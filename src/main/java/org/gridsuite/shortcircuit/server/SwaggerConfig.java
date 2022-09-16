@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuitanalysis.server;
+package org.gridsuite.shortcircuit.server;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -21,8 +21,8 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Sensitivity analysis API")
-                        .description("This is the documentation of the sensitivity analysis REST API")
-                        .version(ShortCircuitAnalysisApi.API_VERSION));
+                        .title("Short circuit API")
+                        .description("This is the documentation of the short circuit REST API")
+                        .version(ShortCircuitApi.API_VERSION));
     }
 }

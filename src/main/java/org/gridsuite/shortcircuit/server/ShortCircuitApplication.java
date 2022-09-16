@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuitanalysis.server;
+package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.ws.commons.Utils;
@@ -17,11 +17,11 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 @SpringBootApplication
-@ComponentScan(basePackageClasses = {ShortCircuitAnalysisApplication.class, NetworkStoreService.class})
-public class ShortCircuitAnalysisApplication {
+@ComponentScan(basePackageClasses = {ShortCircuitApplication.class, NetworkStoreService.class})
+public class ShortCircuitApplication {
 
     public static void main(String[] args) {
         Utils.initProperties();
-        SpringApplication.run(ShortCircuitAnalysisApplication.class, args);
+        SpringApplication.run(ShortCircuitApplication.class, args);
     }
 }

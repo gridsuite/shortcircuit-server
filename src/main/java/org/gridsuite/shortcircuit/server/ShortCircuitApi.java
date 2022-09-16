@@ -4,14 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuitanalysis.server;
+package org.gridsuite.shortcircuit.server;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-public final class ShortCircuitAnalysisApi {
+public final class ShortCircuitApi {
 
-    private ShortCircuitAnalysisApi() {
+    private ShortCircuitApi() {
     }
 
     public static final String API_VERSION = "v1";
