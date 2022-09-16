@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server;
+package org.gridsuite.shortcircuitanalysis.server;
 
 import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
+import org.gridsuite.shortcircuitanalysis.server.service.ShortCircuitAnalysisService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,12 +30,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @RestController
-@RequestMapping(value = "/" + ShortCircuitApi.API_VERSION)
-@Tag(name = "Short circuit server")
-public class ShortCircuitController {
-    private final ShortCircuitService service;
+@RequestMapping(value = "/" + ShortCircuitAnalysisApi.API_VERSION)
+@Tag(name = "Short circuit analysis server")
+public class ShortCircuitAnalysisController {
+    private final ShortCircuitAnalysisService service;
 
-    public ShortCircuitController(ShortCircuitService service) {
+    public ShortCircuitAnalysisController(ShortCircuitAnalysisService service) {
         this.service = service;
     }
 
@@ -44,7 +44,7 @@ public class ShortCircuitController {
     }
 
     @PostMapping(value = "/networks/{networkUuid}/run", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Run a shortcut circuit on a network")
+    @Operation(summary = "Run a shortcut circuit analysis on a network")
     @ApiResponses(value = {@ApiResponse(responseCode = "200",
                                         description = "The short circuit analysis has been performed",
                                         content = {@Content(mediaType = APPLICATION_JSON_VALUE,

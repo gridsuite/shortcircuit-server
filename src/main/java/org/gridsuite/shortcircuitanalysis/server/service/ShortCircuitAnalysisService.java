@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server.service;
+package org.gridsuite.shortcircuitanalysis.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
@@ -32,19 +32,19 @@ import java.util.stream.Collectors;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class ShortCircuitService {
+public class ShortCircuitAnalysisService {
 
     private NetworkStoreService networkStoreService;
     private ObjectMapper objectMapper;
 
-    public ShortCircuitService(NetworkStoreService networkStoreService, ObjectMapper objectMapper) {
+    public ShortCircuitAnalysisService(NetworkStoreService networkStoreService, ObjectMapper objectMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public ShortCircuitAnalysisResult run(UUID networkUuid, String variantId, List<UUID> otherNetworkUuids, List<Fault> faults, UUID reportUuid, ShortCircuitParameters shortCircuitParameters) {
         Network network = getNetwork(networkUuid, otherNetworkUuids, variantId);
-        Reporter reporter = reportUuid != null ? new ReporterModel("ShortCircuit", "Short circuit") : Reporter.NO_OP;
+        Reporter reporter = reportUuid != null ? new ReporterModel("ShortCircuitAnalysis", "Short circuit analysis") : Reporter.NO_OP;
         ShortCircuitAnalysisResult result = ShortCircuitAnalysis.run(network, faults, shortCircuitParameters, LocalComputationManager.getDefault(), List.of(), reporter);
         return result;
     }
