@@ -23,7 +23,7 @@
 
     <packaging>jar</packaging>
     <name>Shortcircuit server</name>
-    <description>Sensitivity analysis service</description>
+    <description>Short circuit service</description>
     <url>http://www.gridsuite.org/</url>
 
     <scm>
@@ -43,7 +43,7 @@
 
     <properties>
         <java.version>11</java.version>
-        <gridsuite-dependencies.version>18</gridsuite-dependencies.version>
+        <gridsuite-dependencies.version>19</gridsuite-dependencies.version>
         <liquibase-hibernate-package>org.gridsuite.shortcircuit.server</liquibase-hibernate-package>
         <mockito-inline.version>3.11.1</mockito-inline.version>
     </properties>
