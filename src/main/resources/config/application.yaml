@@ -28,7 +28,7 @@ spring:
 
 powsybl-ws:
   database:
-    dbName: shortcircuit
+    name: shortcircuit
 
 shortcircuit:
   default-provider: courcirc
