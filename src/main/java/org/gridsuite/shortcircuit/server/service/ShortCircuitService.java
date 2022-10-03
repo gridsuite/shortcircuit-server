@@ -11,7 +11,6 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.computation.local.LocalComputationManager;
-import com.powsybl.iidm.mergingview.MergingView;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -22,11 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -42,8 +39,8 @@ public class ShortCircuitService {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public ShortCircuitAnalysisResult run(UUID networkUuid, String variantId, List<UUID> otherNetworkUuids, List<Fault> faults, UUID reportUuid, ShortCircuitParameters shortCircuitParameters) {
-        Network network = getNetwork(networkUuid, otherNetworkUuids, variantId);
+    public ShortCircuitAnalysisResult run(UUID networkUuid, String variantId, List<Fault> faults, UUID reportUuid, ShortCircuitParameters shortCircuitParameters) {
+        Network network = getNetwork(networkUuid, variantId);
         Reporter reporter = reportUuid != null ? new ReporterModel("ShortCircuit", "Short circuit") : Reporter.NO_OP;
         ShortCircuitAnalysisResult result = ShortCircuitAnalysis.run(network, faults, shortCircuitParameters, LocalComputationManager.getDefault(), List.of(), reporter);
         return result;
@@ -59,20 +56,5 @@ public class ShortCircuitService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
         return network;
-    }
-
-    private Network getNetwork(UUID networkUuid, List<UUID> otherNetworkUuids, String variantId) {
-        Network network = getNetwork(networkUuid, variantId);
-        if (otherNetworkUuids.isEmpty()) {
-            return network;
-        } else {
-            List<Network> otherNetworks = otherNetworkUuids.stream().map(uuid -> getNetwork(uuid, variantId)).collect(Collectors.toList());
-            List<Network> networks = new ArrayList<>();
-            networks.add(network);
-            networks.addAll(otherNetworks);
-            MergingView mergingView = MergingView.create("merge", "iidm");
-            mergingView.merge(networks.toArray(new Network[0]));
-            return mergingView;
-        }
     }
 }

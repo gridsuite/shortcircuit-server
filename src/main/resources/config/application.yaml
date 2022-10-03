@@ -1,3 +1,34 @@
 spring:
   application:
     name: shortcircuit-server
+
+  cloud:
+    function:
+      definition: consumeRun;consumeCancel
+    stream:
+      bindings:
+        consumeRun-in-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.run
+          group: shortcircuitGroup
+          consumer:
+            concurrency: 2
+        publishRun-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.run
+        publishResult-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.result
+        consumeCancel-in-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.cancel
+        publishCancel-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.cancel
+        publishStopped-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.stopped
+        publishFailed-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.failed
+      source: publishRun;publishResult;publishCancel;publishStopped;publishFailed
+
+powsybl-ws:
+  database:
+    dbName: shortcircuit
+
+shortcircuit:
+  default-provider: courcirc

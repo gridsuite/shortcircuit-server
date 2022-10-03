@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.powsybl.commons.reporter.ReporterModelDeserializer;
 import com.powsybl.commons.reporter.ReporterModelJsonModule;
+import com.powsybl.shortcircuit.converter.ShortCircuitAnalysisJsonModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -49,10 +50,7 @@ public class RestTemplateConfig {
     private static ObjectMapper createObjectMapper() {
         var objectMapper = Jackson2ObjectMapperBuilder.json().build();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-//        objectMapper.registerModule(new ContingencyJsonModule());
-//        objectMapper.registerModule(new LoadFlowResultJsonModule());
-//        objectMapper.registerModule(new LoadFlowParametersJsonModule());
-//        objectMapper.registerModule(new SensitivityJsonModule());
+        objectMapper.registerModule(new ShortCircuitAnalysisJsonModule());
         objectMapper.registerModule(new ReporterModelJsonModule());
         objectMapper.setInjectableValues(new InjectableValues.Std().addValue(ReporterModelDeserializer.DICTIONARY_VALUE_ID, null));
         return objectMapper;

@@ -52,12 +52,11 @@ public class ShortCircuitController {
     )
     public ResponseEntity<ShortCircuitAnalysisResult> run(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
                                                          @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-                                                         @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
                                                          @Parameter(description = "Faults") @RequestParam(name = "faults", required = false) List<Fault> faults,
                                                          @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                                          @RequestBody(required = false) ShortCircuitParameters parameters) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        ShortCircuitAnalysisResult result = service.run(networkUuid, variantId, otherNetworkUuids, faults, reportUuid, nonNullParameters);
+        ShortCircuitAnalysisResult result = service.run(networkUuid, variantId, faults, reportUuid, nonNullParameters);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result);
     }
 }
