@@ -7,8 +7,10 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
@@ -67,22 +69,20 @@ public class ShortCircuitResultContext {
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
         String variantId = (String) headers.get("variantId");
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
-        List<UUID> contingencyListUuids = getHeaderList(headers, "contingencyListUuids");
-        List<UUID> variablesFiltersListUuids = getHeaderList(headers, "variablesFiltersListUuids");
-        List<UUID> branchFiltersListUuids = getHeaderList(headers, "branchFiltersListUuids");
 
+        List<Fault> faults;
         String receiver = (String) headers.get("receiver");
-        String provider = (String) headers.get("provider");
         ShortCircuitParameters parameters;
         try {
             parameters = objectMapper.readValue(message.getPayload(), ShortCircuitParameters.class);
+            faults = objectMapper.readValue(message.getPayload(), new TypeReference<List<Fault>>() { });
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
         UUID reportUuid = headers.containsKey(REPORT_UUID) ? UUID.fromString((String) headers.get(REPORT_UUID)) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
-            variantId, otherNetworkUuids, variablesFiltersListUuids, contingencyListUuids, branchFiltersListUuids,
-            receiver, provider, parameters, reportUuid);
+            variantId, otherNetworkUuids, faults, receiver,
+            parameters, reportUuid);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
@@ -98,11 +98,7 @@ public class ShortCircuitResultContext {
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
                 .setHeader("variantId", runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
-                .setHeader("contingencyListUuids", runContext.getContingencyListUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
-                .setHeader("variablesFiltersListUuids", runContext.getVariablesFiltersListUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
-                .setHeader("branchFiltersListUuids", runContext.getBranchFiltersListUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
-                .setHeader("receiver", runContext.getReceiver())
-                .setHeader("provider", runContext.getProvider())
+                .setHeader("faults", runContext.getFaults())
                 .setHeader(REPORT_UUID, runContext.getReportUuid())
                 .build();
     }

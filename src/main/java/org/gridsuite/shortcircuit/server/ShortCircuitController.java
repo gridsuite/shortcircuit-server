@@ -17,10 +17,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,10 +35,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = "/" + ShortCircuitApi.API_VERSION)
 @Tag(name = "Short circuit server")
 public class ShortCircuitController {
-    private final ShortCircuitService service;
+    private final ShortCircuitWorkerService workerService;
 
-    public ShortCircuitController(ShortCircuitService service) {
-        this.service = service;
+    public ShortCircuitController(ShortCircuitWorkerService workerService) {
+        this.workerService = workerService;
     }
 
     private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
@@ -52,11 +54,18 @@ public class ShortCircuitController {
     )
     public ResponseEntity<ShortCircuitAnalysisResult> run(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
                                                          @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
+                                                          @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
                                                          @Parameter(description = "Faults") @RequestParam(name = "faults", required = false) List<Fault> faults,
+                                                          @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                                          @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                                          @RequestBody(required = false) ShortCircuitParameters parameters) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        ShortCircuitAnalysisResult result = service.run(networkUuid, variantId, faults, reportUuid, nonNullParameters);
+        List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
+        ShortCircuitAnalysisResult result = workerService.run(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, faults, receiver, nonNullParameters, reportUuid));
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result);
+    }
+
+    private static List<UUID> getNonNullOtherNetworkUuids(List<UUID> otherNetworkUuids) {
+        return otherNetworkUuids != null ? otherNetworkUuids : Collections.emptyList();
     }
 }

@@ -46,6 +46,7 @@
         <gridsuite-dependencies.version>19</gridsuite-dependencies.version>
         <liquibase-hibernate-package>org.gridsuite.shortcircuit.server</liquibase-hibernate-package>
         <mockito-inline.version>3.11.1</mockito-inline.version>
+        <courcirc.version>3.10.0</courcirc.version>
     </properties>
 
     <build>
@@ -151,6 +152,11 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>com.rte-france.powsybl</groupId>
+            <artifactId>powsybl-courcirc-integration</artifactId>
+            <version>${courcirc.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
             <scope>runtime</scope>
@@ -180,6 +186,11 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-iidm-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

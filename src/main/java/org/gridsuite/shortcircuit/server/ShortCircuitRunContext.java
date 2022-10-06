@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server;
 
+import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 
 import java.util.List;
@@ -23,32 +24,21 @@ public class ShortCircuitRunContext {
 
     private final List<UUID> otherNetworkUuids;
 
-    private final List<UUID> variablesFiltersListUuids;
-
-    private final List<UUID> contingencyListUuids;
-
-    private final List<UUID> branchFiltersListUuids;
+    private final List<Fault> faults;
 
     private final String receiver;
-
-    private final String provider;
 
     private final ShortCircuitParameters parameters;
 
     private final UUID reportUuid;
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, List<UUID> otherNetworkUuids,
-                                  List<UUID> variablesFiltersListUuids, List<UUID> contingencyListUuids,
-                                  List<UUID> branchFiltersListUuids,
-                                  String receiver, String provider, ShortCircuitParameters parameters, UUID reportUuid) {
+                                  List<Fault> faults, String receiver, ShortCircuitParameters parameters, UUID reportUuid) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
         this.variantId = variantId;
         this.otherNetworkUuids = Objects.requireNonNull(otherNetworkUuids);
-        this.variablesFiltersListUuids = Objects.requireNonNull(variablesFiltersListUuids);
-        this.contingencyListUuids = Objects.requireNonNull(contingencyListUuids);
-        this.branchFiltersListUuids = Objects.requireNonNull(branchFiltersListUuids);
+        this.faults = faults;
         this.receiver = receiver;
-        this.provider = provider;
         this.parameters = Objects.requireNonNull(parameters);
         this.reportUuid = reportUuid;
     }
@@ -65,31 +55,19 @@ public class ShortCircuitRunContext {
         return otherNetworkUuids;
     }
 
-    public List<UUID> getVariablesFiltersListUuids() {
-        return variablesFiltersListUuids;
-    }
-
-    public List<UUID> getContingencyListUuids() {
-        return contingencyListUuids;
-    }
-
-    public List<UUID> getBranchFiltersListUuids() {
-        return branchFiltersListUuids;
-    }
-
-    public String getReceiver() {
-        return receiver;
-    }
-
-    public String getProvider() {
-        return provider;
-    }
-
     public ShortCircuitParameters getParameters() {
         return parameters;
     }
 
     public UUID getReportUuid() {
         return reportUuid;
+    }
+
+    public List<Fault> getFaults() {
+        return faults;
+    }
+
+    public String getReceiver() {
+        return receiver;
     }
 }
