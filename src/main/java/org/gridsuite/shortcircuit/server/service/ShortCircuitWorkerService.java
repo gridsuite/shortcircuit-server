@@ -19,9 +19,6 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.shortcircuit.server.ShortCircuitCancelContext;
-import org.gridsuite.shortcircuit.server.ShortCircuitResultContext;
-import org.gridsuite.shortcircuit.server.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.util.ShortCircuitRunnerSupplier;
@@ -159,7 +156,8 @@ public class ShortCircuitWorkerService {
 
             CompletableFuture<ShortCircuitAnalysisResult> future = shortCircuitAnalysisRunner.runAsync(
                 network,
-                List.of(),
+//                List.of(new BusFault("fault", "COMPIP6")),
+                    List.of(),
                 context.getParameters(),
                 LocalComputationManager.getDefault(),
                     List.of(),

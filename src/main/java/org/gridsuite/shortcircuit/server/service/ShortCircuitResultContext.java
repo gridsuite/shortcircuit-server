@@ -4,10 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server;
+package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.shortcircuit.Fault;
@@ -70,12 +69,12 @@ public class ShortCircuitResultContext {
         String variantId = (String) headers.get("variantId");
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
 
-        List<Fault> faults;
+        //TODO: deserialize Fault list properly
+        List<Fault> faults = List.of();
         String receiver = (String) headers.get("receiver");
         ShortCircuitParameters parameters;
         try {
             parameters = objectMapper.readValue(message.getPayload(), ShortCircuitParameters.class);
-            faults = objectMapper.readValue(message.getPayload(), new TypeReference<List<Fault>>() { });
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
@@ -97,8 +96,10 @@ public class ShortCircuitResultContext {
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
                 .setHeader("variantId", runContext.getVariantId())
+                .setHeader("variantId", runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .setHeader("faults", runContext.getFaults())
+                .setHeader("receiver", runContext.getReceiver())
                 .setHeader(REPORT_UUID, runContext.getReportUuid())
                 .build();
     }

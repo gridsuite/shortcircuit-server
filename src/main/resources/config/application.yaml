@@ -8,22 +8,22 @@ spring:
     stream:
       bindings:
         consumeRun-in-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.run
-          group: shortcircuitGroup
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.run
+          group: shortcircuitanalysisGroup
           consumer:
             concurrency: 2
         publishRun-out-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.run
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.run
         publishResult-out-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.result
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.result
         consumeCancel-in-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.cancel
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.cancel
         publishCancel-out-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.cancel
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.cancel
         publishStopped-out-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.stopped
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.stopped
         publishFailed-out-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuit.failed
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.failed
       source: publishRun;publishResult;publishCancel;publishStopped;publishFailed
 
 powsybl-ws:
@@ -31,4 +31,4 @@ powsybl-ws:
     name: shortcircuit
 
 shortcircuit:
-  default-provider: courcirc
+  default-provider: Courcirc

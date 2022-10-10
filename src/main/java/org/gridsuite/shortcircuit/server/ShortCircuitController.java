@@ -7,7 +7,6 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.shortcircuit.Fault;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,8 +15,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,37 +35,91 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = "/" + ShortCircuitApi.API_VERSION)
 @Tag(name = "Short circuit server")
 public class ShortCircuitController {
-    private final ShortCircuitWorkerService workerService;
+//    private final ShortCircuitWorkerService workerService;
 
-    public ShortCircuitController(ShortCircuitWorkerService workerService) {
-        this.workerService = workerService;
+    private final ShortCircuitService shortCircuitService;
+
+    public ShortCircuitController(ShortCircuitService shortCircuitService) {
+        this.shortCircuitService = shortCircuitService;
     }
 
     private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
         return parameters != null ? parameters : new ShortCircuitParameters();
     }
 
-    @PostMapping(value = "/networks/{networkUuid}/run", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a shortcut circuit analysis on a network")
     @ApiResponses(value = {@ApiResponse(responseCode = "200",
                                         description = "The short circuit analysis has been performed",
                                         content = {@Content(mediaType = APPLICATION_JSON_VALUE,
-                                                            schema = @Schema(implementation = ShortCircuitParameters.class))})}
-    )
-    public ResponseEntity<ShortCircuitAnalysisResult> run(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-                                                         @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-                                                          @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
-                                                         @Parameter(description = "Faults") @RequestParam(name = "faults", required = false) List<Fault> faults,
-                                                          @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
-                                                         @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
-                                                         @RequestBody(required = false) ShortCircuitParameters parameters) {
+                                                            schema = @Schema(implementation = ShortCircuitParameters.class))})})
+    public ResponseEntity<UUID> runAndSave(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+                                           @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
+                                           @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
+                                           @Parameter(description = "Faults") @RequestParam(name = "faults", required = false) List<Fault> faults,
+                                           @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
+                                           @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
+                                           @RequestBody(required = false) ShortCircuitParameters parameters) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
+        nonNullParameters.setWithVoltageMap(false);
         List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
-        ShortCircuitAnalysisResult result = workerService.run(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, faults, receiver, nonNullParameters, reportUuid));
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result);
+        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, faults, receiver, nonNullParameters, reportUuid));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
 
     private static List<UUID> getNonNullOtherNetworkUuids(List<UUID> otherNetworkUuids) {
         return otherNetworkUuids != null ? otherNetworkUuids : Collections.emptyList();
     }
+
+    @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a shortcut circuit analysis result from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The sensitivity analysis result"),
+            @ApiResponse(responseCode = "404", description = "Sensitivity analysis result has not been found")})
+    public ResponseEntity<String> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        String result = shortCircuitService.getResult(resultUuid);
+        return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
+                : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Delete a shortcut circuit analysis result from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The shortcut circuit analysis result has been deleted")})
+    public ResponseEntity<Void> deleteResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        shortCircuitService.deleteResult(resultUuid);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping(value = "/results", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Delete all shortcut circuit analysis results from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All shortcut circuit analysis results have been deleted")})
+    public ResponseEntity<Void> deleteResults() {
+        shortCircuitService.deleteResults();
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/results/{resultUuid}/status", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get the shortcut circuit analysis status from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The shortcut circuit analysis status")})
+    public ResponseEntity<String> getStatus(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        String result = shortCircuitService.getStatus(resultUuid);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @PutMapping(value = "/results/invalidate-status", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Invalidate the shortcut circuit analysis status from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The shortcut circuit analysis status has been invalidated")})
+    public ResponseEntity<Void> invalidateStatus(@Parameter(description = "Result uuids") @RequestParam(name = "resultUuid") List<UUID> resultUuids) {
+        shortCircuitService.setStatus(resultUuids, ShortCircuitAnalysisStatus.NOT_DONE.name());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/results/{resultUuid}/stop", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Stop a shortcut circuit analysis computation")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The shortcut circuit analysis has been stopped")})
+    public ResponseEntity<Void> stop(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                     @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver) {
+        shortCircuitService.stop(resultUuid, receiver);
+        return ResponseEntity.ok().build();
+    }
+
 }

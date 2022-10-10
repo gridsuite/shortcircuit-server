@@ -7,19 +7,10 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.computation.local.LocalComputationManager;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.VariantManagerConstants;
-import com.powsybl.network.store.client.NetworkStoreService;
-import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.shortcircuit.*;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpStatus;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,31 +21,50 @@ import java.util.UUID;
  */
 @Service
 public class ShortCircuitService {
+    @Autowired
+    NotificationService notificationService;
 
-    private NetworkStoreService networkStoreService;
+    private ShortCircuitAnalysisResultRepository resultRepository;
+
     private ObjectMapper objectMapper;
 
-    public ShortCircuitService(NetworkStoreService networkStoreService, ObjectMapper objectMapper) {
-        this.networkStoreService = Objects.requireNonNull(networkStoreService);
+    public ShortCircuitService(NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
+        this.notificationService = Objects.requireNonNull(notificationService);
+        this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public ShortCircuitAnalysisResult run(UUID networkUuid, String variantId, List<Fault> faults, UUID reportUuid, ShortCircuitParameters shortCircuitParameters) {
-        Network network = getNetwork(networkUuid, variantId);
-        Reporter reporter = reportUuid != null ? new ReporterModel("ShortCircuit", "Short circuit") : Reporter.NO_OP;
-        ShortCircuitAnalysisResult result = ShortCircuitAnalysis.run(network, faults, shortCircuitParameters, LocalComputationManager.getDefault(), List.of(), reporter);
-        return result;
+    public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
+        Objects.requireNonNull(runContext);
+        var resultUuid = UUID.randomUUID();
+
+        // update status to running status
+        setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING.name());
+        notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
+        return resultUuid;
     }
 
-    private Network getNetwork(UUID networkUuid, String variantId) {
-        Network network;
-        try {
-            network = networkStoreService.getNetwork(networkUuid, PreloadingStrategy.COLLECTION);
-            String variant = StringUtils.isBlank(variantId) ? VariantManagerConstants.INITIAL_VARIANT_ID : variantId;
-            network.getVariantManager().setWorkingVariant(variant);
-        } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-        return network;
+    public String getResult(UUID resultUuid) {
+        return resultRepository.find(resultUuid);
+    }
+
+    public void deleteResult(UUID resultUuid) {
+        resultRepository.delete(resultUuid);
+    }
+
+    public void deleteResults() {
+        resultRepository.deleteAll();
+    }
+
+    public String getStatus(UUID resultUuid) {
+        return resultRepository.findStatus(resultUuid);
+    }
+
+    public void setStatus(List<UUID> resultUuids, String status) {
+        resultRepository.insertStatus(resultUuids, status);
+    }
+
+    public void stop(UUID resultUuid, String receiver) {
+        notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
     }
 }
