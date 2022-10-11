@@ -24,19 +24,22 @@ public class ShortCircuitService {
     @Autowired
     NotificationService notificationService;
 
+    private UuidGeneratorService uuidGeneratorService;
+
     private ShortCircuitAnalysisResultRepository resultRepository;
 
     private ObjectMapper objectMapper;
 
-    public ShortCircuitService(NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
+    public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
         this.notificationService = Objects.requireNonNull(notificationService);
+        this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
         Objects.requireNonNull(runContext);
-        var resultUuid = UUID.randomUUID();
+        var resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING.name());

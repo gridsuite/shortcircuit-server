@@ -156,11 +156,10 @@ public class ShortCircuitWorkerService {
 
             CompletableFuture<ShortCircuitAnalysisResult> future = shortCircuitAnalysisRunner.runAsync(
                 network,
-//                List.of(new BusFault("fault", "COMPIP6")),
-                    List.of(),
+                List.of(),
                 context.getParameters(),
                 LocalComputationManager.getDefault(),
-                    List.of(),
+                List.of(),
                 reporter);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);

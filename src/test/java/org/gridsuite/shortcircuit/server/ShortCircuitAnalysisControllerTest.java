@@ -7,6 +7,9 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.computation.ComputationManager;
+import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
@@ -15,8 +18,12 @@ import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import lombok.SneakyThrows;
 import org.gridsuite.shortcircuit.server.service.ReportService;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
+import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,18 +36,27 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
+import org.springframework.http.MediaType;
+import org.springframework.messaging.Message;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
+import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -85,6 +101,9 @@ public class ShortCircuitAnalysisControllerTest {
     @SpyBean
     private ShortCircuitWorkerService workerService;
 
+    @MockBean
+    private UuidGeneratorService uuidGeneratorService;
+
     private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
@@ -122,31 +141,64 @@ public class ShortCircuitAnalysisControllerTest {
         // report service mocking
         doAnswer(i -> null).when(reportService).sendReport(any(), any());
 
-        // mock the powsybl sensitivity analysis runner
+        // UUID service mocking to always generate the same result UUID
+        given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
+
+        // mock the powsybl short circuit analysis runner
         ShortCircuitAnalysis.Runner runner = mock(ShortCircuitAnalysis.Runner.class);
-//        given(runner.runAsync(eq(network), eq(VariantManagerConstants.INITIAL_VARIANT_ID), anyList(), anyList(), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), any(Reporter.class))).willReturn(CompletableFuture.completedFuture(RESULT));
-//        given(runner.runAsync(eq(network), eq(VARIANT_1_ID), anyList(), anyList(), anyList(), any(SensitivityAnalysisParameters.class), any(ComputationManager.class), any(Reporter.class))).willReturn(CompletableFuture.completedFuture(RESULT));
-//        given(runner.runAsync(eq(network), eq(VARIANT_2_ID), anyList(), anyList(), anyList(), any(SensitivityAnalysisParameters.class), any(ComputationManager.class), any(Reporter.class))).willReturn(CompletableFuture.completedFuture(RESULT));
-//        given(runner.runAsync(eq(network), eq(VARIANT_3_ID), anyList(), anyList(), anyList(), any(SensitivityAnalysisParameters.class), any(ComputationManager.class), any(Reporter.class))).willReturn(CompletableFuture.completedFuture(RESULT_VARIANT));
-//        given(runner.runAsync(eq(network1), eq(VARIANT_2_ID), anyList(), anyList(), anyList(), any(SensitivityAnalysisParameters.class), any(ComputationManager.class), any(Reporter.class))).willReturn(CompletableFuture.completedFuture(RESULT));
-//        workerService.setSensitivityAnalysisFactorySupplier(provider -> runner);
+        given(runner.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class))).willReturn(CompletableFuture.completedFuture(RESULT));
+        workerService.setShortCircuitAnalysisFactorySupplier(provider -> runner);
 
         // purge messages
-        while (output.receive(1000, "sensitivityanalysis.result") != null) {
+        while (output.receive(1000, "shortcircuitanalysis.result") != null) {
         }
         // purge messages
-        while (output.receive(1000, "sensitivityanalysis.run") != null) {
+        while (output.receive(1000, "shortcircuitanalysis.run") != null) {
         }
-        while (output.receive(1000, "sensitivityanalysis.cancel") != null) {
+        while (output.receive(1000, "shortcircuitanalysis.cancel") != null) {
         }
-        while (output.receive(1000, "sensitivityanalysis.stopped") != null) {
+        while (output.receive(1000, "shortcircuitanalysis.stopped") != null) {
         }
-        while (output.receive(1000, "sensitivityanalysis.failed") != null) {
+        while (output.receive(1000, "shortcircuitanalysis.failed") != null) {
         }
     }
 
+    @SneakyThrows
+    @After
+    public void tearDown() {
+        mockMvc.perform(delete("/" + VERSION + "/results"))
+                .andExpect(status().isOk());
+    }
+
     @Test
-    public void runTest() {
-        assertEquals(1, 1);
+    public void runTest() throws Exception {
+        MvcResult result = mockMvc.perform(post(
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+        Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
+        assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+        assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+        result = mockMvc.perform(get(
+                        "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        assertEquals(mapper.writeValueAsString(RESULT), result.getResponse().getContentAsString());
+
+        // should throw not found if result does not exist
+        mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
+                .andExpect(status().isNotFound());
+
+        // test one result deletion
+        mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                .andExpect(status().isNotFound());
     }
 }
