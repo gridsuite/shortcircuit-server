@@ -42,7 +42,7 @@ jobs:
           mvn --batch-mode -DskipTests sonar:sonar
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.organization=gridsuite
-          -Dsonar.projectKey=org.gridsuite:shortcircuit-server
+          -Dsonar.projectKey=org.gridsuite:shortcircuit-analysis-server
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
