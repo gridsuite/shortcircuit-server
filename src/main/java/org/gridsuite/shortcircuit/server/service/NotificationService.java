@@ -41,16 +41,19 @@ public class NotificationService {
     public static final String HEADER_RECEIVER = "receiver";
     public static final String HEADER_MESSAGE = "message";
 
+    public static final String SENDING_MESSAGE = "Sending message : {}";
+
+    public static final String VARIANT_ID = "variantId";
     @Autowired
     private StreamBridge publisher;
 
     public void sendRunMessage(Message<String> message) {
-        RUN_MESSAGE_LOGGER.debug("Sending message : {}", message);
+        RUN_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishRun-out-0", message);
     }
 
     public void sendCancelMessage(Message<String> message) {
-        CANCEL_MESSAGE_LOGGER.debug("Sending message : {}", message);
+        CANCEL_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishCancel-out-0", message);
     }
 
@@ -61,7 +64,7 @@ public class NotificationService {
             .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
             .setHeader(HEADER_RECEIVER, receiver)
             .build();
-        RESULT_MESSAGE_LOGGER.debug("Sending message : {}", message);
+        RESULT_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishResult-out-0", message);
     }
 
@@ -73,7 +76,7 @@ public class NotificationService {
             .setHeader(HEADER_RECEIVER, receiver)
             .setHeader(HEADER_MESSAGE, CANCEL_MESSAGE)
             .build();
-        STOP_MESSAGE_LOGGER.debug("Sending message : {}", message);
+        STOP_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishStopped-out-0", message);
     }
 
@@ -85,7 +88,7 @@ public class NotificationService {
             .setHeader(HEADER_RECEIVER, receiver)
             .setHeader(HEADER_MESSAGE, FAIL_MESSAGE + " : " + causeMessage)
             .build();
-        FAILED_MESSAGE_LOGGER.debug("Sending message : {}", message);
+        FAILED_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishFailed-out-0", message);
     }
 }

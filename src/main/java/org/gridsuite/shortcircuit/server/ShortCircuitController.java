@@ -35,8 +35,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = "/" + ShortCircuitApi.API_VERSION)
 @Tag(name = "Short circuit server")
 public class ShortCircuitController {
-//    private final ShortCircuitWorkerService workerService;
-
     private final ShortCircuitService shortCircuitService;
 
     public ShortCircuitController(ShortCircuitService shortCircuitService) {

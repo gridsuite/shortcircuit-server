@@ -26,6 +26,8 @@ public class ShortCircuitResultContext {
 
     private static final String REPORT_UUID = "reportUuid";
 
+    public static final String VARIANT_ID = "variantId";
+
     private final UUID resultUuid;
 
     private final ShortCircuitRunContext runContext;
@@ -66,11 +68,9 @@ public class ShortCircuitResultContext {
         MessageHeaders headers = message.getHeaders();
         UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
-        String variantId = (String) headers.get("variantId");
+        String variantId = (String) headers.get(VARIANT_ID);
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
 
-        //TODO: deserialize Fault list properly
-        List<Fault> faults = List.of();
         String receiver = (String) headers.get("receiver");
         ShortCircuitParameters parameters;
         try {
@@ -80,7 +80,7 @@ public class ShortCircuitResultContext {
         }
         UUID reportUuid = headers.containsKey(REPORT_UUID) ? UUID.fromString((String) headers.get(REPORT_UUID)) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
-            variantId, otherNetworkUuids, faults, receiver,
+            variantId, otherNetworkUuids, List.of(), receiver,
             parameters, reportUuid);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
@@ -95,8 +95,8 @@ public class ShortCircuitResultContext {
         return MessageBuilder.withPayload(parametersJson)
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader("variantId", runContext.getVariantId())
-                .setHeader("variantId", runContext.getVariantId())
+                .setHeader(VARIANT_ID, runContext.getVariantId())
+                .setHeader(VARIANT_ID, runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .setHeader("faults", runContext.getFaults())
                 .setHeader("receiver", runContext.getReceiver())
