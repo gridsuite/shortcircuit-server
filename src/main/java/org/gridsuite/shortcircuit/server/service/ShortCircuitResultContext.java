@@ -9,7 +9,6 @@ package org.gridsuite.shortcircuit.server.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
