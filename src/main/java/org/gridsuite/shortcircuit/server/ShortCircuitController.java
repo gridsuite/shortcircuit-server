@@ -61,7 +61,6 @@ public class ShortCircuitController {
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @RequestBody(required = false) ShortCircuitParameters parameters) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        nonNullParameters.setWithVoltageMap(false);
         List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
         UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, faults, receiver, nonNullParameters, reportUuid));
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
