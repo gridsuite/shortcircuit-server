@@ -8,8 +8,6 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import com.rte_france.powsybl.adn.TypePlanTension;
-import com.rte_france.powsybl.courcirc.CourcircParameters;
 
 import java.util.List;
 import java.util.Objects;
@@ -42,20 +40,7 @@ public class ShortCircuitRunContext {
         this.faults = faults;
         this.receiver = receiver;
         this.parameters = Objects.requireNonNull(parameters);
-        addSpecificParams(parameters);
         this.reportUuid = reportUuid;
-    }
-
-    private void addSpecificParams(ShortCircuitParameters parameters) {
-        CourcircParameters ext = new CourcircParameters();
-        ext.setUseResistances(true);
-        ext.setUseCapacities(false);
-        ext.setUseLoads(true);
-        ext.setUseShunts(false);
-        ext.setOnlyStartedGenerators(false);
-        ext.setUseTransformersTaps(false);
-        ext.setVoltageMapType(TypePlanTension.NOMINAL);
-        parameters.addExtension(CourcircParameters.class, ext);
     }
 
     public UUID getNetworkUuid() {
