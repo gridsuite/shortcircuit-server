@@ -150,11 +150,10 @@ public class ShortCircuitWorkerService {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {
                 return null;
             }
-            //TODO set provider properly
-            ShortCircuitAnalysis.Runner shortCircuitAnalysisRunner = shortCircuitAnalysisFactorySupplier.apply("Courcirc");
+
             network.getVariantManager().setWorkingVariant(context.getVariantId() != null ? context.getVariantId() : VariantManagerConstants.INITIAL_VARIANT_ID);
 
-            CompletableFuture<ShortCircuitAnalysisResult> future = shortCircuitAnalysisRunner.runAsync(
+            CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.find().runAsync(
                 network,
                 List.of(),
                 context.getParameters(),
