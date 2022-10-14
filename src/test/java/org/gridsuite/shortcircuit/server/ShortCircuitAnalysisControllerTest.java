@@ -15,9 +15,7 @@ import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
-import com.powsybl.shortcircuit.ShortCircuitAnalysis;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
 import org.gridsuite.shortcircuit.server.service.ReportService;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
@@ -26,8 +24,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -131,22 +130,12 @@ public class ShortCircuitAnalysisControllerTest {
 
         network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
-        when(networkStoreService.getNetwork(NETWORK_STOP_UUID, PreloadingStrategy.COLLECTION)).thenAnswer((Answer<?>) invocation -> {
-            //Needed so the stop call doesn't arrive too late
-            Thread.sleep(3000);
-            return network1;
-        });
 
         // report service mocking
         doAnswer(i -> null).when(reportService).sendReport(any(), any());
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
-
-        // mock the powsybl short circuit analysis runner
-        ShortCircuitAnalysis.Runner runner = mock(ShortCircuitAnalysis.Runner.class);
-        given(runner.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class))).willReturn(CompletableFuture.completedFuture(RESULT));
-        workerService.setShortCircuitAnalysisFactorySupplier(provider -> runner);
 
         // purge messages
         while (output.receive(1000, "shortcircuitanalysis.result") != null) {
@@ -171,33 +160,38 @@ public class ShortCircuitAnalysisControllerTest {
 
     @Test
     public void runTest() throws Exception {
-        MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-        assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
+                    .thenReturn(CompletableFuture.completedFuture(RESULT));
 
-        Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
-        assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-        assertEquals("me", resultMessage.getHeaders().get("receiver"));
+            MvcResult result = mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
-        result = mockMvc.perform(get(
-                        "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-        assertEquals(mapper.writeValueAsString(RESULT), result.getResponse().getContentAsString());
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
-        // should throw not found if result does not exist
-        mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
-                .andExpect(status().isNotFound());
+            result = mockMvc.perform(get(
+                            "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+            assertEquals(mapper.writeValueAsString(RESULT), result.getResponse().getContentAsString());
 
-        // test one result deletion
-        mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
-                .andExpect(status().isOk());
+            // should throw not found if result does not exist
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
+                    .andExpect(status().isNotFound());
 
-        mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
-                .andExpect(status().isNotFound());
+            // test one result deletion
+            mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                    .andExpect(status().isNotFound());
+        }
     }
 }

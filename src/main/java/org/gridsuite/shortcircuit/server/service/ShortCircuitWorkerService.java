@@ -21,7 +21,6 @@ import com.powsybl.shortcircuit.*;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
-import org.gridsuite.shortcircuit.server.util.ShortCircuitRunnerSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,17 +71,11 @@ public class ShortCircuitWorkerService {
     private Function<String, ShortCircuitAnalysis.Runner> shortCircuitAnalysisFactorySupplier;
 
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
-                                     ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper,
-                                     ShortCircuitRunnerSupplier shortCircuitRunnerSupplier) {
+                                     ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        shortCircuitAnalysisFactorySupplier = shortCircuitRunnerSupplier::getRunner;
-    }
-
-    public void setShortCircuitAnalysisFactorySupplier(Function<String, ShortCircuitAnalysis.Runner> shortCircuitAnalysisFactorySupplier) {
-        this.shortCircuitAnalysisFactorySupplier = Objects.requireNonNull(shortCircuitAnalysisFactorySupplier);
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -153,7 +146,7 @@ public class ShortCircuitWorkerService {
 
             network.getVariantManager().setWorkingVariant(context.getVariantId() != null ? context.getVariantId() : VariantManagerConstants.INITIAL_VARIANT_ID);
 
-            CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.find().runAsync(
+            CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
                 List.of(),
                 context.getParameters(),
