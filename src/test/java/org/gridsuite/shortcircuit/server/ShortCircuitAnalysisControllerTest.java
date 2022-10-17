@@ -17,6 +17,7 @@ import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
 import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ReportService;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
@@ -238,5 +239,25 @@ public class ShortCircuitAnalysisControllerTest {
 
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
         }
+    }
+
+    @SneakyThrows
+    @Test
+    public void testStatus() {
+        MvcResult result = mockMvc.perform(get(
+                        "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertEquals("", result.getResponse().getContentAsString());
+
+        mockMvc.perform(put("/" + VERSION + "/results/invalidate-status?resultUuid=" + RESULT_UUID))
+                .andExpect(status().isOk());
+
+        result = mockMvc.perform(get(
+                        "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        assertEquals(ShortCircuitAnalysisStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
     }
 }
