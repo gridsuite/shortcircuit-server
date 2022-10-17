@@ -48,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -83,6 +84,8 @@ public class ShortCircuitAnalysisControllerTest {
     private static final int TIMEOUT = 1000;
 
     private static final String ERROR_MESSAGE = "Error message test";
+
+    public static final String CANCEL_MESSAGE = "Short circuit analysis was canceled";
 
     @Autowired
     private OutputDestination output;
@@ -192,6 +195,32 @@ public class ShortCircuitAnalysisControllerTest {
 
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                     .andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
+    public void stopTest() throws Exception {
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
+                    .thenReturn(CompletableFuture.completedFuture(RESULT));
+
+            mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+
+            // stop shortcircuit analysis
+            assertNotNull(output.receive(TIMEOUT, "shortcircuitanalysis.run"));
+            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))
+                    .andExpect(status().isOk());
+            assertNotNull(output.receive(TIMEOUT, "shortcircuitanalysis.cancel"));
+
+            Message<byte[]> message = output.receive(TIMEOUT, "shortcircuitanalysis.stopped");
+            assertNotNull(message);
+            assertEquals(RESULT_UUID.toString(), message.getHeaders().get("resultUuid"));
+            assertEquals("me", message.getHeaders().get("receiver"));
+            assertEquals(CANCEL_MESSAGE, message.getHeaders().get("message"));
         }
     }
 }
