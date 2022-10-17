@@ -43,7 +43,6 @@ public class NotificationService {
 
     public static final String SENDING_MESSAGE = "Sending message : {}";
 
-    public static final String VARIANT_ID = "variantId";
     @Autowired
     private StreamBridge publisher;
 

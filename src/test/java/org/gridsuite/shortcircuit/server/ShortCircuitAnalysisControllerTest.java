@@ -47,6 +47,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
+import static org.gridsuite.shortcircuit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -84,8 +85,6 @@ public class ShortCircuitAnalysisControllerTest {
     private static final int TIMEOUT = 1000;
 
     private static final String ERROR_MESSAGE = "Error message test";
-
-    public static final String CANCEL_MESSAGE = "Short circuit analysis was canceled";
 
     @Autowired
     private OutputDestination output;
