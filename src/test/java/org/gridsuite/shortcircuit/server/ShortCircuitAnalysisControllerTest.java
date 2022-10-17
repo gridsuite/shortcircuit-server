@@ -121,7 +121,6 @@ public class ShortCircuitAnalysisControllerTest {
 
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.COLLECTION)).willReturn(network);
 
-
         networkForMergingView = new NetworkFactoryImpl().createNetwork("mergingView", "test");
         given(networkStoreService.getNetwork(NETWORK_FOR_MERGING_VIEW_UUID, PreloadingStrategy.COLLECTION)).willReturn(networkForMergingView);
 
