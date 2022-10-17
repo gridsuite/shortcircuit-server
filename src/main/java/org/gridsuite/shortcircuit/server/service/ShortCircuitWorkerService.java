@@ -68,8 +68,6 @@ public class ShortCircuitWorkerService {
     @Autowired
     NotificationService notificationService;
 
-    private Function<String, ShortCircuitAnalysis.Runner> shortCircuitAnalysisFactorySupplier;
-
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
                                      ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
@@ -143,8 +141,6 @@ public class ShortCircuitWorkerService {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {
                 return null;
             }
-
-            network.getVariantManager().setWorkingVariant(context.getVariantId() != null ? context.getVariantId() : VariantManagerConstants.INITIAL_VARIANT_ID);
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
