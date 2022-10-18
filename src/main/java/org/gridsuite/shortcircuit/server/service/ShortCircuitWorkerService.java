@@ -102,18 +102,6 @@ public class ShortCircuitWorkerService {
         }
     }
 
-    public ShortCircuitAnalysisResult run(ShortCircuitRunContext context) {
-        try {
-            return run(context, null);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        } catch (Exception e) {
-            LOGGER.error(FAIL_MESSAGE, e);
-            return null;
-        }
-    }
-
     private ShortCircuitAnalysisResult run(ShortCircuitRunContext context, UUID resultUuid) throws ExecutionException, InterruptedException {
         Objects.requireNonNull(context);
 
