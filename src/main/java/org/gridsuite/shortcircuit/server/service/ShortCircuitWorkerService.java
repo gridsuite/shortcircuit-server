@@ -128,10 +128,13 @@ public class ShortCircuitWorkerService {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {
                 return null;
             }
+            List<Fault> faults = network.getBusView().getBusStream()
+                    .map(bus -> new BusFault(bus.getId(), bus.getId()))
+                    .collect(Collectors.toList());
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
-                List.of(),
+                faults,
                 context.getParameters(),
                 LocalComputationManager.getDefault(),
                 List.of(),
