@@ -19,7 +19,6 @@ import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ReportService;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
 import org.junit.After;
 import org.junit.Before;
@@ -92,9 +91,6 @@ public class ShortCircuitAnalysisControllerTest {
 
     @MockBean
     private ReportService reportService;
-
-    @SpyBean
-    private ShortCircuitWorkerService workerService;
 
     @MockBean
     private UuidGeneratorService uuidGeneratorService;
