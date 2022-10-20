@@ -128,6 +128,7 @@ public class ShortCircuitWorkerService {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {
                 return null;
             }
+
             List<Fault> faults = network.getBusView().getBusStream()
                     .map(bus -> new BusFault(bus.getId(), bus.getId()))
                     .collect(Collectors.toList());

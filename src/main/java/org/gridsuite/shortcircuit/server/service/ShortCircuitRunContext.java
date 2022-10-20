@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
 
@@ -26,20 +25,16 @@ public class ShortCircuitRunContext {
 
     private final List<UUID> otherNetworkUuids;
 
-    private final List<Fault> faults;
-
     private final String receiver;
 
     private final ShortCircuitParameters parameters;
 
     private final UUID reportUuid;
 
-    public ShortCircuitRunContext(UUID networkUuid, String variantId, List<UUID> otherNetworkUuids,
-                                  List<Fault> faults, String receiver, ShortCircuitParameters parameters, UUID reportUuid) {
+    public ShortCircuitRunContext(UUID networkUuid, String variantId, List<UUID> otherNetworkUuids, String receiver, ShortCircuitParameters parameters, UUID reportUuid) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
         this.variantId = variantId;
         this.otherNetworkUuids = Objects.requireNonNull(otherNetworkUuids);
-        this.faults = faults;
         this.receiver = receiver;
         this.parameters = Objects.requireNonNull(parameters);
         this.reportUuid = reportUuid;
