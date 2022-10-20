@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
+import lombok.Getter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@Getter
 public class ShortCircuitResultContext {
 
     private static final String REPORT_UUID = "reportUuid";
@@ -34,14 +36,6 @@ public class ShortCircuitResultContext {
     public ShortCircuitResultContext(UUID resultUuid, ShortCircuitRunContext runContext) {
         this.resultUuid = Objects.requireNonNull(resultUuid);
         this.runContext = Objects.requireNonNull(runContext);
-    }
-
-    public UUID getResultUuid() {
-        return resultUuid;
-    }
-
-    public ShortCircuitRunContext getRunContext() {
-        return runContext;
     }
 
     private static List<UUID> getHeaderList(MessageHeaders headers, String name) {

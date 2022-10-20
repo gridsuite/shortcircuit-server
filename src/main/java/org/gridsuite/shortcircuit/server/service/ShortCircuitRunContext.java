@@ -8,6 +8,7 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,6 +17,7 @@ import java.util.UUID;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@Getter
 public class ShortCircuitRunContext {
 
     private final UUID networkUuid;
@@ -41,33 +43,5 @@ public class ShortCircuitRunContext {
         this.receiver = receiver;
         this.parameters = Objects.requireNonNull(parameters);
         this.reportUuid = reportUuid;
-    }
-
-    public UUID getNetworkUuid() {
-        return networkUuid;
-    }
-
-    public String getVariantId() {
-        return variantId;
-    }
-
-    public List<UUID> getOtherNetworkUuids() {
-        return otherNetworkUuids;
-    }
-
-    public ShortCircuitParameters getParameters() {
-        return parameters;
-    }
-
-    public UUID getReportUuid() {
-        return reportUuid;
-    }
-
-    public List<Fault> getFaults() {
-        return faults;
-    }
-
-    public String getReceiver() {
-        return receiver;
     }
 }
