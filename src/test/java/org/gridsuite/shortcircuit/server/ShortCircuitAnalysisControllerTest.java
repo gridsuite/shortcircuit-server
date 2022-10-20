@@ -81,8 +81,6 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static final int TIMEOUT = 1000;
 
-    private static final String ERROR_MESSAGE = "Error message test";
-
     @Autowired
     private OutputDestination output;
 
