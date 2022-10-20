@@ -138,15 +138,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
         </dependency>
-
-        <!-- Runtime dependencies -->
-        <dependency>
-            <groupId>com.rte-france.powsybl</groupId>
-            <artifactId>powsybl-courcirc-integration</artifactId>
-            <version>3.10.0</version>
-            <scope>runtime</scope>
-        </dependency>
-
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-classic</artifactId>
