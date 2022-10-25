@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: shortcircuit-server
+
+  cloud:
+    function:
+      definition: consumeRun;consumeCancel
+    stream:
+      bindings:
+        consumeRun-in-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.run
+          group: shortcircuitanalysisGroup
+          consumer:
+            concurrency: 2
+        publishRun-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.run
+        publishResult-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.result
+        consumeCancel-in-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.cancel
+        publishCancel-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.cancel
+        publishStopped-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.stopped
+        publishFailed-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.failed
+      source: publishRun;publishResult;publishCancel;publishStopped;publishFailed
+
+powsybl-ws:
+  database:
+    name: shortcircuit
