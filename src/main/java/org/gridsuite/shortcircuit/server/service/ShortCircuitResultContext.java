@@ -29,6 +29,8 @@ public class ShortCircuitResultContext {
 
     public static final String VARIANT_ID = "variantId";
 
+    public static final String REPORTER_ID_HEADER = "reporterId";
+
     private final UUID resultUuid;
 
     private final ShortCircuitRunContext runContext;
@@ -72,9 +74,10 @@ public class ShortCircuitResultContext {
             throw new UncheckedIOException(e);
         }
         UUID reportUuid = headers.containsKey(REPORT_UUID) ? UUID.fromString((String) headers.get(REPORT_UUID)) : null;
+        String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
             variantId, otherNetworkUuids, receiver,
-            parameters, reportUuid);
+            parameters, reportUuid, reporterId);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
