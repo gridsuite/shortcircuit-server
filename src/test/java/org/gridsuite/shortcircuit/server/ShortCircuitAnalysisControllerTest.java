@@ -194,7 +194,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
 
             mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID))
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&reporterId=myReporter&reportUuid=b610ee32-7c9d-11ed-a1eb-0242ac120002&variantId=" + VARIANT_2_ID, NETWORK_UUID))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -221,7 +221,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
 
             MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&reporterId=myReporter&reportUuid=b610ee32-7c9d-11ed-a1eb-0242ac120002&networkUuid=" + NETWORK_FOR_MERGING_VIEW_UUID, OTHER_NETWORK_FOR_MERGING_VIEW_UUID))
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&networkUuid=" + NETWORK_FOR_MERGING_VIEW_UUID, OTHER_NETWORK_FOR_MERGING_VIEW_UUID))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
