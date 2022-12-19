@@ -94,7 +94,7 @@ public class ShortCircuitResultContext {
                 .setHeader(VARIANT_ID, runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .setHeader("receiver", runContext.getReceiver())
-                .setHeader(REPORT_UUID, runContext.getReportUuid())
+                .setHeader(REPORT_UUID, Objects.toString(runContext.getReportUuid(), null))
                 .setHeader(REPORTER_ID_HEADER, runContext.getReporterId())
                 .build();
     }

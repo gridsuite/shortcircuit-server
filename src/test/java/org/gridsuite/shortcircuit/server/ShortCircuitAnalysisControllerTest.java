@@ -194,7 +194,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
 
             mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&reporterId=myReporter&reportUuid=b610ee32-7c9d-11ed-a1eb-0242ac120002&variantId=" + VARIANT_2_ID, NETWORK_UUID))
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -248,5 +248,14 @@ public class ShortCircuitAnalysisControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         assertEquals(ShortCircuitAnalysisStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    public void runWithReportTest() throws Exception {
+        mockMvc.perform(post(
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportUuid=" + UUID.randomUUID() + "&variantId=" + VARIANT_2_ID, NETWORK_UUID))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andReturn();
     }
 }
