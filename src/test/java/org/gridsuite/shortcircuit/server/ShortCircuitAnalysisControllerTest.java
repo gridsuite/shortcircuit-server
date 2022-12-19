@@ -250,8 +250,9 @@ public class ShortCircuitAnalysisControllerTest {
         assertEquals(ShortCircuitAnalysisStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
     }
 
+    @SneakyThrows
     @Test
-    public void runWithReportTest() throws Exception {
+    public void runWithReportTest() {
         mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportUuid=" + UUID.randomUUID() + "&variantId=" + VARIANT_2_ID, NETWORK_UUID))
             .andExpect(status().isOk())
