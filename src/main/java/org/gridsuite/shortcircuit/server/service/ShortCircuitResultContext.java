@@ -73,7 +73,7 @@ public class ShortCircuitResultContext {
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
-        UUID reportUuid = headers.containsKey(REPORT_UUID) ? (UUID) headers.get(REPORT_UUID) : null;
+        UUID reportUuid = headers.containsKey(REPORT_UUID) ? UUID.fromString((String) headers.get(REPORT_UUID)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
             variantId, otherNetworkUuids, receiver,
