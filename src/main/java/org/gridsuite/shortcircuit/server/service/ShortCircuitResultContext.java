@@ -19,6 +19,9 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_RECEIVER;
+import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -62,9 +65,10 @@ public class ShortCircuitResultContext {
         UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
         String variantId = (String) headers.get(VARIANT_ID);
+        String receiver = (String) headers.get(HEADER_RECEIVER);
+        String userId = (String) headers.get(HEADER_USER_ID);
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
 
-        String receiver = (String) headers.get("receiver");
         ShortCircuitParameters parameters;
         try {
             parameters = objectMapper.readValue(message.getPayload(), ShortCircuitParameters.class);
@@ -74,7 +78,7 @@ public class ShortCircuitResultContext {
         UUID reportUuid = headers.containsKey(REPORT_UUID) ? UUID.fromString((String) headers.get(REPORT_UUID)) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
             variantId, otherNetworkUuids, receiver,
-            parameters, reportUuid);
+            parameters, reportUuid, userId);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
@@ -90,7 +94,8 @@ public class ShortCircuitResultContext {
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
                 .setHeader(VARIANT_ID, runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
-                .setHeader("receiver", runContext.getReceiver())
+                .setHeader(HEADER_RECEIVER, runContext.getReceiver())
+                .setHeader(HEADER_USER_ID, runContext.getUserId())
                 .setHeader(REPORT_UUID, runContext.getReportUuid())
                 .build();
     }

@@ -101,6 +101,14 @@
     </dependencyManagement>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.rte-france.powsybl</groupId>
+            <artifactId>powsybl-courcirc-integration</artifactId>
+            <version>3.10.0</version>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Compilation dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
