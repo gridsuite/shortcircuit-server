@@ -6,30 +6,32 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
+import com.powsybl.shortcircuit.Fault;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import java.io.Serializable;
-import java.util.UUID;
+import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "result")
-public class ResultEntity implements Serializable {
+@Embeddable
+public class FaultEmbeddable {
 
-    @Id
-    private UUID resultUuid;
+    @Column
+    private String id;
 
-    @Column(name = "result", columnDefinition = "CLOB")
-    private String result;
+    @Column
+    private String elementId;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Fault.FaultType faultType;
 }

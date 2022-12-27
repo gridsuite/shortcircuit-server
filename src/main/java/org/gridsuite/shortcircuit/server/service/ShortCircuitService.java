@@ -7,7 +7,8 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -47,8 +49,33 @@ public class ShortCircuitService {
         return resultUuid;
     }
 
-    public String getResult(UUID resultUuid) {
-        return resultRepository.find(resultUuid);
+    private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity) {
+        List<FaultResult> faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr)).collect(Collectors.toList());
+        return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
+    }
+
+    private static FaultResult fromEntity(FaultResultEntity faultResultEntity) {
+        Fault fault = fromEntity(faultResultEntity.getFault());
+        List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(lv -> fromEntity(lv)).collect(Collectors.toList());
+        List<FeederResult> feederResults = faultResultEntity.getFeederResults().stream().map(fr -> fromEntity(fr)).collect(Collectors.toList());
+        return new FaultResult(fault, limitViolations, feederResults);
+    }
+
+    private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {
+        return new Fault(faultEmbeddable.getId(), faultEmbeddable.getElementId(), faultEmbeddable.getFaultType().name());
+    }
+
+    private static LimitViolation fromEntity(LimitViolationEmbeddable limitViolationEmbeddable) {
+        return new LimitViolation(limitViolationEmbeddable.getLimitType().name(), limitViolationEmbeddable.getLimit(), limitViolationEmbeddable.getLimitName(), limitViolationEmbeddable.getValue());
+    }
+
+    private static FeederResult fromEntity(FeederResultEmbeddable feederResultEmbeddable) {
+        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent());
+    }
+
+    public ShortCircuitAnalysisResult getResult(UUID resultUuid) {
+        ShortCircuitAnalysisResultEntity result = resultRepository.find(resultUuid);
+        return result != null ? fromEntity(result) : null;
     }
 
     public void deleteResult(UUID resultUuid) {

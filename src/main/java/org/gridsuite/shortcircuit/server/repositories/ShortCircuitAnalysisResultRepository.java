@@ -6,16 +6,16 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.shortcircuit.Fault;
+import com.powsybl.shortcircuit.FaultResult;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
-import org.gridsuite.shortcircuit.server.entities.GlobalStatusEntity;
-import org.gridsuite.shortcircuit.server.entities.ResultEntity;
+import org.gridsuite.shortcircuit.server.entities.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.UncheckedIOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -39,8 +39,24 @@ public class ShortCircuitAnalysisResultRepository {
         this.resultRepository = resultRepository;
     }
 
-    private static ResultEntity toResultEntity(UUID resultUuid, String result) {
-        return new ResultEntity(resultUuid, result);
+    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result) {
+        List<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntity(faultResult)).collect(Collectors.toList());
+        return new ShortCircuitAnalysisResultEntity(resultUuid, LocalDateTime.now(), faultResults);
+    }
+
+    private static FaultResultEntity toFaultResultEntity(FaultResult faultResult) {
+        Fault fault = faultResult.getFault();
+        FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
+
+        List<LimitViolationEmbeddable> limitViolations = faultResult.getLimitViolations().stream().map(limitViolation ->
+                new LimitViolationEmbeddable(limitViolation.getLimitType(), limitViolation.getLimit(), limitViolation.getLimitName(), limitViolation.getValue()))
+                .collect(Collectors.toList());
+
+        List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream().map(feederResult ->
+                new FeederResultEmbeddable(feederResult.getConnectableId(), feederResult.getCurrent().getDirectMagnitude()))
+                .collect(Collectors.toList());
+
+        return new FaultResultEntity(null, faultEmbedded, limitViolations, feederResults);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {
@@ -57,11 +73,9 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional
     public void insert(UUID resultUuid, ShortCircuitAnalysisResult result) {
         Objects.requireNonNull(resultUuid);
-
-        try {
-            resultRepository.save(toResultEntity(resultUuid, result != null ? objectMapper.writeValueAsString(result) : null));
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
+        ShortCircuitAnalysisResultEntity ent = toResultEntity(resultUuid, result);
+        if (result != null) {
+            resultRepository.save(toResultEntity(resultUuid, result));
         }
     }
 
@@ -79,10 +93,10 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public String find(UUID resultUuid) {
+    public ShortCircuitAnalysisResultEntity find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        ResultEntity resultEntity = resultRepository.findByResultUuid(resultUuid);
-        return resultEntity != null ? resultEntity.getResult() : null;
+        ShortCircuitAnalysisResultEntity resultEntity = resultRepository.findByResultUuid(resultUuid);
+        return resultEntity;
     }
 
     @Transactional(readOnly = true)
