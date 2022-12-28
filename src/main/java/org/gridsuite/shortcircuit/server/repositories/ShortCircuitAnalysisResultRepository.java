@@ -6,11 +6,9 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.FaultResult;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +29,6 @@ public class ShortCircuitAnalysisResultRepository {
 
     private ResultRepository resultRepository;
 
-    private final ObjectMapper objectMapper = RestTemplateConfig.objectMapper();
-
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
                                                 ResultRepository resultRepository) {
         this.globalStatusRepository = globalStatusRepository;
@@ -40,7 +36,7 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result) {
-        List<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntity(faultResult)).collect(Collectors.toList());
+        List<FaultResultEntity> faultResults = result.getFaultResults().stream().map(ShortCircuitAnalysisResultRepository::toFaultResultEntity).collect(Collectors.toList());
         return new ShortCircuitAnalysisResultEntity(resultUuid, LocalDateTime.now(), faultResults);
     }
 
@@ -96,8 +92,7 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public ShortCircuitAnalysisResultEntity find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        ShortCircuitAnalysisResultEntity resultEntity = resultRepository.findByResultUuid(resultUuid);
-        return resultEntity;
+        return resultRepository.findByResultUuid(resultUuid);
     }
 
     @Transactional(readOnly = true)

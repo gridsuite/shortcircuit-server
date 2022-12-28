@@ -124,7 +124,7 @@ public class ShortCircuitAnalysisControllerTest {
     private Network otherNetworkForMergingView;
 
     private static void assertResultsEquals(ShortCircuitAnalysisResult result, org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto) {
-        assertTrue(result.getFaultResults().size() == resultDto.getFaults().size());
+        assertEquals(result.getFaultResults().size(), resultDto.getFaults().size());
         List<FaultResult> orderedFaultResults = result.getFaultResults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
         List<org.gridsuite.shortcircuit.server.dto.FaultResult> orderedFaultResultsDto = resultDto.getFaults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
         for (int i = 0; i < orderedFaultResultsDto.size(); i++) {
@@ -134,7 +134,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(orderedFaultResultsDto.get(i).getShortCircuitPower(), orderedFaultResults.get(i).getShortCircuitPower(), 0.1);
             List<LimitViolation> orderedLimitViolations = result.getFaultResults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             List<org.gridsuite.shortcircuit.server.dto.LimitViolation> orderedLimitViolationsDto = resultDto.getFaults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
-            assertTrue(orderedLimitViolationsDto.size() == orderedLimitViolations.size());
+            assertEquals(orderedLimitViolationsDto.size(), orderedLimitViolations.size());
             for (int j = 0; j < orderedLimitViolationsDto.size(); j++) {
                 assertEquals(orderedLimitViolationsDto.get(j).getSubjectId(), orderedLimitViolations.get(j).getSubjectId());
                 assertEquals(orderedLimitViolationsDto.get(j).getLimitName(), orderedLimitViolations.get(j).getLimitName());
@@ -144,7 +144,7 @@ public class ShortCircuitAnalysisControllerTest {
             }
             List<FeederResult> orderedFeederResults = result.getFaultResults().get(i).getFeederResults().stream().sorted(Comparator.comparing(fr -> fr.getConnectableId())).collect(Collectors.toList());
             List<org.gridsuite.shortcircuit.server.dto.FeederResult> orderedFeederResultsDto = resultDto.getFaults().get(i).getFeederResults().stream().sorted(Comparator.comparing(fr -> fr.getConnectableId())).collect(Collectors.toList());
-            assertTrue(orderedFeederResultsDto.size() == orderedFeederResults.size());
+            assertEquals(orderedFeederResultsDto.size(), orderedFeederResults.size());
             for (int j = 0; j < orderedFeederResultsDto.size(); j++) {
                 assertEquals(orderedFeederResultsDto.get(j).getConnectableId(), orderedFeederResults.get(j).getConnectableId());
                 assertEquals(orderedFeederResultsDto.get(j).getCurrent(), orderedFeederResults.get(j).getCurrent().getDirectMagnitude(), 0.1);
