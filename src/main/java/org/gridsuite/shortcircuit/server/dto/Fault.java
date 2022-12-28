@@ -8,12 +8,14 @@ package org.gridsuite.shortcircuit.server.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class Fault {
     private String id;
 

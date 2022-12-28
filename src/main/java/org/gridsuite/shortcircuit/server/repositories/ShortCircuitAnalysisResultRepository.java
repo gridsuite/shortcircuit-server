@@ -73,7 +73,6 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional
     public void insert(UUID resultUuid, ShortCircuitAnalysisResult result) {
         Objects.requireNonNull(resultUuid);
-        ShortCircuitAnalysisResultEntity ent = toResultEntity(resultUuid, result);
         if (result != null) {
             resultRepository.save(toResultEntity(resultUuid, result));
         }
