@@ -46,17 +46,19 @@ public class ShortCircuitAnalysisResultRepository {
 
     private static FaultResultEntity toFaultResultEntity(FaultResult faultResult) {
         Fault fault = faultResult.getFault();
+        double shortCircuitPower = faultResult.getShortCircuitPower();
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
 
         List<LimitViolationEmbeddable> limitViolations = faultResult.getLimitViolations().stream().map(limitViolation ->
-                new LimitViolationEmbeddable(limitViolation.getLimitType(), limitViolation.getLimit(), limitViolation.getLimitName(), limitViolation.getValue()))
+                new LimitViolationEmbeddable(limitViolation.getSubjectId(), limitViolation.getLimitType(), limitViolation.getLimit(),
+                        limitViolation.getLimitName(), limitViolation.getValue()))
                 .collect(Collectors.toList());
 
         List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream().map(feederResult ->
                 new FeederResultEmbeddable(feederResult.getConnectableId(), feederResult.getCurrent().getDirectMagnitude()))
                 .collect(Collectors.toList());
 
-        return new FaultResultEntity(null, faultEmbedded, limitViolations, feederResults);
+        return new FaultResultEntity(null, faultEmbedded, shortCircuitPower, limitViolations, feederResults);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {

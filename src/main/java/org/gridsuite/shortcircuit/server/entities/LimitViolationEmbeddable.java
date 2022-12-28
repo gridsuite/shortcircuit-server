@@ -26,6 +26,9 @@ import javax.persistence.Enumerated;
 public class LimitViolationEmbeddable {
 
     @Column
+    private String subjectId;
+
+    @Column
     @Enumerated(EnumType.STRING)
     private LimitViolationType limitType;
 

@@ -18,6 +18,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LimitViolation {
 
+    private String subjectId;
+
     private String limitType;
 
     private double limit;

@@ -30,6 +30,9 @@ public class FaultResultEntity {
     @Embedded
     private FaultEmbeddable fault;
 
+    @Column
+    private double shortCircuitPower;
+
     @ElementCollection
     @CollectionTable(name = "limit_violations")
     private List<LimitViolationEmbeddable> limitViolations;
