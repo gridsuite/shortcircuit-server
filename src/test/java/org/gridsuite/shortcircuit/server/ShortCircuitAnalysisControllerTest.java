@@ -132,6 +132,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(orderedFaultResultsDto.get(i).getFault().getElementId(), orderedFaultResults.get(i).getFault().getElementId());
             assertEquals(orderedFaultResultsDto.get(i).getFault().getFaultType(), orderedFaultResults.get(i).getFault().getFaultType().name());
             assertEquals(orderedFaultResultsDto.get(i).getShortCircuitPower(), orderedFaultResults.get(i).getShortCircuitPower(), 0.1);
+            assertEquals(orderedFaultResultsDto.get(i).getCurrent(), orderedFaultResults.get(i).getCurrent().getDirectMagnitude(), 0.1);
             List<LimitViolation> orderedLimitViolations = result.getFaultResults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             List<org.gridsuite.shortcircuit.server.dto.LimitViolation> orderedLimitViolationsDto = resultDto.getFaults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             assertEquals(orderedLimitViolationsDto.size(), orderedLimitViolations.size());

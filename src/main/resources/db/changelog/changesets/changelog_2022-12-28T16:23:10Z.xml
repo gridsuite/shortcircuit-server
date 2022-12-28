@@ -1,17 +1,18 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="noirnic (generated)" id="1672235978061-1">
+    <changeSet author="noirnic (generated)" id="1672244601211-1">
         <createTable tableName="fault_result_entity">
             <column name="fault_result_uuid" type="UUID">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="fault_result_entityPK"/>
             </column>
+            <column name="current" type="FLOAT8"/>
             <column name="element_id" type="VARCHAR(255)"/>
             <column name="fault_type" type="VARCHAR(255)"/>
             <column name="id" type="VARCHAR(255)"/>
             <column name="short_circuit_power" type="FLOAT8"/>
         </createTable>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-2">
+    <changeSet author="noirnic (generated)" id="1672244601211-2">
         <createTable tableName="feeder_results">
             <column name="fault_result_entity_fault_result_uuid" type="UUID">
                 <constraints nullable="false"/>
@@ -20,7 +21,7 @@
             <column name="current" type="FLOAT8"/>
         </createTable>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-3">
+    <changeSet author="noirnic (generated)" id="1672244601211-3">
         <createTable tableName="limit_violations">
             <column name="fault_result_entity_fault_result_uuid" type="UUID">
                 <constraints nullable="false"/>
@@ -32,7 +33,7 @@
             <column name="actual_value" type="FLOAT8"/>
         </createTable>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-4">
+    <changeSet author="noirnic (generated)" id="1672244601211-4">
         <createTable tableName="shortcircuit_result">
             <column name="result_uuid" type="UUID">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="shortcircuit_resultPK"/>
@@ -40,7 +41,7 @@
             <column name="write_time_stamp" type="TIMESTAMP"/>
         </createTable>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-5">
+    <changeSet author="noirnic (generated)" id="1672244601211-5">
         <createTable tableName="shortcircuit_result_fault_results">
             <column name="short_circuit_analysis_result_entity_result_uuid" type="UUID">
                 <constraints nullable="false"/>
@@ -50,22 +51,22 @@
             </column>
         </createTable>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-6">
+    <changeSet author="noirnic (generated)" id="1672244601211-6">
         <addUniqueConstraint columnNames="fault_results_fault_result_uuid" constraintName="UK_4v6w2vhrqxa7pgejb8qjp65ur" tableName="shortcircuit_result_fault_results"/>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-7">
+    <changeSet author="noirnic (generated)" id="1672244601211-7">
         <addForeignKeyConstraint baseColumnNames="fault_results_fault_result_uuid" baseTableName="shortcircuit_result_fault_results" constraintName="FK4khyau3cwd6r7gx4peofdjf5c" deferrable="false" initiallyDeferred="false" referencedColumnNames="fault_result_uuid" referencedTableName="fault_result_entity" validate="true"/>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-8">
+    <changeSet author="noirnic (generated)" id="1672244601211-8">
         <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid" baseTableName="feeder_results" constraintName="FK5i906qwbrlywclxt3glntj8fq" deferrable="false" initiallyDeferred="false" referencedColumnNames="fault_result_uuid" referencedTableName="fault_result_entity" validate="true"/>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-9">
+    <changeSet author="noirnic (generated)" id="1672244601211-9">
         <addForeignKeyConstraint baseColumnNames="short_circuit_analysis_result_entity_result_uuid" baseTableName="shortcircuit_result_fault_results" constraintName="FKd7q6cb6br7pt62marua9t08ak" deferrable="false" initiallyDeferred="false" referencedColumnNames="result_uuid" referencedTableName="shortcircuit_result" validate="true"/>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-10">
+    <changeSet author="noirnic (generated)" id="1672244601211-10">
         <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid" baseTableName="limit_violations" constraintName="FKq49f3rci12nktv40sdb0b23nd" deferrable="false" initiallyDeferred="false" referencedColumnNames="fault_result_uuid" referencedTableName="fault_result_entity" validate="true"/>
     </changeSet>
-    <changeSet author="noirnic (generated)" id="1672235978061-11">
+    <changeSet author="noirnic (generated)" id="1672244601211-11">
         <dropTable tableName="RESULT"/>
     </changeSet>
 </databaseChangeLog>

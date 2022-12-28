@@ -22,6 +22,8 @@ public class FaultResult {
 
     private Fault fault;
 
+    private double current;
+
     private double shortCircuitPower;
 
     private List<LimitViolation> limitViolations;

@@ -31,6 +31,9 @@ public class FaultResultEntity {
     private FaultEmbeddable fault;
 
     @Column
+    private double current;
+
+    @Column
     private double shortCircuitPower;
 
     @ElementCollection

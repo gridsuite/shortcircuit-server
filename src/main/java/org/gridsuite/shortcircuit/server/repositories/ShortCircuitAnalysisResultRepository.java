@@ -42,6 +42,7 @@ public class ShortCircuitAnalysisResultRepository {
 
     private static FaultResultEntity toFaultResultEntity(FaultResult faultResult) {
         Fault fault = faultResult.getFault();
+        double current = faultResult.getCurrent().getDirectMagnitude();
         double shortCircuitPower = faultResult.getShortCircuitPower();
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
 
@@ -54,7 +55,7 @@ public class ShortCircuitAnalysisResultRepository {
                 new FeederResultEmbeddable(feederResult.getConnectableId(), feederResult.getCurrent().getDirectMagnitude()))
                 .collect(Collectors.toList());
 
-        return new FaultResultEntity(null, faultEmbedded, shortCircuitPower, limitViolations, feederResults);
+        return new FaultResultEntity(null, faultEmbedded, current, shortCircuitPower, limitViolations, feederResults);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {
