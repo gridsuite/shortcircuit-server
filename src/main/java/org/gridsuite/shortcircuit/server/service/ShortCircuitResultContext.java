@@ -27,7 +27,7 @@ public class ShortCircuitResultContext {
 
     private static final String REPORT_UUID_HEADER = "reportUuid";
 
-    public static final String VARIANT_ID = "variantId";
+    public static final String VARIANT_ID_HEADER = "variantId";
 
     public static final String REPORTER_ID_HEADER = "reporterId";
 
@@ -63,7 +63,7 @@ public class ShortCircuitResultContext {
         MessageHeaders headers = message.getHeaders();
         UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
-        String variantId = (String) headers.get(VARIANT_ID);
+        String variantId = (String) headers.get(VARIANT_ID_HEADER);
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
 
         String receiver = (String) headers.get("receiver");
@@ -91,7 +91,7 @@ public class ShortCircuitResultContext {
         return MessageBuilder.withPayload(parametersJson)
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader(VARIANT_ID, runContext.getVariantId())
+                .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .setHeader("receiver", runContext.getReceiver())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid().toString())
