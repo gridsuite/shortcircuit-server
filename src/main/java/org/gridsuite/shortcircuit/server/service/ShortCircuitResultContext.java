@@ -73,7 +73,7 @@ public class ShortCircuitResultContext {
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
-        UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) && headers.get(REPORT_UUID_HEADER) != null ? UUID.fromString(headers.get(REPORT_UUID_HEADER).toString()) : null;
+        UUID reportUuid = UUID.fromString(getNonNullHeader(headers, REPORT_UUID_HEADER));
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
             variantId, otherNetworkUuids, receiver,
@@ -94,7 +94,7 @@ public class ShortCircuitResultContext {
                 .setHeader(VARIANT_ID, runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .setHeader("receiver", runContext.getReceiver())
-                .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid())
+                .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid().toString())
                 .setHeader(REPORTER_ID_HEADER, runContext.getReporterId())
                 .build();
     }
