@@ -48,6 +48,8 @@ public class ShortCircuitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
 
+    private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
+
     private NetworkStoreService networkStoreService;
 
     private ReportService reportService;
@@ -108,13 +110,19 @@ public class ShortCircuitWorkerService {
         LOGGER.info("Run short circuit analysis...");
         Network network = getNetwork(context.getNetworkUuid(), context.getOtherNetworkUuids(), context.getVariantId());
 
-        Reporter reporter = context.getReportUuid() != null ? new ReporterModel("ShortCircuitAnalysis", "Short circuit analysis") : Reporter.NO_OP;
+        Reporter rootReporter = Reporter.NO_OP;
+        Reporter reporter = Reporter.NO_OP;
+        if (context.getReportUuid() != null) {
+            String rootReporterId = context.getReporterId() == null ? SHORTCIRCUIT_TYPE_REPORT : context.getReporterId() + "@" + SHORTCIRCUIT_TYPE_REPORT;
+            rootReporter = new ReporterModel(rootReporterId, rootReporterId);
+            reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+        }
 
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);
 
         ShortCircuitAnalysisResult result = future == null ? null : future.get();
         if (context.getReportUuid() != null) {
-            reportService.sendReport(context.getReportUuid(), reporter);
+            reportService.sendReport(context.getReportUuid(), rootReporter);
         }
         return result;
     }

@@ -55,10 +55,11 @@ public class ShortCircuitController {
                                            @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
+                                           @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
                                            @RequestBody(required = false) ShortCircuitParameters parameters) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
         List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
-        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, nonNullParameters, reportUuid));
+        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, nonNullParameters, reportUuid, reporterId));
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
 
