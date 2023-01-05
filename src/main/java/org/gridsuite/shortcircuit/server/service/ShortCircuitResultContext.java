@@ -28,9 +28,11 @@ import static org.gridsuite.shortcircuit.server.service.NotificationService.HEAD
 @Getter
 public class ShortCircuitResultContext {
 
-    private static final String REPORT_UUID = "reportUuid";
+    private static final String REPORT_UUID_HEADER = "reportUuid";
 
-    public static final String VARIANT_ID = "variantId";
+    public static final String VARIANT_ID_HEADER = "variantId";
+
+    public static final String REPORTER_ID_HEADER = "reporterId";
 
     private final UUID resultUuid;
 
@@ -64,7 +66,7 @@ public class ShortCircuitResultContext {
         MessageHeaders headers = message.getHeaders();
         UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
-        String variantId = (String) headers.get(VARIANT_ID);
+        String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
@@ -75,10 +77,11 @@ public class ShortCircuitResultContext {
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
-        UUID reportUuid = headers.containsKey(REPORT_UUID) ? UUID.fromString((String) headers.get(REPORT_UUID)) : null;
+        UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
+        String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
             variantId, otherNetworkUuids, receiver,
-            parameters, reportUuid, userId);
+            parameters, reportUuid, reporterId, userId);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
@@ -92,11 +95,12 @@ public class ShortCircuitResultContext {
         return MessageBuilder.withPayload(parametersJson)
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader(VARIANT_ID, runContext.getVariantId())
+                .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
                 .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .setHeader(HEADER_RECEIVER, runContext.getReceiver())
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
-                .setHeader(REPORT_UUID, runContext.getReportUuid())
+                .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid() != null ? runContext.getReportUuid().toString() : null)
+                .setHeader(REPORTER_ID_HEADER, runContext.getReporterId())
                 .build();
     }
 }

@@ -73,6 +73,8 @@ public class ShortCircuitAnalysisControllerTest {
     private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
     private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
+
+    private static final UUID REPORT_UUID = UUID.fromString("762b7298-8c0f-11ed-a1eb-0242ac120002");
     private static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of());
 
     private static final String VARIANT_1_ID = "variant_1";
@@ -253,5 +255,20 @@ public class ShortCircuitAnalysisControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         assertEquals(ShortCircuitAnalysisStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
+    }
+
+    @SneakyThrows
+    @Test
+    public void runWithReportTest() {
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
+                    .thenReturn(CompletableFuture.completedFuture(RESULT));
+
+            mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportUuid=" + REPORT_UUID + "&variantId=" + VARIANT_2_ID, NETWORK_UUID))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+        }
     }
 }
