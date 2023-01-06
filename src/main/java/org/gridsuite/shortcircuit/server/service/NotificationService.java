@@ -40,6 +40,7 @@ public class NotificationService {
     public static final String HEADER_RESULT_UUID = "resultUuid";
     public static final String HEADER_RECEIVER = "receiver";
     public static final String HEADER_MESSAGE = "message";
+    public static final String HEADER_USER_ID = "userId";
 
     public static final String SENDING_MESSAGE = "Sending message : {}";
 
@@ -80,12 +81,13 @@ public class NotificationService {
     }
 
     @PostCompletion
-    public void publishFail(UUID resultUuid, String receiver, String causeMessage) {
+    public void publishFail(UUID resultUuid, String receiver, String causeMessage, String userId) {
         Message<String> message = MessageBuilder
             .withPayload("")
             .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
             .setHeader(HEADER_RECEIVER, receiver)
             .setHeader(HEADER_MESSAGE, FAIL_MESSAGE + " : " + causeMessage)
+            .setHeader(HEADER_USER_ID, userId)
             .build();
         FAILED_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishFailed-out-0", message);

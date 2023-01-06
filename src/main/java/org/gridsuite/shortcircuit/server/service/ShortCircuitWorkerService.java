@@ -17,7 +17,10 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.shortcircuit.*;
+import com.powsybl.shortcircuit.BusFault;
+import com.powsybl.shortcircuit.Fault;
+import com.powsybl.shortcircuit.ShortCircuitAnalysis;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
@@ -209,7 +212,7 @@ public class ShortCircuitWorkerService {
             } catch (Exception e) {
                 LOGGER.error(FAIL_MESSAGE, e);
                 if (!(e instanceof CancellationException)) {
-                    notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage());
+                    notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage(), resultContext.getRunContext().getUserId());
                     resultRepository.delete(resultContext.getResultUuid());
                 }
             } finally {
