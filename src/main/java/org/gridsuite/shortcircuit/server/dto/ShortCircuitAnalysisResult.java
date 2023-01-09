@@ -4,32 +4,27 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server.entities;
+package org.gridsuite.shortcircuit.server.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "result")
-public class ResultEntity implements Serializable {
+public class ShortCircuitAnalysisResult {
 
-    @Id
     private UUID resultUuid;
 
-    @Column(name = "result", columnDefinition = "CLOB")
-    private String result;
+    private LocalDateTime writeTimeStamp;
+
+    private List<FaultResult> faults;
 }
