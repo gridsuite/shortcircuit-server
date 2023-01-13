@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,7 +29,7 @@ public class ShortCircuitAnalysisResultEntity {
     private UUID resultUuid;
 
     @Column
-    private LocalDateTime writeTimeStamp;
+    private ZonedDateTime writeTimeStamp;
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<FaultResultEntity> faultResults;
