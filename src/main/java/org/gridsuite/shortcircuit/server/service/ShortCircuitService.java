@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -77,8 +78,8 @@ public class ShortCircuitService {
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, boolean full) {
-        ShortCircuitAnalysisResultEntity result = resultRepository.find(resultUuid);
-        return result != null ? fromEntity(result, full) : null;
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
+        return result.map(r -> fromEntity(r, full)).orElse(null);
     }
 
     public void deleteResult(UUID resultUuid) {

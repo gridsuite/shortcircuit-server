@@ -17,6 +17,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -92,9 +93,9 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public ShortCircuitAnalysisResultEntity find(UUID resultUuid) {
+    public Optional<ShortCircuitAnalysisResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        return resultRepository.findByResultUuid(resultUuid);
+        return Optional.ofNullable(resultRepository.findByResultUuid(resultUuid));
     }
 
     @Transactional(readOnly = true)
