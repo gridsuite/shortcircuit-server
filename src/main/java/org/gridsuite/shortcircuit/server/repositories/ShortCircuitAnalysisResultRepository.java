@@ -6,18 +6,18 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.shortcircuit.Fault;
+import com.powsybl.shortcircuit.FaultResult;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import org.gridsuite.shortcircuit.server.RestTemplateConfig;
-import org.gridsuite.shortcircuit.server.entities.GlobalStatusEntity;
-import org.gridsuite.shortcircuit.server.entities.ResultEntity;
+import org.gridsuite.shortcircuit.server.entities.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.UncheckedIOException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,16 +31,33 @@ public class ShortCircuitAnalysisResultRepository {
 
     private ResultRepository resultRepository;
 
-    private final ObjectMapper objectMapper = RestTemplateConfig.objectMapper();
-
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
                                                 ResultRepository resultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
     }
 
-    private static ResultEntity toResultEntity(UUID resultUuid, String result) {
-        return new ResultEntity(resultUuid, result);
+    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result) {
+        List<FaultResultEntity> faultResults = result.getFaultResults().stream().map(ShortCircuitAnalysisResultRepository::toFaultResultEntity).collect(Collectors.toList());
+        return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC), faultResults);
+    }
+
+    private static FaultResultEntity toFaultResultEntity(FaultResult faultResult) {
+        Fault fault = faultResult.getFault();
+        double current = faultResult.getCurrent().getDirectMagnitude();
+        double shortCircuitPower = faultResult.getShortCircuitPower();
+        FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
+
+        List<LimitViolationEmbeddable> limitViolations = faultResult.getLimitViolations().stream().map(limitViolation ->
+                new LimitViolationEmbeddable(limitViolation.getSubjectId(), limitViolation.getLimitType(), limitViolation.getLimit(),
+                        limitViolation.getLimitName(), limitViolation.getValue()))
+                .collect(Collectors.toList());
+
+        List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream().map(feederResult ->
+                new FeederResultEmbeddable(feederResult.getConnectableId(), feederResult.getCurrent().getDirectMagnitude()))
+                .collect(Collectors.toList());
+
+        return new FaultResultEntity(null, faultEmbedded, current, shortCircuitPower, limitViolations, feederResults);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {
@@ -57,11 +74,8 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional
     public void insert(UUID resultUuid, ShortCircuitAnalysisResult result) {
         Objects.requireNonNull(resultUuid);
-
-        try {
-            resultRepository.save(toResultEntity(resultUuid, result != null ? objectMapper.writeValueAsString(result) : null));
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
+        if (result != null) {
+            resultRepository.save(toResultEntity(resultUuid, result));
         }
     }
 
@@ -79,10 +93,9 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public String find(UUID resultUuid) {
+    public Optional<ShortCircuitAnalysisResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        ResultEntity resultEntity = resultRepository.findByResultUuid(resultUuid);
-        return resultEntity != null ? resultEntity.getResult() : null;
+        return resultRepository.findByResultUuid(resultUuid);
     }
 
     @Transactional(readOnly = true)
