@@ -10,6 +10,7 @@ import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEnti
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -17,7 +18,7 @@ import java.util.UUID;
  */
 @Repository
 public interface ResultRepository extends JpaRepository<ShortCircuitAnalysisResultEntity, UUID> {
-    ShortCircuitAnalysisResultEntity findByResultUuid(UUID resultUuid);
+    Optional<ShortCircuitAnalysisResultEntity> findByResultUuid(UUID resultUuid);
 
     void deleteByResultUuid(UUID resultUuid);
 }

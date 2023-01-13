@@ -95,7 +95,7 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public Optional<ShortCircuitAnalysisResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        return Optional.ofNullable(resultRepository.findByResultUuid(resultUuid));
+        return resultRepository.findByResultUuid(resultUuid);
     }
 
     @Transactional(readOnly = true)
