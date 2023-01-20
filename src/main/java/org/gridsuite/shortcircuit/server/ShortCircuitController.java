@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
@@ -73,8 +74,9 @@ public class ShortCircuitController {
     @Operation(summary = "Get a short circuit analysis result from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis result"),
             @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
-    public ResponseEntity<String> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
-        String result = shortCircuitService.getResult(resultUuid);
+    public ResponseEntity<ShortCircuitAnalysisResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                                @Parameter(description = "Full or summary result") @RequestParam(name = "full", required = false, defaultValue = "false") Boolean full) {
+        ShortCircuitAnalysisResult result = shortCircuitService.getResult(resultUuid, full);
         return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
                 : ResponseEntity.notFound().build();
     }
