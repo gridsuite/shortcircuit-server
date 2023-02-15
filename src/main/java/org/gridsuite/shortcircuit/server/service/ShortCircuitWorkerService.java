@@ -83,7 +83,7 @@ public class ShortCircuitWorkerService {
     private Network getNetwork(UUID networkUuid, String variantId) {
         Network network;
         try {
-            network = networkStoreService.getNetwork(networkUuid, PreloadingStrategy.COLLECTION);
+            network = networkStoreService.getNetwork(networkUuid, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW);
             String variant = StringUtils.isBlank(variantId) ? VariantManagerConstants.INITIAL_VARIANT_ID : variantId;
             network.getVariantManager().setWorkingVariant(variant);
         } catch (PowsyblException e) {
