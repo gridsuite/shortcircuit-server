@@ -96,7 +96,7 @@ public class ShortCircuitAnalysisControllerTest {
 
         static final FaultResult FAULT_RESULT_1 = new FaultResult(new BusFault("FAULT_1", "ELEMENT_ID_1"), 17.0,
                 List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
-                new FortescueValue(45.3));
+                new FortescueValue(45.3), FaultResult.Status.SUCCESS);
 
         static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1));
     }
