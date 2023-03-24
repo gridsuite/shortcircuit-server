@@ -50,8 +50,8 @@ public class ShortCircuitService {
         return resultUuid;
     }
 
-    private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, boolean full) {
-        List<FaultResult> faultResults = resultEntity.getFaultResults().stream().filter(fr -> full || !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr)).collect(Collectors.toList());
+    private ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, boolean full) {
+        List<FaultResult> faultResults = getFaultResults(resultEntity.getResultUuid()).stream().filter(fr -> full || !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr)).collect(Collectors.toList());
         return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
     }
 
@@ -80,6 +80,10 @@ public class ShortCircuitService {
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, boolean full) {
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
         return result.map(r -> fromEntity(r, full)).orElse(null);
+    }
+
+    private List<FaultResultEntity> getFaultResults(UUID resultUuid) {
+        return resultRepository.findByResultUuidPlus(resultUuid);
     }
 
     public void deleteResult(UUID resultUuid) {

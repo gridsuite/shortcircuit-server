@@ -31,10 +31,14 @@ public class ShortCircuitAnalysisResultRepository {
 
     private ResultRepository resultRepository;
 
+    private FaultResultRepository faultResultRepository;
+
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
-                                                ResultRepository resultRepository) {
+                                                ResultRepository resultRepository,
+                                                FaultResultRepository faultResultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
+        this.faultResultRepository = faultResultRepository;
     }
 
     private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result) {
@@ -96,6 +100,12 @@ public class ShortCircuitAnalysisResultRepository {
     public Optional<ShortCircuitAnalysisResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         return resultRepository.findByResultUuid(resultUuid);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FaultResultEntity> findByResultUuidPlus(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return faultResultRepository.findByResultUuidPlus(resultUuid);
     }
 
     @Transactional(readOnly = true)
