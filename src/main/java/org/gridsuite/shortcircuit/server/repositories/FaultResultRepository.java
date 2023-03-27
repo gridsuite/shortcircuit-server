@@ -23,9 +23,15 @@ import java.util.UUID;
 @Repository
 public interface FaultResultRepository extends JpaRepository<FaultResultEntity, UUID> {
     // cf.https://vladmihalcea.com/jpql-distinct-jpa-hibernate/
-    @Query("Select DISTINCT fr from FaultResultEntity fr join ShortCircuitAnalysisResultEntity r on r.resultUuid = :resultUuid left join fetch fr.limitViolations v")
+    @Query("Select DISTINCT fr from FaultResultEntity fr join ShortCircuitAnalysisResultEntity r on r.resultUuid = :resultUuid left join fetch fr.limitViolations limit_violations")
     @QueryHints(value = {
         @QueryHint(name = org.hibernate.jpa.QueryHints.HINT_PASS_DISTINCT_THROUGH, value = "false")
     })
-    List<FaultResultEntity> findByResultUuidPlus(@Param("resultUuid") UUID resultUuid);
+    List<FaultResultEntity> findByResultUuidWithLimitViolations(@Param("resultUuid") UUID resultUuid);
+
+    @Query("Select DISTINCT fr from FaultResultEntity fr join ShortCircuitAnalysisResultEntity r on r.resultUuid = :resultUuid left join fetch fr.feederResults fdr ")
+    @QueryHints(value = {
+        @QueryHint(name = org.hibernate.jpa.QueryHints.HINT_PASS_DISTINCT_THROUGH, value = "false")
+    })
+    List<FaultResultEntity> findByResultUuidWithFeederResults(@Param("resultUuid") UUID resultUuid);
 }

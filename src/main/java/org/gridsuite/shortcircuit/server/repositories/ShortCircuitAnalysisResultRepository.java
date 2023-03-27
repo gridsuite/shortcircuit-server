@@ -105,7 +105,9 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public List<FaultResultEntity> findByResultUuidPlus(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        return faultResultRepository.findByResultUuidPlus(resultUuid);
+        List<FaultResultEntity> faultResults = faultResultRepository.findByResultUuidWithLimitViolations(resultUuid);
+        faultResults = faultResultRepository.findByResultUuidWithFeederResults(resultUuid);
+        return faultResults;
     }
 
     @Transactional(readOnly = true)
