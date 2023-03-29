@@ -22,15 +22,11 @@ import java.util.UUID;
 public interface ResultRepository extends JpaRepository<ShortCircuitAnalysisResultEntity, UUID> {
     Optional<ShortCircuitAnalysisResultEntity> findByResultUuid(UUID resultUuid);
 
-    @EntityGraph(value = "ShortCircuitAnalysisResultEntity-with-limitViolations", type = EntityGraphType.LOAD)
+    @EntityGraph(attributePaths = {"faultResults", "faultResults.limitViolations"}, type = EntityGraphType.FETCH)
     Optional<ShortCircuitAnalysisResultEntity> findAllWithLimitViolationsByResultUuid(UUID resultUuid);
 
-    @EntityGraph(value = "ShortCircuitAnalysisResultEntity-with-feederResults", type = EntityGraphType.LOAD)
+    @EntityGraph(attributePaths = {"faultResults", "faultResults.feederResults"}, type = EntityGraphType.FETCH)
     Optional<ShortCircuitAnalysisResultEntity> findAllWithFeederResultsByResultUuid(UUID resultUuid);
-
-    // TODO try this inline
-    // @EntityGraph(attributePaths = {""faultResults" ,"faultResults.limitViolations"})
-    // @EntityGraph(attributePaths = {""faultResults" ,"faultResults.feederResults"})
 
     void deleteByResultUuid(UUID resultUuid);
 }

@@ -23,24 +23,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "shortcircuit_result")
-@NamedEntityGraph(
-    name = "ShortCircuitAnalysisResultEntity-with-limitViolations",
-    attributeNodes = @NamedAttributeNode(value = "faultResults", subgraph = "faultResults.limitViolations"),
-    subgraphs = {
-        @NamedSubgraph(name = "faultResults.limitViolations", attributeNodes = {
-            @NamedAttributeNode("limitViolations")
-        })
-    }
-)
-@NamedEntityGraph(
-    name = "ShortCircuitAnalysisResultEntity-with-feederResults",
-    attributeNodes = @NamedAttributeNode(value = "faultResults", subgraph = "faultResults.feederResults"),
-    subgraphs = {
-        @NamedSubgraph(name = "faultResults.feederResults", attributeNodes = {
-            @NamedAttributeNode("feederResults")
-        })
-    }
-)
 public class ShortCircuitAnalysisResultEntity {
 
     @Id
