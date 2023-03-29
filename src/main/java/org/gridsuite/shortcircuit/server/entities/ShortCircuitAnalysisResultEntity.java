@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -23,6 +23,24 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "shortcircuit_result")
+@NamedEntityGraph(
+    name = "ShortCircuitAnalysisResultEntity-with-limitViolations",
+    attributeNodes = @NamedAttributeNode(value = "faultResults", subgraph = "faultResults.limitViolations"),
+    subgraphs = {
+        @NamedSubgraph(name = "faultResults.limitViolations", attributeNodes = {
+            @NamedAttributeNode("limitViolations")
+        })
+    }
+)
+@NamedEntityGraph(
+    name = "ShortCircuitAnalysisResultEntity-with-feederResults",
+    attributeNodes = @NamedAttributeNode(value = "faultResults", subgraph = "faultResults.feederResults"),
+    subgraphs = {
+        @NamedSubgraph(name = "faultResults.feederResults", attributeNodes = {
+            @NamedAttributeNode("feederResults")
+        })
+    }
+)
 public class ShortCircuitAnalysisResultEntity {
 
     @Id
@@ -32,5 +50,5 @@ public class ShortCircuitAnalysisResultEntity {
     private ZonedDateTime writeTimeStamp;
 
     @OneToMany(cascade = CascadeType.ALL)
-    private List<FaultResultEntity> faultResults;
+    private Set<FaultResultEntity> faultResults;
 }

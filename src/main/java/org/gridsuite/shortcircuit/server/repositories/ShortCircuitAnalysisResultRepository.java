@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,18 +32,14 @@ public class ShortCircuitAnalysisResultRepository {
 
     private ResultRepository resultRepository;
 
-    private FaultResultRepository faultResultRepository;
-
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
-                                                ResultRepository resultRepository,
-                                                FaultResultRepository faultResultRepository) {
+                                                ResultRepository resultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
-        this.faultResultRepository = faultResultRepository;
     }
 
     private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result) {
-        List<FaultResultEntity> faultResults = result.getFaultResults().stream().map(ShortCircuitAnalysisResultRepository::toFaultResultEntity).collect(Collectors.toList());
+        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(ShortCircuitAnalysisResultRepository::toFaultResultEntity).collect(Collectors.toSet());
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC), faultResults);
     }
 
@@ -103,11 +100,13 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public List<FaultResultEntity> findByResultUuidPlus(UUID resultUuid) {
+    public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        List<FaultResultEntity> faultResults = faultResultRepository.findByResultUuidWithLimitViolations(resultUuid);
-        faultResults = faultResultRepository.findByResultUuidWithFeederResults(resultUuid);
-        return faultResults;
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findAllWithLimitViolationsByResultUuid(resultUuid);
+        if (!result.isPresent()) {
+            return result;
+        }
+        return !result.get().getFaultResults().isEmpty() ? resultRepository.findAllWithFeederResultsByResultUuid(resultUuid) : result;
     }
 
     @Transactional(readOnly = true)

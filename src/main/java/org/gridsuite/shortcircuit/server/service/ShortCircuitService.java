@@ -12,6 +12,11 @@ import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import java.util.List;
 import java.util.Objects;
@@ -24,6 +29,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ShortCircuitService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
+
     @Autowired
     NotificationService notificationService;
 
@@ -51,7 +59,12 @@ public class ShortCircuitService {
     }
 
     private ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, boolean full) {
-        List<FaultResult> faultResults = getFaultResults(resultEntity.getResultUuid()).stream().filter(fr -> full || !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr)).collect(Collectors.toList());
+        LOGGER.info("Get Fault Results");
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+        List<FaultResult> faultResults = resultEntity.getFaultResults().stream().filter(fr -> full || !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr)).collect(Collectors.toList());
+        long currentDuration = System.nanoTime() - startTime.get();
+        LOGGER.info("Get ShortCircuit Fault Results in {}ms", TimeUnit.NANOSECONDS.toMillis(currentDuration));
         return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
     }
 
@@ -78,12 +91,17 @@ public class ShortCircuitService {
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, boolean full) {
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
-        return result.map(r -> fromEntity(r, full)).orElse(null);
-    }
+        LOGGER.info("Get ShortCircuit Results");
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findFullResults(resultUuid);
+        long currentDuration = System.nanoTime() - startTime.get();
+        LOGGER.info("Get ShortCircuit Analysis Results in {}ms", TimeUnit.NANOSECONDS.toMillis(currentDuration));
+        ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r, full)).orElse(null);
+        currentDuration = System.nanoTime() - startTime.get();
+        LOGGER.info("Get all ShortCircuit Results in {}ms", TimeUnit.NANOSECONDS.toMillis(currentDuration));
 
-    private List<FaultResultEntity> getFaultResults(UUID resultUuid) {
-        return resultRepository.findByResultUuidPlus(resultUuid);
+        return res;
     }
 
     public void deleteResult(UUID resultUuid) {
