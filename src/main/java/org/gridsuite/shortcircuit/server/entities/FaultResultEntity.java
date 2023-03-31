@@ -37,11 +37,15 @@ public class FaultResultEntity {
     private double shortCircuitPower;
 
     @ElementCollection
-    @CollectionTable(name = "limit_violations")
+    @CollectionTable(name = "limit_violations",
+            indexes = {@Index(name = "limit_violations_fault_result_idx",
+                    columnList = "fault_result_entity_fault_result_uuid")})
     private List<LimitViolationEmbeddable> limitViolations;
 
     @ElementCollection
-    @CollectionTable(name = "feeder_results")
+    @CollectionTable(name = "feeder_results",
+            indexes = {@Index(name = "feeder_results_fault_result_idx",
+                    columnList = "fault_result_entity_fault_result_uuid")})
     private List<FeederResultEmbeddable> feederResults;
 
 }
