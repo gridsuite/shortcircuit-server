@@ -59,12 +59,7 @@ public class ShortCircuitService {
     }
 
     private ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, boolean full) {
-        LOGGER.info("Get Fault Results");
-        AtomicReference<Long> startTime = new AtomicReference<>();
-        startTime.set(System.nanoTime());
         List<FaultResult> faultResults = resultEntity.getFaultResults().stream().filter(fr -> full || !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr)).collect(Collectors.toList());
-        long currentDuration = System.nanoTime() - startTime.get();
-        LOGGER.info("Get ShortCircuit Fault Results in {}ms", TimeUnit.NANOSECONDS.toMillis(currentDuration));
         return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
     }
 
@@ -91,16 +86,11 @@ public class ShortCircuitService {
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, boolean full) {
-        LOGGER.info("Get ShortCircuit Results");
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findFullResults(resultUuid);
-        long currentDuration = System.nanoTime() - startTime.get();
-        LOGGER.info("Get ShortCircuit Analysis Results in {}ms", TimeUnit.NANOSECONDS.toMillis(currentDuration));
         ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r, full)).orElse(null);
-        currentDuration = System.nanoTime() - startTime.get();
-        LOGGER.info("Get all ShortCircuit Results in {}ms", TimeUnit.NANOSECONDS.toMillis(currentDuration));
-
+        LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
         return res;
     }
 
