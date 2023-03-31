@@ -58,7 +58,7 @@ public class ShortCircuitService {
         return resultUuid;
     }
 
-    private ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, boolean full) {
+    private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, boolean full) {
         List<FaultResult> faultResults = resultEntity.getFaultResults().stream().filter(fr -> full || !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr)).collect(Collectors.toList());
         return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
     }
