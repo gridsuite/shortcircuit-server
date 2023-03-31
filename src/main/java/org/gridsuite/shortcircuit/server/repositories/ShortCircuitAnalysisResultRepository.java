@@ -106,6 +106,8 @@ public class ShortCircuitAnalysisResultRepository {
         if (!result.isPresent()) {
             return result;
         }
+        // using the the Hibernate First-Level Cache or Persistence Context
+        // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         return !result.get().getFaultResults().isEmpty() ? resultRepository.findAllWithFeederResultsByResultUuid(resultUuid) : result;
     }
 
