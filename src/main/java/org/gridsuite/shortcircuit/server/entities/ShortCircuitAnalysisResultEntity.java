@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -32,5 +32,5 @@ public class ShortCircuitAnalysisResultEntity {
     private ZonedDateTime writeTimeStamp;
 
     @OneToMany(cascade = CascadeType.ALL)
-    private List<FaultResultEntity> faultResults;
+    private Set<FaultResultEntity> faultResults;
 }

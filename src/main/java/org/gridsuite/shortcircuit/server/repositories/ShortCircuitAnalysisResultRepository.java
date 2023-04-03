@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,7 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result) {
-        List<FaultResultEntity> faultResults = result.getFaultResults().stream().map(ShortCircuitAnalysisResultRepository::toFaultResultEntity).collect(Collectors.toList());
+        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(ShortCircuitAnalysisResultRepository::toFaultResultEntity).collect(Collectors.toSet());
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC), faultResults);
     }
 
@@ -96,6 +97,18 @@ public class ShortCircuitAnalysisResultRepository {
     public Optional<ShortCircuitAnalysisResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         return resultRepository.findByResultUuid(resultUuid);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findAllWithLimitViolationsByResultUuid(resultUuid);
+        if (!result.isPresent()) {
+            return result;
+        }
+        // using the the Hibernate First-Level Cache or Persistence Context
+        // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
+        return !result.get().getFaultResults().isEmpty() ? resultRepository.findAllWithFeederResultsByResultUuid(resultUuid) : result;
     }
 
     @Transactional(readOnly = true)
