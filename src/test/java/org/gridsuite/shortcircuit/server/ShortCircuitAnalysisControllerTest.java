@@ -86,17 +86,17 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static final class ShortCircuitAnalysisResultMock {
 
-        static final FeederResult FEEDER_RESULT_1 = new FeederResult("CONN_ID_1", 22.17);
-        static final FeederResult FEEDER_RESULT_2 = new FeederResult("CONN_ID_2", 18.57);
-        static final FeederResult FEEDER_RESULT_3 = new FeederResult("CONN_ID_3", 53.94);
+        static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("CONN_ID_1", 22.17);
+        static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("CONN_ID_2", 18.57);
+        static final FeederResult FEEDER_RESULT_3 = new MagnitudeFeederResult("CONN_ID_3", 53.94);
 
         static final LimitViolation LIMIT_VIOLATION_1 = new LimitViolation("SUBJECT_1", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 25.63, 4f, 33.54);
         static final LimitViolation LIMIT_VIOLATION_2 = new LimitViolation("SUBJECT_2", LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, 12.17, 2f, 10.56);
         static final LimitViolation LIMIT_VIOLATION_3 = new LimitViolation("SUBJECT_3", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 45.12, 5f, 54.3);
 
-        static final FaultResult FAULT_RESULT_1 = new FaultResult(new BusFault("FAULT_1", "ELEMENT_ID_1"), 17.0,
+        static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("FAULT_1", "ELEMENT_ID_1"), 17.0,
                 List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
-                new FortescueValue(45.3), FaultResult.Status.SUCCESS);
+                45.3, FaultResult.Status.SUCCESS);
 
         static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1));
     }
@@ -133,7 +133,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(orderedFaultResultsDto.get(i).getFault().getElementId(), orderedFaultResults.get(i).getFault().getElementId());
             assertEquals(orderedFaultResultsDto.get(i).getFault().getFaultType(), orderedFaultResults.get(i).getFault().getFaultType().name());
             assertEquals(orderedFaultResultsDto.get(i).getShortCircuitPower(), orderedFaultResults.get(i).getShortCircuitPower(), 0.1);
-            assertEquals(orderedFaultResultsDto.get(i).getCurrent(), orderedFaultResults.get(i).getCurrent().getDirectMagnitude(), 0.1);
+            assertEquals(orderedFaultResultsDto.get(i).getCurrent(), ((MagnitudeFaultResult) orderedFaultResults.get(i)).getCurrent(), 0.1);
             List<LimitViolation> orderedLimitViolations = result.getFaultResults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             List<org.gridsuite.shortcircuit.server.dto.LimitViolation> orderedLimitViolationsDto = resultDto.getFaults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             assertEquals(orderedLimitViolationsDto.size(), orderedLimitViolations.size());
@@ -149,7 +149,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(orderedFeederResultsDto.size(), orderedFeederResults.size());
             for (int j = 0; j < orderedFeederResultsDto.size(); j++) {
                 assertEquals(orderedFeederResultsDto.get(j).getConnectableId(), orderedFeederResults.get(j).getConnectableId());
-                assertEquals(orderedFeederResultsDto.get(j).getCurrent(), orderedFeederResults.get(j).getCurrent().getDirectMagnitude(), 0.1);
+                assertEquals(orderedFeederResultsDto.get(j).getCurrent(), ((MagnitudeFeederResult) orderedFeederResults.get(j)).getCurrent(), 0.1);
             }
         }
     }

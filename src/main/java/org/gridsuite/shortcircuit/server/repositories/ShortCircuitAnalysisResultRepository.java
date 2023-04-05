@@ -6,9 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.powsybl.shortcircuit.Fault;
-import com.powsybl.shortcircuit.FaultResult;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
+import com.powsybl.shortcircuit.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +43,7 @@ public class ShortCircuitAnalysisResultRepository {
 
     private static FaultResultEntity toFaultResultEntity(FaultResult faultResult) {
         Fault fault = faultResult.getFault();
-        double current = faultResult.getCurrent().getDirectMagnitude();
+        double current = ((MagnitudeFaultResult) faultResult).getCurrent();
         double shortCircuitPower = faultResult.getShortCircuitPower();
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
 
@@ -55,7 +53,7 @@ public class ShortCircuitAnalysisResultRepository {
                 .collect(Collectors.toList());
 
         List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream().map(feederResult ->
-                new FeederResultEmbeddable(feederResult.getConnectableId(), feederResult.getCurrent().getDirectMagnitude()))
+                new FeederResultEmbeddable(feederResult.getConnectableId(), ((MagnitudeFeederResult) feederResult).getCurrent()))
                 .collect(Collectors.toList());
 
         return new FaultResultEntity(null, faultEmbedded, current, shortCircuitPower, limitViolations, feederResults);
