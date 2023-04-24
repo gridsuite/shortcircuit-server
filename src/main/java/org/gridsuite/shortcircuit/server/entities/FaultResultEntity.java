@@ -24,7 +24,7 @@ import java.util.UUID;
 public class FaultResultEntity {
 
     @Id
-    @GeneratedValue(strategy  =  GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID faultResultUuid;
 
     @Embedded
