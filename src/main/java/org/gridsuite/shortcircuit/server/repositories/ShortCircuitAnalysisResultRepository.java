@@ -32,10 +32,14 @@ public class ShortCircuitAnalysisResultRepository {
 
     private ResultRepository resultRepository;
 
+    private FaultResultRepository faultResultRepository;
+
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
-                                                ResultRepository resultRepository) {
+                                                ResultRepository resultRepository,
+                                                FaultResultRepository faultResultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
+        this.faultResultRepository = faultResultRepository;
     }
 
     private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result) {
@@ -106,9 +110,35 @@ public class ShortCircuitAnalysisResultRepository {
         if (!result.isPresent()) {
             return result;
         }
+        List<UUID> faultResultsUuid = result.get().getFaultResults().stream()
+                                                            // .filter(fr -> fr.getLimitViolations().isEmpty())
+                                                            .map(FaultResultEntity::getFaultResultUuid)
+                                                            .collect(Collectors.toList());
         // using the the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
-        return !result.get().getFaultResults().isEmpty() ? resultRepository.findAllWithFeederResultsByResultUuid(resultUuid) : result;
+        if (!result.get().getFaultResults().isEmpty()) {
+            faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuid);
+        }
+        return  result;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ShortCircuitAnalysisResultEntity> findResultsWithLimitViolations(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findAllWithLimitViolationsByResultUuid(resultUuid);
+        if (!result.isPresent()) {
+            return result;
+        }
+        List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
+                                                            .filter(fr -> !fr.getLimitViolations().isEmpty())
+                                                            .map(FaultResultEntity::getFaultResultUuid)
+                                                            .collect(Collectors.toList());
+        // using the the Hibernate First-Level Cache or Persistence Context
+        // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
+        if (!result.get().getFaultResults().isEmpty()) {
+            faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuidWithLimitViolations);
+        }
+        return  result;
     }
 
     @Transactional(readOnly = true)
