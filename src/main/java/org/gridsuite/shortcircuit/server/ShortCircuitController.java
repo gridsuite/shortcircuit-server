@@ -73,7 +73,7 @@ public class ShortCircuitController {
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a short circuit analysis result from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis result"),
-            @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
+        @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<ShortCircuitAnalysisResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                 @Parameter(description = "Full or summary result") @RequestParam(name = "full", required = false, defaultValue = "false") Boolean full) {
         ShortCircuitAnalysisResult result = shortCircuitService.getResult(resultUuid, full);
