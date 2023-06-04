@@ -99,7 +99,6 @@ public class ShortCircuitAnalysisControllerTest {
                 45.3, FaultResult.Status.SUCCESS);
 
         static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1));
-
     }
 
     @Autowired
@@ -194,7 +193,6 @@ public class ShortCircuitAnalysisControllerTest {
         }
         while (output.receive(1000, "shortcircuitanalysis.failed") != null) {
         }
-
     }
 
     @SneakyThrows
@@ -219,7 +217,6 @@ public class ShortCircuitAnalysisControllerTest {
                     .andReturn();
 
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
-
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
@@ -232,7 +229,6 @@ public class ShortCircuitAnalysisControllerTest {
 
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDto);
-
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                     .andExpect(status().isNotFound());
