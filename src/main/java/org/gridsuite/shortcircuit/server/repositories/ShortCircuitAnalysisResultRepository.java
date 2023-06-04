@@ -108,16 +108,12 @@ public class ShortCircuitAnalysisResultRepository {
         if (!result.isPresent()) {
             return result;
         }
-        List<UUID> faultResultsUuid = result.get().getFaultResults().stream()
-                                                            // .filter(fr -> fr.getLimitViolations().isEmpty())
-                                                            .map(FaultResultEntity::getFaultResultUuid)
-                                                            .collect(Collectors.toList());
         // using the the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
-            faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuid);
+            resultRepository.findAllWithFeederResultsByResultUuid(resultUuid);
         }
-        return  result;
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -136,7 +132,7 @@ public class ShortCircuitAnalysisResultRepository {
         if (!result.get().getFaultResults().isEmpty()) {
             faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuidWithLimitViolations);
         }
-        return  result;
+        return result;
     }
 
     @Transactional(readOnly = true)

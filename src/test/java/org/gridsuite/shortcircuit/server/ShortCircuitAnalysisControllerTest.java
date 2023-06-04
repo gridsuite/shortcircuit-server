@@ -42,7 +42,6 @@ import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-// import com.vladmihalcea.sql.SQLStatementCountValidator;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -54,10 +53,6 @@ import java.util.stream.Collectors;
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
-// import static com.vladmihalcea.sql.SQLStatementCountValidator.assertDeleteCount;
-// import static com.vladmihalcea.sql.SQLStatementCountValidator.assertInsertCount;
-// import static com.vladmihalcea.sql.SQLStatementCountValidator.assertSelectCount;
-// import static com.vladmihalcea.sql.SQLStatementCountValidator.assertUpdateCount;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -91,30 +86,20 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static final class ShortCircuitAnalysisResultMock {
 
-        static final FeederResult FEEDER_RESULT_1 = new FeederResult("CONN_ID_1", 22.17);
-        static final FeederResult FEEDER_RESULT_2 = new FeederResult("CONN_ID_2", 18.57);
-        static final FeederResult FEEDER_RESULT_3 = new FeederResult("CONN_ID_3", 53.94);
+        static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("CONN_ID_1", 22.17);
+        static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("CONN_ID_2", 18.57);
+        static final FeederResult FEEDER_RESULT_3 = new MagnitudeFeederResult("CONN_ID_3", 53.94);
 
         static final LimitViolation LIMIT_VIOLATION_1 = new LimitViolation("SUBJECT_1", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 25.63, 4f, 33.54);
         static final LimitViolation LIMIT_VIOLATION_2 = new LimitViolation("SUBJECT_2", LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, 12.17, 2f, 10.56);
         static final LimitViolation LIMIT_VIOLATION_3 = new LimitViolation("SUBJECT_3", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 45.12, 5f, 54.3);
 
-        static final FaultResult FAULT_RESULT_1 = new FaultResult(new BusFault("FAULT_1", "ELEMENT_ID_1"), 17.0,
+        static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("FAULT_1", "ELEMENT_ID_1"), 17.0,
                 List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
-                new FortescueValue(45.3), FaultResult.Status.SUCCESS);
+                45.3, FaultResult.Status.SUCCESS);
 
-        static final FaultResult FAULT_RESULT_2 = new FaultResult(new BusFault("FAULT_2", "ELEMENT_ID_2"), 18.0,
-            List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(),
-            new FortescueValue(46.3), FaultResult.Status.SUCCESS);
-        static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2));
+        static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1));
 
-
-        // static final FaultResult FAULT_RESULT_2_WITHOUT_FEEDER_RESULTS = new FaultResult(new BusFault("FAULT_2", "ELEMENT_ID_2"), 18.0,
-        //     List.of(), List.of(),
-        //     new FortescueValue(46.3), FaultResult.Status.SUCCESS);
-
-        // static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2_WITHOUT_FEEDER_RESULTS));
-        // static final ShortCircuitAnalysisResult RESULT_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2));
     }
 
     @Autowired
@@ -149,7 +134,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(orderedFaultResultsDto.get(i).getFault().getElementId(), orderedFaultResults.get(i).getFault().getElementId());
             assertEquals(orderedFaultResultsDto.get(i).getFault().getFaultType(), orderedFaultResults.get(i).getFault().getFaultType().name());
             assertEquals(orderedFaultResultsDto.get(i).getShortCircuitPower(), orderedFaultResults.get(i).getShortCircuitPower(), 0.1);
-            assertEquals(orderedFaultResultsDto.get(i).getCurrent(), orderedFaultResults.get(i).getCurrent().getDirectMagnitude(), 0.1);
+            assertEquals(orderedFaultResultsDto.get(i).getCurrent(), ((MagnitudeFaultResult) orderedFaultResults.get(i)).getCurrent(), 0.1);
             List<LimitViolation> orderedLimitViolations = result.getFaultResults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             List<org.gridsuite.shortcircuit.server.dto.LimitViolation> orderedLimitViolationsDto = resultDto.getFaults().get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             assertEquals(orderedLimitViolationsDto.size(), orderedLimitViolations.size());
@@ -165,17 +150,10 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(orderedFeederResultsDto.size(), orderedFeederResults.size());
             for (int j = 0; j < orderedFeederResultsDto.size(); j++) {
                 assertEquals(orderedFeederResultsDto.get(j).getConnectableId(), orderedFeederResults.get(j).getConnectableId());
-                assertEquals(orderedFeederResultsDto.get(j).getCurrent(), orderedFeederResults.get(j).getCurrent().getDirectMagnitude(), 0.1);
+                assertEquals(orderedFeederResultsDto.get(j).getCurrent(), ((MagnitudeFeederResult) orderedFeederResults.get(j)).getCurrent(), 0.1);
             }
         }
     }
-
-    // public static void assertRequestsCount(long select, long insert, long update, long delete) {
-    //     assertSelectCount(select);
-    //     assertInsertCount(insert);
-    //     assertUpdateCount(update);
-    //     assertDeleteCount(delete);
-    // }
 
     @Before
     public void setUp() throws Exception {
@@ -217,7 +195,6 @@ public class ShortCircuitAnalysisControllerTest {
         while (output.receive(1000, "shortcircuitanalysis.failed") != null) {
         }
 
-        // SQLStatementCountValidator.reset();
     }
 
     @SneakyThrows
@@ -233,10 +210,7 @@ public class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT));
-            // shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-            //         .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT));
 
-            // SQLStatementCountValidator.reset();
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId"))
@@ -244,33 +218,20 @@ public class ShortCircuitAnalysisControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
 
-            // assertRequestsCount(0, 1, 0, 0);
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
-            // SQLStatementCountValidator.reset();
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
-            // assertRequestsCount(1, 0, 0, 0);
 
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDto);
-
-            // SQLStatementCountValidator.reset();
-            // result = mockMvc.perform(get(
-            //                 "/" + VERSION + "/results/{resultUuid}?full=true", RESULT_UUID))
-            //         .andExpect(status().isOk())
-            //         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            //         .andReturn();
-            // // assertRequestsCount(1, 0, 0, 0);
-            // org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDtoFull = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
-            // assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FULL, resultDtoFull);
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
