@@ -229,6 +229,14 @@ public class ShortCircuitAnalysisControllerTest {
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDto);
 
+            result = mockMvc.perform(get(
+                             "/" + VERSION + "/results/{resultUuid}?full=true", RESULT_UUID))
+                     .andExpect(status().isOk())
+                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                     .andReturn();
+            org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDtoFull = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
+            assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDtoFull);
+
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                     .andExpect(status().isNotFound());
