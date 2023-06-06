@@ -88,7 +88,7 @@ public class ShortCircuitService {
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, boolean full) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findFullResults(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = full ? resultRepository.findFullResults(resultUuid) : resultRepository.findResultsWithLimitViolations(resultUuid);
         ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r, full)).orElse(null);
         LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
         return res;
