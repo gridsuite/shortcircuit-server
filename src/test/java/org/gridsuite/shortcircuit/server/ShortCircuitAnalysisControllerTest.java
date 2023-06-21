@@ -22,7 +22,6 @@ import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ReportService;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
 import org.junit.After;
 import org.junit.Before;
@@ -119,9 +118,6 @@ public class ShortCircuitAnalysisControllerTest {
 
     @MockBean
     private NetworkStoreService networkStoreService;
-
-    @MockBean
-    private ShortCircuitService shortCircuitService;
 
     @MockBean
     private ReportService reportService;
@@ -334,7 +330,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
-            assertEquals("", result.getResponse().getContentAsString());
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
         }
     }
 
