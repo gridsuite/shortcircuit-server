@@ -45,7 +45,8 @@ public class ShortCircuitController {
     }
 
     private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
-        // Hack : remove with the future powsybl version
+        //FIXME : this hack has to be removed with the future powsybl version (should be 2023.3.0)
+        // See the related test to be removed parametersWithExtentionTest()
         ShortCircuitParameters nonNullParameters = parameters != null ? parameters : new ShortCircuitParameters();
         Collection<Extension<ShortCircuitParameters>> extensions = ShortCircuitParameters.load().getExtensions();
         extensions.forEach(e -> {

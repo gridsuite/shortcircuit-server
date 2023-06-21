@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Network;
@@ -21,6 +22,7 @@ import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ReportService;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
 import org.junit.After;
 import org.junit.Before;
@@ -117,6 +119,9 @@ public class ShortCircuitAnalysisControllerTest {
 
     @MockBean
     private NetworkStoreService networkStoreService;
+
+    @MockBean
+    private ShortCircuitService shortCircuitService;
 
     @MockBean
     private ReportService reportService;
@@ -301,6 +306,35 @@ public class ShortCircuitAnalysisControllerTest {
                     .andReturn();
 
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+        }
+    }
+
+    //FIXME: test to be removed when the hack in ShortCircuitParameters.getNonNullParameters() is removed
+    @SneakyThrows
+    @Test
+    public void parametersWithExtentionTest() {
+
+        class ShortCircuitParametersRandomExtension extends AbstractExtension<ShortCircuitParameters> {
+            @Override
+            public String getName() {
+                return "RandomExtension";
+            }
+        }
+
+        ShortCircuitParameters parametersWithExtentions = new ShortCircuitParameters();
+        parametersWithExtentions.addExtension(ShortCircuitParametersRandomExtension.class, new ShortCircuitParametersRandomExtension());
+
+        try (MockedStatic<ShortCircuitParameters> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitParameters.class)) {
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitParameters.load())
+                    .thenReturn(parametersWithExtentions);
+
+            MvcResult result = mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            .header(HEADER_USER_ID, "userId"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+            assertEquals("", mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
         }
     }
 
