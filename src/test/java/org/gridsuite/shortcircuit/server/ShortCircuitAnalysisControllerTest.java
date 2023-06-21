@@ -334,7 +334,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
-            assertEquals("", mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+            assertEquals("", result.getResponse().getContentAsString());
         }
     }
 
