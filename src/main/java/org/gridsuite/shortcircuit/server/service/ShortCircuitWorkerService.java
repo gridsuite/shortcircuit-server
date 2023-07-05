@@ -144,6 +144,11 @@ public class ShortCircuitWorkerService {
                     .map(bus -> new BusFault(bus.getId(), bus.getId()))
                     .collect(Collectors.toList());
 
+            if(context.getBusId() != null){
+                String busId = network.getBusbarSection(context.getBusId()).getTerminal().getBusView().getBus().getId();
+                faults = List.of(new BusFault(busId, busId));
+            }
+
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
                 faults,
@@ -200,7 +205,7 @@ public class ShortCircuitWorkerService {
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
                 if (result != null) {  // result available
-                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver());
+                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getBusId());
                     LOGGER.info("Short circuit analysis complete (resultUuid='{}')", resultContext.getResultUuid());
                 } else {  // result not available : stop computation request
                     if (cancelComputationRequests.get(resultContext.getResultUuid()) != null) {

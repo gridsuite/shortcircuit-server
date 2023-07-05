@@ -39,6 +39,7 @@ public class NotificationService {
 
     public static final String HEADER_RESULT_UUID = "resultUuid";
     public static final String HEADER_RECEIVER = "receiver";
+    public static final String HEADER_BUS_ID = "busId";
     public static final String HEADER_MESSAGE = "message";
     public static final String HEADER_USER_ID = "userId";
 
@@ -58,11 +59,12 @@ public class NotificationService {
     }
 
     @PostCompletion
-    public void sendResultMessage(UUID resultUuid, String receiver) {
+    public void sendResultMessage(UUID resultUuid, String receiver, String busId) {
         Message<String> message = MessageBuilder
             .withPayload("")
             .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
             .setHeader(HEADER_RECEIVER, receiver)
+            .setHeader(HEADER_BUS_ID, busId)
             .build();
         RESULT_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishResult-out-0", message);

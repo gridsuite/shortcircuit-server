@@ -69,6 +69,8 @@ public class ShortCircuitResultContext {
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
+        String nodeId = (String) headers.get("nodeId");;
+
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
 
         ShortCircuitParameters parameters;
@@ -81,7 +83,7 @@ public class ShortCircuitResultContext {
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
             variantId, otherNetworkUuids, receiver,
-            parameters, reportUuid, reporterId, userId);
+            parameters, reportUuid, reporterId, userId, nodeId);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
@@ -101,6 +103,7 @@ public class ShortCircuitResultContext {
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid() != null ? runContext.getReportUuid().toString() : null)
                 .setHeader(REPORTER_ID_HEADER, runContext.getReporterId())
+                .setHeader("nodeId", runContext.getBusId())
                 .build();
     }
 }
