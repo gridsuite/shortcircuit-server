@@ -13,8 +13,10 @@ import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.mergingview.MergingView;
+import com.powsybl.iidm.network.Generator;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
+import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.BusFault;
@@ -23,6 +25,7 @@ import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitCurrentLimits;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +69,8 @@ public class ShortCircuitWorkerService {
     private Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
 
     private Set<UUID> runRequests = Sets.newConcurrentHashSet();
+
+    private Map<String, ShortCircuitCurrentLimits> shortCircuitCurrentLimits = new HashMap<>();
 
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
 
@@ -140,9 +145,13 @@ public class ShortCircuitWorkerService {
                 return null;
             }
 
-            List<Fault> faults = network.getBusView().getBusStream()
-                    .map(bus -> new BusFault(bus.getId(), bus.getId()))
-                    .collect(Collectors.toList());
+            List<Fault> faults = new ArrayList<>();
+
+                    network.getBusView().getBusStream()
+                    .forEach(bus -> {
+                        faults.add(new BusFault(bus.getId(), bus.getId()));
+                        shortCircuitCurrentLimits.put(bus.getId(), bus.getExtension(IdentifiableShortCircuit.class));
+                    });
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
@@ -194,7 +203,7 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result);
+                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitCurrentLimits);
                 resultRepository.insertStatus(List.of(resultContext.getResultUuid()), ShortCircuitAnalysisStatus.COMPLETED.name());
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));

@@ -10,25 +10,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FaultResult {
+public class ShortCircuitCurrentLimits {
 
-    private Fault fault;
+    private double ipMin;
 
-    private double current;
-
-    private double shortCircuitPower;
-
-    private List<LimitViolation> limitViolations;
-
-    private List<FeederResult> feederResults;
-
-    private ShortCircuitCurrentLimits currentLimits;
+    private double ipMax;
 }

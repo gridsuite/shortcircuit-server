@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitCurrentLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,10 +44,27 @@ public class ShortCircuitAnalysisResultRepository {
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
     }
 
+    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitCurrentLimits> allCurrentLimits) {
+
+        Set<FaultResultEntity> faultResults = new HashSet<>();
+
+        result.getFaultResults().stream().forEach(faultResult -> {
+
+                }
+                faultResult toFaultResultEntity));
+        //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
+        return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
+    }
+
     private static FaultResultEntity toFaultResultEntity(FaultResult faultResult) {
         Fault fault = faultResult.getFault();
         double current = ((MagnitudeFaultResult) faultResult).getCurrent();
         double shortCircuitPower = faultResult.getShortCircuitPower();
+
+
+
+        double iscMin = ;
+        double iscMax = ;
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
 
         List<LimitViolationEmbeddable> limitViolations = faultResult.getLimitViolations().stream().map(limitViolation ->
@@ -77,10 +91,10 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result) {
+    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitCurrentLimits> allCurrentLimits) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
-            resultRepository.save(toResultEntity(resultUuid, result));
+            resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits));
         }
     }
 
