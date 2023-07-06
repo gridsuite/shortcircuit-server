@@ -9,6 +9,7 @@ package org.gridsuite.shortcircuit.server.entities;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -47,5 +49,11 @@ public class FaultResultEntity {
             indexes = {@Index(name = "feeder_results_fault_result_idx",
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<FeederResultEmbeddable> feederResults;
+
+    @Column
+    private double ipMax;
+
+    @Column
+    private double ipMin;
 
 }

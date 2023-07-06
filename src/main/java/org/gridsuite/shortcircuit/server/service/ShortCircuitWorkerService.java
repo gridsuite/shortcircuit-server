@@ -13,7 +13,6 @@ import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.mergingview.MergingView;
-import com.powsybl.iidm.network.Generator;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
@@ -147,11 +146,10 @@ public class ShortCircuitWorkerService {
 
             List<Fault> faults = new ArrayList<>();
 
-                    network.getBusView().getBusStream()
-                    .forEach(bus -> {
-                        faults.add(new BusFault(bus.getId(), bus.getId()));
-                        shortCircuitCurrentLimits.put(bus.getId(), bus.getExtension(IdentifiableShortCircuit.class));
-                    });
+            network.getBusView().getBusStream().forEach(bus -> {
+                faults.add(new BusFault(bus.getId(), bus.getId()));
+                shortCircuitCurrentLimits.put(bus.getId(), bus.getExtension(IdentifiableShortCircuit.class));
+            });
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,

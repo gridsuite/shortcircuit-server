@@ -30,5 +30,5 @@ public class FaultResult {
 
     private List<FeederResult> feederResults;
 
-    private ShortCircuitCurrentLimits currentLimits;
+    private ShortCircuitCurrentLimits shortCircuitCurrentLimits;
 }
