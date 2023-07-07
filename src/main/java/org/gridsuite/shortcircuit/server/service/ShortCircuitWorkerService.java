@@ -148,7 +148,10 @@ public class ShortCircuitWorkerService {
 
             network.getBusView().getBusStream().forEach(bus -> {
                 faults.add(new BusFault(bus.getId(), bus.getId()));
-                shortCircuitCurrentLimits.put(bus.getId(), bus.getExtension(IdentifiableShortCircuit.class));
+                IdentifiableShortCircuit shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+                if (shortCircuitExtension != null) {
+                    shortCircuitCurrentLimits.put(bus.getId(), new ShortCircuitCurrentLimits(shortCircuitExtension.getIpMax(), shortCircuitExtension.getIpMin()));
+                }
             });
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
