@@ -55,7 +55,6 @@ public class ShortCircuitAnalysisResultRepository {
         Fault fault = faultResult.getFault();
         double current = ((MagnitudeFaultResult) faultResult).getCurrent();
         double shortCircuitPower = faultResult.getShortCircuitPower();
-
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
 
         List<LimitViolationEmbeddable> limitViolations = faultResult.getLimitViolations().stream().map(limitViolation ->
