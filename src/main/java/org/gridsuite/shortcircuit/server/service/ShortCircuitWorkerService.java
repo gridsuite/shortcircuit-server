@@ -130,6 +130,17 @@ public class ShortCircuitWorkerService {
         return result;
     }
 
+    private List<Fault> getAllBusfaultFromNetwork(Network network) {
+        return network.getBusView().getBusStream()
+            .map(bus -> new BusFault(bus.getId(), bus.getId()))
+            .collect(Collectors.toList());
+    }
+
+    private List<Fault> getBusfaultFromBusId(String busBarId, Network network) {
+        String busId = network.getBusbarSection(busBarId).getTerminal().getBusView().getBus().getId();
+        return List.of(new BusFault(busId, busId));
+    }
+
     private CompletableFuture<ShortCircuitAnalysisResult> runShortCircuitAnalysisAsync(ShortCircuitRunContext context,
                                                                                        Network network,
                                                                                        Reporter reporter,
@@ -140,14 +151,9 @@ public class ShortCircuitWorkerService {
                 return null;
             }
 
-            List<Fault> faults = network.getBusView().getBusStream()
-                    .map(bus -> new BusFault(bus.getId(), bus.getId()))
-                    .collect(Collectors.toList());
-
-            if(context.getBusId() != null){
-                String busId = network.getBusbarSection(context.getBusId()).getTerminal().getBusView().getBus().getId();
-                faults = List.of(new BusFault(busId, busId));
-            }
+            List<Fault> faults = context.getBusId() == null
+                ? getAllBusfaultFromNetwork(network)
+                : getBusfaultFromBusId(context.getBusId(), network);
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
