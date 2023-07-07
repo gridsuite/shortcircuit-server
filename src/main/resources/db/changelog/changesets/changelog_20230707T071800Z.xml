@@ -1,16 +1,13 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="etienne (generated)" id="1688672772228-1">
+    <changeSet author="homereti (generated)" id="1688714291981-1">
         <addColumn tableName="fault_result_entity">
             <column name="ip_max" type="float8"/>
         </addColumn>
     </changeSet>
-    <changeSet author="etienne (generated)" id="1688672772228-2">
+    <changeSet author="homereti (generated)" id="1688714291981-2">
         <addColumn tableName="fault_result_entity">
             <column name="ip_min" type="float8"/>
         </addColumn>
-    </changeSet>
-    <changeSet author="etienne (generated)" id="1688672772228-3">
-        <addPrimaryKey columnNames="short_circuit_analysis_result_entity_result_uuid, fault_results_fault_result_uuid" tableName="shortcircuit_result_fault_results"/>
     </changeSet>
 </databaseChangeLog>
