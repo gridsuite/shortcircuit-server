@@ -38,16 +38,16 @@ public class ShortCircuitAnalysisResultRepository {
         this.faultResultRepository = faultResultRepository;
     }
 
-    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits) {
-        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntityWithCurrentLimits(faultResult, allCurrentLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
+    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
+        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntityWithLimits(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
     }
 
-    private static FaultResultEntity toFaultResultEntityWithCurrentLimits(FaultResult faultResult, ShortCircuitLimits currentLimits) {
+    private static FaultResultEntity toFaultResultEntityWithLimits(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
         FaultResultEntity faultResultEntity = toFaultResultEntity(faultResult);
-        faultResultEntity.setIpMax(currentLimits.getIpMax());
-        faultResultEntity.setIpMin(currentLimits.getIpMin());
+        faultResultEntity.setIpMax(shortCircuitLimits.getIpMax());
+        faultResultEntity.setIpMin(shortCircuitLimits.getIpMin());
         return faultResultEntity;
     }
 
