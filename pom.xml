@@ -170,12 +170,6 @@
 
         <!-- Test dependencies -->
         <dependency>
-            <groupId>com.rte-france.powsybl</groupId>
-            <artifactId>powsybl-courcirc-integration</artifactId>
-            <version>3.14.0</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-test</artifactId>
             <scope>test</scope>
