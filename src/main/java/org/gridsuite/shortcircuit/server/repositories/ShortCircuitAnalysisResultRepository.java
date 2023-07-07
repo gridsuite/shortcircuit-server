@@ -7,7 +7,7 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
-import org.gridsuite.shortcircuit.server.dto.ShortCircuitCurrentLimits;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,13 +38,13 @@ public class ShortCircuitAnalysisResultRepository {
         this.faultResultRepository = faultResultRepository;
     }
 
-    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitCurrentLimits> allCurrentLimits) {
+    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits) {
         Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntityWithCurrentLimits(faultResult, allCurrentLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
     }
 
-    private static FaultResultEntity toFaultResultEntityWithCurrentLimits(FaultResult faultResult, ShortCircuitCurrentLimits currentLimits) {
+    private static FaultResultEntity toFaultResultEntityWithCurrentLimits(FaultResult faultResult, ShortCircuitLimits currentLimits) {
         FaultResultEntity faultResultEntity = toFaultResultEntity(faultResult);
         faultResultEntity.setIpMax(currentLimits.getIpMax());
         faultResultEntity.setIpMin(currentLimits.getIpMin());
@@ -82,7 +82,7 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitCurrentLimits> allCurrentLimits) {
+    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
             resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits));

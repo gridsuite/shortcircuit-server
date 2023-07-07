@@ -11,12 +11,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * @author Nicolas Noir <nicolas.noir at rte-france.com>
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShortCircuitCurrentLimits {
+public class ShortCircuitLimits {
 
     private double ipMin;
 

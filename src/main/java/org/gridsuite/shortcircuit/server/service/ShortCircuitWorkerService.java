@@ -24,7 +24,7 @@ import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
-import org.gridsuite.shortcircuit.server.dto.ShortCircuitCurrentLimits;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public class ShortCircuitWorkerService {
 
     private Set<UUID> runRequests = Sets.newConcurrentHashSet();
 
-    private Map<String, ShortCircuitCurrentLimits> shortCircuitCurrentLimits = new HashMap<>();
+    private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
 
@@ -150,7 +150,7 @@ public class ShortCircuitWorkerService {
                 faults.add(new BusFault(bus.getId(), bus.getId()));
                 IdentifiableShortCircuit shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                 if (shortCircuitExtension != null) {
-                    shortCircuitCurrentLimits.put(bus.getId(), new ShortCircuitCurrentLimits(shortCircuitExtension.getIpMax(), shortCircuitExtension.getIpMin()));
+                    shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMax(), shortCircuitExtension.getIpMin()));
                 }
             });
 
@@ -204,7 +204,7 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitCurrentLimits);
+                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitLimits);
                 resultRepository.insertStatus(List.of(resultContext.getResultUuid()), ShortCircuitAnalysisStatus.COMPLETED.name());
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
