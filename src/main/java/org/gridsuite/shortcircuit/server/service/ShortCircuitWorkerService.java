@@ -15,6 +15,7 @@ import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.mergingview.MergingView;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
+import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
@@ -148,7 +149,7 @@ public class ShortCircuitWorkerService {
 
             network.getBusView().getBusStream().forEach(bus -> {
                 faults.add(new BusFault(bus.getId(), bus.getId()));
-                IdentifiableShortCircuit shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+                IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                 if (shortCircuitExtension != null) {
                     shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMax(), shortCircuitExtension.getIpMin()));
                 }
