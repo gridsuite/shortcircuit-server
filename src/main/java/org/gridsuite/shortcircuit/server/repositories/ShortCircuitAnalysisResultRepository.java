@@ -46,8 +46,10 @@ public class ShortCircuitAnalysisResultRepository {
 
     private static FaultResultEntity toFaultResultEntityWithLimits(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
         FaultResultEntity faultResultEntity = toFaultResultEntity(faultResult);
-        faultResultEntity.setIpMax(shortCircuitLimits.getIpMax());
-        faultResultEntity.setIpMin(shortCircuitLimits.getIpMin());
+        if (shortCircuitLimits != null) {
+            faultResultEntity.setIpMax(shortCircuitLimits.getIpMax());
+            faultResultEntity.setIpMin(shortCircuitLimits.getIpMin());
+        }
         return faultResultEntity;
     }
 
