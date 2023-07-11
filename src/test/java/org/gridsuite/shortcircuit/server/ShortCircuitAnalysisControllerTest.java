@@ -241,7 +241,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
-            assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDto);
+            assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FULL, resultDto);
 
             result = mockMvc.perform(get(
                              "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
