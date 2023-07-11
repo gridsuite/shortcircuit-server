@@ -11,6 +11,7 @@ import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,10 +86,10 @@ public class ShortCircuitService {
         return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent());
     }
 
-    public ShortCircuitAnalysisResult getResult(UUID resultUuid, boolean full) {
+    public ShortCircuitAnalysisResult getResult(UUID resultUuid, boolean full, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
-        Optional<ShortCircuitAnalysisResultEntity> result = full ? resultRepository.findFullResults(resultUuid) : resultRepository.findResultsWithLimitViolations(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = full ? resultRepository.findFullResults(resultUuid, pageable) : resultRepository.findResultsWithLimitViolations(resultUuid, pageable);
         ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r, full)).orElse(null);
         LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
         return res;

@@ -7,8 +7,11 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 
@@ -22,7 +25,15 @@ import java.util.Set;
  */
 @Repository
 public interface FaultResultRepository extends JpaRepository<FaultResultEntity, UUID> {
+    Page<FaultResultEntity> findAllByResult(ShortCircuitAnalysisResultEntity result, Pageable pageable);
+
+    Page<FaultResultEntity> findAllByResultAndNbLimitViolationsGreaterThan(ShortCircuitAnalysisResultEntity result, int nbLimitViolations, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"limitViolations"}, type = EntityGraphType.LOAD)
+    Set<FaultResultEntity> findAllWithLimitViolationsByFaultResultUuidIn(List<UUID> faultResultsUUID);
+
     @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithFeederResultsByFaultResultUuidIn(List<UUID> faultResultsUUID);
 
+    void deleteAllByResultResultUuid(UUID resultUuid);
 }

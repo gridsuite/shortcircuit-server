@@ -6,12 +6,15 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,7 +22,6 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "shortcircuit_result")
@@ -31,6 +33,45 @@ public class ShortCircuitAnalysisResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @JsonInclude()
+    @Transient
     private Set<FaultResultEntity> faultResults;
+
+    public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Set<FaultResultEntity> faultResults) {
+        this.resultUuid = resultUuid;
+        this.writeTimeStamp = writeTimeStamp;
+        addFaultResults(faultResults);
+    }
+
+    public void addFaultResult(FaultResultEntity faultResult) {
+        if (this.faultResults == null) {
+            this.faultResults = new HashSet<>();
+        }
+        faultResults.add(faultResult);
+        faultResult.setResult(this);
+    }
+
+    public void addFaultResults(Set<FaultResultEntity> faultResultsSet) {
+        if (this.faultResults == null) {
+            this.faultResults = new HashSet<>();
+        }
+        faultResults.addAll(faultResultsSet);
+        faultResultsSet.stream().forEach(f -> f.setResult(this));
+    }
+
+    public void removeFaultResult(FaultResultEntity faultResult) {
+        if (this.faultResults == null) {
+            return;
+        }
+        faultResults.remove(faultResult);
+        faultResult.setResult(null);
+    }
+
+    public void removeFaultResults(Set<FaultResultEntity> faultResultsSet) {
+        if (this.faultResults == null) {
+            return;
+        }
+        faultResults.removeAll(faultResultsSet);
+        faultResultsSet.stream().forEach(f -> f.setResult(null));
+    }
 }
