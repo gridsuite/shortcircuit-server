@@ -170,8 +170,6 @@ public class ShortCircuitAnalysisControllerTest {
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
-        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
-        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
         network.getVoltageLevels().forEach(voltageLevel -> {
             IdentifiableShortCircuitAdder<VoltageLevel> identifiableShortCircuitAdder = voltageLevel.newExtension(IdentifiableShortCircuitAdder.class);
             identifiableShortCircuitAdder.withIpMin(10.5);
@@ -179,6 +177,8 @@ public class ShortCircuitAnalysisControllerTest {
             identifiableShortCircuitAdder.add();
         });
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
+        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
+        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
 
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
 
