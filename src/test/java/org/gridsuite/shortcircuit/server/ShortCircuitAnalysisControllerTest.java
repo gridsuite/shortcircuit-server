@@ -8,16 +8,16 @@ package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.extensions.AbstractExtension;
-import com.powsybl.commons.extensions.Extension;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
+import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.extensions.IdentifiableShortCircuitAdder;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
-import com.powsybl.network.store.iidm.impl.extensions.IdentifiableShortCircuitImpl;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
@@ -98,13 +98,13 @@ public class ShortCircuitAnalysisControllerTest {
         static final LimitViolation LIMIT_VIOLATION_2 = new LimitViolation("SUBJECT_2", LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, 12.17, 2f, 10.56);
         static final LimitViolation LIMIT_VIOLATION_3 = new LimitViolation("SUBJECT_3", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 45.12, 5f, 54.3);
 
-        static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("FAULT_1", "ELEMENT_ID_1"), 17.0,
+        static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("VLHV1_0", "ELEMENT_ID_1"), 17.0,
                 List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
                 45.3, FaultResult.Status.SUCCESS);
-        static final FaultResult FAULT_RESULT_2 = new MagnitudeFaultResult(new BusFault("FAULT_2", "ELEMENT_ID_2"), 18.0,
+        static final FaultResult FAULT_RESULT_2 = new MagnitudeFaultResult(new BusFault("VLHV2_0", "ELEMENT_ID_2"), 18.0,
                 List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(),
                 47.3, FaultResult.Status.SUCCESS);
-        static final FaultResult FAULT_RESULT_3 = new MagnitudeFaultResult(new BusFault("FAULT_3", "ELEMENT_ID_3"), 19.0,
+        static final FaultResult FAULT_RESULT_3 = new MagnitudeFaultResult(new BusFault("VLGEN_0", "ELEMENT_ID_3"), 19.0,
                 List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
                 49.3, FaultResult.Status.SUCCESS);
 
@@ -131,7 +131,6 @@ public class ShortCircuitAnalysisControllerTest {
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
     private Network network;
-    private Network network1;
     private Network networkForMergingView;
     private Network otherNetworkForMergingView;
 
@@ -171,16 +170,15 @@ public class ShortCircuitAnalysisControllerTest {
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
+        network.getVoltageLevels().forEach(voltageLevel -> {
+            IdentifiableShortCircuitAdder<VoltageLevel> identifiableShortCircuitAdder = voltageLevel.newExtension(IdentifiableShortCircuitAdder.class);
+            identifiableShortCircuitAdder.withIpMin(10.5);
+            identifiableShortCircuitAdder.withIpMax(200.0);
+            identifiableShortCircuitAdder.add();
+        });
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
-
-        network.getVoltageLevels().forEach(voltageLevel -> {
-            Extension extension = new IdentifiableShortCircuitImpl(voltageLevel);
-//            extension.setIpMax(200.4);
-//            extension.setIpMin(20.5);
-            voltageLevel.addExtension(Extension.class, extension);
-        });
 
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
 
@@ -189,9 +187,6 @@ public class ShortCircuitAnalysisControllerTest {
 
         otherNetworkForMergingView = new NetworkFactoryImpl().createNetwork("other", "test 2");
         given(networkStoreService.getNetwork(OTHER_NETWORK_FOR_MERGING_VIEW_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(otherNetworkForMergingView);
-
-        network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
-        network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
         // report service mocking
         doAnswer(i -> null).when(reportService).sendReport(any(), any());
@@ -241,7 +236,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                            "/" + VERSION + "/results/{resultUuid}?full=false", RESULT_UUID))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -249,7 +244,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDto);
 
             result = mockMvc.perform(get(
-                             "/" + VERSION + "/results/{resultUuid}?full=true", RESULT_UUID))
+                             "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                      .andExpect(status().isOk())
                      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                      .andReturn();
