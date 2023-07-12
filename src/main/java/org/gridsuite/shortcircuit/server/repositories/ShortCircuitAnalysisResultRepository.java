@@ -112,15 +112,14 @@ public class ShortCircuitAnalysisResultRepository {
     public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid, Pageable pageable) {
         Objects.requireNonNull(resultUuid);
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findByResultUuid(resultUuid);
-        if (!result.isPresent()) {
-            return result;
+        if (result.isPresent()) {
+            // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
+            // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
+            // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
+            // We must separate in two requests, one with pagination the other one with Join Fetch
+            Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResult(result.get(), pageable);
+            appendLimitViolationsAndFeederResults(pagedFaultResults, result.get());
         }
-        // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
-        // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
-        // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
-        // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResult(result.get(), pageable);
-        appendLimitViolationsAndFeederResults(pagedFaultResults, result.get());
         return result;
     }
 
@@ -128,15 +127,14 @@ public class ShortCircuitAnalysisResultRepository {
     public Optional<ShortCircuitAnalysisResultEntity> findResultsWithLimitViolations(UUID resultUuid, Pageable pageable) {
         Objects.requireNonNull(resultUuid);
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findByResultUuid(resultUuid);
-        if (!result.isPresent()) {
-            return result;
+        if (result.isPresent()) {
+            // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
+            // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
+            // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
+            // We must separate in two requests, one with pagination the other one with Join Fetch
+            Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResultAndNbLimitViolationsGreaterThan(result.get(), 0, pageable);
+            appendLimitViolationsAndFeederResults(pagedFaultResults, result.get());
         }
-        // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
-        // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
-        // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
-        // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResultAndNbLimitViolationsGreaterThan(result.get(), 0, pageable);
-        appendLimitViolationsAndFeederResults(pagedFaultResults, result.get());
         return result;
     }
 
