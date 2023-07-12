@@ -13,15 +13,6 @@
     <changeSet author="bouzolssyl (generated)" id="1689083606279-3">
         <addForeignKeyConstraint baseColumnNames="result_result_uuid" baseTableName="fault_result_entity" constraintName="FKn82b8umwxov4hcqeejfbpur9t" deferrable="false" initiallyDeferred="false" referencedColumnNames="result_uuid" referencedTableName="shortcircuit_result" validate="true"/>
     </changeSet>
-    <changeSet author="bouzolssyl (generated)" id="1689083606279-4">
-        <dropForeignKeyConstraint baseTableName="SHORTCIRCUIT_RESULT_FAULT_RESULTS" constraintName="FK4KHYAU3CWD6R7GX4PEOFDJF5C"/>
-    </changeSet>
-    <changeSet author="bouzolssyl (generated)" id="1689083606279-5">
-        <dropForeignKeyConstraint baseTableName="SHORTCIRCUIT_RESULT_FAULT_RESULTS" constraintName="FKD7Q6CB6BR7PT62MARUA9T08AK"/>
-    </changeSet>
-    <changeSet author="bouzolssyl (generated)" id="1689083606279-6">
-        <dropUniqueConstraint constraintName="UK_4V6W2VHRQXA7PGEJB8QJP65UR" tableName="SHORTCIRCUIT_RESULT_FAULT_RESULTS"/>
-    </changeSet>
     <changeSet author="bouzolssyl (generated)" id="1689083606279-7">
         <dropTable tableName="SHORTCIRCUIT_RESULT_FAULT_RESULTS"/>
     </changeSet>
