@@ -20,6 +20,9 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @Entity
+@Table(indexes = 
+    @Index(columnList = "result_result_uuid, nbLimitViolations")
+)
 public class FaultResultEntity {
 
     @Id
