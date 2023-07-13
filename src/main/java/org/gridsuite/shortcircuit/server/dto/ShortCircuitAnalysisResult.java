@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,5 +25,5 @@ public class ShortCircuitAnalysisResult {
 
     private ZonedDateTime writeTimeStamp;
 
-    private List<FaultResult> faults;
+    private RestPage<FaultResult> faults;
 }

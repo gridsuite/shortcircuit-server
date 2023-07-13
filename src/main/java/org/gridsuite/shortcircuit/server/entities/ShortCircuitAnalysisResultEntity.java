@@ -11,12 +11,15 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
@@ -35,7 +38,13 @@ public class ShortCircuitAnalysisResultEntity {
 
     @JsonInclude()
     @Transient
-    private Set<FaultResultEntity> faultResults;
+    private Page<FaultResultEntity> faultResultsPage;
+
+    public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Page<FaultResultEntity> faultResults) {
+        this.resultUuid = resultUuid;
+        this.writeTimeStamp = writeTimeStamp;
+        addFaultResults(faultResults);
+    }
 
     public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Set<FaultResultEntity> faultResults) {
         this.resultUuid = resultUuid;
@@ -43,35 +52,18 @@ public class ShortCircuitAnalysisResultEntity {
         addFaultResults(faultResults);
     }
 
-    public void addFaultResult(FaultResultEntity faultResult) {
-        if (this.faultResults == null) {
-            this.faultResults = new HashSet<>();
+    public void addFaultResults(Set<FaultResultEntity> faultResults) {
+        if (faultResults != null) {
+            Page<FaultResultEntity> newFaultResultsPage = new PageImpl<>(faultResults.stream().collect(Collectors.toList()));
+            this.faultResultsPage = newFaultResultsPage;
+            faultResultsPage.forEach(f -> f.setResult(this));
         }
-        faultResults.add(faultResult);
-        faultResult.setResult(this);
     }
 
-    public void addFaultResults(Set<FaultResultEntity> faultResultsSet) {
-        if (this.faultResults == null) {
-            this.faultResults = new HashSet<>();
+    public void addFaultResults(Page<FaultResultEntity> faultResultsPage) {
+        if (faultResultsPage != null) {
+            this.faultResultsPage = faultResultsPage;
+            faultResultsPage.forEach(f -> f.setResult(this));
         }
-        faultResults.addAll(faultResultsSet);
-        faultResultsSet.stream().forEach(f -> f.setResult(this));
-    }
-
-    public void removeFaultResult(FaultResultEntity faultResult) {
-        if (this.faultResults == null) {
-            return;
-        }
-        faultResults.remove(faultResult);
-        faultResult.setResult(null);
-    }
-
-    public void removeFaultResults(Set<FaultResultEntity> faultResultsSet) {
-        if (this.faultResults == null) {
-            return;
-        }
-        faultResults.removeAll(faultResultsSet);
-        faultResultsSet.stream().forEach(f -> f.setResult(null));
     }
 }

@@ -59,9 +59,9 @@ public class ShortCircuitService {
         return resultUuid;
     }
 
-    private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, boolean full) {
-        List<FaultResult> faultResults = resultEntity.getFaultResults().stream().filter(fr -> full || !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr)).collect(Collectors.toList());
-        return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
+    private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity) {
+        RestPage<FaultResult> faultResultsDto = new RestPage<>(resultEntity.getFaultResultsPage().map(fr -> fromEntity(fr)));
+        return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResultsDto);
     }
 
     private static FaultResult fromEntity(FaultResultEntity faultResultEntity) {
@@ -90,8 +90,9 @@ public class ShortCircuitService {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = full ? resultRepository.findFullResults(resultUuid, pageable) : resultRepository.findResultsWithLimitViolations(resultUuid, pageable);
-        ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r, full)).orElse(null);
+        ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r)).orElse(null);
         LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        LOGGER.info("pageable =  {}", pageable);
         return res;
     }
 

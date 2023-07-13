@@ -138,7 +138,7 @@ public class ShortCircuitAnalysisControllerTest {
     private Network otherNetworkForMergingView;
 
     private static void assertResultsEquals(ShortCircuitAnalysisResult result, org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto) {
-        assertEquals(result.getFaultResults().size(), resultDto.getFaults().size());
+        assertEquals(result.getFaultResults().size(), resultDto.getFaults().getNumberOfElements());
         List<FaultResult> orderedFaultResults = result.getFaultResults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
         List<org.gridsuite.shortcircuit.server.dto.FaultResult> orderedFaultResultsDto = resultDto.getFaults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
         for (int i = 0; i < orderedFaultResultsDto.size(); i++) {
