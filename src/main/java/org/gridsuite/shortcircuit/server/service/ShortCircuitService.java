@@ -92,7 +92,9 @@ public class ShortCircuitService {
         Optional<ShortCircuitAnalysisResultEntity> result = full ? resultRepository.findFullResults(resultUuid, pageable) : resultRepository.findResultsWithLimitViolations(resultUuid, pageable);
         ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r)).orElse(null);
         LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-        LOGGER.info("pageable =  {}", pageable);
+        // see https://sonarcloud.io/organizations/gridsuite/rules?open=javasecurity%3AS5145&rule_key=javasecurity%3AS5145
+        String pageableStr = pageable.toString().replaceAll("[\n\r]", "_");
+        LOGGER.info("pageable =  {}", pageableStr);
         return res;
     }
 
