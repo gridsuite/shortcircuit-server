@@ -146,7 +146,8 @@ public class ShortCircuitWorkerService {
         // if not found, trying to get it from busBreakerView
         Bus bus = network.getBusBreakerView().getBus(busId);
         if (bus != null) {
-            String busIdFromBusView = bus.getConnectedTerminalStream().findFirst().get().getBusView().getBus().getId();
+            Terminal terminal = bus.getConnectedTerminalStream().findFirst().orElseThrow(() -> new UnsupportedOperationException("No terminal found for targeted bus"));
+            String busIdFromBusView = terminal.getBusView().getBus().getId();
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
 
@@ -235,7 +236,7 @@ public class ShortCircuitWorkerService {
             } catch (Exception e) {
                 LOGGER.error(FAIL_MESSAGE, e);
                 if (!(e instanceof CancellationException)) {
-                    notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage(), resultContext.getRunContext().getUserId());
+                    notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage(), resultContext.getRunContext().getUserId(), resultContext.getRunContext().getBusId());
                     resultRepository.delete(resultContext.getResultUuid());
                 }
             } finally {

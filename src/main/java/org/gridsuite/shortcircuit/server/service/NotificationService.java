@@ -83,13 +83,14 @@ public class NotificationService {
     }
 
     @PostCompletion
-    public void publishFail(UUID resultUuid, String receiver, String causeMessage, String userId) {
+    public void publishFail(UUID resultUuid, String receiver, String causeMessage, String userId, String busId) {
         Message<String> message = MessageBuilder
             .withPayload("")
             .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
             .setHeader(HEADER_RECEIVER, receiver)
             .setHeader(HEADER_MESSAGE, FAIL_MESSAGE + " : " + causeMessage)
             .setHeader(HEADER_USER_ID, userId)
+            .setHeader(HEADER_BUS_ID, busId)
             .build();
         FAILED_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishFailed-out-0", message);
