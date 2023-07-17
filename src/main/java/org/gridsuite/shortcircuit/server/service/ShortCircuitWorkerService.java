@@ -31,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.webjars.NotFoundException;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -151,7 +152,7 @@ public class ShortCircuitWorkerService {
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
 
-        return null;
+        throw new NotFoundException("No bus found for bus id " + busId);
     }
 
     private CompletableFuture<ShortCircuitAnalysisResult> runShortCircuitAnalysisAsync(ShortCircuitRunContext context,
