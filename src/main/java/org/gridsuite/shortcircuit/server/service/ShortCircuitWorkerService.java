@@ -13,8 +13,7 @@ import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.mergingview.MergingView;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.VariantManagerConstants;
+import com.powsybl.iidm.network.*;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.BusFault;
@@ -136,9 +135,22 @@ public class ShortCircuitWorkerService {
             .collect(Collectors.toList());
     }
 
-    private List<Fault> getBusfaultFromBusId(String busBarId, Network network) {
-        String busId = network.getBusbarSection(busBarId).getTerminal().getBusView().getBus().getId();
-        return List.of(new BusFault(busId, busId));
+    private List<Fault> getBusfaultFromBusId(String busId, Network network) {
+        // Trying to get busId from nodeBreakerView
+        BusbarSection busBarSection = network.getBusbarSection(busId);
+        if(busBarSection != null) {
+            String busIdFromBusView = busBarSection.getTerminal().getBusView().getBus().getId();
+            return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
+        }
+
+        // if not found, trying to get it from busBreakerView
+        Bus bus = network.getBusBreakerView().getBus(busId);
+        if (bus != null) {
+            String busIdFromBusView = bus.getConnectedTerminalStream().findFirst().get().getBusView().getBus().getId();
+            return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
+        }
+
+        return null;
     }
 
     private CompletableFuture<ShortCircuitAnalysisResult> runShortCircuitAnalysisAsync(ShortCircuitRunContext context,
