@@ -3,10 +3,6 @@
     <changeSet author="homereti (generated)" id="1688714291981-1">
         <addColumn tableName="fault_result_entity">
             <column name="ip_max" type="float8"/>
-        </addColumn>
-    </changeSet>
-    <changeSet author="homereti (generated)" id="1688714291981-2">
-        <addColumn tableName="fault_result_entity">
             <column name="ip_min" type="float8"/>
         </addColumn>
     </changeSet>
