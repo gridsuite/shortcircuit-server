@@ -138,7 +138,7 @@ public class ShortCircuitWorkerService {
     private List<Fault> getBusfaultFromBusId(String busId, Network network) {
         // Trying to get busId from nodeBreakerView
         BusbarSection busBarSection = network.getBusbarSection(busId);
-        if(busBarSection != null) {
+        if (busBarSection != null) {
             String busIdFromBusView = busBarSection.getTerminal().getBusView().getBus().getId();
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
