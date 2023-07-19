@@ -34,6 +34,4 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
 
     @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithFeederResultsByFaultResultUuidIn(List<UUID> faultResultsUUID);
-
-    void deleteAllByResultResultUuid(UUID resultUuid);
 }

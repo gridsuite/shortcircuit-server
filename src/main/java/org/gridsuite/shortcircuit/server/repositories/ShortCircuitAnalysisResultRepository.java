@@ -80,15 +80,14 @@ public class ShortCircuitAnalysisResultRepository {
     public void insertStatus(List<UUID> resultUuids, String status) {
         Objects.requireNonNull(resultUuids);
         globalStatusRepository.saveAll(resultUuids.stream()
-                .map(uuid -> toStatusEntity(uuid, status)).collect(Collectors.toList()));
+            .map(uuid -> toStatusEntity(uuid, status)).collect(Collectors.toList()));
     }
 
     @Transactional
     public void insert(UUID resultUuid, ShortCircuitAnalysisResult result) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
-            ShortCircuitAnalysisResultEntity resultEntity = toResultEntity(resultUuid, result);
-            resultRepository.save(resultEntity);
+            resultRepository.save(toResultEntity(resultUuid, result));
         }
     }
 
@@ -96,19 +95,17 @@ public class ShortCircuitAnalysisResultRepository {
     public void delete(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         globalStatusRepository.deleteByResultUuid(resultUuid);
-        faultResultRepository.deleteAllByResultResultUuid(resultUuid);
         resultRepository.deleteByResultUuid(resultUuid);
     }
 
     @Transactional
     public void deleteAll() {
         globalStatusRepository.deleteAll();
-        faultResultRepository.deleteAll();
         resultRepository.deleteAll();
     }
 
     @Transactional(readOnly = true)
-    public Optional<ShortCircuitAnalysisResultEntity> findResult(UUID resultUuid) {
+    public Optional<ShortCircuitAnalysisResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         return resultRepository.findByResultUuid(resultUuid);
     }

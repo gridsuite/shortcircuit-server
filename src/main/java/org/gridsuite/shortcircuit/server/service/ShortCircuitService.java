@@ -116,7 +116,7 @@ public class ShortCircuitService {
                 break;
             case NONE:
             default:
-                result = resultRepository.findResult(resultUuid);
+                result = resultRepository.find(resultUuid);
                 break;
         }
         if (result.isPresent()) {
@@ -131,7 +131,7 @@ public class ShortCircuitService {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
-        result = resultRepository.findResult(resultUuid);
+        result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
             Page<FaultResultEntity> faultResultsPage;
             switch (mode) {
