@@ -113,6 +113,13 @@ public class ShortCircuitAnalysisControllerTest {
         static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
     }
 
+    // Destinations
+    private final String shortCircuitAnalysisResultDestination = "shortcircuitanalysis.result";
+    private final String shortCircuitAnalysisRunDestination = "shortcircuitanalysis.run";
+    private final String shortCircuitAnalysisCancelDestination = "shortcircuitanalysis.cancel";
+    private final String shortCircuitAnalysisStoppedDestination = "shortcircuitanalysis.stopped";
+    private final String shortCircuitAnalysisFailedDestination = "shortcircuitanalysis.failed";
+
     @Autowired
     private OutputDestination output;
 
@@ -200,24 +207,20 @@ public class ShortCircuitAnalysisControllerTest {
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
-
-        // purge messages
-        while (output.receive(100, "shortcircuitanalysis.result") != null) {
-        }
-        // purge messages
-        while (output.receive(100, "shortcircuitanalysis.run") != null) {
-        }
-        while (output.receive(100, "shortcircuitanalysis.cancel") != null) {
-        }
-        while (output.receive(100, "shortcircuitanalysis.stopped") != null) {
-        }
-        while (output.receive(100, "shortcircuitanalysis.failed") != null) {
-        }
     }
 
     @SneakyThrows
     @After
     public void tearDown() {
+        List<String> destinations = List.of(
+            shortCircuitAnalysisResultDestination,
+            shortCircuitAnalysisRunDestination,
+            shortCircuitAnalysisCancelDestination,
+            shortCircuitAnalysisStoppedDestination,
+            shortCircuitAnalysisFailedDestination
+        );
+        TestUtils.assertQueuesEmptyThenClear(destinations, output);
+
         mockMvc.perform(delete("/" + VERSION + "/results"))
                 .andExpect(status().isOk());
     }
@@ -238,7 +241,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
@@ -288,7 +291,7 @@ public class ShortCircuitAnalysisControllerTest {
                 .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
             assertEquals("NGEN", resultMessage.getHeaders().get(HEADER_BUS_ID));
@@ -320,7 +323,7 @@ public class ShortCircuitAnalysisControllerTest {
                 .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.result");
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
             assertEquals("S1VL2_BBS1", resultMessage.getHeaders().get(HEADER_BUS_ID));
@@ -352,7 +355,7 @@ public class ShortCircuitAnalysisControllerTest {
                 .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, "shortcircuitanalysis.failed");
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
             assertEquals("BUSBARSECTION_ID_NOT_EXISTING", resultMessage.getHeaders().get(HEADER_BUS_ID));
@@ -371,9 +374,9 @@ public class ShortCircuitAnalysisControllerTest {
 
             mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))
                     .andExpect(status().isOk());
-            assertNotNull(output.receive(TIMEOUT, "shortcircuitanalysis.cancel"));
+            assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisCancelDestination));
 
-            Message<byte[]> message = output.receive(TIMEOUT, "shortcircuitanalysis.stopped");
+            Message<byte[]> message = output.receive(TIMEOUT, shortCircuitAnalysisStoppedDestination);
             assertNotNull(message);
             assertEquals(RESULT_UUID.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
@@ -389,7 +392,7 @@ public class ShortCircuitAnalysisControllerTest {
                 .andReturn();
 
             // stop shortcircuit analysis
-            assertNotNull(output.receive(TIMEOUT, "shortcircuitanalysis.run"));
+            assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisRunDestination));
         }
     }
 
