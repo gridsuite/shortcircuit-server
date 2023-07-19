@@ -11,20 +11,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+
 /**
- * @author Nicolas Noir <nicolas.noir at rte-france.com>
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShortCircuitAnalysisResult {
+public class ShortCircuitAnalysisPagedResult {
 
     private UUID resultUuid;
 
     private ZonedDateTime writeTimeStamp;
 
-    private List<FaultResult> faults;
+    private Page<FaultResult> faults;
 }

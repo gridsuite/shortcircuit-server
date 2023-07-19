@@ -15,6 +15,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisPagedResult;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
@@ -87,9 +90,20 @@ public class ShortCircuitController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis result"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<ShortCircuitAnalysisResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                @Parameter(description = "Full or summary result") @RequestParam(name = "full", required = false, defaultValue = "false") Boolean full,
+                                                                @Parameter(description = "Full or summary or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode) {
+        ShortCircuitAnalysisResult result = shortCircuitService.getResult(resultUuid, mode);
+        return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
+                : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping(value = "/paged-results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a short circuit analysis result from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis result"),
+        @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
+    public ResponseEntity<ShortCircuitAnalysisPagedResult> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                                @Parameter(description = "Full or summary or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
                                                                 @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-        ShortCircuitAnalysisResult result = shortCircuitService.getResult(resultUuid, full, pageable);
+        ShortCircuitAnalysisPagedResult result = shortCircuitService.getPagedResult(resultUuid, mode, pageable);
         return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
                 : ResponseEntity.notFound().build();
     }

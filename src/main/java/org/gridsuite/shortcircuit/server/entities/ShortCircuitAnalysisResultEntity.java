@@ -11,15 +11,9 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
@@ -36,15 +30,8 @@ public class ShortCircuitAnalysisResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
-    @JsonInclude()
-    @Transient
-    private Page<FaultResultEntity> faultResultsPage;
-
-    public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Page<FaultResultEntity> faultResults) {
-        this.resultUuid = resultUuid;
-        this.writeTimeStamp = writeTimeStamp;
-        addFaultResults(faultResults);
-    }
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FaultResultEntity> faultResults;
 
     public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Set<FaultResultEntity> faultResults) {
         this.resultUuid = resultUuid;
@@ -54,16 +41,8 @@ public class ShortCircuitAnalysisResultEntity {
 
     public void addFaultResults(Set<FaultResultEntity> faultResults) {
         if (faultResults != null) {
-            Page<FaultResultEntity> newFaultResultsPage = new PageImpl<>(faultResults.stream().collect(Collectors.toList()));
-            this.faultResultsPage = newFaultResultsPage;
-            faultResultsPage.forEach(f -> f.setResult(this));
-        }
-    }
-
-    public void addFaultResults(Page<FaultResultEntity> faultResultsPage) {
-        if (faultResultsPage != null) {
-            this.faultResultsPage = faultResultsPage;
-            faultResultsPage.forEach(f -> f.setResult(this));
+            this.faultResults = faultResults;
+            faultResults.forEach(f -> f.setResult(this));
         }
     }
 }

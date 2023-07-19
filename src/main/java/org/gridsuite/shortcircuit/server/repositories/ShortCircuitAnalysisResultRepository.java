@@ -88,7 +88,6 @@ public class ShortCircuitAnalysisResultRepository {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
             ShortCircuitAnalysisResultEntity resultEntity = toResultEntity(resultUuid, result);
-            faultResultRepository.saveAll(resultEntity.getFaultResultsPage().getContent());
             resultRepository.save(resultEntity);
         }
     }
@@ -109,45 +108,78 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid, Pageable pageable) {
+    public Optional<ShortCircuitAnalysisResultEntity> findResult(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findByResultUuid(resultUuid);
-        if (result.isPresent()) {
-            // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
-            // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
-            // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
-            // We must separate in two requests, one with pagination the other one with Join Fetch
-            Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResult(result.get(), pageable);
-            appendLimitViolationsAndFeederResults(pagedFaultResults, result.get());
+        return resultRepository.findByResultUuid(resultUuid);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findAllWithLimitViolationsByResultUuid(resultUuid);
+        if (!result.isPresent()) {
+            return result;
+        }
+        // using the the Hibernate First-Level Cache or Persistence Context
+        // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
+        if (!result.get().getFaultResults().isEmpty()) {
+            resultRepository.findAllWithFeederResultsByResultUuid(resultUuid);
         }
         return result;
     }
 
     @Transactional(readOnly = true)
-    public Optional<ShortCircuitAnalysisResultEntity> findResultsWithLimitViolations(UUID resultUuid, Pageable pageable) {
+    public Optional<ShortCircuitAnalysisResultEntity> findResultsWithLimitViolations(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findByResultUuid(resultUuid);
-        if (result.isPresent()) {
-            // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
-            // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
-            // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
-            // We must separate in two requests, one with pagination the other one with Join Fetch
-            Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResultAndNbLimitViolationsGreaterThan(result.get(), 0, pageable);
-            appendLimitViolationsAndFeederResults(pagedFaultResults, result.get());
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findAllWithLimitViolationsByResultUuid(resultUuid);
+        if (!result.isPresent()) {
+            return result;
+        }
+        List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
+                                                            .filter(fr -> !fr.getLimitViolations().isEmpty())
+                                                            .map(FaultResultEntity::getFaultResultUuid)
+                                                            .collect(Collectors.toList());
+        // using the the Hibernate First-Level Cache or Persistence Context
+        // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
+        if (!result.get().getFaultResults().isEmpty()) {
+            faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuidWithLimitViolations);
         }
         return result;
     }
 
-    private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults, ShortCircuitAnalysisResultEntity result) {
+    @Transactional(readOnly = true)
+    public Page<FaultResultEntity> findAllFaultResults(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+        Objects.requireNonNull(result);
+        // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
+        // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
+        // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
+        // We must separate in two requests, one with pagination the other one with Join Fetch
+        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResult(result, pageable);
+        appendLimitViolationsAndFeederResults(pagedFaultResults);
+        return pagedFaultResults;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<FaultResultEntity> findFaultResultsWithLimitViolations(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+        Objects.requireNonNull(result);
+        // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
+        // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
+        // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
+        // We must separate in two requests, one with pagination the other one with Join Fetch
+        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResultAndNbLimitViolationsGreaterThan(result, 0, pageable);
+        appendLimitViolationsAndFeederResults(pagedFaultResults);
+        return pagedFaultResults;
+    }
+
+    private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults) {
         // using the the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!pagedFaultResults.isEmpty()) {
-            List<UUID> faultResultsUuids = pagedFaultResults.getContent().stream()
+            List<UUID> faultResultsUuids = pagedFaultResults.stream()
                     .map(FaultResultEntity::getFaultResultUuid)
                     .collect(Collectors.toList());
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
             faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuids);
-            result.addFaultResults(pagedFaultResults);
         }
     }
 
