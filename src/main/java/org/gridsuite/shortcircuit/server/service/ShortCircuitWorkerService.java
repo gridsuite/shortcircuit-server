@@ -135,19 +135,16 @@ public class ShortCircuitWorkerService {
             .collect(Collectors.toList());
     }
 
-    private List<Fault> getBusfaultFromBusId(String busId, Network network) {
-        // Trying to get busId from nodeBreakerView
-        BusbarSection busBarSection = network.getBusbarSection(busId);
-        if (busBarSection != null) {
-            String busIdFromBusView = busBarSection.getTerminal().getBusView().getBus().getId();
+    private List<Fault> getBusFaultFromBusId(String busId, Network network) {
+        Identifiable identifiable = network.getIdentifiable(busId);
+
+        if (identifiable instanceof BusbarSection) {
+            String busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
 
-        // if not found, trying to get it from busBreakerView
-        Bus bus = network.getBusBreakerView().getBus(busId);
-        if (bus != null) {
-            Terminal terminal = bus.getConnectedTerminalStream().findFirst().orElseThrow(() -> new UnsupportedOperationException("No terminal found for targeted bus"));
-            String busIdFromBusView = terminal.getBusView().getBus().getId();
+        if (identifiable instanceof Bus) {
+            String busIdFromBusView = ((Bus) identifiable).getVoltageLevel().getBusView().getMergedBus(busId).getId();
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
 
@@ -166,7 +163,7 @@ public class ShortCircuitWorkerService {
 
             List<Fault> faults = context.getBusId() == null
                 ? getAllBusfaultFromNetwork(network)
-                : getBusfaultFromBusId(context.getBusId(), network);
+                : getBusFaultFromBusId(context.getBusId(), network);
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
