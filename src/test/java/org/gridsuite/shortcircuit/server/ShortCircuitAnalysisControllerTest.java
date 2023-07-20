@@ -272,6 +272,9 @@ public class ShortCircuitAnalysisControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
+            // It's not easy to deserialize into a Page implementation 
+            // ( e.g. https://stackoverflow.com/questions/52490399/spring-boot-page-deserialization-pageimpl-no-constructor ), 
+            // but for tests we care only about the content so we deserialize to DTOs only the content subfield using the jackson treemodel api
             JsonNode pagedResultNode = mapper.readTree(result.getResponse().getContentAsString());
             ObjectReader reader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FaultResult>>() { });
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsDto = reader.readValue(pagedResultNode.get("faults").get("content"));
