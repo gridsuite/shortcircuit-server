@@ -136,7 +136,7 @@ public class ShortCircuitWorkerService {
     }
 
     private List<Fault> getBusFaultFromBusId(String busId, Network network) {
-        Identifiable identifiable = network.getIdentifiable(busId);
+        Identifiable<?> identifiable = network.getIdentifiable(busId);
 
         if (identifiable instanceof BusbarSection) {
             String busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
