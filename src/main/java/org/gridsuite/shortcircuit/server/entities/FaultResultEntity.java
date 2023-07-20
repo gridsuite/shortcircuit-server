@@ -9,6 +9,7 @@ package org.gridsuite.shortcircuit.server.entities;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.List;
@@ -26,6 +27,10 @@ public class FaultResultEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID faultResultUuid;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @Setter
+    private ShortCircuitAnalysisResultEntity result;
 
     @Embedded
     private FaultEmbeddable fault;

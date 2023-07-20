@@ -62,7 +62,7 @@ public class ShortCircuitAnalysisResultRepository {
                 new FeederResultEmbeddable(feederResult.getConnectableId(), ((MagnitudeFeederResult) feederResult).getCurrent()))
                 .collect(Collectors.toList());
 
-        return new FaultResultEntity(null, faultEmbedded, current, shortCircuitPower, limitViolations, feederResults);
+        return new FaultResultEntity(null, null, faultEmbedded, current, shortCircuitPower, limitViolations, feederResults);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {

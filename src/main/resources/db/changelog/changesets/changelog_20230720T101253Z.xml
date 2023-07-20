@@ -1,0 +1,21 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+    <changeSet author="bouzolssyl (generated)" id="1689847994545-1">
+        <addColumn tableName="fault_result_entity">
+            <column name="result_result_uuid" type="uuid"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="bouzolssyl (generated)" id="1689847994545-2">
+        <addForeignKeyConstraint baseColumnNames="result_result_uuid" baseTableName="fault_result_entity" constraintName="FKn82b8umwxov4hcqeejfbpur9t" deferrable="false" initiallyDeferred="false" referencedColumnNames="result_uuid" referencedTableName="shortcircuit_result" validate="true"/>
+    </changeSet>
+    <changeSet author="bouzolssyl" id="1689847994545-migration">
+        <update tableName="fault_result_entity">
+            <column name="result_result_uuid" valueComputed="(select r.short_circuit_analysis_result_entity_result_uuid from SHORTCIRCUIT_RESULT_FAULT_RESULTS r where fault_result_entity.fault_result_uuid = r.fault_results_fault_result_uuid)"/>
+            <where>fault_result_entity.fault_result_uuid = (SELECT r.fault_results_fault_result_uuid FROM SHORTCIRCUIT_RESULT_FAULT_RESULTS r WHERE fault_result_entity.result_result_uuid = r.short_circuit_analysis_result_entity_result_uuid)</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="bouzolssyl (generated)" id="1689847994545-3">
+        <dropTable tableName="SHORTCIRCUIT_RESULT_FAULT_RESULTS"/>
+    </changeSet>
+</databaseChangeLog>
