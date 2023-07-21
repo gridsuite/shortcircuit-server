@@ -78,6 +78,8 @@ public class ShortCircuitAnalysisControllerTest {
     private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
     private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
+
+    private static final UUID RESULT_UUID_TO_STOP = UUID.fromString("1c5212a9-e694-46a9-9eb2-cee60fc34675");
     private static final UUID REPORT_UUID = UUID.fromString("762b7298-8c0f-11ed-a1eb-0242ac120002");
     private static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of());
 
@@ -207,20 +209,24 @@ public class ShortCircuitAnalysisControllerTest {
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
+
+        // purge messages
+        while (output.receive(1000, shortCircuitAnalysisResultDestination) != null) {
+        }
+        // purge messages
+        while (output.receive(1000, shortCircuitAnalysisRunDestination) != null) {
+        }
+        while (output.receive(1000, shortCircuitAnalysisCancelDestination) != null) {
+        }
+        while (output.receive(1000, shortCircuitAnalysisStoppedDestination) != null) {
+        }
+        while (output.receive(1000, shortCircuitAnalysisFailedDestination) != null) {
+        }
     }
 
     @SneakyThrows
     @After
     public void tearDown() {
-        List<String> destinations = List.of(
-            shortCircuitAnalysisResultDestination,
-            shortCircuitAnalysisRunDestination,
-            shortCircuitAnalysisCancelDestination,
-            shortCircuitAnalysisStoppedDestination,
-            shortCircuitAnalysisFailedDestination
-        );
-        TestUtils.assertQueuesEmptyThenClear(destinations, output);
-
         mockMvc.perform(delete("/" + VERSION + "/results"))
                 .andExpect(status().isOk());
     }
@@ -368,31 +374,30 @@ public class ShortCircuitAnalysisControllerTest {
 
     @Test
     public void stopTest() throws Exception {
+        given(uuidGeneratorService.generate()).willReturn(RESULT_UUID_TO_STOP);
+
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
 
-            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))
+            mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            .header(HEADER_USER_ID, "userId"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+
+            // stop shortcircuit analysis
+            assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisRunDestination));
+            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID_TO_STOP))
                     .andExpect(status().isOk());
             assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisCancelDestination));
 
             Message<byte[]> message = output.receive(TIMEOUT, shortCircuitAnalysisStoppedDestination);
             assertNotNull(message);
-            assertEquals(RESULT_UUID.toString(), message.getHeaders().get("resultUuid"));
+            assertEquals(RESULT_UUID_TO_STOP.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
             assertEquals(CANCEL_MESSAGE, message.getHeaders().get("message"));
-
-            // short circuit analysis is run here, otherwise cancelComputationRequests is filled with RESULT_UUID, which can break other tests
-            // here, the below run will be canceled then remove RESULT_UUID from cancelComputationRequests
-            mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
-                    .header(HEADER_USER_ID, "userId"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-            // stop shortcircuit analysis
-            assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisRunDestination));
         }
     }
 
