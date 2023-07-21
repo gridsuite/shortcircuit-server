@@ -10,8 +10,7 @@
     </changeSet>
     <changeSet author="bouzolssyl" id="1689847994545-migration">
         <update tableName="fault_result_entity">
-            <column name="result_result_uuid" valueComputed="(scr.result_uuid FROM shortcircuit_result_fault_results srfr ON srfr.fault_results_fault_result_uuid = fault_result_entity.fault_result_uuid JOIN short_circuit_result scr srfr.short_circuit_analysis_result_entity_result_uuid = scr.result_uuid)"/>
-            <where>shortcircuit_result_fault_results.fault_results_fault_result_uuid = fault_result_entity.fault_result_uuid</where>
+            <column name="result_result_uuid" valueComputed="(SELECT srfr.short_circuit_analysis_result_entity_result_uuid FROM shortcircuit_result_fault_results srfr WHERE fault_result_entity.fault_result_uuid = srfr.fault_results_fault_result_uuid)"/>
         </update>
     </changeSet>
     <changeSet author="bouzolssyl (generated)" id="1689847994545-3">
