@@ -6,6 +6,11 @@
             <column name="result_result_uuid" type="uuid"/>
         </addColumn>
     </changeSet>
+    <changeSet author="bouzolssyl" id="1689778289810-migration">
+        <update tableName="fault_result_entity">
+            <column name="nb_limit_violations" valueComputed="(select count(*) from limit_violations lv WHERE fault_result_entity.fault_result_uuid=lv.fault_result_entity_fault_result_uuid)"/>
+        </update>
+    </changeSet>
     <changeSet author="bouzolssyl (generated)" id="1689778289810-2">
         <createIndex indexName="result_uuid_nbLimitViolations_idx" tableName="fault_result_entity">
             <column name="result_result_uuid"/>
