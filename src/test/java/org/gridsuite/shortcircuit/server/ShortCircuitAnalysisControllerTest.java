@@ -374,8 +374,9 @@ public class ShortCircuitAnalysisControllerTest {
 
     @Test
     public void stopTest() throws Exception {
+        // this test breaks following tests executing shortcircuit analysis if they run with the same resultUUID by adding it to cancelComputationRequests
+        // for now, we need to run it with a different resultUuid
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID_TO_STOP);
-
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
