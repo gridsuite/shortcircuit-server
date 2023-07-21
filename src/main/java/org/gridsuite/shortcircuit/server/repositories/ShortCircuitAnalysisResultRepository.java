@@ -145,25 +145,25 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResultEntity> findAllFaultResults(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+    public Page<FaultResultEntity> findPagedFaultResults(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
         Objects.requireNonNull(result);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResult(result, pageable);
+        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findPagedByResult(result, pageable);
         appendLimitViolationsAndFeederResults(pagedFaultResults);
         return pagedFaultResults;
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResultEntity> findFaultResultsWithLimitViolations(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+    public Page<FaultResultEntity> findPagedFaultResultsWithLimitViolations(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
         Objects.requireNonNull(result);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findAllByResultAndNbLimitViolationsGreaterThan(result, 0, pageable);
+        Page<FaultResultEntity> pagedFaultResults = faultResultRepository.findPagedByResultAndNbLimitViolationsGreaterThan(result, 0, pageable);
         appendLimitViolationsAndFeederResults(pagedFaultResults);
         return pagedFaultResults;
     }

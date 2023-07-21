@@ -25,9 +25,9 @@ import java.util.Set;
  */
 @Repository
 public interface FaultResultRepository extends JpaRepository<FaultResultEntity, UUID> {
-    Page<FaultResultEntity> findAllByResult(ShortCircuitAnalysisResultEntity result, Pageable pageable);
+    Page<FaultResultEntity> findPagedByResult(ShortCircuitAnalysisResultEntity result, Pageable pageable);
 
-    Page<FaultResultEntity> findAllByResultAndNbLimitViolationsGreaterThan(ShortCircuitAnalysisResultEntity result, int nbLimitViolations, Pageable pageable);
+    Page<FaultResultEntity> findPagedByResultAndNbLimitViolationsGreaterThan(ShortCircuitAnalysisResultEntity result, int nbLimitViolations, Pageable pageable);
 
     @EntityGraph(attributePaths = {"limitViolations"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithLimitViolationsByFaultResultUuidIn(List<UUID> faultResultsUUID);

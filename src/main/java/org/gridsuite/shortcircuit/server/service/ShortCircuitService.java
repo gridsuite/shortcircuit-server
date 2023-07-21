@@ -136,10 +136,10 @@ public class ShortCircuitService {
             Page<FaultResultEntity> faultResultsPage;
             switch (mode) {
                 case FULL:
-                    faultResultsPage = resultRepository.findAllFaultResults(result.get(), pageable);
+                    faultResultsPage = resultRepository.findPagedFaultResults(result.get(), pageable);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultsPage = resultRepository.findFaultResultsWithLimitViolations(result.get(), pageable);
+                    faultResultsPage = resultRepository.findPagedFaultResultsWithLimitViolations(result.get(), pageable);
                     break;
                 case NONE:
                 default:
