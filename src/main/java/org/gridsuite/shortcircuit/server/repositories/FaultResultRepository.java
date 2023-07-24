@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 
 import java.util.UUID;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 
@@ -25,9 +26,9 @@ import java.util.Set;
  */
 @Repository
 public interface FaultResultRepository extends JpaRepository<FaultResultEntity, UUID> {
-    Page<FaultResultEntity> findPagedByResult(ShortCircuitAnalysisResultEntity result, Pageable pageable);
+    Optional<Page<FaultResultEntity>> findPagedByResult(ShortCircuitAnalysisResultEntity result, Pageable pageable);
 
-    Page<FaultResultEntity> findPagedByResultAndNbLimitViolationsGreaterThan(ShortCircuitAnalysisResultEntity result, int nbLimitViolations, Pageable pageable);
+    Optional<Page<FaultResultEntity>> findPagedByResultAndNbLimitViolationsGreaterThan(ShortCircuitAnalysisResultEntity result, int nbLimitViolations, Pageable pageable);
 
     @EntityGraph(attributePaths = {"limitViolations"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithLimitViolationsByFaultResultUuidIn(List<UUID> faultResultsUUID);
