@@ -258,7 +258,8 @@ public class ShortCircuitAnalysisControllerTest {
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDto);
 
             result = mockMvc.perform(get(
-                             "/" + VERSION + "/results/{resultUuid}?mode=FULL", RESULT_UUID))
+                             "/" + VERSION + "/results/{resultUuid}", RESULT_UUID)
+                            .param("mode", "FULL"))
                      .andExpect(status().isOk())
                      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                      .andReturn();
@@ -266,7 +267,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FULL, resultDtoFull);
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/paged-results/{resultUuid}", RESULT_UUID)
+                            "/" + VERSION + "/results/{resultUuid}/fault_results", RESULT_UUID)
                             .param("page", "0")
                             .param("size", "2"))
                     .andExpect(status().isOk())
@@ -275,32 +276,34 @@ public class ShortCircuitAnalysisControllerTest {
             // It's not easy to deserialize into a Page implementation
             // ( e.g. https://stackoverflow.com/questions/52490399/spring-boot-page-deserialization-pageimpl-no-constructor ),
             // but for tests we care only about the content so we deserialize to DTOs only the content subfield using the jackson treemodel api
-            JsonNode pagedResultNode = mapper.readTree(result.getResponse().getContentAsString());
+            JsonNode faultResultsPageNode = mapper.readTree(result.getResponse().getContentAsString());
             ObjectReader reader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FaultResult>>() { });
-            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsDtoPage0 = reader.readValue(pagedResultNode.get("content"));
-            assertPagedResultsEquals(ShortCircuitAnalysisResultMock.RESULT, faultResultsDtoPage0);
+            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0 = reader.readValue(faultResultsPageNode.get("content"));
+            assertPagedResultsEquals(ShortCircuitAnalysisResultMock.RESULT, faultResultsPageDto0);
 
             result = mockMvc.perform(get(
-                             "/" + VERSION + "/paged-results/{resultUuid}?mode=FULL", RESULT_UUID)
+                             "/" + VERSION + "/results/{resultUuid}/fault_results", RESULT_UUID)
+                             .param("mode", "FULL")
                              .param("page", "0")
                              .param("size", "2"))
                      .andExpect(status().isOk())
                      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                      .andReturn();
-            JsonNode pagedResultNodePage0 = mapper.readTree(result.getResponse().getContentAsString());
-            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsDtoPage0Full = reader.readValue(pagedResultNodePage0.get("content"));
-            assertPagedResultsEquals(ShortCircuitAnalysisResultMock.RESULT_PAGE_0, faultResultsDtoPage0Full);
+            JsonNode faultResultsPageNode0 = mapper.readTree(result.getResponse().getContentAsString());
+            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0Full = reader.readValue(faultResultsPageNode0.get("content"));
+            assertPagedResultsEquals(ShortCircuitAnalysisResultMock.RESULT_PAGE_0, faultResultsPageDto0Full);
 
             result = mockMvc.perform(get(
-                             "/" + VERSION + "/paged-results/{resultUuid}?mode=FULL", RESULT_UUID)
+                             "/" + VERSION + "/results/{resultUuid}/fault_results", RESULT_UUID)
+                             .param("mode", "FULL")
                              .param("page", "1")
                              .param("size", "2"))
                      .andExpect(status().isOk())
                      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                      .andReturn();
-            JsonNode pagedResultNodePage1 = mapper.readTree(result.getResponse().getContentAsString());
-            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsDtoPage1Full = reader.readValue(pagedResultNodePage1.get("content"));
-            assertPagedResultsEquals(ShortCircuitAnalysisResultMock.RESULT_PAGE_1, faultResultsDtoPage1Full);
+            JsonNode faultResultsPageNode1 = mapper.readTree(result.getResponse().getContentAsString());
+            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto1Full = reader.readValue(faultResultsPageNode1.get("content"));
+            assertPagedResultsEquals(ShortCircuitAnalysisResultMock.RESULT_PAGE_1, faultResultsPageDto1Full);
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))

@@ -76,11 +76,6 @@ public class ShortCircuitService {
         return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
     }
 
-    // private static ShortCircuitAnalysisPagedResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, Page<FaultResultEntity> faultResultsPage) {
-    //     Page<FaultResult> faultResultsPageDto = faultResultsPage.map(fr -> fromEntity(fr));
-    //     return new ShortCircuitAnalysisPagedResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResultsPageDto);
-    // }
-
     private static FaultResult fromEntity(FaultResultEntity faultResultEntity) {
         Fault fault = fromEntity(faultResultEntity.getFault());
         double current = faultResultEntity.getCurrent();
@@ -127,7 +122,7 @@ public class ShortCircuitService {
         return null;
     }
 
-    public Page<FaultResult> getPagedResult(UUID resultUuid, FaultResultsMode mode, Pageable pageable) {
+    public Page<FaultResult> getFaultResultsPage(UUID resultUuid, FaultResultsMode mode, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
@@ -137,10 +132,10 @@ public class ShortCircuitService {
             Optional<Page<FaultResultEntity>> faultResultEntitiesPage = Optional.empty();
             switch (mode) {
                 case FULL:
-                    faultResultEntitiesPage = resultRepository.findPagedFaultResults(result.get(), pageable);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), pageable);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultRepository.findPagedFaultResultsWithLimitViolations(result.get(), pageable);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), pageable);
                     break;
                 case NONE:
                 default:

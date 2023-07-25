@@ -145,31 +145,31 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Page<FaultResultEntity>> findPagedFaultResults(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+    public Optional<Page<FaultResultEntity>> findFaultResultsPage(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
         Objects.requireNonNull(result);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Optional<Page<FaultResultEntity>> pagedFaultResults = faultResultRepository.findPagedByResult(result, pageable);
-        if (pagedFaultResults.isPresent()) {
-            appendLimitViolationsAndFeederResults(pagedFaultResults.get());
+        Optional<Page<FaultResultEntity>> faultResultsPage = faultResultRepository.findPagedByResult(result, pageable);
+        if (faultResultsPage.isPresent()) {
+            appendLimitViolationsAndFeederResults(faultResultsPage.get());
         }
-        return pagedFaultResults;
+        return faultResultsPage;
     }
 
     @Transactional(readOnly = true)
-    public Optional<Page<FaultResultEntity>> findPagedFaultResultsWithLimitViolations(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+    public Optional<Page<FaultResultEntity>> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
         Objects.requireNonNull(result);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Optional<Page<FaultResultEntity>> pagedFaultResults = faultResultRepository.findPagedByResultAndNbLimitViolationsGreaterThan(result, 0, pageable);
-        if (pagedFaultResults.isPresent()) {
-            appendLimitViolationsAndFeederResults(pagedFaultResults.get());
+        Optional<Page<FaultResultEntity>> faultResultsPage = faultResultRepository.findPagedByResultAndNbLimitViolationsGreaterThan(result, 0, pageable);
+        if (faultResultsPage.isPresent()) {
+            appendLimitViolationsAndFeederResults(faultResultsPage.get());
         }
-        return pagedFaultResults;
+        return faultResultsPage;
     }
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults) {
