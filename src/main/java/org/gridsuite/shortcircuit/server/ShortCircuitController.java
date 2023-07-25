@@ -97,8 +97,8 @@ public class ShortCircuitController {
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault_results", produces = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get paged fault results for a given short circuit analysis result")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The Page of fault results"),
+    @Operation(summary = "Get a fault results page for a given short circuit analysis result")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<Page<FaultResult>> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                 @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
