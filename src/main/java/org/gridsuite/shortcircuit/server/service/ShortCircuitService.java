@@ -6,6 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.ws.commons.LogUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
@@ -144,9 +146,7 @@ public class ShortCircuitService {
             if (faultResultEntitiesPage.isPresent()) {
                 Page<FaultResult> faultResultsPage = faultResultEntitiesPage.get().map(fr -> fromEntity(fr));
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                // see https://sonarcloud.io/organizations/gridsuite/rules?open=javasecurity%3AS5145&rule_key=javasecurity%3AS5145
-                String pageableStr = pageable.toString().replaceAll("[\n\r]", "_");
-                LOGGER.info("pageable =  {}", pageableStr);
+                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
                 return faultResultsPage;
             }
         }
