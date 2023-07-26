@@ -19,8 +19,7 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_RECEIVER;
-import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -69,6 +68,8 @@ public class ShortCircuitResultContext {
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
+        String busId = (String) headers.get(HEADER_BUS_ID);
+
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
 
         ShortCircuitParameters parameters;
@@ -81,7 +82,7 @@ public class ShortCircuitResultContext {
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
             variantId, otherNetworkUuids, receiver,
-            parameters, reportUuid, reporterId, userId);
+            parameters, reportUuid, reporterId, userId, busId);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
@@ -101,6 +102,7 @@ public class ShortCircuitResultContext {
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid() != null ? runContext.getReportUuid().toString() : null)
                 .setHeader(REPORTER_ID_HEADER, runContext.getReporterId())
+                .setHeader(HEADER_BUS_ID, runContext.getBusId())
                 .build();
     }
 }

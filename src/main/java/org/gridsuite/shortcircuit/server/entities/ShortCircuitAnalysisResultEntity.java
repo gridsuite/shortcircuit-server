@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,7 +18,6 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "shortcircuit_result")
@@ -31,6 +29,19 @@ public class ShortCircuitAnalysisResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<FaultResultEntity> faultResults;
+
+    public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Set<FaultResultEntity> faultResults) {
+        this.resultUuid = resultUuid;
+        this.writeTimeStamp = writeTimeStamp;
+        addFaultResults(faultResults);
+    }
+
+    public void addFaultResults(Set<FaultResultEntity> faultResults) {
+        if (faultResults != null) {
+            this.faultResults = faultResults;
+            faultResults.forEach(f -> f.setResult(this));
+        }
+    }
 }
