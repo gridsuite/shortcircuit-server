@@ -146,7 +146,8 @@ public class ShortCircuitService {
             if (faultResultEntitiesPage.isPresent()) {
                 Page<FaultResult> faultResultsPage = faultResultEntitiesPage.get().map(fr -> fromEntity(fr));
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+                String pageableStr = LogUtils.sanitizeParam(pageable.toString());
+                LOGGER.info("pageable =  {}", pageableStr);
                 return faultResultsPage;
             }
         }
