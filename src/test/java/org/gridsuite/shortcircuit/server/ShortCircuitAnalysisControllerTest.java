@@ -279,7 +279,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}?full=false", RESULT_UUID))
+                            "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
