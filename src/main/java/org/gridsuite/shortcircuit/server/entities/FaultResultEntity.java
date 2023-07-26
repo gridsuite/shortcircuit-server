@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,9 +18,9 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(indexes = @Index(name = "result_uuid_nbLimitViolations_idx", columnList = "result_result_uuid, nbLimitViolations"))
 public class FaultResultEntity {
 
     @Id
@@ -41,6 +40,10 @@ public class FaultResultEntity {
     @Column
     private double shortCircuitPower;
 
+    // Must save it in database to get pageable FaultResultEntity request filtered by number of LimitViolations
+    @Column
+    private int nbLimitViolations;
+
     @ElementCollection
     @CollectionTable(name = "limit_violations",
             indexes = {@Index(name = "limit_violations_fault_result_idx",
@@ -53,4 +56,28 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<FeederResultEmbeddable> feederResults;
 
+    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults) {
+        this.fault = fault;
+        this.current = current;
+        this.shortCircuitPower = shortCircuitPower;
+        this.limitViolations = limitViolations;
+        this.nbLimitViolations = limitViolations.size();
+        this.feederResults = feederResults;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof FaultResultEntity)) {
+            return false;
+        }
+        return faultResultUuid != null && faultResultUuid.equals(((FaultResultEntity) o).getFaultResultUuid());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
