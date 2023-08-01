@@ -41,21 +41,12 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
-        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntityWithLimits(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
+        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
     }
 
-    private static FaultResultEntity toFaultResultEntityWithLimits(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
-        FaultResultEntity faultResultEntity = toFaultResultEntity(faultResult);
-        if (shortCircuitLimits != null) {
-            faultResultEntity.setIpMax(shortCircuitLimits.getIpMax());
-            faultResultEntity.setIpMin(shortCircuitLimits.getIpMin());
-        }
-        return faultResultEntity;
-    }
-
-    private static FaultResultEntity toFaultResultEntity(FaultResult faultResult) {
+    private static FaultResultEntity toFaultResultEntity(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
         Fault fault = faultResult.getFault();
         double current = ((MagnitudeFaultResult) faultResult).getCurrent();
         double shortCircuitPower = faultResult.getShortCircuitPower();
@@ -72,7 +63,13 @@ public class ShortCircuitAnalysisResultRepository {
                         ((MagnitudeFeederResult) feederResult).getCurrent()))
                 .collect(Collectors.toList());
 
-        return new FaultResultEntity(faultEmbedded, current, shortCircuitPower, limitViolations, feederResults, Double.NaN, Double.NaN);
+        double ipMax = Double.NaN;
+        double ipMin = Double.NaN;
+        if (shortCircuitLimits != null) {
+            ipMax = shortCircuitLimits.getIpMax();
+            ipMin = shortCircuitLimits.getIpMin();
+        }
+        return new FaultResultEntity(faultEmbedded, current, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {
