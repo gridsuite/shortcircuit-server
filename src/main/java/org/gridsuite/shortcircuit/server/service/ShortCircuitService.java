@@ -82,9 +82,10 @@ public class ShortCircuitService {
         Fault fault = fromEntity(faultResultEntity.getFault());
         double current = faultResultEntity.getCurrent();
         double shortCircuitPower = faultResultEntity.getShortCircuitPower();
+        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMax(), faultResultEntity.getIpMin());
         List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(lv -> fromEntity(lv)).collect(Collectors.toList());
         List<FeederResult> feederResults = faultResultEntity.getFeederResults().stream().map(fr -> fromEntity(fr)).collect(Collectors.toList());
-        return new FaultResult(fault, current, shortCircuitPower, limitViolations, feederResults);
+        return new FaultResult(fault, current, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
     }
 
     private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {

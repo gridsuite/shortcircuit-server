@@ -56,13 +56,21 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<FeederResultEmbeddable> feederResults;
 
-    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults) {
+    @Column
+    private double ipMax;
+
+    @Column
+    private double ipMin;
+
+    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults, double ipMin, double ipMax) {
         this.fault = fault;
         this.current = current;
         this.shortCircuitPower = shortCircuitPower;
         this.limitViolations = limitViolations;
         this.nbLimitViolations = limitViolations.size();
         this.feederResults = feederResults;
+        this.ipMin = ipMin;
+        this.ipMax = ipMax;
     }
 
     @Override
