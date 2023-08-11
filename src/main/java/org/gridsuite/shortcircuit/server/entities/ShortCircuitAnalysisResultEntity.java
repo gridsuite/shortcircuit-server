@@ -8,6 +8,7 @@ package org.gridsuite.shortcircuit.server.entities;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
@@ -30,6 +31,7 @@ public class ShortCircuitAnalysisResultEntity {
     private ZonedDateTime writeTimeStamp;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Setter
     private Set<FaultResultEntity> faultResults;
 
     public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Set<FaultResultEntity> faultResults) {
