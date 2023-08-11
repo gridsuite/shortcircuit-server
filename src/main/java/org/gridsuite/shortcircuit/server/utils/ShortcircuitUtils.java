@@ -8,7 +8,10 @@ import org.apache.commons.math3.util.Pair;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEmbeddable;
 
-public class ShortcircuitUtils {
+public final class ShortcircuitUtils {
+
+    private ShortcircuitUtils() {
+    }
 
     //TODO Remove this method in order to use FortescueValue::toThreePhaseValue once Powsybl core 6.0.0 version is out
     public static FortescueValue.ThreePhaseValue toThreePhaseValue(FortescueValue fortescueValue) {
