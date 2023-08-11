@@ -29,7 +29,7 @@ public final class ShortcircuitUtils {
         Pair<Double, Double> phaseA = FortescueUtil.getPolarFromCartesian(mGphase.get(0, 0), mGphase.get(1, 0));
         Pair<Double, Double> phaseB = FortescueUtil.getPolarFromCartesian(mGphase.get(2, 0), mGphase.get(3, 0));
         Pair<Double, Double> phaseC = FortescueUtil.getPolarFromCartesian(mGphase.get(4, 0), mGphase.get(5, 0));
-        return fortescueValue.new ThreePhaseValue((Double) phaseA.getKey() / Math.sqrt(3.0D), (Double) phaseB.getKey() / Math.sqrt(3.0D), (Double) phaseC.getKey() / Math.sqrt(3.0D), (Double) phaseA.getValue(), (Double) phaseB.getValue(), (Double) phaseC.getValue());
+        return fortescueValue.new ThreePhaseValue(phaseA.getKey() / Math.sqrt(3.0D), phaseB.getKey() / Math.sqrt(3.0D), phaseC.getKey() / Math.sqrt(3.0D), phaseA.getValue(), phaseB.getValue(), phaseC.getValue());
     }
 
     public static double getPositiveMagnitude(FaultResultEntity faultResult) {

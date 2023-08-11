@@ -63,37 +63,33 @@ public class FaultResultEntity {
     private double ipMin;
 
     @Embedded
-    @AttributeOverrides({
-        @AttributeOverride(name = "positiveMagnitude", column = @Column(name = "fortescue_current_positive_magnitude")),
-        @AttributeOverride(name = "zeroMagnitude", column = @Column(name = "fortescue_current_zero_magnitude")),
-        @AttributeOverride(name = "negativeMagnitude", column = @Column(name = "fortescue_current_negative_magnitude")),
-        @AttributeOverride(name = "positiveAngle", column = @Column(name = "fortescue_current_positive_angle")),
-        @AttributeOverride(name = "zeroAngle", column = @Column(name = "fortescue_current_zero_angle")),
-        @AttributeOverride(name = "negativeAngle", column = @Column(name = "fortescue_current_negative_angle")),
-        @AttributeOverride(name = "magnitudeA", column = @Column(name = "fortescue_current_magnitude_a")),
-        @AttributeOverride(name = "magnitudeB", column = @Column(name = "fortescue_current_magnitude_b")),
-        @AttributeOverride(name = "magnitudeC", column = @Column(name = "fortescue_current_magnitude_c")),
-        @AttributeOverride(name = "angleA", column = @Column(name = "fortescue_current_angle_a")),
-        @AttributeOverride(name = "angleB", column = @Column(name = "fortescue_current_angle_b")),
-        @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_current_angle_c")),
-    })
+    @AttributeOverride(name = "positiveMagnitude", column = @Column(name = "fortescue_current_positive_magnitude"))
+    @AttributeOverride(name = "zeroMagnitude", column = @Column(name = "fortescue_current_zero_magnitude"))
+    @AttributeOverride(name = "negativeMagnitude", column = @Column(name = "fortescue_current_negative_magnitude"))
+    @AttributeOverride(name = "positiveAngle", column = @Column(name = "fortescue_current_positive_angle"))
+    @AttributeOverride(name = "zeroAngle", column = @Column(name = "fortescue_current_zero_angle"))
+    @AttributeOverride(name = "negativeAngle", column = @Column(name = "fortescue_current_negative_angle"))
+    @AttributeOverride(name = "magnitudeA", column = @Column(name = "fortescue_current_magnitude_a"))
+    @AttributeOverride(name = "magnitudeB", column = @Column(name = "fortescue_current_magnitude_b"))
+    @AttributeOverride(name = "magnitudeC", column = @Column(name = "fortescue_current_magnitude_c"))
+    @AttributeOverride(name = "angleA", column = @Column(name = "fortescue_current_angle_a"))
+    @AttributeOverride(name = "angleB", column = @Column(name = "fortescue_current_angle_b"))
+    @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_current_angle_c"))
     private FortescueResultEmbeddable fortescueCurrent;
 
     @Embedded
-    @AttributeOverrides({
-        @AttributeOverride(name = "positiveMagnitude", column = @Column(name = "fortescue_voltage_positive_magnitude")),
-        @AttributeOverride(name = "zeroMagnitude", column = @Column(name = "fortescue_voltage_zero_magnitude")),
-        @AttributeOverride(name = "negativeMagnitude", column = @Column(name = "fortescue_voltage_negative_magnitude")),
-        @AttributeOverride(name = "positiveAngle", column = @Column(name = "fortescue_voltage_positive_angle")),
-        @AttributeOverride(name = "zeroAngle", column = @Column(name = "fortescue_voltage_zero_angle")),
-        @AttributeOverride(name = "negativeAngle", column = @Column(name = "fortescue_voltage_negative_angle")),
-        @AttributeOverride(name = "magnitudeA", column = @Column(name = "fortescue_voltage_magnitude_a")),
-        @AttributeOverride(name = "magnitudeB", column = @Column(name = "fortescue_voltage_magnitude_b")),
-        @AttributeOverride(name = "magnitudeC", column = @Column(name = "fortescue_voltage_magnitude_c")),
-        @AttributeOverride(name = "angleA", column = @Column(name = "fortescue_voltage_angle_a")),
-        @AttributeOverride(name = "angleB", column = @Column(name = "fortescue_voltage_angle_b")),
-        @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_voltage_angle_c")),
-    })
+    @AttributeOverride(name = "positiveMagnitude", column = @Column(name = "fortescue_voltage_positive_magnitude"))
+    @AttributeOverride(name = "zeroMagnitude", column = @Column(name = "fortescue_voltage_zero_magnitude"))
+    @AttributeOverride(name = "negativeMagnitude", column = @Column(name = "fortescue_voltage_negative_magnitude"))
+    @AttributeOverride(name = "positiveAngle", column = @Column(name = "fortescue_voltage_positive_angle"))
+    @AttributeOverride(name = "zeroAngle", column = @Column(name = "fortescue_voltage_zero_angle"))
+    @AttributeOverride(name = "negativeAngle", column = @Column(name = "fortescue_voltage_negative_angle"))
+    @AttributeOverride(name = "magnitudeA", column = @Column(name = "fortescue_voltage_magnitude_a"))
+    @AttributeOverride(name = "magnitudeB", column = @Column(name = "fortescue_voltage_magnitude_b"))
+    @AttributeOverride(name = "magnitudeC", column = @Column(name = "fortescue_voltage_magnitude_c"))
+    @AttributeOverride(name = "angleA", column = @Column(name = "fortescue_voltage_angle_a"))
+    @AttributeOverride(name = "angleB", column = @Column(name = "fortescue_voltage_angle_b"))
+    @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_voltage_angle_c"))
     private FortescueResultEmbeddable fortescueVoltage;
 
     public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage) {
