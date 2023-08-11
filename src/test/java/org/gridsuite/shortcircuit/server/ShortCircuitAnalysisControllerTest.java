@@ -123,7 +123,7 @@ public class ShortCircuitAnalysisControllerTest {
                 List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
                 49.3, FaultResult.Status.SUCCESS);
         static final FaultResult FAULT_RESULT_4 = new FortescueFaultResult(new BusFault("VLHV2_0", "ELEMENT_ID_2"), 18.0,
-            List.of(FEEDER_RESULT_4, FEEDER_RESULT_5, FEEDER_RESULT_6), List.of(),
+            List.of(FEEDER_RESULT_4, FEEDER_RESULT_5, FEEDER_RESULT_6), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
             new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), Collections.emptyList(), null, FaultResult.Status.SUCCESS);
 
         static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3));
@@ -401,7 +401,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals("NGEN", resultMessage.getHeaders().get(HEADER_BUS_ID));
 
             result = mockMvc.perform(get(
-                    "/" + VERSION + "/results/{resultUuid}?mode={mode}", RESULT_UUID, FaultResultsMode.FULL))
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -438,7 +438,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals("S1VL2_BBS1", resultMessage.getHeaders().get(HEADER_BUS_ID));
 
             result = mockMvc.perform(get(
-                    "/" + VERSION + "/results/{resultUuid}?mode={mode}", RESULT_UUID, FaultResultsMode.FULL))
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
