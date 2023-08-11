@@ -9,11 +9,14 @@ package org.gridsuite.shortcircuit.server.repositories;
 import com.powsybl.shortcircuit.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -40,27 +43,29 @@ public class ShortCircuitAnalysisResultRepository {
         this.faultResultRepository = faultResultRepository;
     }
 
-    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
-        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> toFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
+    private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
+        return faultResult.getLimitViolations().stream()
+            .map(limitViolation -> new LimitViolationEmbeddable(limitViolation.getSubjectId(),
+                limitViolation.getLimitType(), limitViolation.getLimit(),
+                limitViolation.getLimitName(), limitViolation.getValue()))
+            .collect(Collectors.toList());
+    }
+
+    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits, boolean isWithFortescueResult) {
+        Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> isWithFortescueResult ? toFortescueFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId())) : toMagnitudeFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
     }
 
-    private static FaultResultEntity toFaultResultEntity(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
+    private static FaultResultEntity toMagnitudeFaultResultEntity(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
         Fault fault = faultResult.getFault();
         double current = ((MagnitudeFaultResult) faultResult).getCurrent();
         double shortCircuitPower = faultResult.getShortCircuitPower();
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
-
-        List<LimitViolationEmbeddable> limitViolations = faultResult.getLimitViolations().stream()
-                .map(limitViolation -> new LimitViolationEmbeddable(limitViolation.getSubjectId(),
-                        limitViolation.getLimitType(), limitViolation.getLimit(),
-                        limitViolation.getLimitName(), limitViolation.getValue()))
-                .collect(Collectors.toList());
-
+        List<LimitViolationEmbeddable> limitViolations = extractLimitViolations(faultResult);
         List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream()
                 .map(feederResult -> new FeederResultEmbeddable(feederResult.getConnectableId(),
-                        ((MagnitudeFeederResult) feederResult).getCurrent()))
+                        ((MagnitudeFeederResult) feederResult).getCurrent(), null))
                 .collect(Collectors.toList());
 
         double ipMax = Double.NaN;
@@ -69,7 +74,38 @@ public class ShortCircuitAnalysisResultRepository {
             ipMax = shortCircuitLimits.getIpMax();
             ipMin = shortCircuitLimits.getIpMin();
         }
-        return new FaultResultEntity(faultEmbedded, current, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax);
+        return new FaultResultEntity(faultEmbedded, current, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax, null, null);
+    }
+
+    private static FaultResultEntity toFortescueFaultResultEntity(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
+        Fault fault = faultResult.getFault();
+        double shortCircuitPower = faultResult.getShortCircuitPower();
+        FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
+        List<LimitViolationEmbeddable> limitViolations = extractLimitViolations(faultResult);
+        List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream()
+            .map(feederResult -> {
+                FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
+                FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(feederFortescueCurrent);
+                return new FeederResultEmbeddable(feederResult.getConnectableId(),
+                    Double.NaN, new FortescueResultEmbeddable(feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(), feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(), feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(), feederFortescueThreePhaseValue.getMagnitudeA(), feederFortescueThreePhaseValue.getMagnitudeB(), feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(), feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
+            })
+            .collect(Collectors.toList());
+
+        double ipMax = Double.NaN;
+        double ipMin = Double.NaN;
+        if (shortCircuitLimits != null) {
+            ipMax = shortCircuitLimits.getIpMax();
+            ipMin = shortCircuitLimits.getIpMin();
+        }
+
+        FortescueValue current = ((FortescueFaultResult) faultResult).getCurrent();
+        FortescueValue voltage = ((FortescueFaultResult) faultResult).getVoltage();
+        //We here use the function toThreePhaseValue from the utils class instead of FortescueValue's one because it is curently privated by mistake, to be changed once Powsybl core 6.0.0 is out
+        FortescueValue.ThreePhaseValue currentThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(current);
+        FortescueValue.ThreePhaseValue voltageThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(voltage);
+        FortescueResultEmbeddable fortescueCurrent = new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(), current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(), currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(), currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC());
+        FortescueResultEmbeddable fortescueVoltage = new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(), voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(), voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(), voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC());
+        return new FaultResultEntity(faultEmbedded, Double.NaN, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax, fortescueCurrent, fortescueVoltage);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {
@@ -84,10 +120,10 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits) {
+    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, boolean isWithFortescueResult) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
-            resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits));
+            resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits, isWithFortescueResult));
         }
     }
 

@@ -1,0 +1,183 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+    <changeSet author="marcelinhug (generated)" id="1691583529845-1">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_angle_a" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-2">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_angle_a" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-3">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_angle_b" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-4">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_angle_b" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-5">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_angle_c" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-6">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_angle_c" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-7">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_magnitude_a" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-8">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_magnitude_a" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-9">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_magnitude_b" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-10">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_magnitude_b" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-11">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_magnitude_c" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-12">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_magnitude_c" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-13">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_negative_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-14">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_negative_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-15">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_negative_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-16">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_negative_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-17">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_positive_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-18">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_positive_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-19">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_positive_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-20">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_positive_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-21">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_zero_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-22">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_zero_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-23">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_current_zero_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-24">
+        <addColumn tableName="feeder_results">
+            <column name="fortescue_current_zero_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-25">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_angle_a" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-27">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_angle_b" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-29">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_angle_c" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-31">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_magnitude_a" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-33">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_magnitude_b" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-35">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_magnitude_c" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-37">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_negative_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-39">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_negative_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-41">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_positive_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-43">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_positive_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-45">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_zero_angle" type="float8"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="marcelinhug (generated)" id="1691583529845-47">
+        <addColumn tableName="fault_result_entity">
+            <column name="fortescue_voltage_zero_magnitude" type="float8"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

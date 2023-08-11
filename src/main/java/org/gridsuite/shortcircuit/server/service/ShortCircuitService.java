@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
+import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -81,11 +82,12 @@ public class ShortCircuitService {
     private static FaultResult fromEntity(FaultResultEntity faultResultEntity) {
         Fault fault = fromEntity(faultResultEntity.getFault());
         double current = faultResultEntity.getCurrent();
+        double positiveMagnitude = ShortcircuitUtils.getPositiveMagnitude(faultResultEntity);
         double shortCircuitPower = faultResultEntity.getShortCircuitPower();
         ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMax(), faultResultEntity.getIpMin());
         List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(lv -> fromEntity(lv)).collect(Collectors.toList());
         List<FeederResult> feederResults = faultResultEntity.getFeederResults().stream().map(fr -> fromEntity(fr)).collect(Collectors.toList());
-        return new FaultResult(fault, current, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
+        return new FaultResult(fault, current, positiveMagnitude, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
     }
 
     private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {
@@ -98,7 +100,7 @@ public class ShortCircuitService {
     }
 
     private static FeederResult fromEntity(FeederResultEmbeddable feederResultEmbeddable) {
-        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent());
+        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent(), ShortcircuitUtils.getPositiveMagnitude(feederResultEmbeddable));
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {

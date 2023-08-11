@@ -233,7 +233,7 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitLimits);
+                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitLimits, resultContext.getRunContext().getParameters().isWithFortescueResult());
                 resultRepository.insertStatus(List.of(resultContext.getResultUuid()), ShortCircuitAnalysisStatus.COMPLETED.name());
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
