@@ -26,7 +26,6 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
-import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ReportService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
