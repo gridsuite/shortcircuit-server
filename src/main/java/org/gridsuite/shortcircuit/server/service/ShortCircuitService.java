@@ -101,10 +101,6 @@ public class ShortCircuitService {
         result.setFaultResults(result.getFaultResults().stream()
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
-                .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
-                .toList();
-        Set<FaultResultEntity> sortedFaultResultsSet = new LinkedHashSet<>(sortedFaultResults);
-        result.setFaultResults(sortedFaultResultsSet);
         return result;
     }
 
