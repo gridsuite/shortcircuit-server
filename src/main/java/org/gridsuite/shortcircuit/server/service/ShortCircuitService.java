@@ -98,7 +98,9 @@ public class ShortCircuitService {
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
-        List<FaultResultEntity> sortedFaultResults = result.getFaultResults().stream()
+        result.setFaultResults(result.getFaultResults().stream()
+                .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
                 .toList();
         Set<FaultResultEntity> sortedFaultResultsSet = new LinkedHashSet<>(sortedFaultResults);
