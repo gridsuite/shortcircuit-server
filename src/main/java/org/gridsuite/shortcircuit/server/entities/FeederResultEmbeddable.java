@@ -41,4 +41,8 @@ public class FeederResultEmbeddable {
     @AttributeOverride(name = "angleB", column = @Column(name = "fortescue_current_angle_b"))
     @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_current_angle_c"))
     private FortescueResultEmbeddable fortescueCurrent;
+
+    public double getPositiveMagnitude() {
+        return this.getFortescueCurrent() != null ? this.getFortescueCurrent().getPositiveMagnitude() : Double.NaN;
+    }
 }

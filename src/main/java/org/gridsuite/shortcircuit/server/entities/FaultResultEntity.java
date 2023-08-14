@@ -120,4 +120,8 @@ public class FaultResultEntity {
     public int hashCode() {
         return getClass().hashCode();
     }
+
+    public double getPositiveMagnitude() {
+        return this.getFortescueCurrent() != null ? this.getFortescueCurrent().getPositiveMagnitude() : Double.NaN;
+    }
 }

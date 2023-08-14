@@ -5,8 +5,6 @@ import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.shortcircuit.FortescueValue;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.util.Pair;
-import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
-import org.gridsuite.shortcircuit.server.entities.FeederResultEmbeddable;
 
 public final class ShortcircuitUtils {
 
@@ -30,13 +28,5 @@ public final class ShortcircuitUtils {
         Pair<Double, Double> phaseB = FortescueUtil.getPolarFromCartesian(mGphase.get(2, 0), mGphase.get(3, 0));
         Pair<Double, Double> phaseC = FortescueUtil.getPolarFromCartesian(mGphase.get(4, 0), mGphase.get(5, 0));
         return fortescueValue.new ThreePhaseValue(phaseA.getKey() / Math.sqrt(3.0D), phaseB.getKey() / Math.sqrt(3.0D), phaseC.getKey() / Math.sqrt(3.0D), phaseA.getValue(), phaseB.getValue(), phaseC.getValue());
-    }
-
-    public static double getPositiveMagnitude(FaultResultEntity faultResult) {
-        return faultResult.getFortescueCurrent() != null ? faultResult.getFortescueCurrent().getPositiveMagnitude() : Double.NaN;
-    }
-
-    public static double getPositiveMagnitude(FeederResultEmbeddable feederResult) {
-        return feederResult.getFortescueCurrent() != null ? feederResult.getFortescueCurrent().getPositiveMagnitude() : Double.NaN;
     }
 }

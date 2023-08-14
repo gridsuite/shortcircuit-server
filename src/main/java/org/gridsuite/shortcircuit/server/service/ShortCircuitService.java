@@ -82,7 +82,7 @@ public class ShortCircuitService {
     private static FaultResult fromEntity(FaultResultEntity faultResultEntity) {
         Fault fault = fromEntity(faultResultEntity.getFault());
         double current = faultResultEntity.getCurrent();
-        double positiveMagnitude = ShortcircuitUtils.getPositiveMagnitude(faultResultEntity);
+        double positiveMagnitude = faultResultEntity.getPositiveMagnitude();
         double shortCircuitPower = faultResultEntity.getShortCircuitPower();
         ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMax(), faultResultEntity.getIpMin());
         List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(lv -> fromEntity(lv)).collect(Collectors.toList());
@@ -100,7 +100,7 @@ public class ShortCircuitService {
     }
 
     private static FeederResult fromEntity(FeederResultEmbeddable feederResultEmbeddable) {
-        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent(), ShortcircuitUtils.getPositiveMagnitude(feederResultEmbeddable));
+        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent(), feederResultEmbeddable.getPositiveMagnitude());
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {
