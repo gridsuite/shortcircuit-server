@@ -97,7 +97,7 @@ public class ShortCircuitService {
         return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent());
     }
 
-    private static ShortCircuitAnalysisResultEntity sortByElementId (ShortCircuitAnalysisResultEntity result) {
+    private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
         List<FaultResultEntity> sortedFaultResults = result.getFaultResults().stream()
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
                 .toList();
@@ -123,7 +123,7 @@ public class ShortCircuitService {
                 break;
         }
         if (result.isPresent()) {
-            Optional<ShortCircuitAnalysisResultEntity>  sortedResult = Optional.of(sortByElementId(result.get()));
+            Optional<ShortCircuitAnalysisResultEntity> sortedResult = Optional.of(sortByElementId(result.get()));
 
             ShortCircuitAnalysisResult res = sortedResult.map(r -> fromEntity(r, mode)).orElse(null);
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
