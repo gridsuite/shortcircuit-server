@@ -121,9 +121,9 @@ public class ShortCircuitService {
                 break;
         }
         if (result.isPresent()) {
-            Optional<ShortCircuitAnalysisResultEntity> sortedResult = Optional.of(sortByElementId(result.get()));
+            ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
 
-            ShortCircuitAnalysisResult res = sortedResult.map(r -> fromEntity(r, mode)).orElse(null);
+            ShortCircuitAnalysisResult res = fromEntity(sortedResult, mode);
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
             return res;
         }
