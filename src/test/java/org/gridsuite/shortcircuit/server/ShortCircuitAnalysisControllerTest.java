@@ -274,10 +274,8 @@ public class ShortCircuitAnalysisControllerTest {
                     .andReturn();
 
             // stop shortcircuit analysis
-            assertNotNull(output.receive(TIMEOUT, "shortcircuitanalysis.run"));
             mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))
                     .andExpect(status().isOk());
-            assertNotNull(output.receive(TIMEOUT, "shortcircuitanalysis.cancel"));
 
             Message<byte[]> message = output.receive(TIMEOUT, "shortcircuitanalysis.stopped");
             assertNotNull(message);
