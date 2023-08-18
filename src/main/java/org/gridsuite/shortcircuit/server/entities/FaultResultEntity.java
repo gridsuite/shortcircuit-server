@@ -6,9 +6,9 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import jakarta.persistence.*;
 import java.util.List;
@@ -18,14 +18,18 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(indexes = @Index(name = "result_uuid_nbLimitViolations_idx", columnList = "result_result_uuid, nbLimitViolations"))
 public class FaultResultEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID faultResultUuid;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @Setter
+    private ShortCircuitAnalysisResultEntity result;
 
     @Embedded
     private FaultEmbeddable fault;
@@ -35,6 +39,10 @@ public class FaultResultEntity {
 
     @Column
     private double shortCircuitPower;
+
+    // Must save it in database to get pageable FaultResultEntity request filtered by number of LimitViolations
+    @Column
+    private int nbLimitViolations;
 
     @ElementCollection
     @CollectionTable(name = "limit_violations",
@@ -48,4 +56,36 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<FeederResultEmbeddable> feederResults;
 
+    @Column
+    private double ipMax;
+
+    @Column
+    private double ipMin;
+
+    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults, double ipMin, double ipMax) {
+        this.fault = fault;
+        this.current = current;
+        this.shortCircuitPower = shortCircuitPower;
+        this.limitViolations = limitViolations;
+        this.nbLimitViolations = limitViolations.size();
+        this.feederResults = feederResults;
+        this.ipMin = ipMin;
+        this.ipMax = ipMax;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof FaultResultEntity)) {
+            return false;
+        }
+        return faultResultUuid != null && faultResultUuid.equals(((FaultResultEntity) o).getFaultResultUuid());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
