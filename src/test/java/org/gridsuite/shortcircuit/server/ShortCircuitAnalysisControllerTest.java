@@ -118,7 +118,7 @@ public class ShortCircuitAnalysisControllerTest {
                 List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
                 49.3, FaultResult.Status.SUCCESS);
 
-        static final ShortCircuitAnalysisResult RESULT_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3));
+        static final ShortCircuitAnalysisResult ALL_RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_0 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_1 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
@@ -264,7 +264,7 @@ public class ShortCircuitAnalysisControllerTest {
         LocalDateTime testTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FULL));
+                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.ALL_RESULT));
 
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
@@ -293,7 +293,7 @@ public class ShortCircuitAnalysisControllerTest {
                      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                      .andReturn();
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDtoFull = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
-            assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FULL, resultDtoFull);
+            assertResultsEquals(ShortCircuitAnalysisResultMock.ALL_RESULT, resultDtoFull);
 
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
@@ -336,6 +336,20 @@ public class ShortCircuitAnalysisControllerTest {
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto1Full = reader.readValue(faultResultsPageNode1.get("content"));
             assertPagedResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full);
 
+            result = mockMvc.perform(get(
+                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                            .param("mode", "FULL")
+                            .param("page", "0")
+                            .param("size", "2")
+                            .param("allResults", "true")
+                            .param("sort", "fault.id"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+            JsonNode faultResultsPageNode2 = mapper.readTree(result.getResponse().getContentAsString());
+            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto2Full = reader.readValue(faultResultsPageNode2.get("content"));
+            assertPagedResultsEquals(ShortCircuitAnalysisResultMock.ALL_RESULT, faultResultsPageDto2Full);
+
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                     .andExpect(status().isNotFound());
@@ -355,7 +369,7 @@ public class ShortCircuitAnalysisControllerTest {
         LocalDateTime testTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FULL));
+                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.ALL_RESULT));
 
             MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
@@ -387,7 +401,7 @@ public class ShortCircuitAnalysisControllerTest {
         LocalDateTime testTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(nodeBreakerNetwork), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FULL));
+                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.ALL_RESULT));
 
             MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + NODE_BREAKER_NETWORK_VARIANT_ID, NODE_BREAKER_NETWORK_UUID)
@@ -419,7 +433,7 @@ public class ShortCircuitAnalysisControllerTest {
         LocalDateTime testTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(nodeBreakerNetwork), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FULL));
+                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.ALL_RESULT));
 
             MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + NODE_BREAKER_NETWORK_VARIANT_ID, NODE_BREAKER_NETWORK_UUID)
