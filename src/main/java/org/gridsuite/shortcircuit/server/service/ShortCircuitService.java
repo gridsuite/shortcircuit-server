@@ -19,13 +19,9 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -101,6 +97,13 @@ public class ShortCircuitService {
         return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent());
     }
 
+    private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
+        result.setFaultResults(result.getFaultResults().stream()
+                .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
+        return result;
+    }
+
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
@@ -118,7 +121,9 @@ public class ShortCircuitService {
                 break;
         }
         if (result.isPresent()) {
-            ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r, mode)).orElse(null);
+            ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
+
+            ShortCircuitAnalysisResult res = fromEntity(sortedResult, mode);
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
             return res;
         }
