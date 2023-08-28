@@ -242,26 +242,21 @@ public class ShortCircuitAnalysisControllerTest {
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
-
-        // purge messages
-        while (output.receive(1000, shortCircuitAnalysisResultDestination) != null) {
-        }
-        // purge messages
-        while (output.receive(1000, shortCircuitAnalysisRunDestination) != null) {
-        }
-        while (output.receive(1000, shortCircuitAnalysisCancelDestination) != null) {
-        }
-        while (output.receive(1000, shortCircuitAnalysisStoppedDestination) != null) {
-        }
-        while (output.receive(1000, shortCircuitAnalysisFailedDestination) != null) {
-        }
     }
 
     @SneakyThrows
     @After
     public void tearDown() {
-        mockMvc.perform(delete("/" + VERSION + "/results"))
-                .andExpect(status().isOk());
+        cleanDB();
+
+        TestUtils.assertQueuesEmptyThenClear(List.of(shortCircuitAnalysisResultDestination, shortCircuitAnalysisRunDestination,
+            shortCircuitAnalysisCancelDestination, shortCircuitAnalysisStoppedDestination,
+            shortCircuitAnalysisFailedDestination), output);
+    }
+
+    @SneakyThrows
+    private void cleanDB() {
+        mockMvc.perform(delete("/" + VERSION + "/results")).andExpect(status().isOk());
     }
 
     @Test
@@ -283,6 +278,10 @@ public class ShortCircuitAnalysisControllerTest {
             Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
 
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
@@ -377,6 +376,11 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
             assertEquals("NGEN", resultMessage.getHeaders().get(HEADER_BUS_ID));
 
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+            assertEquals("NGEN", runMessage.getHeaders().get(HEADER_BUS_ID));
+
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -409,6 +413,11 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
             assertEquals("S1VL2_BBS1", resultMessage.getHeaders().get(HEADER_BUS_ID));
 
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+            assertEquals("S1VL2_BBS1", runMessage.getHeaders().get(HEADER_BUS_ID));
+
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -436,10 +445,15 @@ public class ShortCircuitAnalysisControllerTest {
                 .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
-            assertEquals("BUSBARSECTION_ID_NOT_EXISTING", resultMessage.getHeaders().get(HEADER_BUS_ID));
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+            assertEquals("BUSBARSECTION_ID_NOT_EXISTING", runMessage.getHeaders().get(HEADER_BUS_ID));
+
+            Message<byte[]> failedMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
+            assertEquals(RESULT_UUID.toString(), failedMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", failedMessage.getHeaders().get("receiver"));
+            assertEquals("BUSBARSECTION_ID_NOT_EXISTING", failedMessage.getHeaders().get(HEADER_BUS_ID));
 
             mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
@@ -467,6 +481,8 @@ public class ShortCircuitAnalysisControllerTest {
             assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisRunDestination));
             mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID_TO_STOP))
                     .andExpect(status().isOk());
+
+            assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisResultDestination));
             assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisCancelDestination));
 
             Message<byte[]> message = output.receive(TIMEOUT, shortCircuitAnalysisStoppedDestination);
@@ -492,13 +508,21 @@ public class ShortCircuitAnalysisControllerTest {
                     .andReturn();
 
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+
+            Message<byte[]> failedMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
+            assertEquals(RESULT_UUID.toString(), failedMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", failedMessage.getHeaders().get("receiver"));
         }
     }
 
     //FIXME: test to be removed when the hack in ShortCircuitParameters.getNonNullParameters() is removed
     @SneakyThrows
     @Test
-    public void parametersWithExtentionTest() {
+    public void parametersWithExtensionTest() {
 
         class ShortCircuitParametersRandomExtension extends AbstractExtension<ShortCircuitParameters> {
             @Override
@@ -510,9 +534,11 @@ public class ShortCircuitAnalysisControllerTest {
         ShortCircuitParameters parametersWithExtentions = new ShortCircuitParameters();
         parametersWithExtentions.addExtension(ShortCircuitParametersRandomExtension.class, new ShortCircuitParametersRandomExtension());
 
-        try (MockedStatic<ShortCircuitParameters> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitParameters.class)) {
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitParameters.load())
-                    .thenReturn(parametersWithExtentions);
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class);
+            MockedStatic<ShortCircuitParameters> shortCircuitParametersMockedStatic = Mockito.mockStatic(ShortCircuitParameters.class)) {
+            shortCircuitParametersMockedStatic.when(ShortCircuitParameters::load).thenReturn(parametersWithExtentions);
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
+                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FULL));
 
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
@@ -521,6 +547,14 @@ public class ShortCircuitAnalysisControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
         }
     }
 
@@ -557,6 +591,14 @@ public class ShortCircuitAnalysisControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
+
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
         }
     }
 }
