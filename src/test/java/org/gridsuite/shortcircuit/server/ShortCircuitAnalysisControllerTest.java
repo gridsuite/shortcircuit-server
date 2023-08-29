@@ -497,7 +497,7 @@ public class ShortCircuitAnalysisControllerTest {
     @Test
     public void mergingViewTest() {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(Network.class), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
 
             MvcResult result = mockMvc.perform(post(
@@ -513,9 +513,9 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
             assertEquals("me", runMessage.getHeaders().get("receiver"));
 
-            Message<byte[]> failedMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
-            assertEquals(RESULT_UUID.toString(), failedMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", failedMessage.getHeaders().get("receiver"));
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
         }
     }
 
