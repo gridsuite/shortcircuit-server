@@ -50,6 +50,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.lang.reflect.Constructor;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
@@ -122,6 +123,18 @@ public class ShortCircuitAnalysisControllerTest {
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_0 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_1 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
+    }
+
+    private static class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
+        @Override
+        public String getName() {
+            return "ShortCircuitAnalysisMock";
+        }
+
+        @Override
+        public String getVersion() {
+            return "1";
+        }
     }
 
     // Destinations
@@ -581,9 +594,17 @@ public class ShortCircuitAnalysisControllerTest {
     @SneakyThrows
     @Test
     public void runWithReportTest() {
-        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+        // ShortCircuitAnalysis.Runner constructor is private
+        ShortCircuitAnalysisProviderMock shortCircuitAnalysisProviderMock = new ShortCircuitAnalysisProviderMock();
+        Constructor<ShortCircuitAnalysis.Runner> constructor = ShortCircuitAnalysis.Runner.class.getDeclaredConstructor(ShortCircuitAnalysisProvider.class);
+        constructor.setAccessible(true);
+        ShortCircuitAnalysis.Runner runner = constructor.newInstance(shortCircuitAnalysisProviderMock);
+
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class);
+             MockedStatic<ShortCircuitAnalysis.Runner> shortCircuitAnalysisRunnerMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.Runner.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
+            shortCircuitAnalysisRunnerMockedStatic.when(() -> ShortCircuitAnalysis.find()).thenReturn(runner);
 
             mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportUuid=" + REPORT_UUID + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
