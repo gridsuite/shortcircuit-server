@@ -584,7 +584,7 @@ public class ShortCircuitAnalysisControllerTest {
             MockedStatic<ShortCircuitParameters> shortCircuitParametersMockedStatic = Mockito.mockStatic(ShortCircuitParameters.class)) {
             shortCircuitParametersMockedStatic.when(ShortCircuitParameters::load).thenReturn(parametersWithExtentions);
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FULL));
+                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
 
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
