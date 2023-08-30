@@ -20,4 +20,6 @@ public class FeederResult {
     private String connectableId;
 
     private double current;
+
+    private double positiveMagnitude;
 }

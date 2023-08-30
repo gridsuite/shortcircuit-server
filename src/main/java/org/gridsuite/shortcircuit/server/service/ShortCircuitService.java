@@ -77,11 +77,12 @@ public class ShortCircuitService {
     private static FaultResult fromEntity(FaultResultEntity faultResultEntity) {
         Fault fault = fromEntity(faultResultEntity.getFault());
         double current = faultResultEntity.getCurrent();
+        double positiveMagnitude = faultResultEntity.getPositiveMagnitude();
         double shortCircuitPower = faultResultEntity.getShortCircuitPower();
         ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMin(), faultResultEntity.getIpMax());
         List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(lv -> fromEntity(lv)).collect(Collectors.toList());
         List<FeederResult> feederResults = faultResultEntity.getFeederResults().stream().map(fr -> fromEntity(fr)).collect(Collectors.toList());
-        return new FaultResult(fault, current, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
+        return new FaultResult(fault, current, positiveMagnitude, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
     }
 
     private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {
@@ -94,7 +95,7 @@ public class ShortCircuitService {
     }
 
     private static FeederResult fromEntity(FeederResultEmbeddable feederResultEmbeddable) {
-        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent());
+        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent(), feederResultEmbeddable.getPositiveMagnitude());
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
