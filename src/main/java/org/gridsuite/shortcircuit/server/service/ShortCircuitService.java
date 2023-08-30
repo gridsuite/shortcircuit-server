@@ -19,13 +19,9 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -83,7 +79,7 @@ public class ShortCircuitService {
         double current = faultResultEntity.getCurrent();
         double positiveMagnitude = faultResultEntity.getPositiveMagnitude();
         double shortCircuitPower = faultResultEntity.getShortCircuitPower();
-        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMax(), faultResultEntity.getIpMin());
+        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMin(), faultResultEntity.getIpMax());
         List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(lv -> fromEntity(lv)).collect(Collectors.toList());
         List<FeederResult> feederResults = faultResultEntity.getFeederResults().stream().map(fr -> fromEntity(fr)).collect(Collectors.toList());
         return new FaultResult(fault, current, positiveMagnitude, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
@@ -100,6 +96,13 @@ public class ShortCircuitService {
 
     private static FeederResult fromEntity(FeederResultEmbeddable feederResultEmbeddable) {
         return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent(), feederResultEmbeddable.getPositiveMagnitude());
+    }
+
+    private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
+        result.setFaultResults(result.getFaultResults().stream()
+                .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
+        return result;
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {
@@ -119,7 +122,9 @@ public class ShortCircuitService {
                 break;
         }
         if (result.isPresent()) {
-            ShortCircuitAnalysisResult res = result.map(r -> fromEntity(r, mode)).orElse(null);
+            ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
+
+            ShortCircuitAnalysisResult res = fromEntity(sortedResult, mode);
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
             return res;
         }
