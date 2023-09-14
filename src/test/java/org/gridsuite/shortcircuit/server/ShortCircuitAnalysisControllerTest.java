@@ -528,6 +528,9 @@ public class ShortCircuitAnalysisControllerTest {
             mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID_TO_STOP))
                     .andExpect(status().isOk());
 
+            assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisResultDestination));
+            assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisCancelDestination));
+
             Message<byte[]> message = output.receive(TIMEOUT, shortCircuitAnalysisStoppedDestination);
             assertNotNull(message);
             assertEquals(RESULT_UUID_TO_STOP.toString(), message.getHeaders().get("resultUuid"));
