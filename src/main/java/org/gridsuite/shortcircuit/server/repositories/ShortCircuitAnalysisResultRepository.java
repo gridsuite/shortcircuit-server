@@ -151,6 +151,12 @@ public class ShortCircuitAnalysisResultRepository {
         if (!result.isPresent()) {
             return result;
         }
+        // TODO why is this needed ? And is it needed in other places ?
+        result.get().getFaultResults().forEach(x -> {
+            x.getFeederResults().toArray();
+//            x.getLimitViolations().toArray(); /// XXX not needed ?
+        });
+
         // using the the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
@@ -166,6 +172,12 @@ public class ShortCircuitAnalysisResultRepository {
         if (!result.isPresent()) {
             return result;
         }
+        // TODO why is this needed ? And is it needed in other places ?
+        result.get().getFaultResults().forEach(x -> {
+            x.getFeederResults().toArray();
+//            x.getLimitViolations().toArray(); /// XXX not needed ?
+        });
+
         List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
                                                             .filter(fr -> !fr.getLimitViolations().isEmpty())
                                                             .map(FaultResultEntity::getFaultResultUuid)

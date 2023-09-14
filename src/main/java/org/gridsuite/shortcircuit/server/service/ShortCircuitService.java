@@ -137,6 +137,13 @@ public class ShortCircuitService {
         Optional<ShortCircuitAnalysisResultEntity> result;
         // get without faultResults : FaultResultsM.NONE
         result = resultRepository.find(resultUuid);
+
+        // TODO why is this needed ? And is it needed in other places ?
+        result.get().getFaultResults().forEach(x -> {
+            x.getFeederResults().toArray();
+            x.getLimitViolations().toArray();
+        });
+
         if (result.isPresent()) {
             Optional<Page<FaultResultEntity>> faultResultEntitiesPage = Optional.empty();
             switch (mode) {
