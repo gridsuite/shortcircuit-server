@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import org.gridsuite.shortcircuit.server.repositories.GlobalStatusRepository;
 import org.gridsuite.shortcircuit.server.repositories.ResultRepository;
 import org.springframework.stereotype.Service;
 
