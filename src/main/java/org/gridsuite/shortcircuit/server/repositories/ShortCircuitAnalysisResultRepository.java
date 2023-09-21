@@ -122,8 +122,8 @@ public class ShortCircuitAnalysisResultRepository {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
             resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits, isWithFortescueResult));
-            globalStatusRepository.save(toStatusEntity(resultUuid, status));
         }
+        globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }
 
     @Transactional
