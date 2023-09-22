@@ -32,7 +32,7 @@ spring:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.stopped
         publishFailed-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.failed
-      source: publishRun;publishResult;publishCancel;publishStopped;publishFailed
+      output-bindings: publishRun-out-0;publishResult-out-0;publishCancel-out-0;publishStopped-out-0;publishFailed-out-0
 
 powsybl-ws:
   database:
