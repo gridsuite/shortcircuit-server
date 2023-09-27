@@ -68,11 +68,15 @@ public class ShortCircuitAnalysisResultRepository {
 
         double ipMax = Double.NaN;
         double ipMin = Double.NaN;
+        double deltaCurrentIpMin = Double.NaN;
+        double deltaCurrentIpMax = Double.NaN;
         if (shortCircuitLimits != null) {
             ipMax = shortCircuitLimits.getIpMax();
             ipMin = shortCircuitLimits.getIpMin();
+            deltaCurrentIpMin = current - ipMin / 1000;
+            deltaCurrentIpMax = current - ipMax / 1000;
         }
-        return new FaultResultEntity(faultEmbedded, current, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax, null, null);
+        return new FaultResultEntity(faultEmbedded, current, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax, null, null, deltaCurrentIpMin, deltaCurrentIpMax);
     }
 
     private static FaultResultEntity toFortescueFaultResultEntity(FaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
@@ -91,19 +95,23 @@ public class ShortCircuitAnalysisResultRepository {
 
         double ipMax = Double.NaN;
         double ipMin = Double.NaN;
+        double deltaCurrentIpMin = Double.NaN;
+        double deltaCurrentIpMax = Double.NaN;
+        FortescueValue current = ((FortescueFaultResult) faultResult).getCurrent();
         if (shortCircuitLimits != null) {
             ipMax = shortCircuitLimits.getIpMax();
             ipMin = shortCircuitLimits.getIpMin();
+            deltaCurrentIpMin = current.getPositiveMagnitude() - ipMin / 1000;
+            deltaCurrentIpMax = current.getPositiveMagnitude() - ipMax / 1000;
         }
 
-        FortescueValue current = ((FortescueFaultResult) faultResult).getCurrent();
         FortescueValue voltage = ((FortescueFaultResult) faultResult).getVoltage();
         //We here use the function toThreePhaseValue from the utils class instead of FortescueValue's one because it is curently privated by mistake, to be changed once Powsybl core 6.0.0 is out
         FortescueValue.ThreePhaseValue currentThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(current);
         FortescueValue.ThreePhaseValue voltageThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(voltage);
         FortescueResultEmbeddable fortescueCurrent = new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(), current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(), currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(), currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC());
         FortescueResultEmbeddable fortescueVoltage = new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(), voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(), voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(), voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC());
-        return new FaultResultEntity(faultEmbedded, Double.NaN, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax, fortescueCurrent, fortescueVoltage);
+        return new FaultResultEntity(faultEmbedded, Double.NaN, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax, fortescueCurrent, fortescueVoltage, deltaCurrentIpMin, deltaCurrentIpMax);
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {

@@ -62,6 +62,12 @@ public class FaultResultEntity {
     @Column
     private double ipMin;
 
+    @Column
+    private Double deltaCurrentIpMin;
+
+    @Column
+    private Double deltaCurrentIpMax;
+
     @Embedded
     @AttributeOverride(name = "positiveMagnitude", column = @Column(name = "fortescue_current_positive_magnitude"))
     @AttributeOverride(name = "zeroMagnitude", column = @Column(name = "fortescue_current_zero_magnitude"))
@@ -92,7 +98,7 @@ public class FaultResultEntity {
     @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_voltage_angle_c"))
     private FortescueResultEmbeddable fortescueVoltage;
 
-    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage) {
+    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage, double deltaCurrentIpMin, double deltaCurrentIpMax) {
         this.fault = fault;
         this.current = current;
         this.shortCircuitPower = shortCircuitPower;
@@ -103,6 +109,8 @@ public class FaultResultEntity {
         this.ipMax = ipMax;
         this.fortescueCurrent = fortescueCurrent;
         this.fortescueVoltage = fortescueVoltage;
+        this.deltaCurrentIpMin = deltaCurrentIpMin;
+        this.deltaCurrentIpMax = deltaCurrentIpMax;
     }
 
     @Override
