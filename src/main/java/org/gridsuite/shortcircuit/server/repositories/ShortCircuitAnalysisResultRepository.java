@@ -118,11 +118,12 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, boolean isWithFortescueResult) {
+    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, boolean isWithFortescueResult, String status) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
             resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits, isWithFortescueResult));
         }
+        globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }
 
     @Transactional
