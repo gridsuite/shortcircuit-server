@@ -84,6 +84,13 @@
     <dependencyManagement>
         <dependencies>
             <!-- overrides of imports -->
+            <dependency><!-- temporally until updated in parent -->
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-bom</artifactId>
+                <version>3.24.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <!-- imports -->
             <dependency>
