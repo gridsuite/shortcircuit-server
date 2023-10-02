@@ -21,4 +21,13 @@ public class ShortCircuitLimits {
     private double ipMin;
 
     private double ipMax;
+
+    private Double deltaCurrentIpMin;
+
+    private Double deltaCurrentIpMax;
+
+    public ShortCircuitLimits(double ipMin, double ipMax) {
+        this.ipMin = ipMin;
+        this.ipMax = ipMax;
+    }
 }
