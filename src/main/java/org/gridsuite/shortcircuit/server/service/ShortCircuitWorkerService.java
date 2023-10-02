@@ -21,7 +21,6 @@ import com.powsybl.shortcircuit.BusFault;
 import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
