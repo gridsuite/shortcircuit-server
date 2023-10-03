@@ -21,15 +21,12 @@ import com.powsybl.shortcircuit.BusFault;
 import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
@@ -50,23 +47,39 @@ import static org.gridsuite.shortcircuit.server.service.NotificationService.FAIL
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ShortCircuitWorkerService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
+
     private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
 
-    @NonNull private final NetworkStoreService networkStoreService;
-    @NonNull private final ReportService reportService;
-    @NonNull private final NotificationService notificationService;
-    @NonNull private final ShortCircuitAnalysisResultRepository resultRepository;
-    @NonNull private final ObjectMapper objectMapper;
-    @NonNull private final ReportMapper reportMapper;
+    private NetworkStoreService networkStoreService;
+    private ReportService reportService;
+    private ShortCircuitAnalysisResultRepository resultRepository;
+    private NotificationService notificationService;
+    private ObjectMapper objectMapper;
+    private final ReportMapper reportMapper;
 
-    private final Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
-    private final Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
-    private final Set<UUID> runRequests = Sets.newConcurrentHashSet();
-    private final Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+    private Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
+
+    private Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
+
+    private Set<UUID> runRequests = Sets.newConcurrentHashSet();
+
+    private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
+
+    public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
+                                     NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
+                                     ObjectMapper objectMapper, ReportMapper reportMapper) {
+        this.networkStoreService = Objects.requireNonNull(networkStoreService);
+        this.reportService = Objects.requireNonNull(reportService);
+        this.notificationService = Objects.requireNonNull(notificationService);
+        this.resultRepository = Objects.requireNonNull(resultRepository);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.reportMapper = Objects.requireNonNull(reportMapper);
+    }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
         Network network;

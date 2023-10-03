@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -190,13 +196,6 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
-                    /*.thenAnswer(invocation -> providerMock.run(
-                    invocation.getArgument(0),
-                    invocation.getArgument(1),
-                    invocation.getArgument(2),
-                    invocation.getArgument(3),
-                    invocation.getArgument(4)
-            ));*/
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapperMocked)).thenReturn(resultContext);
             Mockito.when(networkStoreServiceMocked.getNetwork(eq(networkUuid), any(PreloadingStrategy.class))).thenReturn(networkMocked);
             Mockito.when(networkMocked.getVariantManager()).thenReturn(variantManagerMocked);
@@ -208,17 +207,6 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             Mockito.verify(reportMapperMocked, times(1)).modifyReporter(any(ReporterModel.class));
             Mockito.verify(reportServiceMocked, times(1)).sendReport(reportUuid, reporter);
-            //we check the rest to be sure
-            /*try {
-                Mockito.verify(providerMock, Mockito.times(1)).run(any(), anyList(), any(), any(), anyList());
-            } catch (Throwable ex) { //hacky way to do OR with Mockito
-                Mockito.verify(providerMock, Mockito.times(1)).run(any(), anyList(), any(), any(), anyList(), any());
-            }
-            Mockito.verify(providerMock, Mockito.atLeast(0)).getName();
-            shortCircuitAnalysisMockedStatic.verifyNoMoreInteractions();
-            shortCircuitResultContextMockedStatic.verifyNoMoreInteractions();
-            Mockito.verifyNoMoreInteractions(providerMock, networkMocked, variantManagerMocked, busViewMocked);
-            Mockito.verifyNoMoreInteractions(reportMapperMocked, networkStoreServiceMocked, reportServiceMocked, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked);*/
         }
     }
 
