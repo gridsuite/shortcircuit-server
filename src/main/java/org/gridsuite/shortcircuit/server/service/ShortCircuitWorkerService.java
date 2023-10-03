@@ -58,7 +58,7 @@ public class ShortCircuitWorkerService {
     private ShortCircuitAnalysisResultRepository resultRepository;
     private NotificationService notificationService;
     private ObjectMapper objectMapper;
-    private final ReportMapper reportMapper;
+    private final ReportMapperService reportMapperService;
 
     private Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
 
@@ -72,13 +72,13 @@ public class ShortCircuitWorkerService {
 
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
-                                     ObjectMapper objectMapper, ReportMapper reportMapper) {
+                                     ObjectMapper objectMapper, ReportMapperService reportMapperService) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
         this.notificationService = Objects.requireNonNull(notificationService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.reportMapper = Objects.requireNonNull(reportMapper);
+        this.reportMapperService = Objects.requireNonNull(reportMapperService);
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -126,7 +126,7 @@ public class ShortCircuitWorkerService {
 
         ShortCircuitAnalysisResult result = future == null ? null : future.get();
         if (context.getReportUuid() != null) {
-            reportService.sendReport(context.getReportUuid(), reportMapper.modifyReporter(rootReporter));
+            reportService.sendReport(context.getReportUuid(), reportMapperService.modifyReporter(rootReporter));
         }
         return result;
     }
