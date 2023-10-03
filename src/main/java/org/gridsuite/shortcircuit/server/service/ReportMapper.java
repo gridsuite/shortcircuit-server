@@ -50,7 +50,7 @@ public class ReportMapper {
      * @apiNote is limited to some implementations of {@link Reporter}
      */
     public Reporter modifyReporter(@NonNull final Reporter reporter) {
-        if(reporter instanceof ReporterModel reporterModel) {
+        if (reporter instanceof ReporterModel reporterModel) {
             log.trace("ReportModel found");
             return modifyReporterModel(reporterModel);
         } else {
@@ -63,7 +63,7 @@ public class ReportMapper {
      * Starting point, determine the root type
      */
     protected Reporter modifyReporterModel(@NonNull final ReporterModel reporterModel) {
-        if(reporterModel.getTaskKey().matches("^\\d{8}-\\d{4}-\\d{4}-\\d{4}-\\d{12}@ShortCircuitAnalysis$")) {
+        if (reporterModel.getTaskKey().matches("^\\d{8}-\\d{4}-\\d{4}-\\d{4}-\\d{12}@ShortCircuitAnalysis$")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
             return forUuidAtShortCircuitAnalysis(reporterModel);
         } else {
@@ -80,10 +80,11 @@ public class ReportMapper {
     protected Reporter forUuidAtShortCircuitAnalysis(@NonNull final ReporterModel reporterModel) {
         final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
         reporterModel.getReports().forEach(newReporter::report);
-        reporterModel.getSubReporters().forEach(reporter -> newReporter.addSubReporter(switch (reporter.getTaskKey()) {
-            case "ShortCircuitAnalysis" -> forShortCircuitAnalysis(reporter);
-            default -> reporter;
-        }));
+        reporterModel.getSubReporters().forEach(reporter -> newReporter.addSubReporter(
+            switch (reporter.getTaskKey()) {
+                case "ShortCircuitAnalysis" -> forShortCircuitAnalysis(reporter);
+                default -> reporter;
+            }));
         return newReporter;
     }
 
@@ -95,11 +96,12 @@ public class ReportMapper {
     protected ReporterModel forShortCircuitAnalysis(@NonNull final ReporterModel reporterModel) {
         final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
         reporterModel.getReports().forEach(newReporter::report);
-        reporterModel.getSubReporters().forEach(reporter -> newReporter.addSubReporter(switch (reporter.getTaskKey()) {
-            case "generatorConversion" -> forGeneratorConversion(reporter);
-            case "courcirc" -> forCourcirc(reporter);
-            default -> reporter;
-        }));
+        reporterModel.getSubReporters().forEach(reporter -> newReporter.addSubReporter(
+            switch (reporter.getTaskKey()) {
+                case "generatorConversion" -> forGeneratorConversion(reporter);
+                case "courcirc" -> forCourcirc(reporter);
+                default -> reporter;
+            }));
         return newReporter;
     }
 
@@ -126,7 +128,7 @@ public class ReportMapper {
         /* analyze and compute logs in one pass */
         for (final Report report : reporterModel.getReports()) { //we modify logs conditionally here
             final Matcher matcherTransientReactanceTooLow = patternTransientReactanceTooLow.matcher(report.getDefaultMessage());
-            if(matcherTransientReactanceTooLow.matches()) { //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
+            if (matcherTransientReactanceTooLow.matches()) { //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
                 logsTransientReactanceTooLow.add(matcherTransientReactanceTooLow.group(1));
             } else { //we keep this log as it
                 newReporter.report(report);

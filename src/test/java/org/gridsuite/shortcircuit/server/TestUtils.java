@@ -10,7 +10,6 @@ package org.gridsuite.shortcircuit.server;
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 import lombok.NonNull;
-import lombok.experimental.UtilityClass;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
@@ -23,10 +22,12 @@ import static org.junit.Assert.assertNull;
 /**
  * @author Franck Lecuyer <frnck.lecuyer at rte-france.com>
  */
-@UtilityClass
 public final class TestUtils {
-
     private static final long TIMEOUT = 100;
+
+    private TestUtils() {
+        throw new IllegalStateException("Not implemented exception");
+    }
 
     public static void assertQueuesEmptyThenClear(List<String> destinations, OutputDestination output) {
         try {
@@ -55,8 +56,9 @@ public final class TestUtils {
             shortCircuitAnalysisRunnerMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
             return shortCircuitAnalysisRunnerMockedStatic;
         } catch (final Exception ex) {
-            if(shortCircuitAnalysisRunnerMockedStatic != null)
+            if (shortCircuitAnalysisRunnerMockedStatic != null) {
                 shortCircuitAnalysisRunnerMockedStatic.closeOnDemand();
+            }
             throw ex;
         }
     }
