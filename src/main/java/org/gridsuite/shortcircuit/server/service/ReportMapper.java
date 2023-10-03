@@ -63,7 +63,7 @@ public class ReportMapper {
      * Starting point, determine the root type
      */
     protected Reporter modifyReporterModel(@NonNull final ReporterModel reporterModel) {
-        if (reporterModel.getTaskKey().matches("^\\d{8}-\\d{4}-\\d{4}-\\d{4}-\\d{12}@ShortCircuitAnalysis$")) {
+        if (reporterModel.getTaskKey().matches("^[a-fA-F\\d]{8}-[a-fA-F\\d]{4}-[a-fA-F\\d]{4}-[a-fA-F\\d]{4}-[a-fA-F\\d]{12}@ShortCircuitAnalysis$")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
             return forUuidAtShortCircuitAnalysis(reporterModel);
         } else {
@@ -123,7 +123,7 @@ public class ReportMapper {
         final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
         reporterModel.getSubReporters().forEach(newReporter::addSubReporter);
         /* preparing */
-        final Pattern patternTransientReactanceTooLow = Pattern.compile("^([^ ]+) +: transient reactance too low ==> generator ignored$", Pattern.CASE_INSENSITIVE);
+        final Pattern patternTransientReactanceTooLow = Pattern.compile("^(.+) +: transient reactance too low ==> generator ignored$", Pattern.CASE_INSENSITIVE);
         final List<String> logsTransientReactanceTooLow = new ArrayList<>(newReporter.getReports().size());
         /* analyze and compute logs in one pass */
         for (final Report report : reporterModel.getReports()) { //we modify logs conditionally here
@@ -137,7 +137,8 @@ public class ReportMapper {
         /* finalize computation */
         log.debug("Found {} lines in courcirc logs matching \"MYNODE : transient reactance too low ==> generator ignored\"", logsTransientReactanceTooLow.size());
         newReporter.report("TransientReactanceTooLow", "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
-                           Map.of("nb", new TypedValue(logsTransientReactanceTooLow.size(), TypedValue.UNTYPED),
+                           Map.of("reportSeverity", TypedValue.WARN_SEVERITY,
+                                  "nb", new TypedValue(logsTransientReactanceTooLow.size(), TypedValue.UNTYPED),
                                   "nodes", new TypedValue(String.join(", ", logsTransientReactanceTooLow), TypedValue.UNTYPED)));
         return newReporter;
     }

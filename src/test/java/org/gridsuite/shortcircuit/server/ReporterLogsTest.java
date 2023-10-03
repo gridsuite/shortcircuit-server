@@ -144,7 +144,9 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
         reporterCourcirc.report("REC_7", "Taking into account sub-transient values : non");
         reporterCourcirc.report("REC_8", "Interior area = whole network");
         reporterCourcirc.report("TransientReactanceTooLow", "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
-                Map.of("nb", new TypedValue(5, TypedValue.UNTYPED), "nodes", new TypedValue("T.NODE0, T.NODE1, T.NODE2, T.NODE3, T.NODE4", TypedValue.UNTYPED)));
+                Map.of("reportSeverity", TypedValue.WARN_SEVERITY,
+                       "nb", new TypedValue(5, TypedValue.UNTYPED),
+                       "nodes", new TypedValue("T.NODE0, T.NODE1, T.NODE2, T.NODE3, T.NODE4", TypedValue.UNTYPED)));
 
         final Reporter result = reportMapper.modifyReporter(rootReporter);
         log.debug("Result = {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
@@ -180,6 +182,7 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
         final Network networkMocked = Mockito.mock(Network.class);
         final VariantManager variantManagerMocked = Mockito.mock(VariantManager.class);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
+        final Reporter reporter = new ReporterModel("test", "test");
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
             final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = Mockito.mockStatic(ShortCircuitResultContext.class)) {
@@ -199,10 +202,12 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
             Mockito.when(networkMocked.getVariantManager()).thenReturn(variantManagerMocked);
             Mockito.when(networkMocked.getBusView()).thenReturn(busViewMocked);
             Mockito.when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
+            Mockito.when(reportMapperMocked.modifyReporter(any(ReporterModel.class))).thenReturn(reporter);
             final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, reportMapperMocked);
             workerService.consumeRun().accept(message);
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             Mockito.verify(reportMapperMocked, times(1)).modifyReporter(any(ReporterModel.class));
+            Mockito.verify(reportServiceMocked, times(1)).sendReport(reportUuid, reporter);
             //we check the rest to be sure
             /*try {
                 Mockito.verify(providerMock, Mockito.times(1)).run(any(), anyList(), any(), any(), anyList());
