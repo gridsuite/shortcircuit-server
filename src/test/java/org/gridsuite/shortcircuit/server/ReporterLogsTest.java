@@ -23,9 +23,9 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
-import org.gridsuite.shortcircuit.server.test.assertj.WithCustomAssertions;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.service.*;
+import org.gridsuite.shortcircuit.server.test.assertj.WithCustomAssertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -37,6 +37,9 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -63,10 +66,16 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
 
     @BeforeAll
     static void prepare() {
-        PlatformConfig.setDefaultConfig(new TestPlatformConfigProvider().getPlatformConfig()); //PowsyblException: Multiple platform configuration providers found
+        try {
+            PlatformConfig.setDefaultConfig(new TestPlatformConfigProvider().getPlatformConfig()); //PowsyblException: Multiple platform configuration providers found
+        } catch (final UncheckedIOException ex) {
+            //there is an error with files on CI
+            final Path cfgDir = Paths.get(".", "unittests").toAbsolutePath();
+            PlatformConfig.setDefaultConfig(new PlatformConfig(PlatformConfig.loadModuleRepository(cfgDir, "config"), cfgDir));
+        }
 
         rootReporter = new ReporterModel(ROOT_REPORTER_ID, ROOT_REPORTER_ID);
-        final Reporter reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+        final Reporter reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", "Courcirc");
         //assertThat(reporter).isInstanceOf(ReporterModel.class);
         reporter.createSubReporter("generatorConversion", "Conversion of generators")
                 .report("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.", "generator", "TestGenerator");
@@ -110,7 +119,7 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
     @Test
     void testModifyRootNode() {
         final Reporter targetReporter = new ReporterModel(ROOT_REPORTER_ID, ROOT_REPORTER_ID);
-        final Reporter reporter = targetReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+        final Reporter reporter = targetReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", "Courcirc");
         assertThat(reporter).isInstanceOf(ReporterModel.class);
         reporter.createSubReporter("generatorConversion", "Conversion of generators")
                 .report("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.", "generator", "TestGenerator");
@@ -130,7 +139,7 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
                 .build();
 
         final ReporterModel targetReporter = new ReporterModel(ROOT_REPORTER_ID, ROOT_REPORTER_ID);
-        final Reporter reporter = targetReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+        final Reporter reporter = targetReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", "Courcirc");
         reporter.createSubReporter("generatorConversion", "Conversion of generators")
                 .report("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.", "generator", "TestGenerator");
         final Reporter reporter1 = reporter.createSubReporter("batteryConversion", "Conversion of the batteries");
