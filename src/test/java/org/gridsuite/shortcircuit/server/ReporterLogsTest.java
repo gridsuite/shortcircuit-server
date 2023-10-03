@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2023, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
-import org.gridsuite.shortcircuit.server.assertj.WithCustomAssertions;
+import org.gridsuite.shortcircuit.server.test.assertj.WithCustomAssertions;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.service.*;
 import org.junit.jupiter.api.BeforeAll;

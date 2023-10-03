@@ -69,7 +69,7 @@ public class ReportMapper {
      * Starting point, determine the root type
      */
     protected Reporter modifyReporterModel(@NonNull final ReporterModel reporterModel) {
-        if (reporterModel.getTaskKey().matches("^[a-fA-F\\d]{8}-[a-fA-F\\d]{4}-[a-fA-F\\d]{4}-[a-fA-F\\d]{4}-[a-fA-F\\d]{12}@ShortCircuitAnalysis$")) {
+        if (reporterModel.getTaskKey().matches("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@ShortCircuitAnalysis$")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
             return forUuidAtShortCircuitAnalysis(reporterModel);
         } else {
