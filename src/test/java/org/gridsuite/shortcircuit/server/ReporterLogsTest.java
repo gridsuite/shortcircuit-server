@@ -8,12 +8,10 @@ package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.config.PlatformConfig;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.computation.ComputationManager;
-import com.powsybl.config.test.TestPlatformConfigProvider;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -37,9 +35,6 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
-import java.io.UncheckedIOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -66,14 +61,6 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
 
     @BeforeAll
     static void prepare() {
-        try {
-            PlatformConfig.setDefaultConfig(new TestPlatformConfigProvider().getPlatformConfig()); //PowsyblException: Multiple platform configuration providers found
-        } catch (final UncheckedIOException ex) {
-            //there is an error with files on CI
-            final Path cfgDir = Paths.get(".", "unittests").toAbsolutePath();
-            PlatformConfig.setDefaultConfig(new PlatformConfig(PlatformConfig.loadModuleRepository(cfgDir, "config"), cfgDir));
-        }
-
         rootReporter = new ReporterModel(ROOT_REPORTER_ID, ROOT_REPORTER_ID);
         final Reporter reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", "Courcirc");
         reporter.createSubReporter("generatorConversion", "Conversion of generators")
