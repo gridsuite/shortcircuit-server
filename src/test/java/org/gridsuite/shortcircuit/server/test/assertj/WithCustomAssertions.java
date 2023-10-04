@@ -30,7 +30,7 @@ public interface WithCustomAssertions extends WithAssertions {
      * @param actual the actual value.
      * @return the created assertion object.
      */
-    default AbstractReporterModelAssert<?> assertThat(ReporterModel actual) {
+    default ReporterModelAssert assertThat(ReporterModel actual) {
         return Assertions.assertThat(actual);
     }
 
@@ -40,7 +40,7 @@ public interface WithCustomAssertions extends WithAssertions {
      * @param actual the actual value.
      * @return the created assertion object.
      */
-    default AbstractReportAssert<?> assertThat(Report actual) {
+    default ReportAssert assertThat(Report actual) {
         return Assertions.assertThat(actual);
     }
 }

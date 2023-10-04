@@ -30,7 +30,7 @@ public class Assertions extends org.assertj.core.api.Assertions {
      * @return the created assertion object.
      */
     @CheckReturnValue
-    public static AbstractReporterModelAssert<?> assertThat(ReporterModel actual) {
+    public static ReporterModelAssert assertThat(ReporterModel actual) {
         return new ReporterModelAssert(actual);
     }
 
@@ -41,7 +41,7 @@ public class Assertions extends org.assertj.core.api.Assertions {
      * @return the created assertion object.
      */
     @CheckReturnValue
-    public static AbstractReportAssert<?> assertThat(Report actual) {
+    public static ReportAssert assertThat(Report actual) {
         return new ReportAssert(actual);
     }
 }

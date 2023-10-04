@@ -76,7 +76,6 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
 
         rootReporter = new ReporterModel(ROOT_REPORTER_ID, ROOT_REPORTER_ID);
         final Reporter reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", "Courcirc");
-        //assertThat(reporter).isInstanceOf(ReporterModel.class);
         reporter.createSubReporter("generatorConversion", "Conversion of generators")
                 .report("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.", "generator", "TestGenerator");
         {

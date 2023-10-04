@@ -136,16 +136,18 @@ public class ReportMapper {
             final Matcher matcherTransientReactanceTooLow = patternTransientReactanceTooLow.matcher(report.getDefaultMessage());
             if (matcherTransientReactanceTooLow.matches()) { //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
                 logsTransientReactanceTooLow.add(matcherTransientReactanceTooLow.group(1));
-            } else { //we keep this log as it
+            } else { //we keep this log as is
                 newReporter.report(report);
             }
         }
         /* finalize computation */
         log.debug("Found {} lines in courcirc logs matching \"MYNODE : transient reactance too low ==> generator ignored\"", logsTransientReactanceTooLow.size());
-        newReporter.report("TransientReactanceTooLow", "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
-                           Map.of("reportSeverity", TypedValue.WARN_SEVERITY,
-                                  "nb", new TypedValue(logsTransientReactanceTooLow.size(), TypedValue.UNTYPED),
-                                  "nodes", new TypedValue(String.join(", ", logsTransientReactanceTooLow), TypedValue.UNTYPED)));
+        if (!logsTransientReactanceTooLow.isEmpty()) {
+            newReporter.report("TransientReactanceTooLow", "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
+                                Map.of("reportSeverity", TypedValue.WARN_SEVERITY,
+                                       "nb", new TypedValue(logsTransientReactanceTooLow.size(), TypedValue.UNTYPED),
+                                       "nodes", new TypedValue(String.join(", ", logsTransientReactanceTooLow), TypedValue.UNTYPED)));
+        }
         return newReporter;
     }
 }

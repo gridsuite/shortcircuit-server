@@ -20,7 +20,7 @@ public class ReporterAssert extends AbstractReporterAssert<ReporterAssert, Repor
         super(actual, ReporterAssert.class);
     }
 
-    public AbstractReporterModelAssert<?> asInstanceOfReportModel() {
+    public ReporterModelAssert asInstanceOfReportModel() {
         return this.asInstanceOf(new InstanceOfAssertFactory<>(ReporterModel.class, Assertions::assertThat));
     }
 }
