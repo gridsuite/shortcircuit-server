@@ -23,9 +23,7 @@ import org.assertj.core.api.WithAssertions;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.service.*;
-import org.gridsuite.shortcircuit.server.test.assertj.WithCustomAssertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
@@ -50,14 +48,17 @@ import static org.mockito.Mockito.times;
  */
 @ExtendWith(MockitoExtension.class)
 @Slf4j
-@Tag("UnitTest")
-class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
-    private final ReportMapper reportMapper = new ReportMapper();
+class ReporterLogsTest implements WithAssertions {
+    private final ShortCircuitReportMapper reportMapper = new ShortCircuitReportMapper();
 
     static final String ROOT_REPORTER_ID = "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis";
     static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
 
     private static ReporterModel rootReporter;
+    private static RecursiveComparisonConfiguration assertjRecursiveComparisonConfiguration = RecursiveComparisonConfiguration.builder()
+            .withIgnoreCollectionOrder(false)
+            .withIgnoreAllOverriddenEquals(true)
+            .build();
 
     @BeforeAll
     static void prepare() {
@@ -111,19 +112,12 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
                 .report("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.", "generator", "TestGenerator");
         assertThat(reportMapper.modifyReporter(targetReporter))
                 .isNotSameAs(targetReporter)
-                .usingRecursiveComparison(RecursiveComparisonConfiguration.builder()
-                        .withIgnoreCollectionOrder(false)
-                        .withIgnoreAllOverriddenEquals(true)
-                        .build())
+                .usingRecursiveComparison(assertjRecursiveComparisonConfiguration)
                 .isEqualTo(targetReporter);
     }
 
     @Test
     void testModificationLogs() throws JsonProcessingException {
-        final ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json()
-                .findModulesViaServiceLoader(true)
-                .build();
-
         final ReporterModel targetReporter = new ReporterModel(ROOT_REPORTER_ID, ROOT_REPORTER_ID);
         final Reporter reporter = targetReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", "Courcirc");
         reporter.createSubReporter("generatorConversion", "Conversion of generators")
@@ -150,21 +144,16 @@ class ReporterLogsTest implements WithAssertions, WithCustomAssertions {
                        "nodes", new TypedValue("T.NODE0, T.NODE1, T.NODE2, T.NODE3, T.NODE4", TypedValue.UNTYPED)));
 
         final Reporter result = reportMapper.modifyReporter(rootReporter);
-        log.debug("Result = {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
+        log.debug("Result = {}", Jackson2ObjectMapperBuilder.json().findModulesViaServiceLoader(true).build().writerWithDefaultPrettyPrinter().writeValueAsString(result));
         assertThat(result)
                 .isNotSameAs(rootReporter)
-                .asInstanceOfReportModel()
-                .usingRecursiveComparison(RecursiveComparisonConfiguration.builder()
-                        .withIgnoreCollectionOrder(false)
-                        .withIgnoreAllOverriddenEquals(true)
-                        .build())
+                .usingRecursiveComparison(assertjRecursiveComparisonConfiguration)
                 .isEqualTo(targetReporter);
     }
 
-    @Tag("IntegrationTest")
     @Test
     void testReportMapperIsCalled() throws Exception {
-        final ReportMapper reportMapperMocked = Mockito.mock(ReportMapper.class);
+        final ShortCircuitReportMapper reportMapperMocked = Mockito.mock(ShortCircuitReportMapper.class);
         final NetworkStoreService networkStoreServiceMocked = Mockito.mock(NetworkStoreService.class);
         final ReportService reportServiceMocked = Mockito.mock(ReportService.class);
         final NotificationService notificationServiceMocked = Mockito.mock(NotificationService.class);

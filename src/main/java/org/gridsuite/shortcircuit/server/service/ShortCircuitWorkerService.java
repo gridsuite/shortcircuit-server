@@ -58,7 +58,7 @@ public class ShortCircuitWorkerService {
     private ShortCircuitAnalysisResultRepository resultRepository;
     private NotificationService notificationService;
     private ObjectMapper objectMapper;
-    private final ReportMapper reportMapper;
+    private final ShortCircuitReportMapper reportMapper;
 
     private Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
 
@@ -72,7 +72,7 @@ public class ShortCircuitWorkerService {
 
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
-                                     ObjectMapper objectMapper, ReportMapper reportMapper) {
+                                     ObjectMapper objectMapper, ShortCircuitReportMapper reportMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
         this.notificationService = Objects.requireNonNull(notificationService);
