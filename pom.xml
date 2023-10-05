@@ -85,7 +85,8 @@
     <dependencyManagement>
         <dependencies>
             <!-- overrides of imports -->
-            <dependency><!-- temporally until updated in parent -->
+            <dependency><!-- temporally until powsybl-core is updated to v6 in gridsuite-dependencies>powsybl-ws-dependencies>powsybl-dependencies -->
+                <!-- requires, among other things, usingRecursiveComparison() -->
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-bom</artifactId>
                 <version>${assertj.version}</version>
