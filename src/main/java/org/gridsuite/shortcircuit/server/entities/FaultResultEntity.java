@@ -50,11 +50,12 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<LimitViolationEmbeddable> limitViolations;
 
-    @ElementCollection
-    @CollectionTable(name = "feeder_results",
-            indexes = {@Index(name = "feeder_results_fault_result_idx",
-                    columnList = "fault_result_entity_fault_result_uuid")})
-    private List<FeederResultEmbeddable> feederResults;
+    @OneToMany(
+            mappedBy = "faultResult",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<FeederResultEntity> feederResults;
 
     @Column
     private double ipMax;
@@ -98,7 +99,7 @@ public class FaultResultEntity {
     @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_voltage_angle_c"))
     private FortescueResultEmbeddable fortescueVoltage;
 
-    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage, double deltaCurrentIpMin, double deltaCurrentIpMax) {
+    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEntity> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage, double deltaCurrentIpMin, double deltaCurrentIpMax) {
         this.fault = fault;
         this.current = current;
         this.shortCircuitPower = shortCircuitPower;
@@ -111,6 +112,12 @@ public class FaultResultEntity {
         this.fortescueVoltage = fortescueVoltage;
         this.deltaCurrentIpMin = deltaCurrentIpMin;
         this.deltaCurrentIpMax = deltaCurrentIpMax;
+        setFeederResults(feederResults);
+    }
+
+    public void setFeederResults(List<FeederResultEntity> feederResults) {
+        this.feederResults = feederResults;
+        feederResults.stream().forEach(feederResultEntity -> feederResultEntity.setFaultResult(this));
     }
 
     @Override

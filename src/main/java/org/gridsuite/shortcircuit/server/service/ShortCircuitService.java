@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -94,8 +95,8 @@ public class ShortCircuitService {
                 limitViolationEmbeddable.getLimit(), limitViolationEmbeddable.getLimitName(), limitViolationEmbeddable.getValue());
     }
 
-    private static FeederResult fromEntity(FeederResultEmbeddable feederResultEmbeddable) {
-        return new FeederResult(feederResultEmbeddable.getConnectableId(), feederResultEmbeddable.getCurrent(), feederResultEmbeddable.getPositiveMagnitude());
+    private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
+        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
@@ -131,12 +132,27 @@ public class ShortCircuitService {
         return null;
     }
 
-    public Page<FaultResult> getFaultResultsPage(UUID resultUuid, FaultResultsMode mode, Pageable pageable) {
+    public ShortCircuitAnalysisPagedResults getPagedResults(UUID resultUuid, FaultResultsMode mode, ShortCircuitAnalysisType type, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
-        Optional<ShortCircuitAnalysisResultEntity> result;
+        Optional<ShortCircuitAnalysisResultEntity> resultEntity;
         // get without faultResults : FaultResultsM.NONE
-        result = resultRepository.find(resultUuid);
+        resultEntity = resultRepository.find(resultUuid);
+        ShortCircuitAnalysisPagedResults results;
+        if (type == ShortCircuitAnalysisType.ALL_BUSES) {
+            results = getAllBusesResults(mode, pageable, resultEntity);
+        } else {
+            // mode is always FULL in ONE_BUS
+            results = getOneBusResults(pageable, resultEntity);
+        }
+        LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        String pageableStr = LogUtils.sanitizeParam(pageable.toString());
+        LOGGER.info("pageable =  {}", pageableStr);
+        return results;
+    }
+
+    @Nullable
+    private ShortCircuitAnalysisPagedResultsAllBuses getAllBusesResults(FaultResultsMode mode, Pageable pageable, Optional<ShortCircuitAnalysisResultEntity> result) {
         if (result.isPresent()) {
             Optional<Page<FaultResultEntity>> faultResultEntitiesPage = Optional.empty();
             switch (mode) {
@@ -152,10 +168,24 @@ public class ShortCircuitService {
             }
             if (faultResultEntitiesPage.isPresent()) {
                 Page<FaultResult> faultResultsPage = faultResultEntitiesPage.get().map(fr -> fromEntity(fr));
-                LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                String pageableStr = LogUtils.sanitizeParam(pageable.toString());
-                LOGGER.info("pageable =  {}", pageableStr);
-                return faultResultsPage;
+                return new ShortCircuitAnalysisPagedResultsAllBuses(faultResultsPage);
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private ShortCircuitAnalysisPagedResultsOneBus getOneBusResults(Pageable pageable, Optional<ShortCircuitAnalysisResultEntity> result) {
+        if (result.isPresent()) {
+            // if one bus, we have only one fault
+            Optional<FaultResultEntity> faultResultEntity = resultRepository.findFirstFaultResult(result.get());
+            if (faultResultEntity.isPresent()) {
+                Optional<Page<FeederResultEntity>> feederResultEntitiesPage = resultRepository.findFeederResultsPage(faultResultEntity.get(), pageable);
+                if (feederResultEntitiesPage.isPresent()) {
+                    Page<FeederResult> feederResultsPage = feederResultEntitiesPage.get().map(fr -> fromEntity(fr));
+                    FaultResult faultResult = fromEntity(faultResultEntity.get());
+                    return new ShortCircuitAnalysisPagedResultsOneBus(faultResult, feederResultsPage);
+                }
             }
         }
         return null;

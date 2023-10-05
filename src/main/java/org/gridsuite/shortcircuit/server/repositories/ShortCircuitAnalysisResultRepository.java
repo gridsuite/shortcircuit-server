@@ -33,12 +33,16 @@ public class ShortCircuitAnalysisResultRepository {
 
     private FaultResultRepository faultResultRepository;
 
+    private FeederResultRepository feederResultRepository;
+
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
-            ResultRepository resultRepository,
-            FaultResultRepository faultResultRepository) {
+                                                ResultRepository resultRepository,
+                                                FaultResultRepository faultResultRepository,
+                                                FeederResultRepository feederResultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
         this.faultResultRepository = faultResultRepository;
+        this.feederResultRepository = feederResultRepository;
     }
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
@@ -61,8 +65,8 @@ public class ShortCircuitAnalysisResultRepository {
         double shortCircuitPower = faultResult.getShortCircuitPower();
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
         List<LimitViolationEmbeddable> limitViolations = extractLimitViolations(faultResult);
-        List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream()
-                .map(feederResult -> new FeederResultEmbeddable(feederResult.getConnectableId(),
+        List<FeederResultEntity> feederResults = faultResult.getFeederResults().stream()
+                .map(feederResult -> new FeederResultEntity(UUID.randomUUID(), null, feederResult.getConnectableId(),
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
                 .collect(Collectors.toList());
 
@@ -84,11 +88,11 @@ public class ShortCircuitAnalysisResultRepository {
         double shortCircuitPower = faultResult.getShortCircuitPower();
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
         List<LimitViolationEmbeddable> limitViolations = extractLimitViolations(faultResult);
-        List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream()
+        List<FeederResultEntity> feederResults = faultResult.getFeederResults().stream()
             .map(feederResult -> {
                 FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
                 FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(feederFortescueCurrent);
-                return new FeederResultEmbeddable(feederResult.getConnectableId(),
+                return new FeederResultEntity(UUID.randomUUID(), null, feederResult.getConnectableId(),
                     Double.NaN, new FortescueResultEmbeddable(feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(), feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(), feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(), feederFortescueThreePhaseValue.getMagnitudeA(), feederFortescueThreePhaseValue.getMagnitudeB(), feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(), feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
             })
             .collect(Collectors.toList());
@@ -188,6 +192,12 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
+    public Optional<FaultResultEntity> findFirstFaultResult(ShortCircuitAnalysisResultEntity result) {
+        Objects.requireNonNull(result);
+        return faultResultRepository.findFirstByResult(result);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Page<FaultResultEntity>> findFaultResultsPage(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
         Objects.requireNonNull(result);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
@@ -199,6 +209,12 @@ public class ShortCircuitAnalysisResultRepository {
             appendLimitViolationsAndFeederResults(faultResultsPage.get());
         }
         return faultResultsPage;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Page<FeederResultEntity>> findFeederResultsPage(FaultResultEntity faultResult, Pageable pageable) {
+        Objects.requireNonNull(faultResult);
+        return feederResultRepository.findPagedByFaultResult(faultResult, pageable);
     }
 
     @Transactional(readOnly = true)
