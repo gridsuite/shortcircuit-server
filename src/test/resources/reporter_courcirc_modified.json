@@ -91,7 +91,7 @@
           "reportKey" : "TransientReactanceTooLow",
           "values" : {
             "nodes" : {
-              "value" : "T.NODE0, T.NODE1, T.NODE2, T.NODE3, T.NODE4",
+              "value" : "T.NODE0, T-NODE1, T:NODE2, T NODE3, T—NODE4",
               "type" : "UNTYPED"
             },
             "reportSeverity" : {

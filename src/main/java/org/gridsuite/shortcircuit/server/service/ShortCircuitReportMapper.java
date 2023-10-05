@@ -12,13 +12,12 @@ import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.commons.reporter.TypedValue;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class manages how to postprocess reports of the proprietary courcir simulator to reduce the number of reports
@@ -48,6 +47,8 @@ import java.util.regex.Pattern;
 @Slf4j
 @Component
 public class ShortCircuitReportMapper {
+    private static final String PATTERN_TRANSIENT_REACTANCE_TOO_LOW = " : transient reactance too low ==> generator ignored";
+
     /**
      * Will try to modify the reporter
      * @param reporter the reporter to modify
@@ -121,13 +122,11 @@ public class ShortCircuitReportMapper {
         final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
         reporterModel.getSubReporters().forEach(newReporter::addSubReporter);
         /* preparing */
-        final Pattern patternTransientReactanceTooLow = Pattern.compile("^(.+) +: transient reactance too low ==> generator ignored$", Pattern.CASE_INSENSITIVE);
         final List<String> logsTransientReactanceTooLow = new ArrayList<>(newReporter.getReports().size());
         /* analyze and compute logs in one pass */
         for (final Report report : reporterModel.getReports()) { //we modify logs conditionally here
-            final Matcher matcherTransientReactanceTooLow = patternTransientReactanceTooLow.matcher(report.getDefaultMessage());
-            if (matcherTransientReactanceTooLow.matches()) { //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
-                logsTransientReactanceTooLow.add(matcherTransientReactanceTooLow.group(1));
+            if (StringUtils.endsWith(report.getDefaultMessage(), PATTERN_TRANSIENT_REACTANCE_TOO_LOW)) { //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
+                logsTransientReactanceTooLow.add(StringUtils.removeEnd(report.getDefaultMessage(), PATTERN_TRANSIENT_REACTANCE_TOO_LOW).trim()); //... to get the node name
             } else { //we keep this log as is
                 newReporter.report(report);
             }
