@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * <br/>
  * The tree structure returned by the courcirc proprietary simulator is:
  * <pre>
- * 00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis
+ * 00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis  or  ShortCircuitAnalysis
  * \-- ShortCircuitAnalysis -> "ShortCircuitAnalysis (${providerToUse})"
  *     +-- generatorConversion -> "Conversion of generators"
  *     +-- batteryConversion -> "Conversion of the batteries"
@@ -60,7 +60,7 @@ public class ShortCircuitReportMapper {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
             return forUuidAtShortCircuitAnalysis(reporterModel);
         } else {
-            log.trace("Unrecognized Reporter of type {}", reporter.getClass().getSimpleName());
+            log.trace("Unrecognized Reporter: {}", reporter);
             return reporter;
         }
     }
