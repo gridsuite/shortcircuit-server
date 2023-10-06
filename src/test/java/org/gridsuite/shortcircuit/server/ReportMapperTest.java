@@ -53,7 +53,7 @@ import static org.mockito.Mockito.times;
  */
 @ExtendWith(MockitoExtension.class)
 @Slf4j
-class ReporterLogsTest implements WithAssertions {
+class ReportMapperTest implements WithAssertions {
     private final ShortCircuitReportMapper reportMapper = new ShortCircuitReportMapper();
 
     static final String ROOT_REPORTER_ID = "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis";
@@ -68,7 +68,7 @@ class ReporterLogsTest implements WithAssertions {
 
     @BeforeAll
     static void prepare() throws IOException {
-        rootReporter = RestTemplateConfig.objectMapper().readValue(ReporterLogsTest.class.getClassLoader().getResource("reporter_courcirc_test.json"), ReporterModel.class);
+        rootReporter = RestTemplateConfig.objectMapper().readValue(ReportMapperTest.class.getClassLoader().getResource("reporter_courcirc_test.json"), ReporterModel.class);
     }
 
     @Test
@@ -97,8 +97,8 @@ class ReporterLogsTest implements WithAssertions {
     }
 
     @Test
-    void testModificationLogs() throws IOException {
-        final ReporterModel targetReporter = RestTemplateConfig.objectMapper().readValue(ReporterLogsTest.class.getClassLoader().getResource("reporter_courcirc_modified.json"), ReporterModel.class);
+    void testAggregatedLogs() throws IOException {
+        final ReporterModel targetReporter = RestTemplateConfig.objectMapper().readValue(ReportMapperTest.class.getClassLoader().getResource("reporter_courcirc_modified.json"), ReporterModel.class);
         final Reporter result = reportMapper.modifyReporter(rootReporter);
         log.debug("Result = {}", Jackson2ObjectMapperBuilder.json().findModulesViaServiceLoader(true).build().writerWithDefaultPrettyPrinter().writeValueAsString(result));
         assertThat(result)
@@ -108,7 +108,7 @@ class ReporterLogsTest implements WithAssertions {
     }
 
     @Test
-    void testReportMapperIsCalled() throws Exception {
+    void testMapperIsCalled() throws Exception {
         final ShortCircuitReportMapper reportMapperMocked = Mockito.mock(ShortCircuitReportMapper.class);
         final NetworkStoreService networkStoreServiceMocked = Mockito.mock(NetworkStoreService.class);
         final ReportService reportServiceMocked = Mockito.mock(ReportService.class);
@@ -181,8 +181,8 @@ class ReporterLogsTest implements WithAssertions {
     }
 
     /**
-     * A {@code toString()} implementation a little more useful than "{@code com.powsybl.commons.reporter.Report@14998e21}"
-     * in assertion messages.
+     * Replace default {@code toString()} "{@code com.powsybl.commons.reporter.Report@14998e21}" in AssertJ
+     * output by the content of the report in assertion messages.
      */
     public static class ReportRepresentation extends StandardRepresentation {
         /**
