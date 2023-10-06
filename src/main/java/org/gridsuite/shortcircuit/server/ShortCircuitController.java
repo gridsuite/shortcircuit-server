@@ -97,10 +97,10 @@ public class ShortCircuitController {
     @Operation(summary = "Get a results page for a given short circuit analysis result")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
-    public ResponseEntity<ShortCircuitAnalysisPagedResults> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                                 @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
-                                                                                 @Parameter(description = "Type of analysis") @RequestParam(value = "type") ShortCircuitAnalysisType type,
-                                                                                 Pageable pageable) {
+    public ResponseEntity<ShortCircuitAnalysisPagedResults> getPagedResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                                            @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
+                                                                            @Parameter(description = "Type of analysis") @RequestParam(value = "type") ShortCircuitAnalysisType type,
+                                                                            Pageable pageable) {
         ShortCircuitAnalysisPagedResults pagedResults = shortCircuitService.getPagedResults(resultUuid, mode, type, pageable);
         return pagedResults != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(pagedResults)
                 : ResponseEntity.notFound().build();
