@@ -7,8 +7,14 @@
 
 package org.gridsuite.shortcircuit.server;
 
+import com.powsybl.shortcircuit.ShortCircuitAnalysis;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
+import lombok.NonNull;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 
+import java.lang.reflect.Constructor;
 import java.util.List;
 
 import static org.junit.Assert.assertNull;
@@ -17,10 +23,10 @@ import static org.junit.Assert.assertNull;
  * @author Franck Lecuyer <frnck.lecuyer at rte-france.com>
  */
 public final class TestUtils {
-
     private static final long TIMEOUT = 100;
 
     private TestUtils() {
+        throw new IllegalStateException("Not implemented exception");
     }
 
     public static void assertQueuesEmptyThenClear(List<String> destinations, OutputDestination output) {
@@ -30,6 +36,30 @@ public final class TestUtils {
             // Ignoring
         } finally {
             output.clear(); // purge in order to not fail the other tests
+        }
+    }
+
+    /**
+     * Inject a (mocked?) {@link ShortCircuitAnalysisProvider provider} into the {@link ShortCircuitAnalysis.Runner}
+     * before it call Java's {@link java.util.ServiceLoader}<br/>
+     * @param provider the mock to close after test
+     */
+    public static MockedStatic<ShortCircuitAnalysis> injectShortCircuitAnalysisProvider(@NonNull final ShortCircuitAnalysisProvider provider) throws Exception {
+        // ShortCircuitAnalysis.Runner constructor is private
+        final Constructor<ShortCircuitAnalysis.Runner> constructor = ShortCircuitAnalysis.Runner.class.getDeclaredConstructor(ShortCircuitAnalysisProvider.class);
+        constructor.setAccessible(true);
+        final ShortCircuitAnalysis.Runner runner = constructor.newInstance(provider);
+        //MockedStatic is closeable object
+        MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisRunnerMockedStatic = null;
+        try {
+            shortCircuitAnalysisRunnerMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class);
+            shortCircuitAnalysisRunnerMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            return shortCircuitAnalysisRunnerMockedStatic;
+        } catch (final Exception ex) {
+            if (shortCircuitAnalysisRunnerMockedStatic != null) {
+                shortCircuitAnalysisRunnerMockedStatic.closeOnDemand();
+            }
+            throw ex;
         }
     }
 }
