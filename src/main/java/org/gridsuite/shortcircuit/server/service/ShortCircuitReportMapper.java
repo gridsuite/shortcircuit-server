@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -127,6 +128,7 @@ public class ShortCircuitReportMapper {
         for (final Report report : reporterModel.getReports()) { //we modify logs conditionally here
             if (StringUtils.endsWith(report.getDefaultMessage(), PATTERN_TRANSIENT_REACTANCE_TOO_LOW)) { //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
                 logsTransientReactanceTooLow.add(StringUtils.removeEnd(report.getDefaultMessage(), PATTERN_TRANSIENT_REACTANCE_TOO_LOW).trim()); //... to get the node name
+                copyReportAsTrace(newReporter, report);
             } else { //we keep this log as is
                 newReporter.report(report);
             }
@@ -135,10 +137,25 @@ public class ShortCircuitReportMapper {
         log.debug("Found {} lines in courcirc logs matching \"MYNODE : transient reactance too low ==> generator ignored\"", logsTransientReactanceTooLow.size());
         if (!logsTransientReactanceTooLow.isEmpty()) {
             newReporter.report("TransientReactanceTooLow", "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
-                                Map.of("reportSeverity", TypedValue.WARN_SEVERITY,
+                                Map.of(Report.REPORT_SEVERITY_KEY, TypedValue.WARN_SEVERITY,
                                        "nb", new TypedValue(logsTransientReactanceTooLow.size(), TypedValue.UNTYPED),
                                        "nodes", new TypedValue(String.join(", ", logsTransientReactanceTooLow), TypedValue.UNTYPED)));
         }
         return newReporter;
+    }
+
+    /**
+     * Copy the report, but with {@link TypedValue#TRACE_SEVERITY} severity
+     * @param reporterModel the {@link ReporterModel reporter} to wich add the modified {@link Report}
+     * @param report the report to copy with {@code TRACE} severity
+     */
+    private static void copyReportAsTrace(@NonNull final ReporterModel reporterModel, @NonNull final Report report) {
+        if (TypedValue.TRACE_SEVERITY.equals(report.getValue(Report.REPORT_SEVERITY_KEY))) {
+            reporterModel.report(report); //no change needed
+        } else {
+            final Map<String, TypedValue> values = new HashMap<>(report.getValues());
+            values.put(Report.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
+            reporterModel.report(new Report(report.getReportKey(), report.getDefaultMessage(), values));
+        }
     }
 }
