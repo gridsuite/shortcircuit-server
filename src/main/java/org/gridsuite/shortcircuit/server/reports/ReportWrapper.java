@@ -13,8 +13,8 @@ import lombok.Setter;
 
 import java.util.Map;
 
-public class ReportWrapper extends Report { //we keep interface for polymorphisme
-    @Getter @Setter
+@Getter @Setter
+class ReportWrapper extends Report { //we keep interface for polymorphisme
     private Report report;
 
     public ReportWrapper() {

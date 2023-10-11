@@ -6,12 +6,16 @@
  */
 package org.gridsuite.shortcircuit.server.reports;
 
+import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.reporter.TypedValue;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -71,4 +75,15 @@ public abstract class AbstractReportMapper {
      * Modify node with key {@code ShortCircuitAnalysis}
      */
     protected abstract ReporterModel forShortCircuitAnalysis(@NonNull final ReporterModel reporterModel);
+
+    /**
+     * Copy the report, but with {@link TypedValue#TRACE_SEVERITY} severity
+     * @param reporterModel the {@link ReporterModel reporter} to which add the modified {@link Report}
+     * @param report the report to copy with {@code TRACE} severity
+     */
+    static void copyReportAsTrace(@NonNull final ReporterModel reporterModel, @NonNull final Report report) {
+        final Map<String, TypedValue> values = new HashMap<>(report.getValues());
+        values.put(Report.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
+        reporterModel.report(new Report(report.getReportKey(), report.getDefaultMessage(), values));
+    }
 }

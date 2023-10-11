@@ -84,7 +84,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                     newReporter.report(logsRegulatingTerminalSummary);
                     logsRegulatingTerminalSeverity = report.getValue(Report.REPORT_SEVERITY_KEY);
                 }
-                ReportsUtils.copyReportAsTrace(newReporter, report);
+                copyReportAsTrace(newReporter, report);
                 final TypedValue generator = report.getValue("generator");
                 if (generator != null && generator.getValue() != null) {
                     logsRegulatingTerminalCount++;

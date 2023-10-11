@@ -122,7 +122,7 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                     newReporter.report(logsTransientReactanceTooLowSummary);
                     logsTransientReactanceTooLowSeverity = report.getValue(Report.REPORT_SEVERITY_KEY);
                 }
-                ReportsUtils.copyReportAsTrace(newReporter, report);
+                copyReportAsTrace(newReporter, report);
                 logsTransientReactanceTooLowCount++;
             } else if (StringUtils.startsWith(report.getDefaultMessage(), PATTERN_SIMULATING_SHORT_CIRCUIT_LOCATED)) {
                 //we match line "Simulating : short-circuit located on node .BRIDGE_0"
@@ -131,7 +131,7 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                     newReporter.report(logsSimulatingShortCircuitLocatedSummary);
                     logsSimulatingShortCircuitLocatedSeverity = report.getValue(Report.REPORT_SEVERITY_KEY);
                 }
-                ReportsUtils.copyReportAsTrace(newReporter, report);
+                copyReportAsTrace(newReporter, report);
                 logsSimulatingShortCircuitLocatedCount++;
             } else if (logsShortCircuitNotSimulatedPattern.matcher(report.getDefaultMessage()).matches()) {
                 //we match line "Short circuit on node ABCDEP4_0 is not simulated : it is located in an out of voltage part of the network"
@@ -140,7 +140,7 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                     newReporter.report(logsShortCircuitNotSimulatedSummary);
                     logsShortCircuitNotSimulatedSeverity = report.getValue(Report.REPORT_SEVERITY_KEY);
                 }
-                ReportsUtils.copyReportAsTrace(newReporter, report);
+                copyReportAsTrace(newReporter, report);
                 logsShortCircuitNotSimulatedCount++;
             } else { //we keep this log as is
                 newReporter.report(report);
