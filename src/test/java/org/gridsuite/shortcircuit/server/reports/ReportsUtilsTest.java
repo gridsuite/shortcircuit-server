@@ -19,14 +19,40 @@ import java.util.Map;
 @Slf4j
 class ReportsUtilsTest implements WithAssertions {
     @Test
+    void testEqualsTypedValue() {
+        final TypedValue tv = new TypedValue("val", "tip");
+        assertThat(ReportsUtils.equalsTypedValue(tv, tv)).as("same object equals").isTrue();
+        assertThat(ReportsUtils.equalsTypedValue(tv, new TypedValue("val", "tip"))).as("clone object equals").isTrue();
+        assertThat(ReportsUtils.equalsTypedValue(tv, new TypedValue("obj", "tip"))).as("not equals objects").isFalse();
+        assertThat(ReportsUtils.equalsTypedValue(null, tv)).as("first null").isFalse();
+        assertThat(ReportsUtils.equalsTypedValue(tv, null)).as("second null").isFalse();
+        assertThat(ReportsUtils.equalsTypedValue(null, null)).as("two null equals").isTrue();
+    }
+
+    @Test
+    void testReportsNullArguments() {
+        assertThatThrownBy(() -> ReportsUtils.copyReportAsTrace(new ReporterModel("test", "test"), null))
+                .as("With null report")
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> ReportsUtils.copyReportAsTrace(null, new Report("", "", Map.of())))
+                .as("With null reporter")
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void testReportsTransformedToTraceLevel() {
         ReporterForTest reporter = new ReporterForTest("Test", "test node", Map.of());
-        final Report report = new Report("Test1", "test", Map.of(Report.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY));
+        final Report report = new Report("Test1", "test", Map.of(Report.REPORT_SEVERITY_KEY, TypedValue.INFO_SEVERITY));
         ReportsUtils.copyReportAsTrace(reporter, report);
         assertThat(reporter).as("reporter test")
                 .extracting(r -> r.reports, InstanceOfAssertFactories.list(Report.class)).as("reports")
                 .singleElement()
-                .isSameAs(report);
+                // Report doesn't implement equals() method...
+                .hasFieldOrPropertyWithValue("reportKey", "Test1")
+                .hasFieldOrPropertyWithValue("defaultMessage", "test")
+                .extracting(Report::getValues, InstanceOfAssertFactories.MAP)
+                .hasSize(1)
+                .containsEntry(Report.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
     }
 
     @Test

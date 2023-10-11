@@ -51,7 +51,7 @@ import static org.mockito.Mockito.times;
 /**
  * @see org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService#run(ShortCircuitRunContext, UUID)
  */
-@ExtendWith({ MockitoExtension.class })
+@ExtendWith(MockitoExtension.class)
 @Slf4j
 class ReportMapperTest implements WithAssertions {
     private final ShortCircuitReportMapper reportMapper = new ShortCircuitReportMapper();

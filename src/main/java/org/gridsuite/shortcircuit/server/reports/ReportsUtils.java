@@ -42,7 +42,7 @@ public final class ReportsUtils {
      * @param obj2 second object to test
      * @return {@code true} if equals, else {@code false}
      */
-    private static boolean equalsTypedValue(final TypedValue obj1, final TypedValue obj2) {
+    static boolean equalsTypedValue(final TypedValue obj1, final TypedValue obj2) {
         if (obj1 == obj2) {
             return true;
         } else if (obj1 != null && obj2 != null) {
