@@ -98,7 +98,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected generator MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalCount);
         if (logsRegulatingTerminalSummary != null) {
             logsRegulatingTerminalSummary.setReport(new Report("disconnectedTerminalGeneratorSummary",
-                    "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.\n${nodes}",
+                    "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.",
                     Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY),
                             "nb", new TypedValue(logsRegulatingTerminalCount, TypedValue.UNTYPED))));
         }

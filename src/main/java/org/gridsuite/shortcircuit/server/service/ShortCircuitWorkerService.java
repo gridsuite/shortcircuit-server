@@ -130,7 +130,7 @@ public class ShortCircuitWorkerService {
         ShortCircuitAnalysisResult result = future == null ? null : future.get();
         if (context.getReportUuid() != null) {
             reportService.sendReport(context.getReportUuid(), reportMappers.stream().reduce(rootReporter,
-                    (acc, reportMapper) -> reportMapper.processReporter(acc), null));
+                    (acc, reportMapper) -> reportMapper.processReporter(acc), (c1, c2) -> null)); //combiner isn't used because stream sequential
         }
         return result;
     }

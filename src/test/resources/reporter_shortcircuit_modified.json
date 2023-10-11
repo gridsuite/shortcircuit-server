@@ -25,7 +25,7 @@
               "type" : "SEVERITY"
             },
             "nb" : {
-              "value" : "4",
+              "value" : 4,
               "type" : "UNTYPED"
             }
           }

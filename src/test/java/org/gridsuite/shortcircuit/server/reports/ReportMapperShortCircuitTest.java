@@ -10,11 +10,16 @@ import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
+import org.json.JSONException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 @Slf4j
 class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
@@ -27,13 +32,10 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     }
 
     @Test
-    void testAggregatedLogs() throws IOException {
-        final ReporterModel targetReporter = RestTemplateConfig.objectMapper().readValue(ReportMapperShortCircuitTest.class.getClassLoader().getResource("reporter_shortcircuit_modified.json"), ReporterModel.class);
+    void testAggregatedLogs() throws IOException, URISyntaxException, JSONException {
         final Reporter result = reportMapper.processReporter(rootReporter);
         log.debug("Result = {}", Jackson2ObjectMapperBuilder.json().findModulesViaServiceLoader(true).build().writerWithDefaultPrettyPrinter().writeValueAsString(result));
-        assertThat(result)
-                .isNotSameAs(rootReporter)
-                .usingRecursiveComparison(ASSERTJ_RECURSIVE_COMPARISON_CONFIGURATION)
-                .isEqualTo(targetReporter);
+        JSONAssert.assertEquals("short-circuit logs aggregated", RestTemplateConfig.objectMapper().writeValueAsString(result),
+                Files.readString(Paths.get(this.getClass().getClassLoader().getResource("reporter_shortcircuit_modified.json").toURI())), false);
     }
 }
