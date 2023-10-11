@@ -133,6 +133,22 @@
             }
           }
         }, {
+          "reportKey" : "transientReactanceTooLowSummary",
+          "values" : {
+            "nodes" : {
+              "value" : "T.NODE0, T-NODE1, T:NODE2, T NODE3, T—NODE4",
+              "type" : "UNTYPED"
+            },
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            },
+            "nb" : {
+              "value" : 5,
+              "type" : "UNTYPED"
+            }
+          }
+        }, {
           "reportKey" : "REC_9",
           "values" : {
             "reportSeverity" : {
@@ -173,10 +189,50 @@
             }
           }
         }, {
-          "reportKey" : "TransientReactanceTooLow",
+          "reportKey" : "REC_245",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "simulatingShortCircuitLocatedNodeSummary",
           "values" : {
             "nodes" : {
-              "value" : "T.NODE0, T-NODE1, T:NODE2, T NODE3, T—NODE4",
+              "value" : "NODE123_0, ABCDEFG_1, DUPONT1_1, DUPOND2_0, CAPTAIN_0",
+              "type" : "UNTYPED"
+            },
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            },
+            "nb" : {
+              "value" : 5,
+              "type" : "UNTYPED"
+            }
+          }
+        }, {
+          "reportKey" : "REC_246",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_274",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "shortCircuitNodeNotSimulatedOutOfVoltageSummary",
+          "values" : {
+            "nodes" : {
+              "value" : "ABCDEFG_1, DUPOND2_0",
               "type" : "UNTYPED"
             },
             "reportSeverity" : {
@@ -184,8 +240,48 @@
               "type" : "SEVERITY"
             },
             "nb" : {
-              "value" : 5,
+              "value" : 2,
               "type" : "UNTYPED"
+            }
+          }
+        }, {
+          "reportKey" : "REC_275",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_276",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_305",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_306",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_307",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
             }
           }
         } ]
@@ -219,7 +315,17 @@
       "REC_11" : "T:NODE2 : transient reactance too low ==> generator ignored",
       "REC_12" : "T NODE3 : transient reactance too low ==> generator ignored",
       "REC_13" : "T—NODE4 : transient reactance too low ==> generator ignored",
-      "TransientReactanceTooLow" : "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}"
+      "REC_245" : "Simulating : short-circuits located on nodes with branches contributions",
+      "REC_246" : "Simulating : short-circuit located on node NODE123_0",
+      "REC_274" : "Simulating : short-circuit located on node ABCDEFG_1",
+      "REC_275" : "Short circuit on node ABCDEFG_1 is not simulated : it is located in an out of voltage part of the network",
+      "REC_276" : "Simulating : short-circuit located on node DUPONT1_1",
+      "REC_305" : "Simulating : short-circuit located on node DUPOND2_0",
+      "REC_306" : "Short circuit on node DUPOND2_0 is not simulated : it is located in an out of voltage part of the network",
+      "REC_307" : "Simulating : short-circuit located on node CAPTAIN_0",
+      "transientReactanceTooLowSummary" : "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
+      "simulatingShortCircuitLocatedNodeSummary": "Simulating: short-circuits located on ${nb} nodes\n${nodes}",
+      "shortCircuitNodeNotSimulatedOutOfVoltageSummary": "Short circuit on ${nb} nodes is not simulated : they are in an out of voltage part of the network.\n${nodes}"
     }
   }
 }

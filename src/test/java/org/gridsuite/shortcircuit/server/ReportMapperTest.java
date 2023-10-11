@@ -22,8 +22,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.WithAssertions;
+import org.assertj.core.api.recursive.comparison.RecursiveComparator;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.presentation.StandardRepresentation;
+import org.gridsuite.shortcircuit.server.reports.ReportWrapper;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.service.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -64,6 +66,8 @@ class ReportMapperTest implements WithAssertions {
     private static final RecursiveComparisonConfiguration ASSERTJ_RECURSIVE_COMPARISON_CONFIGURATION = RecursiveComparisonConfiguration.builder()
             .withIgnoreCollectionOrder(false)
             .withIgnoreAllOverriddenEquals(true)
+            .withComparatorForType((r1, r2) -> new RecursiveComparator(RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true).withIgnoreAllOverriddenEquals(true).build())
+                    .compare((r1 instanceof ReportWrapper rw1) ? rw1.getReport() : r1, (r2 instanceof ReportWrapper rw2) ? rw2.getReport() : r2), Report.class)
             .build();
 
     @BeforeAll

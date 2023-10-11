@@ -172,6 +172,70 @@
               "type" : "SEVERITY"
             }
           }
+        }, {
+          "reportKey" : "REC_245",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_246",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_274",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_275",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_276",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_305",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_306",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_307",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         } ]
       } ]
     } ]
@@ -202,7 +266,15 @@
       "REC_10" : "T-NODE1 : transient reactance too low ==> generator ignored",
       "REC_11" : "T:NODE2 : transient reactance too low ==> generator ignored",
       "REC_12" : "T NODE3 : transient reactance too low ==> generator ignored",
-      "REC_13" : "T—NODE4 : transient reactance too low ==> generator ignored"
+      "REC_13" : "T—NODE4 : transient reactance too low ==> generator ignored",
+      "REC_245" : "Simulating : short-circuits located on nodes with branches contributions",
+      "REC_246" : "Simulating : short-circuit located on node NODE123_0",
+      "REC_274" : "Simulating : short-circuit located on node ABCDEFG_1",
+      "REC_275" : "Short circuit on node ABCDEFG_1 is not simulated : it is located in an out of voltage part of the network",
+      "REC_276" : "Simulating : short-circuit located on node DUPONT1_1",
+      "REC_305" : "Simulating : short-circuit located on node DUPOND2_0",
+      "REC_306" : "Short circuit on node DUPOND2_0 is not simulated : it is located in an out of voltage part of the network",
+      "REC_307" : "Simulating : short-circuit located on node CAPTAIN_0"
     }
   }
 }
