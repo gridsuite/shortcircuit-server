@@ -62,31 +62,116 @@
         "subReporters" : [ ],
         "reports" : [ {
           "reportKey" : "REC_0",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_1",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_2",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_3",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_4",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_5",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_6",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_7",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "REC_8",
-          "values" : { }
+          "values" : {
+            "reportSeverity" : {
+              "value" : "INFO",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_9",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_10",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_11",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_12",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_13",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
         }, {
           "reportKey" : "TransientReactanceTooLow",
           "values" : {
@@ -129,6 +214,11 @@
       "REC_6" : "Taking into account mutual lines : non",
       "REC_7" : "Taking into account sub-transient values : non",
       "REC_8" : "Interior area = whole network",
+      "REC_9" : "T.NODE0 : transient reactance too low ==> generator ignored",
+      "REC_10" : "T-NODE1 : transient reactance too low ==> generator ignored",
+      "REC_11" : "T:NODE2 : transient reactance too low ==> generator ignored",
+      "REC_12" : "T NODE3 : transient reactance too low ==> generator ignored",
+      "REC_13" : "T—NODE4 : transient reactance too low ==> generator ignored",
       "TransientReactanceTooLow" : "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}"
     }
   }
