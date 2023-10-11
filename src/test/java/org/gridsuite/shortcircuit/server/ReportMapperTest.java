@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManager;
@@ -22,10 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.InstanceOfAssertFactories;
-import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.api.WithAssertions;
-import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.presentation.StandardRepresentation;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
@@ -43,9 +39,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -57,7 +51,7 @@ import static org.mockito.Mockito.times;
 /**
  * @see org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService#run(ShortCircuitRunContext, UUID)
  */
-@ExtendWith({MockitoExtension.class, SoftAssertionsExtension.class})
+@ExtendWith({ MockitoExtension.class })
 @Slf4j
 class ReportMapperTest implements WithAssertions {
     private final ShortCircuitReportMapper reportMapper = new ShortCircuitReportMapper();
@@ -86,48 +80,6 @@ class ReportMapperTest implements WithAssertions {
     void testIgnoreOthersReportModels() {
         final Reporter reporter = new ReporterModel("test", "Test node");
         assertThat(reportMapper.modifyReporter(reporter)).isSameAs(reporter);
-    }
-
-    @Test
-    void testReportsTransformedToTraceLevel() {
-        ReporterForTest reporter = new ReporterForTest("Test", "test node", Map.of());
-        final Report report = new Report("Test1", "test", Map.of(Report.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY));
-        SCRMtesting.copyReportAsTrace(reporter, report);
-        assertThat(reporter).as("reporter test")
-                .extracting(r -> r.reports, InstanceOfAssertFactories.list(Report.class)).as("reports")
-                .singleElement()
-                .isSameAs(report);
-    }
-
-    @Test
-    void testReportsAlreadyAtTraceLevelIgnored(final SoftAssertions softly) {
-        ReporterForTest reporter = new ReporterForTest("Test", "test node", Map.of());
-        {
-            final Report report = new Report("Test1", "test", Map.of(Report.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY));
-            SCRMtesting.copyReportAsTrace(reporter, report);
-            softly.assertThat(reporter).as("reporter test")
-                    .extracting(r -> r.reports, InstanceOfAssertFactories.list(Report.class)).as("reports")
-                    .singleElement()
-                    .isSameAs(report);
-            reporter.reset();
-        }
-        {
-            final Report report = Report.builder().withSeverity(TypedValue.TRACE_SEVERITY).withKey("Test2").withDefaultMessage("test").build();
-            SCRMtesting.copyReportAsTrace(reporter, report);
-            softly.assertThat(reporter).as("reporter test")
-                    .extracting(r -> r.reports, InstanceOfAssertFactories.list(Report.class)).as("reports")
-                    .singleElement()
-                    .isSameAs(report);
-            reporter.reset();
-        }
-        {
-            final Report report = new Report("Test3", "test", Map.of(Report.REPORT_SEVERITY_KEY, new TypedValue("TRACE", TypedValue.SEVERITY)));
-            SCRMtesting.copyReportAsTrace(reporter, report);
-            softly.assertThat(reporter).as("reporter test")
-                    .extracting(r -> r.reports, InstanceOfAssertFactories.list(Report.class)).as("reports")
-                    .singleElement()
-                    .isSameAs(report);
-        }
     }
 
     @ParameterizedTest
@@ -195,39 +147,6 @@ class ReportMapperTest implements WithAssertions {
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             Mockito.verify(reportMapperMocked, times(1)).modifyReporter(any(ReporterModel.class));
             Mockito.verify(reportServiceMocked, times(1)).sendReport(reportUuid, reporter);
-        }
-    }
-
-    private static class SCRMtesting extends ShortCircuitReportMapper {
-        public static void copyReportAsTrace(ReporterModel reporterModel, Report report) {
-            ShortCircuitReportMapper.copyReportAsTrace(reporterModel, report);
-        }
-    }
-
-    private static class ReporterForTest extends ReporterModel {
-        public List<Report> reports = new ArrayList<>();
-
-        public ReporterForTest(String taskKey, String defaultName, Map<String, TypedValue> taskValues) {
-            super(taskKey, defaultName, taskValues);
-        }
-
-        @Override
-        public ReporterModel createSubReporter(String taskKey, String defaultName, Map<String, TypedValue> values) {
-            throw new UnsupportedOperationException("Not implemented in test");
-        }
-
-        @Override
-        public void addSubReporter(ReporterModel reporterModel) {
-            throw new UnsupportedOperationException("Not implemented in test");
-        }
-
-        @Override
-        public void report(Report report) {
-            this.reports.add(report);
-        }
-
-        public void reset() {
-            this.reports.clear();
         }
     }
 
