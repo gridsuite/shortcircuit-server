@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public final class ReportsUtils {
+final class ReportsUtils {
     private ReportsUtils() {
         throw new IllegalCallerException("Utility class");
     }
@@ -25,7 +25,7 @@ public final class ReportsUtils {
      * @param reporterModel the {@link ReporterModel reporter} to wich add the modified {@link Report}
      * @param report the report to copy with {@code TRACE} severity
      */
-    public static void copyReportAsTrace(@NonNull final ReporterModel reporterModel, @NonNull final Report report) {
+    static void copyReportAsTrace(@NonNull final ReporterModel reporterModel, @NonNull final Report report) {
         //TODO use .equals() when implemented in TypedValue
         if (equalsTypedValue(TypedValue.TRACE_SEVERITY, report.getValue(Report.REPORT_SEVERITY_KEY))) {
             reporterModel.report(report); //no change needed
