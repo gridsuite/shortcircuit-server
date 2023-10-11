@@ -27,10 +27,6 @@
             "nb" : {
               "value" : "4",
               "type" : "UNTYPED"
-            },
-            "nodes" : {
-              "value" : "ABCDEFG.XY1, T.ABC.XYZ, T.ABC.123, T.ABCDEF1",
-              "type" : "UNTYPED"
             }
           }
         }, {
@@ -116,7 +112,7 @@
       "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
       "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
       "generatorConversion" : "Conversion of generators",
-      "disconnectedTerminalGeneratorSummary" : "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.\n${nodes}",
+      "disconnectedTerminalGeneratorSummary" : "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.",
       "disconnectedTerminalGenerator" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
       "batteryConversion" : "Conversion of the batteries",
       "lineConversion" : "Conversion of lines",

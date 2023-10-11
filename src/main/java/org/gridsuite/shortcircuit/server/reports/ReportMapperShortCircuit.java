@@ -15,10 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * This class manages how to postprocess reports of the short-circuit server to reduce the number of reports
@@ -74,7 +71,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         reporterModel.getSubReporters().forEach(newReporter::addSubReporter);
 
         /* preparing */
-        final List<String> logsRegulatingTerminalList = new ArrayList<>(newReporter.getReports().size());
+        long logsRegulatingTerminalCount = 0L;
         ReportWrapper logsRegulatingTerminalSummary = null;
         TypedValue logsRegulatingTerminalSeverity = null;
 
@@ -90,7 +87,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                 ReportsUtils.copyReportAsTrace(newReporter, report);
                 final TypedValue generator = report.getValue("generator");
                 if (generator != null && generator.getValue() != null) {
-                    logsRegulatingTerminalList.add(Objects.toString(generator.getValue()));
+                    logsRegulatingTerminalCount++;
                 }
             } else { //we keep this log as is
                 newReporter.report(report);
@@ -98,13 +95,12 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         }
 
         /* finalize computation of summaries */
-        log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected generator MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalList.size());
+        log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected generator MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalCount);
         if (logsRegulatingTerminalSummary != null) {
             logsRegulatingTerminalSummary.setReport(new Report("disconnectedTerminalGeneratorSummary",
                     "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.\n${nodes}",
                     Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY),
-                            "nb", new TypedValue(logsRegulatingTerminalList.size(), TypedValue.UNTYPED),
-                            "nodes", new TypedValue(String.join(", ", logsRegulatingTerminalList), TypedValue.UNTYPED))));
+                            "nb", new TypedValue(logsRegulatingTerminalCount, TypedValue.UNTYPED))));
         }
 
         return newReporter;

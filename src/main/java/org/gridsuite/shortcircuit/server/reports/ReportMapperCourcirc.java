@@ -16,12 +16,9 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -46,6 +43,7 @@ import java.util.regex.Pattern;
 @Component
 public class ReportMapperCourcirc extends AbstractReportMapper {
     private static final String PATTERN_TRANSIENT_REACTANCE_TOO_LOW = " : transient reactance too low ==> generator ignored";
+    private static final String PATTERN_SIMULATING_SHORT_CIRCUIT_LOCATED = "Simulating : short-circuit located on node ";
 
     /**
      * {@inheritDoc}
@@ -104,45 +102,42 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
         reporterModel.getSubReporters().forEach(newReporter::addSubReporter);
 
         /* preparing */
-        final List<String> logsTransientReactanceTooLowList = new ArrayList<>(newReporter.getReports().size());
+        long logsTransientReactanceTooLowCount = 0L;
         var warppedLogsTransientReactanceTooLowSummary = new Object() { ReportWrapper value = null; };
         var warppedLogsTransientReactanceTooLowSeverity = new Object() { TypedValue value = null; };
 
-        final Pattern logsSimulatingShortCircuitLocatedPattern = Pattern.compile("^Simulating : short-circuit located on node +(.+) *$", Pattern.CASE_INSENSITIVE);
-        final List<String> logsSimulatingShortCircuitLocatedList = new ArrayList<>(newReporter.getReports().size());
+        long logsSimulatingShortCircuitLocatedCount = 0L;
         var warppedLogsSimulatingShortCircuitLocatedSummary = new Object() { ReportWrapper value = null; };
         var warppedLogsSimulatingShortCircuitLocatedSeverity = new Object() { TypedValue value = null; };
 
-        final Pattern logsShortCircuitNotSimulatedPattern = Pattern.compile("^Short circuit on node +(.+) +is not simulated : it is located in an out of voltage part of the network$", Pattern.CASE_INSENSITIVE);
-        final List<String> logsShortCircuitNotSimulatedList = new ArrayList<>(newReporter.getReports().size());
+        final Pattern logsShortCircuitNotSimulatedPattern = Pattern.compile("^Short circuit on node .+ is not simulated : it is located in an out of voltage part of the network$", Pattern.CASE_INSENSITIVE);
+        long logsShortCircuitNotSimulatedCount = 0L;
         var warppedLogsShortCircuitNotSimulatedSummary = new Object() { ReportWrapper value = null; };
         var wrappedLogsShortCircuitNotSimulatedSeverity = new Object() { TypedValue value = null; };
 
         /* analyze and compute logs in one pass */
         for (final Report report : reporterModel.getReports()) { //we modify logs conditionally here
-            final Matcher matcherSimulatingShortCircuitLocated;
-            final Matcher matcherShortCircuitNotSimulated;
             if (StringUtils.endsWith(report.getDefaultMessage(), PATTERN_TRANSIENT_REACTANCE_TOO_LOW)) {
                 //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
                 computeReportCommonPart(newReporter, report,
                         () -> warppedLogsTransientReactanceTooLowSummary.value,
                         r -> warppedLogsTransientReactanceTooLowSummary.value = r,
                         s -> warppedLogsTransientReactanceTooLowSeverity.value = s);
-                logsTransientReactanceTooLowList.add(StringUtils.removeEnd(report.getDefaultMessage(), PATTERN_TRANSIENT_REACTANCE_TOO_LOW).trim()); //... to get the node name
-            } else if ((matcherSimulatingShortCircuitLocated = logsSimulatingShortCircuitLocatedPattern.matcher(report.getDefaultMessage())).matches()) {
+                logsTransientReactanceTooLowCount++;
+            } else if (StringUtils.startsWith(report.getDefaultMessage(), PATTERN_SIMULATING_SHORT_CIRCUIT_LOCATED)) {
                 //we match line "Simulating : short-circuit located on node .BRIDGE_0"
                 computeReportCommonPart(newReporter, report,
                         () -> warppedLogsSimulatingShortCircuitLocatedSummary.value,
                         r -> warppedLogsSimulatingShortCircuitLocatedSummary.value = r,
                         s -> warppedLogsSimulatingShortCircuitLocatedSeverity.value = s);
-                logsSimulatingShortCircuitLocatedList.add(matcherSimulatingShortCircuitLocated.group(1));
-            } else if ((matcherShortCircuitNotSimulated = logsShortCircuitNotSimulatedPattern.matcher(report.getDefaultMessage())).matches()) {
+                logsSimulatingShortCircuitLocatedCount++;
+            } else if (logsShortCircuitNotSimulatedPattern.matcher(report.getDefaultMessage()).matches()) {
                 //we match line "Short circuit on node ABCDEP4_0 is not simulated : it is located in an out of voltage part of the network"
                 computeReportCommonPart(newReporter, report,
                         () -> warppedLogsShortCircuitNotSimulatedSummary.value,
                         r -> warppedLogsShortCircuitNotSimulatedSummary.value = r,
                         s -> wrappedLogsShortCircuitNotSimulatedSeverity.value = s);
-                logsShortCircuitNotSimulatedList.add(matcherShortCircuitNotSimulated.group(1));
+                logsShortCircuitNotSimulatedCount++;
                 //TODO Reactive range is too small for generator xxx, voltage regulation will be turned off. --> Remplacer par: Reactive range is too small for N generators, voltage regulation will be tunred off.   (N - nombre groupes concernés)
                 //TODO Odd Pmax value (xxx) for generator xxx, will probably be responsible of bad balance --> Remplacer par: Odd Pmax value for N generators, will probably be responsible of bad balance.
                 //TODO Active power setpoint (xxx) outside reactive limits for generator xxx --> Remplacer par: Active power setpoints outside reactive limits for N generators.
@@ -150,28 +145,28 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                 newReporter.report(report);
             }
         }
+
         /* finalize computation of summaries */
-        log.debug("Found {} lines in courcirc logs matching \"MYNODE : transient reactance too low ==> generator ignored\"", logsTransientReactanceTooLowList.size());
+        log.debug("Found {} lines in courcirc logs matching \"MYNODE : transient reactance too low ==> generator ignored\"", logsTransientReactanceTooLowCount);
         if (warppedLogsTransientReactanceTooLowSummary.value != null) {
             warppedLogsTransientReactanceTooLowSummary.value.setReport(new Report("transientReactanceTooLowSummary",
-                    "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
+                    "${nb} node(s) with transient reactance too low ==> generator ignored",
                     Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(warppedLogsTransientReactanceTooLowSeverity.value, TypedValue.WARN_SEVERITY),
-                            "nb", new TypedValue(logsTransientReactanceTooLowList.size(), TypedValue.UNTYPED),
-                            "nodes", new TypedValue(String.join(", ", logsTransientReactanceTooLowList), TypedValue.UNTYPED))));
+                            "nb", new TypedValue(logsTransientReactanceTooLowCount, TypedValue.UNTYPED))));
         }
+        log.debug("Found {} lines in courcirc logs matching \"Simulating : short-circuit located on node MYNODE\"", logsSimulatingShortCircuitLocatedCount);
         if (warppedLogsSimulatingShortCircuitLocatedSummary.value != null) {
             warppedLogsSimulatingShortCircuitLocatedSummary.value.setReport(new Report("simulatingShortCircuitLocatedNodeSummary",
-                    "Simulating: short-circuits located on ${nb} nodes\n${nodes}",
+                    "Simulating: short-circuits located on ${nb} nodes",
                     Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(warppedLogsSimulatingShortCircuitLocatedSeverity.value, TypedValue.INFO_SEVERITY),
-                            "nb", new TypedValue(logsSimulatingShortCircuitLocatedList.size(), TypedValue.UNTYPED),
-                            "nodes", new TypedValue(String.join(", ", logsSimulatingShortCircuitLocatedList), TypedValue.UNTYPED))));
+                            "nb", new TypedValue(logsSimulatingShortCircuitLocatedCount, TypedValue.UNTYPED))));
         }
+        log.debug("Found {} lines in courcirc logs matching \"Short circuit on node MYNODE is not simulated : it is located in an out of voltage part of the network\"", logsShortCircuitNotSimulatedCount);
         if (warppedLogsShortCircuitNotSimulatedSummary.value != null) {
             warppedLogsShortCircuitNotSimulatedSummary.value.setReport(new Report("shortCircuitNodeNotSimulatedOutOfVoltageSummary",
-                    "Short circuit on ${nb} nodes is not simulated : they are in an out of voltage part of the network.\n${nodes}",
+                    "Short circuit on ${nb} nodes is not simulated : they are in an out of voltage part of the network.",
                     Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(wrappedLogsShortCircuitNotSimulatedSeverity.value, TypedValue.WARN_SEVERITY),
-                            "nb", new TypedValue(logsShortCircuitNotSimulatedList.size(), TypedValue.UNTYPED),
-                            "nodes", new TypedValue(String.join(", ", logsShortCircuitNotSimulatedList), TypedValue.UNTYPED))));
+                            "nb", new TypedValue(logsShortCircuitNotSimulatedCount, TypedValue.UNTYPED))));
         }
 
         return newReporter;

@@ -135,10 +135,6 @@
         }, {
           "reportKey" : "transientReactanceTooLowSummary",
           "values" : {
-            "nodes" : {
-              "value" : "T.NODE0, T-NODE1, T:NODE2, T NODE3, T—NODE4",
-              "type" : "UNTYPED"
-            },
             "reportSeverity" : {
               "value" : "WARN",
               "type" : "SEVERITY"
@@ -199,10 +195,6 @@
         }, {
           "reportKey" : "simulatingShortCircuitLocatedNodeSummary",
           "values" : {
-            "nodes" : {
-              "value" : "NODE123_0, ABCDEFG_1, DUPONT1_1, DUPOND2_0, CAPTAIN_0",
-              "type" : "UNTYPED"
-            },
             "reportSeverity" : {
               "value" : "INFO",
               "type" : "SEVERITY"
@@ -231,10 +223,6 @@
         }, {
           "reportKey" : "shortCircuitNodeNotSimulatedOutOfVoltageSummary",
           "values" : {
-            "nodes" : {
-              "value" : "ABCDEFG_1, DUPOND2_0",
-              "type" : "UNTYPED"
-            },
             "reportSeverity" : {
               "value" : "WARN",
               "type" : "SEVERITY"
@@ -323,9 +311,9 @@
       "REC_305" : "Simulating : short-circuit located on node DUPOND2_0",
       "REC_306" : "Short circuit on node DUPOND2_0 is not simulated : it is located in an out of voltage part of the network",
       "REC_307" : "Simulating : short-circuit located on node CAPTAIN_0",
-      "transientReactanceTooLowSummary" : "${nb} node(s) with transient reactance too low ==> generator ignored\n${nodes}",
-      "simulatingShortCircuitLocatedNodeSummary": "Simulating: short-circuits located on ${nb} nodes\n${nodes}",
-      "shortCircuitNodeNotSimulatedOutOfVoltageSummary": "Short circuit on ${nb} nodes is not simulated : they are in an out of voltage part of the network.\n${nodes}"
+      "transientReactanceTooLowSummary" : "${nb} node(s) with transient reactance too low ==> generator ignored",
+      "simulatingShortCircuitLocatedNodeSummary": "Simulating: short-circuits located on ${nb} nodes",
+      "shortCircuitNodeNotSimulatedOutOfVoltageSummary": "Short circuit on ${nb} nodes is not simulated : they are in an out of voltage part of the network."
     }
   }
 }
