@@ -138,9 +138,6 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                         r -> warppedLogsShortCircuitNotSimulatedSummary.value = r,
                         s -> wrappedLogsShortCircuitNotSimulatedSeverity.value = s);
                 logsShortCircuitNotSimulatedCount++;
-                //TODO Reactive range is too small for generator xxx, voltage regulation will be turned off. --> Remplacer par: Reactive range is too small for N generators, voltage regulation will be tunred off.   (N - nombre groupes concernés)
-                //TODO Odd Pmax value (xxx) for generator xxx, will probably be responsible of bad balance --> Remplacer par: Odd Pmax value for N generators, will probably be responsible of bad balance.
-                //TODO Active power setpoint (xxx) outside reactive limits for generator xxx --> Remplacer par: Active power setpoints outside reactive limits for N generators.
             } else { //we keep this log as is
                 newReporter.report(report);
             }
