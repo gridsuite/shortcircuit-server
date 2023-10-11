@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.powsybl.commons.extensions.Extension;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +16,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
@@ -93,15 +93,18 @@ public class ShortCircuitController {
                 : ResponseEntity.notFound().build();
     }
 
+    //TODO delete the endpoint above
     @GetMapping(value = "/results/{resultUuid}/paged", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a results page for a given short circuit analysis result")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<ShortCircuitAnalysisPagedResults> getPagedResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                             @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
-                                                                            @Parameter(description = "Type of analysis") @RequestParam(value = "type") ShortCircuitAnalysisType type,
-                                                                            Pageable pageable) {
-        ShortCircuitAnalysisPagedResults pagedResults = shortCircuitService.getPagedResults(resultUuid, mode, type, pageable);
+                                                                            @Parameter(description = "Type of analysis") @RequestParam(name = "type") ShortCircuitAnalysisType type,
+                                                                            @Parameter(description = "Filter") @RequestParam(name = "filter", required = false) String filterModelString,
+                                                                            Pageable pageable) throws JsonProcessingException {
+        FilterModel filterModel = FilterModel.fromString(filterModelString);
+        ShortCircuitAnalysisPagedResults pagedResults = shortCircuitService.getPagedResults(resultUuid, mode, type, filterModel, pageable);
         return pagedResults != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(pagedResults)
                 : ResponseEntity.notFound().build();
     }

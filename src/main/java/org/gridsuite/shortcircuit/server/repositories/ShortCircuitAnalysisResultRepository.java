@@ -12,6 +12,7 @@ import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -212,9 +213,9 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Page<FeederResultEntity>> findFeederResultsPage(FaultResultEntity faultResult, Pageable pageable) {
-        Objects.requireNonNull(faultResult);
-        return feederResultRepository.findPagedByFaultResult(faultResult, pageable);
+    public Page<FeederResultEntity> findFeederResultsPage(Specification<FeederResultEntity> specification, Pageable pageable) {
+        Objects.requireNonNull(specification);
+        return feederResultRepository.findAll(specification, pageable);
     }
 
     @Transactional(readOnly = true)
