@@ -18,7 +18,7 @@ import java.io.IOException;
 
 @Slf4j
 class ReportMapperCourcircTest extends AbstractReportMapperTest {
-    private final ReportMapper/*Courcirc*/ reportMapper = new ReportMapperCourcirc();
+    private final AbstractReportMapper/*Courcirc*/ reportMapper = new ReportMapperCourcirc();
     protected static ReporterModel rootReporter;
 
     @BeforeAll

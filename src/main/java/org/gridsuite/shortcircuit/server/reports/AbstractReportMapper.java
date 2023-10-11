@@ -31,7 +31,7 @@ import java.util.UUID;
  * @see org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService#run(ShortCircuitRunContext, UUID)
  */
 @Slf4j
-public abstract class AbstractReportMapper implements ReportMapper {
+public abstract class AbstractReportMapper {
     /**
      * Will try to modify the reporter
      * @param reporter the reporter to modify
@@ -39,7 +39,6 @@ public abstract class AbstractReportMapper implements ReportMapper {
      *
      * @implNote currently support only some implementations of {@link Reporter}
      */
-    @Override
     public Reporter processReporter(@NonNull final Reporter reporter) {
         if (reporter instanceof ReporterModel reporterModel && reporterModel.getTaskKey().matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@)?ShortCircuitAnalysis$")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");

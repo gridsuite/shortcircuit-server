@@ -20,7 +20,7 @@ class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
     static final String ROOT_REPORTER_NO_ID = "ShortCircuitAnalysis";
     static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
 
-    private final ReportMapper reportMapper = new AbstractReportMapper() {
+    private final AbstractReportMapper reportMapper = new AbstractReportMapper() {
         @Override
         protected ReporterModel forShortCircuitAnalysis(@NonNull ReporterModel reporterModel) {
             return reporterModel;

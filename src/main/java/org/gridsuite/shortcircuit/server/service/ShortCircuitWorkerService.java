@@ -24,7 +24,7 @@ import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
-import org.gridsuite.shortcircuit.server.reports.ReportMapper;
+import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class ShortCircuitWorkerService {
     private ShortCircuitAnalysisResultRepository resultRepository;
     private NotificationService notificationService;
     private ObjectMapper objectMapper;
-    private final Collection<ReportMapper> reportMappers;
+    private final Collection<AbstractReportMapper> reportMappers;
 
     private Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
 
@@ -75,7 +75,7 @@ public class ShortCircuitWorkerService {
     @Autowired
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
-                                     ObjectMapper objectMapper, Collection<ReportMapper> reportMappers) {
+                                     ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
         this.notificationService = Objects.requireNonNull(notificationService);

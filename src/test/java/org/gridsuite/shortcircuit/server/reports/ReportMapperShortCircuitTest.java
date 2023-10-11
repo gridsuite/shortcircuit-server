@@ -18,7 +18,7 @@ import java.io.IOException;
 
 @Slf4j
 class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
-    private final ReportMapper/*ShortCircuit*/ reportMapper = new ReportMapperShortCircuit();
+    private final AbstractReportMapper/*ShortCircuit*/ reportMapper = new ReportMapperShortCircuit();
     protected static ReporterModel rootReporter;
 
     @BeforeAll

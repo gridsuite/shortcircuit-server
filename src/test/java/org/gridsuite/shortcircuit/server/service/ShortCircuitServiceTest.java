@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.TestUtils;
-import org.gridsuite.shortcircuit.server.reports.ReportMapper;
+import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.times;
 class ShortCircuitServiceTest implements WithAssertions {
     @Test
     void testLogsMappersIsCalled() throws Exception {
-        final ReportMapper reportMapperMocked = Mockito.mock(ReportMapper.class);
+        final AbstractReportMapper reportMapperMocked = Mockito.mock(AbstractReportMapper.class);
         final NetworkStoreService networkStoreServiceMocked = Mockito.mock(NetworkStoreService.class);
         final ReportService reportServiceMocked = Mockito.mock(ReportService.class);
         final NotificationService notificationServiceMocked = Mockito.mock(NotificationService.class);
