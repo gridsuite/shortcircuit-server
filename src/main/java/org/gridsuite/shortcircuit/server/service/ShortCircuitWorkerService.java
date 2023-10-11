@@ -27,7 +27,6 @@ import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
@@ -55,12 +54,11 @@ public class ShortCircuitWorkerService {
     private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
 
     private NetworkStoreService networkStoreService;
-
     private ReportService reportService;
-
     private ShortCircuitAnalysisResultRepository resultRepository;
-
+    private NotificationService notificationService;
     private ObjectMapper objectMapper;
+    private final ShortCircuitReportMapper reportMapper;
 
     private Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
 
@@ -72,15 +70,15 @@ public class ShortCircuitWorkerService {
 
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
 
-    @Autowired
-    NotificationService notificationService;
-
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
-                                     ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
+                                     NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
+                                     ObjectMapper objectMapper, ShortCircuitReportMapper reportMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
+        this.notificationService = Objects.requireNonNull(notificationService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.reportMapper = Objects.requireNonNull(reportMapper);
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -128,7 +126,7 @@ public class ShortCircuitWorkerService {
 
         ShortCircuitAnalysisResult result = future == null ? null : future.get();
         if (context.getReportUuid() != null) {
-            reportService.sendReport(context.getReportUuid(), rootReporter);
+            reportService.sendReport(context.getReportUuid(), reportMapper.modifyReporter(rootReporter));
         }
         return result;
     }

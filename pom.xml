@@ -13,7 +13,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent-ws</artifactId>
-        <version>16</version>
+        <version>17</version>
         <relativePath/>
     </parent>
 
@@ -45,6 +45,7 @@
         <gridsuite-dependencies.version>26</gridsuite-dependencies.version>
         <liquibase-hibernate-package>org.gridsuite.shortcircuit.server</liquibase-hibernate-package>
         <mockito-inline.version>3.11.1</mockito-inline.version>
+        <assertj.version>3.24.2</assertj.version>
     </properties>
 
     <build>
@@ -84,6 +85,14 @@
     <dependencyManagement>
         <dependencies>
             <!-- overrides of imports -->
+            <dependency><!-- temporally until powsybl-core is updated to v6 in gridsuite-dependencies>powsybl-ws-dependencies>powsybl-dependencies -->
+                <!-- requires, among other things, usingRecursiveComparison() -->
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-bom</artifactId>
+                <version>${assertj.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <!-- imports -->
             <dependency>
