@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * This class manages how to postprocess reports of the proprietary courcir simulator to reduce the number of reports
@@ -40,9 +39,6 @@ import java.util.regex.Pattern;
 @Slf4j
 @Component
 public class ReportMapperCourcirc extends AbstractReportMapper {
-    private static final String PATTERN_TRANSIENT_REACTANCE_TOO_LOW = " : transient reactance too low ==> generator ignored";
-    private static final String PATTERN_SIMULATING_SHORT_CIRCUIT_LOCATED = "Simulating : short-circuit located on node ";
-
     /**
      * {@inheritDoc}
      */
@@ -108,14 +104,13 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
         ReportWrapper logsSimulatingShortCircuitLocatedSummary = null;
         TypedValue logsSimulatingShortCircuitLocatedSeverity = null;
 
-        final Pattern logsShortCircuitNotSimulatedPattern = Pattern.compile("^Short circuit on node .+ is not simulated : it is located in an out of voltage part of the network$", Pattern.CASE_INSENSITIVE);
         long logsShortCircuitNotSimulatedCount = 0L;
         ReportWrapper logsShortCircuitNotSimulatedSummary = null;
         TypedValue logsShortCircuitNotSimulatedSeverity = null;
 
         /* analyze and compute logs in one pass */
         for (final Report report : reporterModel.getReports()) { //we modify logs conditionally here
-            if (StringUtils.endsWith(report.getDefaultMessage(), PATTERN_TRANSIENT_REACTANCE_TOO_LOW)) {
+            if (StringUtils.endsWith(report.getDefaultMessage(), " : transient reactance too low ==> generator ignored")) {
                 //we match line "X.ABCDEF1 : transient reactance too low ==> generator ignored"
                 if (logsTransientReactanceTooLowSummary == null) {
                     logsTransientReactanceTooLowSummary = new ReportWrapper();
@@ -124,7 +119,7 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                 }
                 copyReportAsTrace(newReporter, report);
                 logsTransientReactanceTooLowCount++;
-            } else if (StringUtils.startsWith(report.getDefaultMessage(), PATTERN_SIMULATING_SHORT_CIRCUIT_LOCATED)) {
+            } else if (StringUtils.startsWith(report.getDefaultMessage(), "Simulating : short-circuit located on node ")) {
                 //we match line "Simulating : short-circuit located on node .BRIDGE_0"
                 if (logsSimulatingShortCircuitLocatedSummary == null) {
                     logsSimulatingShortCircuitLocatedSummary = new ReportWrapper();
@@ -133,7 +128,8 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                 }
                 copyReportAsTrace(newReporter, report);
                 logsSimulatingShortCircuitLocatedCount++;
-            } else if (logsShortCircuitNotSimulatedPattern.matcher(report.getDefaultMessage()).matches()) {
+            } else if (StringUtils.startsWith(report.getDefaultMessage(), "Short circuit on node ")
+                    && StringUtils.endsWith(report.getDefaultMessage(), " is not simulated : it is located in an out of voltage part of the network")) {
                 //we match line "Short circuit on node ABCDEP4_0 is not simulated : it is located in an out of voltage part of the network"
                 if (logsShortCircuitNotSimulatedSummary == null) {
                     logsShortCircuitNotSimulatedSummary = new ReportWrapper();
