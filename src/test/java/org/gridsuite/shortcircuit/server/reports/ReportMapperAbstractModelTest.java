@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.reports;
 
+import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import lombok.NonNull;
@@ -13,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.Map;
 
 @Slf4j
 class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
@@ -50,5 +53,15 @@ class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
                 .isNotSameAs(targetReporter)
                 .usingRecursiveComparison(ASSERTJ_RECURSIVE_COMPARISON_CONFIGURATION)
                 .isEqualTo(targetReporter);
+    }
+
+    @Test
+    void testCopyReportTraceNotAcceptNullArguments() {
+        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(null, new Report("", "", Map.of())))
+                .as("copyReportAsTrace(null, *)")
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(new ReporterModel("", ""), null))
+                .as("copyReportAsTrace(*, null)")
+                .isInstanceOf(NullPointerException.class);
     }
 }

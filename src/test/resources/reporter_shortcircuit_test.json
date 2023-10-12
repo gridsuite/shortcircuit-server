@@ -5,6 +5,11 @@
     "taskValues" : { },
     "reports" : [ ],
     "subReporters" : [ {
+      "taskKey" : "TestReporter",
+      "taskValues" : { },
+      "reports" : [ ],
+      "subReporters" : [ ]
+    }, {
       "taskKey" : "ShortCircuitAnalysis",
       "taskValues" : {
         "providerToUse" : {
@@ -18,6 +23,14 @@
         "taskValues" : { },
         "subReporters" : [ ],
         "reports" : [ {
+          "reportKey" : "testReportLine",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "DEBUG",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
           "reportKey" : "disconnectedTerminalGenerator",
           "values" : {
             "reportSeverity" : {
@@ -99,6 +112,8 @@
     "default": {
       "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
       "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
+      "TestReporter": "Test Reporter",
+      "testReportLine": "Test log line",
       "generatorConversion" : "Conversion of generators",
       "disconnectedTerminalGenerator" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
       "batteryConversion" : "Conversion of the batteries",

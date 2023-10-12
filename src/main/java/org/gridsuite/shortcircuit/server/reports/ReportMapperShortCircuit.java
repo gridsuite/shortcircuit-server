@@ -64,6 +64,8 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
 
     /**
      * Modify node with key {@code generatorConversion}
+     * @implNote we use {@link ReportWrapper} to insert a {@link Report} without knowing the exact content at that time, and
+     *           filling it later
      */
     protected ReporterModel forGeneratorConversion(@NonNull final ReporterModel reporterModel) {
         log.trace("short-circuit logs detected, will analyse them...");
@@ -85,10 +87,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                     logsRegulatingTerminalSeverity = report.getValue(Report.REPORT_SEVERITY_KEY);
                 }
                 copyReportAsTrace(newReporter, report);
-                final TypedValue generator = report.getValue("generator");
-                if (generator != null && generator.getValue() != null) {
-                    logsRegulatingTerminalCount++;
-                }
+                logsRegulatingTerminalCount++;
             } else { //we keep this log as is
                 newReporter.report(report);
             }

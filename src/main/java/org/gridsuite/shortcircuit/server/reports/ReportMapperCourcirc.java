@@ -89,6 +89,8 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
      *          and change existing lines found to {@code TRACE} severity
      * @implNote courcirc logs don't seem to use enumerate keys neither template value, only incremental keys (REC_0,REC_1,...),
      *           so we need to test the message
+     * @implNote we use {@link ReportWrapper} to insert a {@link Report} without knowing the exact content at that time, and
+     *           filling it later
      */
     private ReporterModel forCourcirc(@NonNull final ReporterModel reporterModel) {
         log.trace("courcirc logs detected, will analyse them...");
