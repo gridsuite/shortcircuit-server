@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 
 @Slf4j
 class ReportMapperCourcircTest extends AbstractReportMapperTest {
-    private final AbstractReportMapper/*Courcirc*/ reportMapper = new ReportMapperCourcirc();
+    private final AbstractReportMapper reportMapper = new ReportMapperCourcirc();
     protected static ReporterModel rootReporter;
 
     @BeforeAll

@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 
 @Slf4j
 class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
-    private final AbstractReportMapper/*ShortCircuit*/ reportMapper = new ReportMapperShortCircuit();
+    private final AbstractReportMapper reportMapper = new ReportMapperShortCircuit();
     protected static ReporterModel rootReporter;
 
     @BeforeAll
