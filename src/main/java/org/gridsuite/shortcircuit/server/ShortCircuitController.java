@@ -101,10 +101,10 @@ public class ShortCircuitController {
     public ResponseEntity<ShortCircuitAnalysisPagedResults> getPagedResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                             @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
                                                                             @Parameter(description = "Type of analysis") @RequestParam(name = "type") ShortCircuitAnalysisType type,
-                                                                            @Parameter(description = "Filter") @RequestParam(name = "filter", required = false) String filterModelString,
+                                                                            @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
                                                                             Pageable pageable) throws JsonProcessingException {
-        FilterModel filterModel = FilterModel.fromString(filterModelString);
-        ShortCircuitAnalysisPagedResults pagedResults = shortCircuitService.getPagedResults(resultUuid, mode, type, filterModel, pageable);
+        List<Filter> filters = Filter.fromStringToList(stringFilters);
+        ShortCircuitAnalysisPagedResults pagedResults = shortCircuitService.getPagedResults(resultUuid, mode, type, filters, pageable);
         return pagedResults != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(pagedResults)
                 : ResponseEntity.notFound().build();
     }

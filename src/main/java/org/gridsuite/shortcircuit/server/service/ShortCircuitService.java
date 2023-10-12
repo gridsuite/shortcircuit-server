@@ -134,7 +134,7 @@ public class ShortCircuitService {
         return null;
     }
 
-    public ShortCircuitAnalysisPagedResults getPagedResults(UUID resultUuid, FaultResultsMode mode, ShortCircuitAnalysisType type, FilterModel filterModel, Pageable pageable) {
+    public ShortCircuitAnalysisPagedResults getPagedResults(UUID resultUuid, FaultResultsMode mode, ShortCircuitAnalysisType type, List<Filter> filters, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> resultEntity;
@@ -145,7 +145,7 @@ public class ShortCircuitService {
             results = getAllBusesResults(mode, pageable, resultEntity);
         } else {
             // mode is always FULL in ONE_BUS
-            results = getOneBusResults(filterModel, pageable, resultEntity);
+            results = getOneBusResults(filters, pageable, resultEntity);
         }
         LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
         String pageableStr = LogUtils.sanitizeParam(pageable.toString());
@@ -177,12 +177,12 @@ public class ShortCircuitService {
     }
 
     @Nullable
-    private ShortCircuitAnalysisPagedResultsOneBus getOneBusResults(FilterModel filter, Pageable pageable, Optional<ShortCircuitAnalysisResultEntity> result) {
+    private ShortCircuitAnalysisPagedResultsOneBus getOneBusResults(List<Filter> filters, Pageable pageable, Optional<ShortCircuitAnalysisResultEntity> result) {
         if (result.isPresent()) {
             // if one bus, we have only one fault
             Optional<FaultResultEntity> faultResultEntity = resultRepository.findFirstFaultResult(result.get());
             if (faultResultEntity.isPresent()) {
-                Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(faultResultEntity.get(), filter);
+                Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(faultResultEntity.get(), filters);
                 Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(specification, pageable);
                 Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(fr -> fromEntity(fr));
                 FaultResult faultResult = fromEntity(faultResultEntity.get());

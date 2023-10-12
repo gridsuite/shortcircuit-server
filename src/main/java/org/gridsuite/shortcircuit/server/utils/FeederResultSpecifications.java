@@ -7,67 +7,68 @@
 
 package org.gridsuite.shortcircuit.server.utils;
 
-import org.gridsuite.shortcircuit.server.dto.FilterModel;
-import org.gridsuite.shortcircuit.server.dto.NumberFilter;
-import org.gridsuite.shortcircuit.server.dto.TextFilter;
+import org.gridsuite.shortcircuit.server.dto.Filter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.UUID;
 
 public class FeederResultSpecifications {
 
-    public static Specification<FeederResultEntity> faultResultUuidEquals(UUID id) {
-        return (feederResult, cq, cb) -> cb.equal(feederResult.get("faultResult").get("faultResultUuid"), id);
+    public static Specification<FeederResultEntity> faultResultUuidEquals(UUID value) {
+        return (feederResult, cq, cb) -> cb.equal(feederResult.get("faultResult").get("faultResultUuid"), value);
     }
 
-    public static Specification<FeederResultEntity> connectableIdContains(String text) {
-        return (feederResult, cq, cb) -> cb.like(feederResult.get("connectableId"), "%" + text + "%");
+    public static Specification<FeederResultEntity> contains(String column, String value) {
+        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), "%" + value + "%");
     }
 
-    public static Specification<FeederResultEntity> connectableIdStartsWith(String text) {
-        return (feederResult, cq, cb) -> cb.like(feederResult.get("connectableId"), text + "%");
+    public static Specification<FeederResultEntity> startsWith(String column, String value) {
+        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), value + "%");
     }
 
-    public static Specification<FeederResultEntity> currentNotEqual(Double number) {
-        return (feederResult, cq, cb) -> cb.notEqual(feederResult.get("current"), number);
+    public static Specification<FeederResultEntity> notEqual(String column, Double value) {
+        return (feederResult, cq, cb) -> cb.notEqual(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> currentLessThanOrEqualTo(Double number) {
-        return (feederResult, cq, cb) -> cb.lessThanOrEqualTo(feederResult.get("current"), number);
+    public static Specification<FeederResultEntity> lessThanOrEqualTo(String column, Double value) {
+        return (feederResult, cq, cb) -> cb.lessThanOrEqualTo(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> currentGreaterThanOrEqualTo(Double number) {
-        return (feederResult, cq, cb) -> cb.greaterThanOrEqualTo(feederResult.get("current"), number);
+    public static Specification<FeederResultEntity> greaterThanOrEqualTo(String column, Double value) {
+        return (feederResult, cq, cb) -> cb.greaterThanOrEqualTo(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> buildSpecification(FaultResultEntity faultResult, FilterModel filterModel) {
+    public static Specification<FeederResultEntity> buildSpecification(FaultResultEntity faultResult, List<Filter> filters) {
         Specification<FeederResultEntity> specification = Specification.where(faultResultUuidEquals(faultResult.getFaultResultUuid()));
 
-        if (filterModel == null) {
+        if (filters == null || filters.isEmpty()) {
             return specification;
         }
 
-        if (filterModel.connectableId() != null) {
-            TextFilter connectableIdFilter = filterModel.connectableId();
-            switch (connectableIdFilter.type()) {
-                case CONTAINS ->
-                        specification = specification.and(connectableIdContains(connectableIdFilter.filter()));
-                case STARTS_WITH ->
-                        specification = specification.and(connectableIdStartsWith(connectableIdFilter.filter()));
+        for (Filter filter : filters) {
+            if (filter.dataType() == Filter.DataType.TEXT) {
+                String value = filter.value().toString();
+                switch (filter.type()) {
+                    case CONTAINS ->
+                            specification = specification.and(contains(filter.column(), value));
+                    case STARTS_WITH ->
+                            specification = specification.and(startsWith(filter.column(), value));
+                }
             }
-        }
-
-        if (filterModel.current() != null) {
-            NumberFilter currentFilter = filterModel.current();
-            switch (currentFilter.type()) {
-                case NOT_EQUAL ->
-                        specification = specification.and(currentNotEqual(currentFilter.filter()));
-                case LESS_THAN_OR_EQUAL ->
-                        specification = specification.and(currentLessThanOrEqualTo(currentFilter.filter()));
-                case GREATER_THAN_OR_EQUAL ->
-                        specification = specification.and(currentGreaterThanOrEqualTo(currentFilter.filter()));
+            //TODO FM test and fix
+            if (filter.dataType() == Filter.DataType.NUMBER) {
+                Double value = Double.valueOf(filter.value().toString());
+                switch (filter.type()) {
+                    case NOT_EQUAL ->
+                            specification = specification.and(notEqual(filter.column(), value));
+                    case LESS_THAN_OR_EQUAL ->
+                            specification = specification.and(lessThanOrEqualTo(filter.column(), value));
+                    case GREATER_THAN_OR_EQUAL ->
+                            specification = specification.and(greaterThanOrEqualTo(filter.column(), value));
+                }
             }
         }
 
