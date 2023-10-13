@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -93,20 +94,29 @@ public class ShortCircuitController {
                 : ResponseEntity.notFound().build();
     }
 
-    //TODO delete the endpoint above
-    @GetMapping(value = "/results/{resultUuid}/paged", produces = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get a results page for a given short circuit analysis result")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of results"),
+    @GetMapping(value = "/results/{resultUuid}/fault_results", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a fault results page for a given short circuit analysis result")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
-    public ResponseEntity<ShortCircuitAnalysisPagedResults> getPagedResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                            @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
-                                                                            @Parameter(description = "Type of analysis") @RequestParam(name = "type") ShortCircuitAnalysisType type,
-                                                                            @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
-                                                                            Pageable pageable) throws JsonProcessingException {
-        List<Filter> filters = Filter.fromStringToList(stringFilters);
-        ShortCircuitAnalysisPagedResults pagedResults = shortCircuitService.getPagedResults(resultUuid, mode, type, filters, pageable);
+    public ResponseEntity<Page<FaultResult>> getFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                             @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
+                                                             Pageable pageable) {
+        Page<FaultResult> pagedResults = shortCircuitService.getFaultResultsPage(resultUuid, mode, pageable);
         return pagedResults != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(pagedResults)
                 : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping(value = "/results/{resultUuid}/feeder_results", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a feeder results page for a given short circuit analysis result")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of feeder results"),
+        @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
+    public ResponseEntity<Page<FeederResult>> getFeederResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                               @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
+                                                               Pageable pageable) throws JsonProcessingException {
+        List<Filter> filters = Filter.fromStringToList(stringFilters);
+        Page<FeederResult> pagedResults = shortCircuitService.getFeederResultsPage(resultUuid, filters, pageable);
+        return pagedResults != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(pagedResults)
+            : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)

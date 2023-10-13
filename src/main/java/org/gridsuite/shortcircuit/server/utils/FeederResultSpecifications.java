@@ -8,8 +8,8 @@
 package org.gridsuite.shortcircuit.server.utils;
 
 import org.gridsuite.shortcircuit.server.dto.Filter;
-import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -17,8 +17,8 @@ import java.util.UUID;
 
 public class FeederResultSpecifications {
 
-    public static Specification<FeederResultEntity> faultResultUuidEquals(UUID value) {
-        return (feederResult, cq, cb) -> cb.equal(feederResult.get("faultResult").get("faultResultUuid"), value);
+    public static Specification<FeederResultEntity> resultUuidEquals(UUID value) {
+        return (feederResult, cq, cb) -> cb.equal(feederResult.get("faultResult").get("result").get("resultUuid"), value);
     }
 
     public static Specification<FeederResultEntity> contains(String column, String value) {
@@ -41,8 +41,8 @@ public class FeederResultSpecifications {
         return (feederResult, cq, cb) -> cb.greaterThanOrEqualTo(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> buildSpecification(FaultResultEntity faultResult, List<Filter> filters) {
-        Specification<FeederResultEntity> specification = Specification.where(faultResultUuidEquals(faultResult.getFaultResultUuid()));
+    public static Specification<FeederResultEntity> buildSpecification(ShortCircuitAnalysisResultEntity resultEntity, List<Filter> filters) {
+        Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultEntity.getResultUuid()));
 
         if (filters == null || filters.isEmpty()) {
             return specification;
