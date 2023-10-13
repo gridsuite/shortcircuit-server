@@ -1,0 +1,127 @@
+{
+  "version": "1.0",
+  "reportTree": {
+    "taskKey" : "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
+    "taskValues" : { },
+    "reports" : [ ],
+    "subReporters" : [ {
+      "taskKey" : "TestReporter",
+      "taskValues" : { },
+      "reports" : [ ],
+      "subReporters" : [ ]
+    }, {
+      "taskKey" : "ShortCircuitAnalysis",
+      "taskValues" : {
+        "providerToUse" : {
+          "value" : "Unknown",
+          "type" : "UNTYPED"
+        }
+      },
+      "reports" : [ ],
+      "subReporters" : [ {
+        "taskKey" : "generatorConversion",
+        "taskValues" : { },
+        "subReporters" : [ ],
+        "reports" : [ {
+          "reportKey" : "testReportLine",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "DEBUG",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "disconnectedTerminalGenerator",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            },
+            "generator" : {
+              "value" : "ABCDEFG.XY1"
+            }
+          }
+        }, {
+          "reportKey" : "disconnectedTerminalGenerator",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            },
+            "generator" : {
+              "value" : "T.ABC.XYZ"
+            }
+          }
+        }, {
+          "reportKey" : "disconnectedTerminalGenerator",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            },
+            "generator" : {
+              "value" : "T.ABC.123"
+            }
+          }
+        }, {
+          "reportKey" : "disconnectedTerminalGenerator",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            },
+            "generator" : {
+              "value" : "T.ABCDEF1"
+            }
+          }
+        } ]
+      }, {
+        "taskKey" : "batteryConversion",
+        "taskValues" : { },
+        "subReporters" : [ {
+          "taskKey" : "lineConversion",
+          "taskValues" : { },
+          "subReporters" : [ ],
+          "reports" : [ ]
+        }, {
+          "taskKey" : "tieLineConversion",
+          "taskValues" : { },
+          "subReporters" : [ ],
+          "reports" : [ ]
+        }, {
+          "taskKey" : "twoWindingsTransformerConversion",
+          "taskValues" : { },
+          "subReporters" : [ ],
+          "reports" : [ ]
+        }, {
+          "taskKey" : "threeWindingsTransformerConversion",
+          "taskValues" : { },
+          "subReporters" : [ ],
+          "reports" : [ ]
+        } ],
+        "reports" : [ ]
+      }, {
+        "taskKey" : "danglinglinesConversion",
+        "taskValues" : { },
+        "subReporters" : [ ],
+        "reports" : [ ]
+      } ]
+    } ]
+  },
+  "dics": {
+    "default": {
+      "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
+      "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
+      "TestReporter": "Test Reporter",
+      "testReportLine": "Test log line",
+      "generatorConversion" : "Conversion of generators",
+      "disconnectedTerminalGenerator" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
+      "batteryConversion" : "Conversion of the batteries",
+      "lineConversion" : "Conversion of lines",
+      "tieLineConversion" : "Conversion of tie lines",
+      "twoWindingsTransformerConversion" : "Conversion of two windings transformers",
+      "threeWindingsTransformerConversion" : "Conversion of three windings transformers",
+      "danglinglinesConversion" : "Conversion of the dangling lines"
+    }
+  }
+}
