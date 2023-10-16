@@ -15,7 +15,11 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.List;
 import java.util.UUID;
 
-public class FeederResultSpecifications {
+public final class FeederResultSpecifications {
+
+    // Utility class, so no constructor
+    private FeederResultSpecifications() {
+    }
 
     public static Specification<FeederResultEntity> resultUuidEquals(UUID value) {
         return (feederResult, cq, cb) -> cb.equal(feederResult.get("faultResult").get("result").get("resultUuid"), value);
@@ -58,7 +62,6 @@ public class FeederResultSpecifications {
                             specification = specification.and(startsWith(filter.column(), value));
                 }
             }
-            //TODO FM test and fix
             if (filter.dataType() == Filter.DataType.NUMBER) {
                 Double value = Double.valueOf(filter.value().toString());
                 switch (filter.type()) {
