@@ -15,16 +15,20 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository.toResultEntity;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest // would be better with @DataJpaTest but does not work here
@@ -39,119 +43,182 @@ class ShortCircuitAnalysisResultRepositoryTest {
         47.3, FaultResult.Status.SUCCESS);
     static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT));
 
-    static final UUID RESULT_UUID = UUID.randomUUID();
+    private FeederResultEntity feederResultEntity1;
+    private FeederResultEntity feederResultEntity2;
+    private FeederResultEntity feederResultEntity3;
+    private ShortCircuitAnalysisResultEntity resultEntity;
+
 
     @Autowired
-    private ShortCircuitAnalysisResultRepository resultRepository;
+    private ShortCircuitAnalysisResultRepository SCAResultRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     @BeforeAll
     void setUp() {
-        resultRepository.insert(RESULT_UUID, RESULT, Map.of(), false, "");
+        resultEntity = toResultEntity(UUID.randomUUID(), RESULT, Map.of(), false);
+        List<FeederResultEntity> feederResultEntities = resultEntity.getFaultResults().stream()
+            .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
+            .sorted(Comparator.comparing(FeederResultEntity::getConnectableId))
+            .toList();
+        feederResultEntity1 = feederResultEntities.get(0);
+        feederResultEntity2 = feederResultEntities.get(1);
+        feederResultEntity3 = feederResultEntities.get(2);
+        resultRepository.save(resultEntity);
     }
 
     @AfterAll
     void tearDown() {
-        resultRepository.deleteAll();
+        SCAResultRepository.deleteAll();
     }
 
     @ParameterizedTest
     @MethodSource({
         "provideContainsFilters",
         "provideStartsWithFilters",
-        "provideNoEqualFilters",
-        "provideLessThanOrEqualToFilters",
-        "provideGreaterThanOrEqualToFilters"
+        "provideNotEqualFilters",
+        "provideLessThanOrEqualFilters",
+        "provideGreaterThanOrEqualFilters"
     })
-    void feederResultFilterTest(List<Filter> filters, long count) {
-        ShortCircuitAnalysisResultEntity resultEntity = resultRepository.find(RESULT_UUID).get();
+    void feederResultFilterTest(List<Filter> filters, List<FeederResultEntity> feederList) {
         Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(resultEntity, filters);
-        Page<FeederResultEntity> feedersPage = resultRepository.findFeederResultsPage(specification, Pageable.unpaged());
-        assertThat(feedersPage.get().count()).isEqualTo(count);
+        Page<FeederResultEntity> feederPage = SCAResultRepository.findFeederResultsPage(specification, Pageable.unpaged());
+        assertThat(feederPage.getContent()).extracting("feederResultUuid")
+            .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
 
-    private static Stream<Arguments> provideContainsFilters() {
+    @ParameterizedTest
+    @MethodSource({
+        "providePageable",
+        "provideSortingPageable"
+    })
+    void feederResultPageableTest(Pageable pageable, List<FeederResultEntity> feederList) {
+        Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(resultEntity, null);
+        Page<FeederResultEntity> feederPage = SCAResultRepository.findFeederResultsPage(specification, pageable);
+        assertThat(feederPage.getContent()).extracting("feederResultUuid")
+            .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
+    }
+
+    private Stream<Arguments> provideContainsFilters() {
         return Stream.of(
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_1", "connectableId")),
-                1),
-            Arguments.of(List.of(
                     new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_2", "connectableId")),
-                1),
+                List.of(feederResultEntity2)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_4", "connectableId")),
-                0),
+                List.of()),
+            Arguments.of(List.of(
+                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_1", "connectableId"),
+                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_3", "connectableId")),
+                List.of()),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "CONN", "connectableId"),
                     new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID", "connectableId")),
-                3)
+                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3))
         );
     }
 
-    private static Stream<Arguments> provideStartsWithFilters() {
+    private Stream<Arguments> provideStartsWithFilters() {
         return Stream.of(
             Arguments.of(List.of(
                     new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "A_CONN", "connectableId")),
-                2),
+                List.of(feederResultEntity1, feederResultEntity2)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "B_CONN", "connectableId")),
-                1),
+                List.of(feederResultEntity3)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "CONN", "connectableId")),
-                0)
+                List.of()),
+            Arguments.of(List.of(
+                    new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "A_CONN", "connectableId"),
+                    new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "B_CONN", "connectableId")),
+                List.of())
         );
     }
 
-    private static Stream<Arguments> provideNoEqualFilters() {
+    private Stream<Arguments> provideNotEqualFilters() {
         return Stream.of(
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, 22.17, "current")),
-                2),
-            Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, 18.57, "current")),
-                2),
+                List.of(feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, 18.56, "current")),
-                3),
+                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, 22.17, "current"),
                     new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, 53.94, "current")),
-                1)
+                List.of(feederResultEntity2))
         );
     }
 
-    private static Stream<Arguments> provideLessThanOrEqualToFilters() {
+    private Stream<Arguments> provideLessThanOrEqualFilters() {
         return Stream.of(
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, 22.17, "current")),
-                2),
+                List.of(feederResultEntity1, feederResultEntity2)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, 18.56, "current")),
-                0),
+                List.of()),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
-                3),
+                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, 22.17, "current"),
                     new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
-                2)
+                List.of(feederResultEntity1, feederResultEntity2))
         );
     }
 
-    private static Stream<Arguments> provideGreaterThanOrEqualToFilters() {
+    private Stream<Arguments> provideGreaterThanOrEqualFilters() {
         return Stream.of(
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current")),
-                2),
+                List.of(feederResultEntity1, feederResultEntity3)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, 18.56, "current")),
-                3),
+                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, 53.95, "current")),
-                0),
+                List.of()),
             Arguments.of(List.of(
                     new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
                     new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
-                1)
+                List.of(feederResultEntity3))
+        );
+    }
+
+    private Stream<Arguments> providePageable() {
+        return Stream.of(
+            Arguments.of(
+                PageRequest.of(0, 2),
+                List.of(feederResultEntity1, feederResultEntity2)),
+            Arguments.of(
+                PageRequest.of(1, 2),
+                List.of(feederResultEntity3)),
+            Arguments.of(
+                PageRequest.of(0, 5),
+                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
+            Arguments.of(
+                PageRequest.of(1, 5),
+                List.of())
+        );
+    }
+
+    private Stream<Arguments> provideSortingPageable() {
+        return Stream.of(
+            Arguments.of(
+                PageRequest.of(0, 5, Sort.by("connectableId")),
+                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
+            Arguments.of(
+                PageRequest.of(0, 5, Sort.by("connectableId").descending()),
+                List.of(feederResultEntity3, feederResultEntity2, feederResultEntity1)),
+            Arguments.of(
+                PageRequest.of(0, 5, Sort.by("current")),
+                List.of(feederResultEntity2, feederResultEntity1, feederResultEntity3)),
+            Arguments.of(
+                PageRequest.of(0, 5, Sort.by("current").descending()),
+                List.of(feederResultEntity3, feederResultEntity1, feederResultEntity2))
         );
     }
 

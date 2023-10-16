@@ -55,7 +55,7 @@ public class ShortCircuitAnalysisResultRepository {
             .collect(Collectors.toList());
     }
 
-    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits, boolean isWithFortescueResult) {
+    public static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits, boolean isWithFortescueResult) {
         Set<FaultResultEntity> faultResults = result.getFaultResults().stream().map(faultResult -> isWithFortescueResult ? toFortescueFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId())) : toMagnitudeFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()))).collect(Collectors.toSet());
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
