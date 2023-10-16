@@ -39,14 +39,14 @@ class ShortCircuitAnalysisResultRepositoryTest {
         47.3, FaultResult.Status.SUCCESS);
     static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT));
 
-    static final UUID resultUuid = UUID.randomUUID();
+    static final UUID RESULT_UUID = UUID.randomUUID();
 
     @Autowired
     private ShortCircuitAnalysisResultRepository resultRepository;
 
     @BeforeAll
     void setUp() {
-        resultRepository.insert(resultUuid, RESULT, Map.of(), false, "");
+        resultRepository.insert(RESULT_UUID, RESULT, Map.of(), false, "");
     }
 
     @AfterAll
@@ -63,7 +63,7 @@ class ShortCircuitAnalysisResultRepositoryTest {
         "provideGreaterThanOrEqualToFilters"
     })
     void feederResultFilterTest(List<Filter> filters, long count) {
-        ShortCircuitAnalysisResultEntity resultEntity = resultRepository.find(resultUuid).get();
+        ShortCircuitAnalysisResultEntity resultEntity = resultRepository.find(RESULT_UUID).get();
         Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(resultEntity, filters);
         Page<FeederResultEntity> feedersPage = resultRepository.findFeederResultsPage(specification, Pageable.unpaged());
         assertThat(feedersPage.get().count()).isEqualTo(count);
