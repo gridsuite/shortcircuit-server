@@ -42,22 +42,20 @@ class ShortCircuitAnalysisResultRepositoryTest {
         List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(),
         47.3, FaultResult.Status.SUCCESS);
     static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT));
+    static final UUID RESULT_UUID = UUID.randomUUID();
 
     private FeederResultEntity feederResultEntity1;
     private FeederResultEntity feederResultEntity2;
     private FeederResultEntity feederResultEntity3;
     private ShortCircuitAnalysisResultEntity resultEntity;
 
-
     @Autowired
-    private ShortCircuitAnalysisResultRepository SCAResultRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
+    private ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
 
     @BeforeAll
     void setUp() {
-        resultEntity = toResultEntity(UUID.randomUUID(), RESULT, Map.of(), false);
+        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, RESULT, Map.of(), false, "");
+        resultEntity = shortCircuitAnalysisResultRepository.findFullResults(RESULT_UUID).get();
         List<FeederResultEntity> feederResultEntities = resultEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
             .sorted(Comparator.comparing(FeederResultEntity::getConnectableId))
@@ -65,12 +63,11 @@ class ShortCircuitAnalysisResultRepositoryTest {
         feederResultEntity1 = feederResultEntities.get(0);
         feederResultEntity2 = feederResultEntities.get(1);
         feederResultEntity3 = feederResultEntities.get(2);
-        resultRepository.save(resultEntity);
     }
 
     @AfterAll
     void tearDown() {
-        SCAResultRepository.deleteAll();
+        shortCircuitAnalysisResultRepository.deleteAll();
     }
 
     @ParameterizedTest
@@ -83,7 +80,7 @@ class ShortCircuitAnalysisResultRepositoryTest {
     })
     void feederResultFilterTest(List<Filter> filters, List<FeederResultEntity> feederList) {
         Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(resultEntity, filters);
-        Page<FeederResultEntity> feederPage = SCAResultRepository.findFeederResultsPage(specification, Pageable.unpaged());
+        Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(specification, Pageable.unpaged());
         assertThat(feederPage.getContent()).extracting("feederResultUuid")
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
@@ -95,7 +92,7 @@ class ShortCircuitAnalysisResultRepositoryTest {
     })
     void feederResultPageableTest(Pageable pageable, List<FeederResultEntity> feederList) {
         Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(resultEntity, null);
-        Page<FeederResultEntity> feederPage = SCAResultRepository.findFeederResultsPage(specification, pageable);
+        Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(specification, pageable);
         assertThat(feederPage.getContent()).extracting("feederResultUuid")
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }

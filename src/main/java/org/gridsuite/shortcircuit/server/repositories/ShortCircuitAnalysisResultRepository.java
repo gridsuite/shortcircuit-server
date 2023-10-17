@@ -68,7 +68,7 @@ public class ShortCircuitAnalysisResultRepository {
         FaultEmbeddable faultEmbedded = new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType());
         List<LimitViolationEmbeddable> limitViolations = extractLimitViolations(faultResult);
         List<FeederResultEntity> feederResults = faultResult.getFeederResults().stream()
-                .map(feederResult -> new FeederResultEntity(UUID.randomUUID(), null, feederResult.getConnectableId(),
+                .map(feederResult -> new FeederResultEntity(null, feederResult.getConnectableId(),
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
                 .collect(Collectors.toList());
 
@@ -94,7 +94,7 @@ public class ShortCircuitAnalysisResultRepository {
             .map(feederResult -> {
                 FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
                 FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(feederFortescueCurrent);
-                return new FeederResultEntity(UUID.randomUUID(), null, feederResult.getConnectableId(),
+                return new FeederResultEntity(null, feederResult.getConnectableId(),
                     Double.NaN, new FortescueResultEmbeddable(feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(), feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(), feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(), feederFortescueThreePhaseValue.getMagnitudeA(), feederFortescueThreePhaseValue.getMagnitudeB(), feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(), feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
             })
             .collect(Collectors.toList());

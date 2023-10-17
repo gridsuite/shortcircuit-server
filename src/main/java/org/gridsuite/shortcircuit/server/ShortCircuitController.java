@@ -99,11 +99,14 @@ public class ShortCircuitController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<Page<FaultResult>> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                  @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
+                                                                  @Parameter(description = "BASIC (without limits and feeders), " +
+                                                                      "FULL (with both), " +
+                                                                      "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
+                                                                      "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
                                                                   Pageable pageable) {
         Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, pageable);
         return faultResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage)
-                : ResponseEntity.notFound().build();
+            : ResponseEntity.notFound().build();
     }
 
     @GetMapping(value = "/results/{resultUuid}/feeder_results", produces = APPLICATION_JSON_VALUE)

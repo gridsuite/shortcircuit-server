@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +17,6 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "feeder_results",
@@ -27,6 +25,7 @@ import java.util.UUID;
 public class FeederResultEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID feederResultUuid;
 
     @ManyToOne(
@@ -63,5 +62,12 @@ public class FeederResultEntity {
 
     public void setFaultResult(FaultResultEntity faultResult) {
         this.faultResult = faultResult;
+    }
+
+    public FeederResultEntity(FaultResultEntity faultResult, String connectableId, double current, FortescueResultEmbeddable fortescueCurrent) {
+        this.faultResult = faultResult;
+        this.connectableId = connectableId;
+        this.current = current;
+        this.fortescueCurrent = fortescueCurrent;
     }
 }
