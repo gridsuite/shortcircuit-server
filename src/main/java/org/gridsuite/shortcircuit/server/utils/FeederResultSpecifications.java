@@ -37,11 +37,11 @@ public final class FeederResultSpecifications {
         return (feederResult, cq, cb) -> cb.notEqual(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> lessThanOrEqualTo(String column, Double value) {
+    public static Specification<FeederResultEntity> lessThanOrEqual(String column, Double value) {
         return (feederResult, cq, cb) -> cb.lessThanOrEqualTo(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> greaterThanOrEqualTo(String column, Double value) {
+    public static Specification<FeederResultEntity> greaterThanOrEqual(String column, Double value) {
         return (feederResult, cq, cb) -> cb.greaterThanOrEqualTo(feederResult.get(column), value);
     }
 
@@ -68,9 +68,9 @@ public final class FeederResultSpecifications {
                     case NOT_EQUAL ->
                             specification = specification.and(notEqual(filter.column(), value));
                     case LESS_THAN_OR_EQUAL ->
-                            specification = specification.and(lessThanOrEqualTo(filter.column(), value));
+                            specification = specification.and(lessThanOrEqual(filter.column(), value));
                     case GREATER_THAN_OR_EQUAL ->
-                            specification = specification.and(greaterThanOrEqualTo(filter.column(), value));
+                            specification = specification.and(greaterThanOrEqual(filter.column(), value));
                 }
             }
         }

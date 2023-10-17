@@ -168,14 +168,14 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithLimitViolationsByResultUuid(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
         if (!result.isPresent()) {
             return result;
         }
         // using the the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
-            resultRepository.findWithFeederResultsByResultUuid(resultUuid);
+            resultRepository.findWithFaultResultsAndFeederResultsByResultUuid(resultUuid);
         }
         return result;
     }
@@ -183,7 +183,7 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public Optional<ShortCircuitAnalysisResultEntity> findResultsWithLimitViolations(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithLimitViolationsByResultUuid(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
         if (!result.isPresent()) {
             return result;
         }

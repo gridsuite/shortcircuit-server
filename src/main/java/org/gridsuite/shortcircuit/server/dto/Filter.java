@@ -23,6 +23,8 @@ import java.util.List;
  */
 public record Filter(DataType dataType, Type type, Object value, String column) {
 
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
     public enum DataType {
         @JsonProperty("text")
         TEXT,
@@ -47,8 +49,7 @@ public record Filter(DataType dataType, Type type, Object value, String column) 
         if (filters == null || filters.isEmpty()) {
             return null;
         }
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(filters, new TypeReference<List<Filter>>() {
+        return objectMapper.readValue(filters, new TypeReference<>() {
         });
     }
 }

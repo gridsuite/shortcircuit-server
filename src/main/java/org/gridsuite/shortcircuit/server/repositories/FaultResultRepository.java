@@ -26,7 +26,6 @@ import java.util.Set;
  */
 @Repository
 public interface FaultResultRepository extends JpaRepository<FaultResultEntity, UUID> {
-
     Optional<Page<FaultResultEntity>> findPagedByResult(ShortCircuitAnalysisResultEntity result, Pageable pageable);
 
     Optional<Page<FaultResultEntity>> findPagedByResultAndNbLimitViolationsGreaterThan(ShortCircuitAnalysisResultEntity result, int nbLimitViolations, Pageable pageable);

@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
 package org.gridsuite.shortcircuit.server.repositories;
 
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
@@ -12,7 +13,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
-
 
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>

@@ -50,7 +50,6 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<LimitViolationEmbeddable> limitViolations;
 
-    //TODO FM why it's still sent ???
     @OneToMany(
             mappedBy = "faultResult",
             cascade = CascadeType.ALL,

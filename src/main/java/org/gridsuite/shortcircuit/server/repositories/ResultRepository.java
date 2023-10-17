@@ -26,10 +26,10 @@ public interface ResultRepository extends JpaRepository<ShortCircuitAnalysisResu
     Optional<ShortCircuitAnalysisResultEntity> findWithFaultResultsByResultUuid(UUID resultUuid);
 
     @EntityGraph(attributePaths = {"faultResults", "faultResults.limitViolations"}, type = EntityGraphType.LOAD)
-    Optional<ShortCircuitAnalysisResultEntity> findWithLimitViolationsByResultUuid(UUID resultUuid);
+    Optional<ShortCircuitAnalysisResultEntity> findWithFaultResultsAndLimitViolationsByResultUuid(UUID resultUuid);
 
     @EntityGraph(attributePaths = {"faultResults", "faultResults.feederResults"}, type = EntityGraphType.LOAD)
-    Optional<ShortCircuitAnalysisResultEntity> findWithFeederResultsByResultUuid(UUID resultUuid);
+    Optional<ShortCircuitAnalysisResultEntity> findWithFaultResultsAndFeederResultsByResultUuid(UUID resultUuid);
 
     void deleteByResultUuid(UUID resultUuid);
 }
