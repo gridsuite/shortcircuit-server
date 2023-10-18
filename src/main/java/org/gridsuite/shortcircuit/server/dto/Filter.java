@@ -21,7 +21,7 @@ import java.util.List;
  * @param value the value of the filter
  * @param column the column / field on which the filter will be applied
  */
-public record Filter(DataType dataType, Type type, Object value, String column) {
+public record Filter(DataType dataType, Type type, String value, String column) {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 

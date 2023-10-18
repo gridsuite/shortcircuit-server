@@ -20,6 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -142,6 +143,7 @@ public class ShortCircuitService {
         return null;
     }
 
+    @Transactional(readOnly = true)
     public Page<FaultResult> getFaultResultsPage(UUID resultUuid, FaultResultsMode mode, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
@@ -173,12 +175,13 @@ public class ShortCircuitService {
         return null;
     }
 
+    @Transactional(readOnly = true)
     public Page<FeederResult> getFeederResultsPage(UUID resultUuid, List<Filter> filters, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
-            Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(result.get(), filters);
+            Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(result.get().getResultUuid(), filters);
             Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(specification, pageable);
             Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(fr -> fromEntity(fr));
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));

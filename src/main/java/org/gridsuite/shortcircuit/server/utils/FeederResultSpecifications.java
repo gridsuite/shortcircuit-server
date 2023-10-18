@@ -9,8 +9,8 @@ package org.gridsuite.shortcircuit.server.utils;
 
 import org.gridsuite.shortcircuit.server.dto.Filter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
-import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.query.EscapeCharacter;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,11 +26,11 @@ public final class FeederResultSpecifications {
     }
 
     public static Specification<FeederResultEntity> contains(String column, String value) {
-        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), "%" + value + "%");
+        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), "%" + value + "%", '\\');
     }
 
     public static Specification<FeederResultEntity> startsWith(String column, String value) {
-        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), value + "%");
+        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), value + "%", '\\');
     }
 
     public static Specification<FeederResultEntity> notEqual(String column, Double value) {
@@ -45,8 +45,8 @@ public final class FeederResultSpecifications {
         return (feederResult, cq, cb) -> cb.greaterThanOrEqualTo(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> buildSpecification(ShortCircuitAnalysisResultEntity resultEntity, List<Filter> filters) {
-        Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultEntity.getResultUuid()));
+    public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<Filter> filters) {
+        Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultUuid));
 
         if (filters == null || filters.isEmpty()) {
             return specification;
@@ -54,7 +54,9 @@ public final class FeederResultSpecifications {
 
         for (Filter filter : filters) {
             if (filter.dataType() == Filter.DataType.TEXT) {
-                String value = filter.value().toString();
+                // To avoid interpretation of wildcard characters used by the user
+                // The Criteria API does not propose a way to automatically escape at the time of this comment
+                String value = EscapeCharacter.of('\\').escape(filter.value());
                 switch (filter.type()) {
                     case CONTAINS ->
                             specification = specification.and(contains(filter.column(), value));
@@ -63,7 +65,7 @@ public final class FeederResultSpecifications {
                 }
             }
             if (filter.dataType() == Filter.DataType.NUMBER) {
-                Double value = Double.valueOf(filter.value().toString());
+                Double value = Double.valueOf(filter.value());
                 switch (filter.type()) {
                     case NOT_EQUAL ->
                             specification = specification.and(notEqual(filter.column(), value));
