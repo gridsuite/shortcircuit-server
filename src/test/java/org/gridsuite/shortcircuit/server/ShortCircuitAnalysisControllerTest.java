@@ -335,7 +335,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL, resultDtoFull);
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}/fault_results", RESULT_UUID)
+                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
                             .param("page", "0")
                             .param("size", "2"))
                     .andExpect(status().isOk())
@@ -350,7 +350,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT, faultResultsPageDto0);
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}/fault_results", RESULT_UUID)
+                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
                              .param("mode", "FULL")
                              .param("page", "0")
                              .param("size", "2")
@@ -363,7 +363,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_0, faultResultsPageDto0Full);
 
             result = mockMvc.perform(get(
-                             "/" + VERSION + "/results/{resultUuid}/fault_results", RESULT_UUID)
+                             "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
                              .param("mode", "FULL")
                              .param("page", "1")
                              .param("size", "2")
@@ -430,7 +430,7 @@ public class ShortCircuitAnalysisControllerTest {
 
             // paged results
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}/feeder_results", RESULT_UUID)
+                            "/" + VERSION + "/results/{resultUuid}/feeder_results/paged", RESULT_UUID)
                             .param("page", "0")
                             .param("size", "3"))
                     .andExpect(status().isOk())

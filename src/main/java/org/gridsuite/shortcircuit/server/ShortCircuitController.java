@@ -94,7 +94,7 @@ public class ShortCircuitController {
                 : ResponseEntity.notFound().build();
     }
 
-    @GetMapping(value = "/results/{resultUuid}/fault_results", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a fault results page for a given short circuit analysis result")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
@@ -109,7 +109,7 @@ public class ShortCircuitController {
             : ResponseEntity.notFound().build();
     }
 
-    @GetMapping(value = "/results/{resultUuid}/feeder_results", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/results/{resultUuid}/feeder_results/paged", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a feeder results page for a given short circuit analysis result")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of feeder results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
