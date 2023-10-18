@@ -116,8 +116,8 @@ public class ShortCircuitController {
     public ResponseEntity<Page<FeederResult>> getPagedFeederResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                     @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
                                                                     Pageable pageable) throws JsonProcessingException {
-        List<Filter> filters = Filter.fromStringToList(stringFilters);
-        Page<FeederResult> feederResultsPage = shortCircuitService.getFeederResultsPage(resultUuid, filters, pageable);
+        List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
+        Page<FeederResult> feederResultsPage = shortCircuitService.getFeederResultsPage(resultUuid, resourceFilters, pageable);
         return feederResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(feederResultsPage)
             : ResponseEntity.notFound().build();
     }

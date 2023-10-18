@@ -7,7 +7,7 @@
 
 package org.gridsuite.shortcircuit.server.utils;
 
-import org.gridsuite.shortcircuit.server.dto.Filter;
+import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.EscapeCharacter;
@@ -26,11 +26,11 @@ public final class FeederResultSpecifications {
     }
 
     public static Specification<FeederResultEntity> contains(String column, String value) {
-        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), "%" + value + "%", '\\');
+        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), "%" + EscapeCharacter.DEFAULT.escape(value) + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
     }
 
     public static Specification<FeederResultEntity> startsWith(String column, String value) {
-        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), value + "%", '\\');
+        return (feederResult, cq, cb) -> cb.like(feederResult.get(column), EscapeCharacter.DEFAULT.escape(value) + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
     }
 
     public static Specification<FeederResultEntity> notEqual(String column, Double value) {
@@ -45,34 +45,32 @@ public final class FeederResultSpecifications {
         return (feederResult, cq, cb) -> cb.greaterThanOrEqualTo(feederResult.get(column), value);
     }
 
-    public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<Filter> filters) {
+    public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
         Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultUuid));
 
-        if (filters == null || filters.isEmpty()) {
+        if (resourceFilters == null || resourceFilters.isEmpty()) {
             return specification;
         }
 
-        for (Filter filter : filters) {
-            if (filter.dataType() == Filter.DataType.TEXT) {
-                // To avoid interpretation of wildcard characters used by the user
-                // The Criteria API does not propose a way to automatically escape at the time of this comment
-                String value = EscapeCharacter.of('\\').escape(filter.value());
-                switch (filter.type()) {
+        for (ResourceFilter resourceFilter : resourceFilters) {
+            if (resourceFilter.dataType() == ResourceFilter.DataType.TEXT) {
+                String value = resourceFilter.value();
+                switch (resourceFilter.type()) {
                     case CONTAINS ->
-                            specification = specification.and(contains(filter.column(), value));
+                            specification = specification.and(contains(resourceFilter.column(), value));
                     case STARTS_WITH ->
-                            specification = specification.and(startsWith(filter.column(), value));
+                            specification = specification.and(startsWith(resourceFilter.column(), value));
                 }
             }
-            if (filter.dataType() == Filter.DataType.NUMBER) {
-                Double value = Double.valueOf(filter.value());
-                switch (filter.type()) {
+            if (resourceFilter.dataType() == ResourceFilter.DataType.NUMBER) {
+                Double value = Double.valueOf(resourceFilter.value());
+                switch (resourceFilter.type()) {
                     case NOT_EQUAL ->
-                            specification = specification.and(notEqual(filter.column(), value));
+                            specification = specification.and(notEqual(resourceFilter.column(), value));
                     case LESS_THAN_OR_EQUAL ->
-                            specification = specification.and(lessThanOrEqual(filter.column(), value));
+                            specification = specification.and(lessThanOrEqual(resourceFilter.column(), value));
                     case GREATER_THAN_OR_EQUAL ->
-                            specification = specification.and(greaterThanOrEqual(filter.column(), value));
+                            specification = specification.and(greaterThanOrEqual(resourceFilter.column(), value));
                 }
             }
         }

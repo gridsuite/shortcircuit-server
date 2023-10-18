@@ -1,7 +1,7 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
-import org.gridsuite.shortcircuit.server.dto.Filter;
+import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.gridsuite.shortcircuit.server.utils.FeederResultSpecifications;
@@ -77,8 +77,8 @@ class ShortCircuitAnalysisResultRepositoryTest {
         "provideLessThanOrEqualFilters",
         "provideGreaterThanOrEqualFilters"
     })
-    void feederResultFilterTest(List<Filter> filters, List<FeederResultEntity> feederList) {
-        Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(RESULT_UUID, filters);
+    void feederResultFilterTest(List<ResourceFilter> resourceFilters, List<FeederResultEntity> feederList) {
+        Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(RESULT_UUID, resourceFilters);
         Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(specification, Pageable.unpaged());
         assertThat(feederPage.getContent()).extracting("feederResultUuid")
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
@@ -99,25 +99,25 @@ class ShortCircuitAnalysisResultRepositoryTest {
     private Stream<Arguments> provideContainsFilters() {
         return Stream.of(
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_2", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_2", "connectableId")),
                 List.of(feederResultEntity2)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_4", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_4", "connectableId")),
                 List.of()),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_1", "connectableId"),
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID_3", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_1", "connectableId"),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_3", "connectableId")),
                 List.of()),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "CONN", "connectableId"),
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "ID", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "CONN", "connectableId"),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID", "connectableId")),
                 List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
             // we test escaping of wildcard chars also
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "%", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "%", "connectableId")),
                 List.of()),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.CONTAINS, "_D_1", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "_D_1", "connectableId")),
                 List.of())
         );
     }
@@ -125,17 +125,17 @@ class ShortCircuitAnalysisResultRepositoryTest {
     private Stream<Arguments> provideStartsWithFilters() {
         return Stream.of(
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "A_CONN", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId")),
                 List.of(feederResultEntity1, feederResultEntity2)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "B_CONN", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
                 List.of(feederResultEntity3)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "CONN", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "CONN", "connectableId")),
                 List.of()),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "A_CONN", "connectableId"),
-                    new Filter(Filter.DataType.TEXT, Filter.Type.STARTS_WITH, "B_CONN", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId"),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
                 List.of())
         );
     }
@@ -143,14 +143,14 @@ class ShortCircuitAnalysisResultRepositoryTest {
     private Stream<Arguments> provideNotEqualFilters() {
         return Stream.of(
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, "22.17", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "22.17", "current")),
                 List.of(feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, "18.56", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "18.56", "current")),
                 List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, "22.17", "current"),
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.NOT_EQUAL, "53.94", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "22.17", "current"),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "53.94", "current")),
                 List.of(feederResultEntity2))
         );
     }
@@ -158,17 +158,17 @@ class ShortCircuitAnalysisResultRepositoryTest {
     private Stream<Arguments> provideLessThanOrEqualFilters() {
         return Stream.of(
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, "22.17", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, "22.17", "current")),
                 List.of(feederResultEntity1, feederResultEntity2)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, "18.56", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, "18.56", "current")),
                 List.of()),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, "53.94", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, "53.94", "current")),
                 List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, "22.17", "current"),
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.LESS_THAN_OR_EQUAL, "53.94", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, "22.17", "current"),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, "53.94", "current")),
                 List.of(feederResultEntity1, feederResultEntity2))
         );
     }
@@ -176,17 +176,17 @@ class ShortCircuitAnalysisResultRepositoryTest {
     private Stream<Arguments> provideGreaterThanOrEqualFilters() {
         return Stream.of(
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, "22.17", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, "22.17", "current")),
                 List.of(feederResultEntity1, feederResultEntity3)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, "18.56", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, "18.56", "current")),
                 List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, "53.95", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, "53.95", "current")),
                 List.of()),
             Arguments.of(List.of(
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, "22.17", "current"),
-                    new Filter(Filter.DataType.NUMBER, Filter.Type.GREATER_THAN_OR_EQUAL, "53.94", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, "22.17", "current"),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, "53.94", "current")),
                 List.of(feederResultEntity3))
         );
     }

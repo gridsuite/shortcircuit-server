@@ -176,12 +176,12 @@ public class ShortCircuitService {
     }
 
     @Transactional(readOnly = true)
-    public Page<FeederResult> getFeederResultsPage(UUID resultUuid, List<Filter> filters, Pageable pageable) {
+    public Page<FeederResult> getFeederResultsPage(UUID resultUuid, List<ResourceFilter> resourceFilters, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
-            Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(result.get().getResultUuid(), filters);
+            Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(result.get().getResultUuid(), resourceFilters);
             Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(specification, pageable);
             Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(fr -> fromEntity(fr));
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));

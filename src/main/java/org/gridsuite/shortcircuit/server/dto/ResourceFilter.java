@@ -21,7 +21,7 @@ import java.util.List;
  * @param value the value of the filter
  * @param column the column / field on which the filter will be applied
  */
-public record Filter(DataType dataType, Type type, String value, String column) {
+public record ResourceFilter(DataType dataType, Type type, String value, String column) {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -45,7 +45,7 @@ public record Filter(DataType dataType, Type type, String value, String column) 
         GREATER_THAN_OR_EQUAL
     }
 
-    public static List<Filter> fromStringToList(String filters) throws JsonProcessingException {
+    public static List<ResourceFilter> fromStringToList(String filters) throws JsonProcessingException {
         if (filters == null || filters.isEmpty()) {
             return null;
         }
