@@ -69,7 +69,7 @@ class ShortCircuitAnalysisResultRepositoryTest {
         shortCircuitAnalysisResultRepository.deleteAll();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "[{index}] Using the filter(s) {0} should return the given entities")
     @MethodSource({
         "provideContainsFilters",
         "provideStartsWithFilters",
@@ -80,11 +80,11 @@ class ShortCircuitAnalysisResultRepositoryTest {
     void feederResultFilterTest(List<ResourceFilter> resourceFilters, List<FeederResultEntity> feederList) {
         Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(RESULT_UUID, resourceFilters);
         Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(specification, Pageable.unpaged());
-        assertThat(feederPage.getContent()).extracting("feederResultUuid")
+        assertThat(feederPage.getContent()).extracting("feederResultUuid").describedAs("Check if the IDs of the feeder page are correct")
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "[{index}] Using the pageable {0} should return the given entities")
     @MethodSource({
         "providePageable",
         "provideSortingPageable"
@@ -92,7 +92,7 @@ class ShortCircuitAnalysisResultRepositoryTest {
     void feederResultPageableTest(Pageable pageable, List<FeederResultEntity> feederList) {
         Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(RESULT_UUID, null);
         Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(specification, pageable);
-        assertThat(feederPage.getContent()).extracting("feederResultUuid")
+        assertThat(feederPage.getContent()).extracting("feederResultUuid").describedAs("Check if the IDs of the feeder page are correct")
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
 
