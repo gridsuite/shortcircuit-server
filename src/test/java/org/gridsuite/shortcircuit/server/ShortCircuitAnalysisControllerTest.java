@@ -428,7 +428,7 @@ public class ShortCircuitAnalysisControllerTest {
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL, resultDto);
 
-            // paged results
+            // paged results (more deeply tested in unit tests)
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}/feeder_results/paged", RESULT_UUID)
                             .param("page", "0")
@@ -440,6 +440,7 @@ public class ShortCircuitAnalysisControllerTest {
             org.gridsuite.shortcircuit.server.dto.FaultResult faultResult = resultDto.getFaults().get(0);
             ObjectReader reader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FeederResult>>() { });
             List<org.gridsuite.shortcircuit.server.dto.FeederResult> feederResults = reader.readValue(feederResultsPage.get("content"));
+            // we update the fault result with the feeders we just get to be able to use the assertion
             org.gridsuite.shortcircuit.server.dto.FaultResult formattedFaultResult = new org.gridsuite.shortcircuit.server.dto.FaultResult(faultResult.getFault(), faultResult.getCurrent(), faultResult.getPositiveMagnitude(), faultResult.getShortCircuitPower(), faultResult.getLimitViolations(), feederResults, faultResult.getShortCircuitLimits());
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL, List.of(formattedFaultResult));
         }
