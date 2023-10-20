@@ -19,9 +19,9 @@ import java.util.List;
  * @param dataType the type of data we want to filter (text, number)
  * @param type the type of filter (contains, startsWith...)
  * @param value the value of the filter
- * @param column the column / field on which the filter will be applied
+ * @param field the field on which the filter will be applied
  */
-public record ResourceFilter(DataType dataType, Type type, String value, String column) {
+public record ResourceFilter(DataType dataType, Type type, String value, String field) {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
