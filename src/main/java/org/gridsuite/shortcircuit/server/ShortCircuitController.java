@@ -29,7 +29,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -69,7 +68,6 @@ public class ShortCircuitController {
                                                             schema = @Schema(implementation = ShortCircuitParameters.class))})})
     public ResponseEntity<UUID> runAndSave(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
                                            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-                                           @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
@@ -77,13 +75,8 @@ public class ShortCircuitController {
                                            @RequestBody(required = false) ShortCircuitParameters parameters,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
-        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, nonNullParameters, reportUuid, reporterId, userId, busId));
+        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, nonNullParameters, reportUuid, reporterId, userId, busId));
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
-    }
-
-    private static List<UUID> getNonNullOtherNetworkUuids(List<UUID> otherNetworkUuids) {
-        return otherNetworkUuids != null ? otherNetworkUuids : Collections.emptyList();
     }
 
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)

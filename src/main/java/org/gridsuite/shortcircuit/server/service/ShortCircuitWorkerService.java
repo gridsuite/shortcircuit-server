@@ -12,7 +12,6 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.computation.local.LocalComputationManager;
-import com.powsybl.iidm.mergingview.MergingView;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -96,26 +95,11 @@ public class ShortCircuitWorkerService {
         return network;
     }
 
-    private Network getNetwork(UUID networkUuid, List<UUID> otherNetworkUuids, String variantId) {
-        Network network = getNetwork(networkUuid, variantId);
-        if (otherNetworkUuids.isEmpty()) {
-            return network;
-        } else {
-            List<Network> otherNetworks = otherNetworkUuids.stream().map(uuid -> getNetwork(uuid, variantId)).collect(Collectors.toList());
-            List<Network> networks = new ArrayList<>();
-            networks.add(network);
-            networks.addAll(otherNetworks);
-            MergingView mergingView = MergingView.create("merge", "iidm");
-            mergingView.merge(networks.toArray(new Network[0]));
-            return mergingView;
-        }
-    }
-
     private ShortCircuitAnalysisResult run(ShortCircuitRunContext context, UUID resultUuid) throws ExecutionException, InterruptedException {
         Objects.requireNonNull(context);
 
         LOGGER.info("Run short circuit analysis...");
-        Network network = getNetwork(context.getNetworkUuid(), context.getOtherNetworkUuids(), context.getVariantId());
+        Network network = getNetwork(context.getNetworkUuid(), context.getVariantId());
 
         Reporter rootReporter = Reporter.NO_OP;
         Reporter reporter = Reporter.NO_OP;

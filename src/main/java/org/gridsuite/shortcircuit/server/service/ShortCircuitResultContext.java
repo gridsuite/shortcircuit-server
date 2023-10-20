@@ -72,8 +72,6 @@ public class ShortCircuitResultContext {
         String userId = (String) headers.get(HEADER_USER_ID);
         String busId = (String) headers.get(HEADER_BUS_ID);
 
-        List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
-
         ShortCircuitParameters parameters;
         try {
             // can't use the following line because jackson doesn't play well with null..?
@@ -85,7 +83,7 @@ public class ShortCircuitResultContext {
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
-            variantId, otherNetworkUuids, receiver,
+            variantId, receiver,
             parameters, reportUuid, reporterId, userId, busId);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
@@ -103,7 +101,6 @@ public class ShortCircuitResultContext {
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
                 .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
-                .setHeader("otherNetworkUuids", runContext.getOtherNetworkUuids().stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .setHeader(HEADER_RECEIVER, runContext.getReceiver())
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid() != null ? runContext.getReportUuid().toString() : null)

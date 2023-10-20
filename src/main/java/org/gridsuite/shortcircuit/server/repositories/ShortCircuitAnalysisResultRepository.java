@@ -9,7 +9,6 @@ package org.gridsuite.shortcircuit.server.repositories;
 import com.powsybl.shortcircuit.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
-import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -87,7 +86,7 @@ public class ShortCircuitAnalysisResultRepository {
         List<FeederResultEmbeddable> feederResults = faultResult.getFeederResults().stream()
             .map(feederResult -> {
                 FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
-                FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(feederFortescueCurrent);
+                FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = feederFortescueCurrent.toThreePhaseValue();
                 return new FeederResultEmbeddable(feederResult.getConnectableId(),
                     Double.NaN, new FortescueResultEmbeddable(feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(), feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(), feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(), feederFortescueThreePhaseValue.getMagnitudeA(), feederFortescueThreePhaseValue.getMagnitudeB(), feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(), feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
             })
@@ -107,8 +106,8 @@ public class ShortCircuitAnalysisResultRepository {
 
         FortescueValue voltage = ((FortescueFaultResult) faultResult).getVoltage();
         //We here use the function toThreePhaseValue from the utils class instead of FortescueValue's one because it is curently privated by mistake, to be changed once Powsybl core 6.0.0 is out
-        FortescueValue.ThreePhaseValue currentThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(current);
-        FortescueValue.ThreePhaseValue voltageThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(voltage);
+        FortescueValue.ThreePhaseValue currentThreePhaseValue = current.toThreePhaseValue();
+        FortescueValue.ThreePhaseValue voltageThreePhaseValue = voltage.toThreePhaseValue();
         FortescueResultEmbeddable fortescueCurrent = new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(), current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(), currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(), currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC());
         FortescueResultEmbeddable fortescueVoltage = new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(), voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(), voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(), voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC());
         return new FaultResultEntity(faultEmbedded, Double.NaN, shortCircuitPower, limitViolations, feederResults, ipMin, ipMax, fortescueCurrent, fortescueVoltage, deltaCurrentIpMin, deltaCurrentIpMax);
