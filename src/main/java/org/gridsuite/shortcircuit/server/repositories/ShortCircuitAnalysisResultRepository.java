@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
+import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com
  */
+@Slf4j
 @Repository
 public class ShortCircuitAnalysisResultRepository {
     private final GlobalStatusRepository globalStatusRepository;
@@ -53,13 +55,14 @@ public class ShortCircuitAnalysisResultRepository {
                 .stream()
                 .map(faultResult -> {
                     if (faultResult instanceof FailedFaultResult failedFaultResult) {
-                        return toFailedFaultResultEntity(failedFaultResult);
+                        return toGenericFaultResultEntity(failedFaultResult, null);
                     } else if (faultResult instanceof FortescueFaultResult fortescueFaultResult) {
                         return toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     } else if (faultResult instanceof MagnitudeFaultResult magnitudeFaultResult) {
                         return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     } else {
-                        throw new ClassCastException("Unknown FaultResult class: " + (faultResult == null ? "null" : faultResult.getClass().toString()));
+                        log.warn("Unknown FaultResult class: {}", faultResult.getClass());
+                        return toGenericFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     }
                 })
                 .collect(Collectors.toSet());
@@ -67,11 +70,7 @@ public class ShortCircuitAnalysisResultRepository {
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
     }
 
-    private static FaultResultEntity toFailedFaultResultEntity(final FailedFaultResult faultResult) {
-        return toFaultResultEntity(faultResult, null);
-    }
-
-    private static FaultResultEntity toFaultResultEntity(final FaultResult faultResult, final ShortCircuitLimits shortCircuitLimits) {
+    private static FaultResultEntity toGenericFaultResultEntity(final FaultResult faultResult, final ShortCircuitLimits shortCircuitLimits) {
         final Fault fault = faultResult.getFault();
         double ipMax = Double.NaN;
         double ipMin = Double.NaN;
@@ -92,7 +91,7 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private static FaultResultEntity toMagnitudeFaultResultEntity(MagnitudeFaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
-        FaultResultEntity entity = toFaultResultEntity(faultResult, shortCircuitLimits);
+        FaultResultEntity entity = toGenericFaultResultEntity(faultResult, shortCircuitLimits);
         final double current = faultResult.getCurrent();
         entity.setCurrent(current);
         entity.setFeederResults(faultResult.getFeederResults().stream()
@@ -107,7 +106,7 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private static FaultResultEntity toFortescueFaultResultEntity(FortescueFaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
-        FaultResultEntity entity = toFaultResultEntity(faultResult, shortCircuitLimits);
+        FaultResultEntity entity = toGenericFaultResultEntity(faultResult, shortCircuitLimits);
         entity.setFeederResults(faultResult.getFeederResults().stream()
                 .map(feederResult -> {
                     final FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
