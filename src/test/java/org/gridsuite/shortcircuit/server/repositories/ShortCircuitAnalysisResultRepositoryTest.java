@@ -91,7 +91,7 @@ class ShortCircuitAnalysisResultRepositoryTest {
         shortCircuitAnalysisResultRepository.deleteAll();
     }
 
-    @ParameterizedTest(name = "[{index}] Using the filter(s) {0} should return the given entities")
+    @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
     @MethodSource({
         "provideContainsFilters",
         "provideStartsWithFilters",
@@ -107,7 +107,7 @@ class ShortCircuitAnalysisResultRepositoryTest {
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
 
-    @ParameterizedTest(name = "[{index}] Using the pageable {0} should return the given entities")
+    @ParameterizedTest(name = "[{index}] Using the pageable {1} should return the given entities")
     @MethodSource({
         "providePageable",
         "provideSortingPageable"
