@@ -242,7 +242,7 @@ public class ShortCircuitWorkerService {
                     if (result.getFaultResults().stream().map(FaultResult::getStatus).anyMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
                         LOGGER.error("Short circuit analysis failed (resultUuid='{}')", resultContext.getResultUuid());
                         notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                                "Missing Short-Circuit extension datas",
+                                "Missing short-circuit extension data",
                                 resultContext.getRunContext().getUserId(), resultContext.getRunContext().getBusId());
                     } else {
                         notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getBusId());
