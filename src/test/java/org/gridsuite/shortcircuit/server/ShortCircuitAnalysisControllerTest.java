@@ -218,7 +218,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(orderedFeederResultsDto.size(), orderedFeederResults.size());
             for (int j = 0; j < orderedFeederResultsDto.size(); j++) {
                 assertEquals(orderedFeederResultsDto.get(j).getConnectableId(), orderedFeederResults.get(j).getConnectableId());
-                if (faultResults.get(i) instanceof MagnitudeFaultResult) {
+                if (orderedFeederResults.get(i) instanceof MagnitudeFaultResult) {
                     assertEquals(orderedFeederResultsDto.get(j).getCurrent(), ((MagnitudeFeederResult) orderedFeederResults.get(j)).getCurrent(), 0.1);
                 } else if (faultResults.get(i) instanceof FortescueFaultResult) {
                     assertEquals(faultResultsDto.get(i).getPositiveMagnitude(), ((FortescueFaultResult) faultResults.get(i)).getCurrent().getPositiveMagnitude(), 0.1);

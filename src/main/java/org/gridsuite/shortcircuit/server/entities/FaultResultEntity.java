@@ -50,6 +50,10 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<LimitViolationEmbeddable> limitViolations;
 
+    /*
+    Bidirectional relation is not needed here and is done for performance
+    https://vladmihalcea.com/the-best-way-to-map-a-onetomany-association-with-jpa-and-hibernate/
+     */
     @OneToMany(
             mappedBy = "faultResult",
             cascade = CascadeType.ALL,

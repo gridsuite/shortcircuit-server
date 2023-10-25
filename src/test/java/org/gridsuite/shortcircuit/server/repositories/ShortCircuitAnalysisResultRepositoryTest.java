@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.security.LimitViolation;
@@ -26,6 +33,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * @author Florent MILLOT <florent.millot@rte-france.com>
+ */
 @SpringBootTest // would be better with @DataJpaTest but does not work here
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // improve tests speed as we only read DB
 class ShortCircuitAnalysisResultRepositoryTest {

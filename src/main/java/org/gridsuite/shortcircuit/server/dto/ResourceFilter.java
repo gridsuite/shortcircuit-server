@@ -20,6 +20,7 @@ import java.util.List;
  * @param type the type of filter (contains, startsWith...)
  * @param value the value of the filter
  * @param field the field on which the filter will be applied
+ * @author Florent MILLOT <florent.millot@rte-france.com>
  */
 public record ResourceFilter(DataType dataType, Type type, String value, String field) {
 

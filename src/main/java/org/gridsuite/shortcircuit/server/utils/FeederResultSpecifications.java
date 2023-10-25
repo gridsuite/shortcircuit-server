@@ -17,6 +17,9 @@ import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * @author Florent MILLOT <florent.millot@rte-france.com>
+ */
 public final class FeederResultSpecifications {
 
     // Utility class, so no constructor
