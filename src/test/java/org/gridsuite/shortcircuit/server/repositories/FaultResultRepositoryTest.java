@@ -97,7 +97,7 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS,"THREE_PHASE", "fault.faultType")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, "THREE_PHASE", "fault.faultType")),
                 List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
