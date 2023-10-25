@@ -21,7 +21,7 @@ import java.util.List;
  * @param value the value of the filter
  * @param field the field on which the filter will be applied
  */
-public record ResourceFilter(DataType dataType, Type type, String value, String field) {
+public record ResourceFilter(DataType dataType, Type type, Object value, String field) {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -33,6 +33,8 @@ public record ResourceFilter(DataType dataType, Type type, String value, String 
     }
 
     public enum Type {
+        @JsonProperty("equals")
+        EQUALS,
         @JsonProperty("contains")
         CONTAINS,
         @JsonProperty("startsWith")
