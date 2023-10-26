@@ -66,14 +66,12 @@ public final class SpecificationUtils {
             if (resourceFilter.dataType() == ResourceFilter.DataType.TEXT) {
                 switch (resourceFilter.type()) {
                     case EQUALS -> {
-                        // THIS IS SUPPOSED TO BE TEMPORARY (waiting for new filters from front end)
+                        // this type can manage one value or a list of values (with OR)
                         if (resourceFilter.value() instanceof Collection<?> valueList) {
-                            // ideally, we should be able to manage the OR condition everywhere and use a list of single equals filters from the frond end
-                            // it's done like this in sensi so I did the same by coherence, but it should be temporary
                             Specification<X> anyOfSpec = anyOf(valueList.stream().map(value -> SpecificationUtils.<X>equals(resourceFilter.field(), value.toString())).toList());
                             completedSpecification = completedSpecification.and(anyOfSpec);
                         } else if (resourceFilter.value() == null) {
-                            // if the value is null, we build an impossible specification
+                            // if the value is null, we build an impossible specification (trick to remove later on ?)
                             completedSpecification = completedSpecification.and(not(completedSpecification));
                         } else {
                             String value = resourceFilter.value().toString();
