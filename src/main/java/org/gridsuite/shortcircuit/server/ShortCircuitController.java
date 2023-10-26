@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server;
 
-import com.powsybl.commons.extensions.Extension;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +27,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,15 +47,7 @@ public class ShortCircuitController {
     }
 
     private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
-        //FIXME : this hack has to be removed with the future powsybl version (should be 2023.3.0)
-        // See the related test to be removed parametersWithExtentionTest()
-        ShortCircuitParameters nonNullParameters = parameters != null ? parameters : new ShortCircuitParameters();
-        Collection<Extension<ShortCircuitParameters>> extensions = ShortCircuitParameters.load().getExtensions();
-        extensions.forEach(e -> {
-            e.setExtendable(null);
-            nonNullParameters.addExtension((Class) e.getClass(), e);
-        });
-        return nonNullParameters;
+        return parameters != null ? parameters : new ShortCircuitParameters();
     }
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
