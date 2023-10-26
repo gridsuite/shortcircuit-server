@@ -170,17 +170,15 @@ public class ShortCircuitController {
     @GetMapping(value = "/fault-types", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get list of fault types")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of fault types")})
-    public ResponseEntity<List<String>> getFaultTypes() {
-        List<String> faultsTypes = Arrays.stream(FaultType.values()).map(FaultType::name).toList();
-        return ResponseEntity.ok().body(faultsTypes);
+    public ResponseEntity<FaultType[]> getFaultTypes() {
+        return ResponseEntity.ok().body(FaultType.values());
     }
 
     @GetMapping(value = "/limit-violation-types", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get list of limit violation types")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of limit violation types")})
-    public ResponseEntity<List<String>> getLimitTypes() {
-        List<String> limitTypes = Arrays.stream(LimitViolationType.values()).map(LimitViolationType::name).toList();
-        return ResponseEntity.ok().body(limitTypes);
+    public ResponseEntity<LimitViolationType[]> getLimitTypes() {
+        return ResponseEntity.ok().body(LimitViolationType.values());
     }
 
 }
