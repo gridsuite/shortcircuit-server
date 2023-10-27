@@ -20,6 +20,7 @@ import java.util.List;
  * @param type the type of filter (contains, startsWith...)
  * @param value the value of the filter
  * @param field the field on which the filter will be applied
+ * @author Florent MILLOT <florent.millot@rte-france.com>
  */
 public record ResourceFilter(DataType dataType, Type type, Object value, String field) {
 
@@ -49,7 +50,7 @@ public record ResourceFilter(DataType dataType, Type type, Object value, String 
 
     public static List<ResourceFilter> fromStringToList(String filters) throws JsonProcessingException {
         if (filters == null || filters.isEmpty()) {
-            return null;
+            return List.of();
         }
         return objectMapper.readValue(filters, new TypeReference<>() {
         });

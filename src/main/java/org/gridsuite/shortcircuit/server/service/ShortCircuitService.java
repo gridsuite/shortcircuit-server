@@ -61,8 +61,7 @@ public class ShortCircuitService {
     private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, FaultResultsMode mode) {
         List<FaultResult> faultResults = new ArrayList<>();
         switch (mode) {
-            case BASIC:
-            case FULL:
+            case BASIC, FULL:
                 faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr, mode)).collect(Collectors.toList());
                 break;
             case WITH_LIMIT_VIOLATIONS:
@@ -150,8 +149,7 @@ public class ShortCircuitService {
         if (result.isPresent()) {
             Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
             switch (mode) {
-                case BASIC:
-                case FULL:
+                case BASIC, FULL:
                     faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
