@@ -53,7 +53,7 @@ public final class FeederResultSpecifications {
     public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
         Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultUuid));
 
-        if (resourceFilters.isEmpty()) {
+        if (resourceFilters == null || resourceFilters.isEmpty()) {
             return specification;
         }
 
