@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>
@@ -123,6 +125,14 @@ class FeederResultRepositoryTest {
         Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(resultEntity, null, pageable);
         assertThat(feederPage.getContent()).extracting("feederResultUuid").describedAs("Check if the IDs of the feeder page are correct")
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
+    }
+
+    @ParameterizedTest(name = "[{index}] Using the filter {1} should throw an exception")
+    @MethodSource({
+        "provideBadFilter",
+    })
+    void feederResultFilterExceptionTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters) {
+        assertThrows(InvalidDataAccessApiUsageException.class, () -> shortCircuitAnalysisResultRepository.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged()));
     }
 
     private Stream<Arguments> provideContainsFilters() {
@@ -280,6 +290,19 @@ class FeederResultRepositoryTest {
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
                 List.of(feederResultEntity3))
+        );
+    }
+
+    private Stream<Arguments> provideBadFilter() {
+        return Stream.of(
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.NOT_EQUAL, "A_CONN", "connectableId"))),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.STARTS_WITH, 22.17, "current")))
         );
     }
 

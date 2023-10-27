@@ -15,10 +15,16 @@ import org.springframework.data.jpa.repository.query.EscapeCharacter;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import static org.springframework.data.jpa.domain.Specification.anyOf;
 import static org.springframework.data.jpa.domain.Specification.not;
 
+/**
+ * Utility class to create Spring Data JPA Specification (Spring interface for JPA Criteria API).
+ *
+ * @author Florent MILLOT <florent.millot@rte-france.com>
+ */
 public final class SpecificationUtils {
 
     // Utility class, so no constructor
@@ -55,6 +61,7 @@ public final class SpecificationUtils {
     }
 
     public static <X> Specification<X> appendFiltersToSpecification(Specification<X> specification, List<ResourceFilter> resourceFilters) {
+        Objects.requireNonNull(specification);
 
         if (resourceFilters == null || resourceFilters.isEmpty()) {
             return specification;
@@ -68,24 +75,21 @@ public final class SpecificationUtils {
                     case EQUALS -> {
                         // this type can manage one value or a list of values (with OR)
                         if (resourceFilter.value() instanceof Collection<?> valueList) {
-                            Specification<X> anyOfSpec = anyOf(valueList.stream().map(value -> SpecificationUtils.<X>equals(resourceFilter.field(), value.toString())).toList());
-                            completedSpecification = completedSpecification.and(anyOfSpec);
+                            completedSpecification = completedSpecification.and(anyOf(valueList.stream().map(value -> SpecificationUtils.<X>equals(resourceFilter.field(), value.toString())).toList()));
                         } else if (resourceFilter.value() == null) {
                             // if the value is null, we build an impossible specification (trick to remove later on ?)
                             completedSpecification = completedSpecification.and(not(completedSpecification));
                         } else {
-                            String value = resourceFilter.value().toString();
-                            completedSpecification = completedSpecification.and(equals(resourceFilter.field(), value));
+                            completedSpecification = completedSpecification.and(equals(resourceFilter.field(), resourceFilter.value().toString()));
                         }
                     }
                     case CONTAINS -> {
-                        String value = resourceFilter.value().toString();
-                        completedSpecification = completedSpecification.and(contains(resourceFilter.field(), value));
+                        completedSpecification = completedSpecification.and(contains(resourceFilter.field(), resourceFilter.value().toString()));
                     }
                     case STARTS_WITH -> {
-                        String value = resourceFilter.value().toString();
-                        completedSpecification = completedSpecification.and(startsWith(resourceFilter.field(), value));
+                        completedSpecification = completedSpecification.and(startsWith(resourceFilter.field(), resourceFilter.value().toString()));
                     }
+                    default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
                 }
             }
             if (resourceFilter.dataType() == ResourceFilter.DataType.NUMBER) {
@@ -98,6 +102,7 @@ public final class SpecificationUtils {
                         completedSpecification = completedSpecification.and(lessThanOrEqual(resourceFilter.field(), value));
                     case GREATER_THAN_OR_EQUAL ->
                         completedSpecification = completedSpecification.and(greaterThanOrEqual(resourceFilter.field(), value));
+                    default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
                 }
             }
         }
@@ -116,7 +121,7 @@ public final class SpecificationUtils {
      * @param <Y>                the type referenced by the path
      * @return path for the query
      */
-    public static <X, Y> Path<Y> getColumnPath(Root<X> root, String dotSeparatedFields) {
+    private static <X, Y> Path<Y> getColumnPath(Root<X> root, String dotSeparatedFields) {
         if (dotSeparatedFields.contains(".")) {
             String[] fields = dotSeparatedFields.split("\\.");
             Path<Y> path = root.get(fields[0]);
@@ -127,5 +132,10 @@ public final class SpecificationUtils {
         } else {
             return root.get(dotSeparatedFields);
         }
+    }
+
+    // will be overloaded by Spring as InvalidDataAccessApiUsageException
+    private static void throwBadFilterTypeException(ResourceFilter.Type filterType, ResourceFilter.DataType dataType) {
+        throw new IllegalArgumentException("The filter type " + filterType + " is not supported with the data type " + dataType);
     }
 }
