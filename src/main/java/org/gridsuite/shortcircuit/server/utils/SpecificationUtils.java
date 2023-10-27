@@ -56,8 +56,8 @@ public final class SpecificationUtils {
         return (root, cq, cb) -> cb.greaterThanOrEqualTo(getColumnPath(root, field), value);
     }
 
-    public static <X> Specification<X> greaterThan(String field, Double value) {
-        return (root, cq, cb) -> cb.greaterThan(getColumnPath(root, field), value);
+    public static <X> Specification<X> isNotEmpty(String field) {
+        return (root, cq, cb) -> cb.isNotEmpty(getColumnPath(root, field));
     }
 
     public static <X> Specification<X> appendFiltersToSpecification(Specification<X> specification, List<ResourceFilter> resourceFilters) {

@@ -30,6 +30,6 @@ public final class FaultResultSpecificationBuilder {
     }
 
     public static Specification<FaultResultEntity> appendWithLimitViolationsToSpecification(Specification<FaultResultEntity> specification) {
-        return specification.and(SpecificationUtils.greaterThan("limitViolations", 0.0));
+        return specification.and(SpecificationUtils.isNotEmpty("limitViolations"));
     }
 }
