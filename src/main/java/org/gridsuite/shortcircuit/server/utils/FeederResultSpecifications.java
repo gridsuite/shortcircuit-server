@@ -53,7 +53,7 @@ public final class FeederResultSpecifications {
     public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
         Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultUuid));
 
-        if (resourceFilters == null || resourceFilters.isEmpty()) {
+        if (resourceFilters.isEmpty()) {
             return specification;
         }
 
@@ -65,6 +65,7 @@ public final class FeederResultSpecifications {
                             specification = specification.and(contains(resourceFilter.field(), value));
                     case STARTS_WITH ->
                             specification = specification.and(startsWith(resourceFilter.field(), value));
+                    default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
                 }
             }
             if (resourceFilter.dataType() == ResourceFilter.DataType.NUMBER) {
@@ -76,6 +77,7 @@ public final class FeederResultSpecifications {
                             specification = specification.and(lessThanOrEqual(resourceFilter.field(), value));
                     case GREATER_THAN_OR_EQUAL ->
                             specification = specification.and(greaterThanOrEqual(resourceFilter.field(), value));
+                    default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
                 }
             }
         }
@@ -102,5 +104,9 @@ public final class FeederResultSpecifications {
         } else {
             return root.get(dotSeparatedFields);
         }
+    }
+
+    private static void throwBadFilterTypeException(ResourceFilter.Type filterType, ResourceFilter.DataType dataType) {
+        throw new IllegalArgumentException("The filter type " + filterType + " is not supported with the data type " + dataType);
     }
 }

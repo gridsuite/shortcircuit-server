@@ -48,7 +48,7 @@ public record ResourceFilter(DataType dataType, Type type, String value, String 
 
     public static List<ResourceFilter> fromStringToList(String filters) throws JsonProcessingException {
         if (filters == null || filters.isEmpty()) {
-            return null;
+            return List.of();
         }
         return objectMapper.readValue(filters, new TypeReference<>() {
         });
