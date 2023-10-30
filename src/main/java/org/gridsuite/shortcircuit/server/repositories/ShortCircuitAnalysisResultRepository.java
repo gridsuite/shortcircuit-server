@@ -12,6 +12,7 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,6 +36,7 @@ public class ShortCircuitAnalysisResultRepository {
     private final FaultResultRepository faultResultRepository;
     private final FeederResultRepository feederResultRepository;
 
+    @Autowired
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
                                                 ResultRepository resultRepository,
                                                 FaultResultRepository faultResultRepository,
