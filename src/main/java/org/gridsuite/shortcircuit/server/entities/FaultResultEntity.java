@@ -6,11 +6,11 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +18,7 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(indexes = @Index(name = "result_uuid_nbLimitViolations_idx", columnList = "result_result_uuid, nbLimitViolations"))
