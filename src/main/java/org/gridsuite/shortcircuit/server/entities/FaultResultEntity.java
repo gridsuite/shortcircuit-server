@@ -108,15 +108,19 @@ public class FaultResultEntity {
         this.fault = fault;
         this.current = current;
         this.shortCircuitPower = shortCircuitPower;
-        this.limitViolations = limitViolations;
-        this.nbLimitViolations = limitViolations.size();
+        if (limitViolations != null) {
+            this.limitViolations = limitViolations;
+            this.nbLimitViolations = limitViolations.size();
+        }
         this.ipMin = ipMin;
         this.ipMax = ipMax;
         this.fortescueCurrent = fortescueCurrent;
         this.fortescueVoltage = fortescueVoltage;
         this.deltaCurrentIpMin = deltaCurrentIpMin;
         this.deltaCurrentIpMax = deltaCurrentIpMax;
-        setFeederResults(feederResults);
+        if (feederResults != null) {
+            setFeederResults(feederResults);
+        }
     }
 
     public void setFeederResults(List<FeederResultEntity> feederResults) {
