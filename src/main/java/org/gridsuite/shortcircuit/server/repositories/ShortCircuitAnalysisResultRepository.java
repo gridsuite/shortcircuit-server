@@ -12,7 +12,6 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -99,7 +98,7 @@ public class ShortCircuitAnalysisResultRepository {
         final double current = faultResult.getCurrent();
         entity.setCurrent(current);
         entity.setFeederResults(faultResult.getFeederResults().stream()
-                .map(feederResult -> new FeederResultEmbeddable(feederResult.getConnectableId(),
+                .map(feederResult -> new FeederResultEntity(null, feederResult.getConnectableId(),
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
                 .collect(Collectors.toList()));
         if (shortCircuitLimits != null) {
@@ -115,7 +114,7 @@ public class ShortCircuitAnalysisResultRepository {
                 .map(feederResult -> {
                     final FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
                     final FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(feederFortescueCurrent);
-                    return new FeederResultEmbeddable(feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
+                    return new FeederResultEntity(null, feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
                             feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(),
                             feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(),
                             feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(),
