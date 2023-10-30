@@ -336,6 +336,7 @@ public class ShortCircuitAnalysisControllerTest {
 
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                            .param("mode", "WITH_LIMIT_VIOLATIONS")
                             .param("page", "0")
                             .param("size", "2"))
                     .andExpect(status().isOk())
