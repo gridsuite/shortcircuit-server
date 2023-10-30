@@ -104,7 +104,7 @@ public class ShortCircuitController {
                                                                   @Parameter(description = "BASIC (faults without limits and feeders), " +
                                                                       "FULL (faults with both), " +
                                                                       "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
-                                                                      "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
+                                                                      "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
                                                                   Pageable pageable) throws JsonProcessingException {
         List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
