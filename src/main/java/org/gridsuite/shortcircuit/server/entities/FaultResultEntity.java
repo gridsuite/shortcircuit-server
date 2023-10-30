@@ -110,7 +110,6 @@ public class FaultResultEntity {
         this.shortCircuitPower = shortCircuitPower;
         this.limitViolations = limitViolations;
         this.nbLimitViolations = limitViolations.size();
-        this.feederResults = feederResults;
         this.ipMin = ipMin;
         this.ipMax = ipMax;
         this.fortescueCurrent = fortescueCurrent;

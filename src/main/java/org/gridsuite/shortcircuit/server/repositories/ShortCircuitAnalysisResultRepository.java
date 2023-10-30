@@ -100,7 +100,7 @@ public class ShortCircuitAnalysisResultRepository {
         final double current = faultResult.getCurrent();
         entity.setCurrent(current);
         entity.setFeederResults(faultResult.getFeederResults().stream()
-                .map(feederResult -> new FeederResultEntity(null, feederResult.getConnectableId(),
+                .map(feederResult -> new FeederResultEntity(feederResult.getConnectableId(),
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
                 .collect(Collectors.toList()));
         if (shortCircuitLimits != null) {
@@ -116,7 +116,7 @@ public class ShortCircuitAnalysisResultRepository {
                 .map(feederResult -> {
                     final FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
                     final FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(feederFortescueCurrent);
-                    return new FeederResultEntity(null, feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
+                    return new FeederResultEntity(feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
                             feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(),
                             feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(),
                             feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(),

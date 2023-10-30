@@ -64,8 +64,7 @@ public class FeederResultEntity {
         this.faultResult = faultResult;
     }
 
-    public FeederResultEntity(FaultResultEntity faultResult, String connectableId, double current, FortescueResultEmbeddable fortescueCurrent) {
-        this.faultResult = faultResult;
+    public FeederResultEntity(String connectableId, double current, FortescueResultEmbeddable fortescueCurrent) {
         this.connectableId = connectableId;
         this.current = current;
         this.fortescueCurrent = fortescueCurrent;
