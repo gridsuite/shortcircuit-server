@@ -161,8 +161,7 @@ public class ShortCircuitService {
             }
             Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-            String pageableStr = LogUtils.sanitizeParam(pageable.toString());
-            LOGGER.info("pageable =  {}", pageableStr);
+            LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
             return faultResultsPage;
         }
         return null;
@@ -177,8 +176,7 @@ public class ShortCircuitService {
             Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(result.get(), resourceFilters, pageable);
             Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(fr -> fromEntity(fr));
             LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-            String pageableStr = LogUtils.sanitizeParam(pageable.toString());
-            LOGGER.info("pageable =  {}", pageableStr);
+            LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
             return feederResultsPage;
         }
         return null;

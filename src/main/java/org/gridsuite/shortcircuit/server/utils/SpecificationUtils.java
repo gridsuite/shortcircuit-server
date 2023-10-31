@@ -73,8 +73,7 @@ public final class SpecificationUtils {
         for (ResourceFilter resourceFilter : resourceFilters) {
             if (resourceFilter.dataType() == ResourceFilter.DataType.TEXT) {
                 completedSpecification = appendTextFilterToSpecification(completedSpecification, resourceFilter);
-            }
-            if (resourceFilter.dataType() == ResourceFilter.DataType.NUMBER) {
+            } else if (resourceFilter.dataType() == ResourceFilter.DataType.NUMBER) {
                 completedSpecification = appendNumberFilterToSpecification(completedSpecification, resourceFilter);
             }
         }
