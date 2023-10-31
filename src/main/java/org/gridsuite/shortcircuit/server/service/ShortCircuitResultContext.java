@@ -17,7 +17,6 @@ import org.springframework.messaging.support.MessageBuilder;
 
 import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
 
@@ -42,16 +41,6 @@ public class ShortCircuitResultContext {
     public ShortCircuitResultContext(UUID resultUuid, ShortCircuitRunContext runContext) {
         this.resultUuid = Objects.requireNonNull(resultUuid);
         this.runContext = Objects.requireNonNull(runContext);
-    }
-
-    private static List<UUID> getHeaderList(MessageHeaders headers, String name) {
-        String header = (String) headers.get(name);
-        if (header == null || header.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return Arrays.asList(header.split(",")).stream()
-            .map(UUID::fromString)
-            .collect(Collectors.toList());
     }
 
     private static String getNonNullHeader(MessageHeaders headers, String name) {
