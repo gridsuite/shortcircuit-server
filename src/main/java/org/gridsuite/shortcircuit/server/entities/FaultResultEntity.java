@@ -6,11 +6,11 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +18,7 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(indexes = @Index(name = "result_uuid_nbLimitViolations_idx", columnList = "result_result_uuid, nbLimitViolations"))
@@ -107,16 +108,19 @@ public class FaultResultEntity {
         this.fault = fault;
         this.current = current;
         this.shortCircuitPower = shortCircuitPower;
-        this.limitViolations = limitViolations;
-        this.nbLimitViolations = limitViolations.size();
-        this.feederResults = feederResults;
+        if (limitViolations != null) {
+            this.limitViolations = limitViolations;
+            this.nbLimitViolations = limitViolations.size();
+        }
         this.ipMin = ipMin;
         this.ipMax = ipMax;
         this.fortescueCurrent = fortescueCurrent;
         this.fortescueVoltage = fortescueVoltage;
         this.deltaCurrentIpMin = deltaCurrentIpMin;
         this.deltaCurrentIpMax = deltaCurrentIpMax;
-        setFeederResults(feederResults);
+        if (feederResults != null) {
+            setFeederResults(feederResults);
+        }
     }
 
     public void setFeederResults(List<FeederResultEntity> feederResults) {
