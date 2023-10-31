@@ -162,23 +162,23 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "45.3", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.3, "current")),
                 List.of(faultResultEntity2, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "47", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 47, "current")),
                 List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "47.3", "current"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "49.3", "current")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 47.3, "current"),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 49.3, "current")),
                 List.of(faultResultEntity1)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "2", "nbLimitViolations")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 2, "nbLimitViolations")),
                 List.of(faultResultEntity2))
         );
     }
@@ -189,28 +189,28 @@ class FaultResultRepositoryTest {
 //            Arguments.of(
 //                resultMagnitudeEntity,
 //                List.of(
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "33.54", "limitViolations.value")),
+//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 33.54, "limitViolations.value")),
 //                List.of(faultResultEntity2, faultResultEntity3)),
 //            Arguments.of(
 //                resultMagnitudeEntity,
 //                List.of(
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "33.54", "limitViolations.value"),
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "54.3", "limitViolations.value")),
+//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 33.54, "limitViolations.value"),
+//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 54.3, "limitViolations.value")),
 //                List.of(faultResultEntity2)),
 //            Arguments.of(
 //                resultMagnitudeEntity,
 //                List.of(
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "10.56", "limitViolations.value")),
+//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 10.56, "limitViolations.value")),
 //                List.of()),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "42", "fortescueCurrent.positiveMagnitude")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 42, "fortescueCurrent.positiveMagnitude")),
                 List.of(faultResultEntity4)),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, "21.328664779663086", "fortescueVoltage.positiveMagnitude")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 21.328664779663086, "fortescueVoltage.positiveMagnitude")),
                 List.of())
         );
     }
