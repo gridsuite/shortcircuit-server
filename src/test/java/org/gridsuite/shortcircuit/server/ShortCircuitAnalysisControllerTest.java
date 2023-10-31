@@ -123,12 +123,22 @@ public class ShortCircuitAnalysisControllerTest {
         static final FaultResult FAULT_RESULT_4 = new FortescueFaultResult(new BusFault("VLHV2_0", "ELEMENT_ID_2"), 18.0,
             List.of(FEEDER_RESULT_4, FEEDER_RESULT_5, FEEDER_RESULT_6), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
             new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), Collections.emptyList(), null, FaultResult.Status.SUCCESS);
+        static final FaultResult FAULT_RESULT_BASIC_1 = new MagnitudeFaultResult(new BusFault("VLHV1_0", "ELEMENT_ID_1"), 17.0,
+            List.of(), List.of(),
+            45.3, FaultResult.Status.SUCCESS);
+        static final FaultResult FAULT_RESULT_BASIC_2 = new MagnitudeFaultResult(new BusFault("VLHV2_0", "ELEMENT_ID_2"), 18.0,
+            List.of(), List.of(),
+            47.3, FaultResult.Status.SUCCESS);
+        static final FaultResult FAULT_RESULT_BASIC_3 = new MagnitudeFaultResult(new BusFault("VLGEN_0", "ELEMENT_ID_3"), 19.0,
+            List.of(), List.of(),
+            49.3, FaultResult.Status.SUCCESS);
 
         static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT_FORTESCUE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_4));
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_0 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_1 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_3));
-        static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
+        static final ShortCircuitAnalysisResult RESULT_WITH_LIMIT_VIOLATIONS = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
+        static final ShortCircuitAnalysisResult RESULT_BASIC = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_BASIC_1, FAULT_RESULT_BASIC_2, FAULT_RESULT_BASIC_3));
     }
 
     private static class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
@@ -317,14 +327,26 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
             assertEquals("me", runMessage.getHeaders().get("receiver"));
 
+            // WITH_LIMIT_VIOLATIONS mode (default)
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
-            assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT, resultDto);
+            assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_WITH_LIMIT_VIOLATIONS, resultDto);
 
+            // BASIC mode
+            result = mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID)
+                    .param("mode", "BASIC"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+            org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDtoBasic = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
+            assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_BASIC, resultDtoBasic);
+
+            // FULL mode
             result = mockMvc.perform(get(
                              "/" + VERSION + "/results/{resultUuid}", RESULT_UUID)
                             .param("mode", "FULL"))
@@ -348,7 +370,7 @@ public class ShortCircuitAnalysisControllerTest {
             JsonNode faultResultsPageNode = mapper.readTree(result.getResponse().getContentAsString());
             ObjectReader faultResultsReader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FaultResult>>() { });
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0 = faultResultsReader.readValue(faultResultsPageNode.get("content"));
-            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT, faultResultsPageDto0);
+            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_WITH_LIMIT_VIOLATIONS, faultResultsPageDto0);
 
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
