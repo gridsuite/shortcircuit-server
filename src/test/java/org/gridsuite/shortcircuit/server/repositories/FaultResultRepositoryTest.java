@@ -70,7 +70,7 @@ class FaultResultRepositoryTest {
     @BeforeAll
     void setUp() {
         // Magnitude faults
-        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, Map.of(), false, "");
+        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, Map.of(), "");
         resultMagnitudeEntity = shortCircuitAnalysisResultRepository.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FaultResultEntity> faultResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .sorted(Comparator.comparing(faultResultEntity -> faultResultEntity.getFault().getId()))
@@ -79,7 +79,7 @@ class FaultResultRepositoryTest {
         faultResultEntity2 = faultResultEntities.get(1);
         faultResultEntity3 = faultResultEntities.get(2);
         // Fortescue fault
-        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, Map.of(), true, "");
+        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, Map.of(), "");
         resultFortescueEntity = shortCircuitAnalysisResultRepository.findFullResults(FORTESCUE_RESULT_UUID).get();
         faultResultEntity4 = resultFortescueEntity.getFaultResults().stream().findFirst().get();
     }
