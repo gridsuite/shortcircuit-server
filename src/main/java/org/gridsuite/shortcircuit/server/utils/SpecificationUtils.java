@@ -98,12 +98,10 @@ public final class SpecificationUtils {
                     completedSpecification = completedSpecification.and(equals(resourceFilter.field(), resourceFilter.value().toString()));
                 }
             }
-            case CONTAINS -> {
+            case CONTAINS ->
                 completedSpecification = completedSpecification.and(contains(resourceFilter.field(), resourceFilter.value().toString()));
-            }
-            case STARTS_WITH -> {
+            case STARTS_WITH ->
                 completedSpecification = completedSpecification.and(startsWith(resourceFilter.field(), resourceFilter.value().toString()));
-            }
             default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
         }
 
