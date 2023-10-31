@@ -10,7 +10,6 @@ import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
-import org.gridsuite.shortcircuit.server.utils.ShortcircuitUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -111,7 +110,7 @@ public class ShortCircuitAnalysisResultRepository {
         entity.setFeederResults(faultResult.getFeederResults().stream()
                 .map(feederResult -> {
                     final FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
-                    final FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(feederFortescueCurrent);
+                    final FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = feederFortescueCurrent.toThreePhaseValue();
                     return new FeederResultEmbeddable(feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
                             feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(),
                             feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(),
@@ -128,12 +127,10 @@ public class ShortCircuitAnalysisResultRepository {
             entity.setDeltaCurrentIpMax(current.getPositiveMagnitude() - entity.getIpMax() / 1000.0);
         }
 
-
-        //We here use the function toThreePhaseValue from the utils class instead of FortescueValue's one because it is currently private by mistake, to be changed once Powsybl core 6.0.0 is out
-        final FortescueValue.ThreePhaseValue currentThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(current);
+        final FortescueValue.ThreePhaseValue currentThreePhaseValue = current.toThreePhaseValue();
         entity.setFortescueCurrent(new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(), current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(), currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(), currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC()));
         final FortescueValue voltage = faultResult.getVoltage();
-        final FortescueValue.ThreePhaseValue voltageThreePhaseValue = ShortcircuitUtils.toThreePhaseValue(voltage);
+        final FortescueValue.ThreePhaseValue voltageThreePhaseValue = voltage.toThreePhaseValue();
         entity.setFortescueVoltage(new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(), voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(), voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(), voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC()));
 
         return entity;
