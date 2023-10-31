@@ -10,6 +10,7 @@ package org.gridsuite.shortcircuit.server.utils;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.EscapeCharacter;
 
@@ -71,40 +72,59 @@ public final class SpecificationUtils {
 
         for (ResourceFilter resourceFilter : resourceFilters) {
             if (resourceFilter.dataType() == ResourceFilter.DataType.TEXT) {
-                switch (resourceFilter.type()) {
-                    case EQUALS -> {
-                        // this type can manage one value or a list of values (with OR)
-                        if (resourceFilter.value() instanceof Collection<?> valueList) {
-                            completedSpecification = completedSpecification.and(anyOf(valueList.stream().map(value -> SpecificationUtils.<X>equals(resourceFilter.field(), value.toString())).toList()));
-                        } else if (resourceFilter.value() == null) {
-                            // if the value is null, we build an impossible specification (trick to remove later on ?)
-                            completedSpecification = completedSpecification.and(not(completedSpecification));
-                        } else {
-                            completedSpecification = completedSpecification.and(equals(resourceFilter.field(), resourceFilter.value().toString()));
-                        }
-                    }
-                    case CONTAINS -> {
-                        completedSpecification = completedSpecification.and(contains(resourceFilter.field(), resourceFilter.value().toString()));
-                    }
-                    case STARTS_WITH -> {
-                        completedSpecification = completedSpecification.and(startsWith(resourceFilter.field(), resourceFilter.value().toString()));
-                    }
-                    default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
-                }
+                completedSpecification = appendTextFilterToSpecification(completedSpecification, resourceFilter);
             }
             if (resourceFilter.dataType() == ResourceFilter.DataType.NUMBER) {
-                // We need to cast it as String before and use .valueOf to be able to works with integers
-                Double value = Double.valueOf(resourceFilter.value().toString());
-                switch (resourceFilter.type()) {
-                    case NOT_EQUAL ->
-                        completedSpecification = completedSpecification.and(notEqual(resourceFilter.field(), value));
-                    case LESS_THAN_OR_EQUAL ->
-                        completedSpecification = completedSpecification.and(lessThanOrEqual(resourceFilter.field(), value));
-                    case GREATER_THAN_OR_EQUAL ->
-                        completedSpecification = completedSpecification.and(greaterThanOrEqual(resourceFilter.field(), value));
-                    default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
+                completedSpecification = appendNumberFilterToSpecification(completedSpecification, resourceFilter);
+            }
+        }
+
+        return completedSpecification;
+    }
+
+    @NotNull
+    private static <X> Specification<X> appendTextFilterToSpecification(Specification<X> specification, ResourceFilter resourceFilter) {
+        Specification<X> completedSpecification = specification;
+
+        switch (resourceFilter.type()) {
+            case EQUALS -> {
+                // this type can manage one value or a list of values (with OR)
+                if (resourceFilter.value() instanceof Collection<?> valueList) {
+                    completedSpecification = completedSpecification.and(anyOf(valueList.stream().map(value -> SpecificationUtils.<X>equals(resourceFilter.field(), value.toString())).toList()));
+                } else if (resourceFilter.value() == null) {
+                    // if the value is null, we build an impossible specification (trick to remove later on ?)
+                    completedSpecification = completedSpecification.and(not(completedSpecification));
+                } else {
+                    completedSpecification = completedSpecification.and(equals(resourceFilter.field(), resourceFilter.value().toString()));
                 }
             }
+            case CONTAINS -> {
+                completedSpecification = completedSpecification.and(contains(resourceFilter.field(), resourceFilter.value().toString()));
+            }
+            case STARTS_WITH -> {
+                completedSpecification = completedSpecification.and(startsWith(resourceFilter.field(), resourceFilter.value().toString()));
+            }
+            default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
+        }
+
+        return completedSpecification;
+    }
+
+    @NotNull
+    private static <X> Specification<X> appendNumberFilterToSpecification(Specification<X> specification, ResourceFilter resourceFilter) {
+        Specification<X> completedSpecification = specification;
+
+        // We need to cast it as String before and use .valueOf to be able to works with integers
+        Double value = Double.valueOf(resourceFilter.value().toString());
+
+        switch (resourceFilter.type()) {
+            case NOT_EQUAL ->
+                completedSpecification = completedSpecification.and(notEqual(resourceFilter.field(), value));
+            case LESS_THAN_OR_EQUAL ->
+                completedSpecification = completedSpecification.and(lessThanOrEqual(resourceFilter.field(), value));
+            case GREATER_THAN_OR_EQUAL ->
+                completedSpecification = completedSpecification.and(greaterThanOrEqual(resourceFilter.field(), value));
+            default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
         }
 
         return completedSpecification;

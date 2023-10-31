@@ -14,6 +14,9 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * @author Florent MILLOT <florent.millot@rte-france.com>
+ */
 public final class FeederResultSpecificationBuilder {
 
     // Utility class, so no constructor
