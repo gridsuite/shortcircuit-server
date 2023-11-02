@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Network;
@@ -83,8 +82,6 @@ public class ShortCircuitAnalysisControllerTest {
     private static final UUID NODE_BREAKER_NETWORK_UUID = UUID.fromString("060d9225-1b88-4e52-885f-0f6297f5fa35");
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
     private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
-    private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
-    private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
 
     private static final UUID RESULT_UUID_TO_STOP = UUID.fromString("1c5212a9-e694-46a9-9eb2-cee60fc34675");
     private static final UUID REPORT_UUID = UUID.fromString("762b7298-8c0f-11ed-a1eb-0242ac120002");
@@ -181,9 +178,6 @@ public class ShortCircuitAnalysisControllerTest {
     private Network network;
     private Network network1;
 
-    private Network networkForMergingView;
-    private Network otherNetworkForMergingView;
-
     private Network nodeBreakerNetwork;
 
     private static void assertResultsEquals(ShortCircuitAnalysisResult result, org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto) {
@@ -254,12 +248,6 @@ public class ShortCircuitAnalysisControllerTest {
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
 
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
-
-        networkForMergingView = new NetworkFactoryImpl().createNetwork("mergingView", "test");
-        given(networkStoreService.getNetwork(NETWORK_FOR_MERGING_VIEW_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(networkForMergingView);
-
-        otherNetworkForMergingView = new NetworkFactoryImpl().createNetwork("other", "test 2");
-        given(networkStoreService.getNetwork(OTHER_NETWORK_FOR_MERGING_VIEW_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(otherNetworkForMergingView);
 
         network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
@@ -573,71 +561,6 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(RESULT_UUID_TO_STOP.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
             assertEquals(CANCEL_MESSAGE, message.getHeaders().get("message"));
-        }
-    }
-
-    @SneakyThrows
-    @Test
-    public void mergingViewTest() {
-        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(Network.class), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-                    .thenReturn(CompletableFuture.completedFuture(RESULT));
-
-            MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&networkUuid=" + NETWORK_FOR_MERGING_VIEW_UUID, OTHER_NETWORK_FOR_MERGING_VIEW_UUID)
-                            .header(HEADER_USER_ID, "userId"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andReturn();
-
-            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
-
-            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
-            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", runMessage.getHeaders().get("receiver"));
-
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
-        }
-    }
-
-    //FIXME: test to be removed when the hack in ShortCircuitParameters.getNonNullParameters() is removed
-    @SneakyThrows
-    @Test
-    public void parametersWithExtensionTest() {
-
-        class ShortCircuitParametersRandomExtension extends AbstractExtension<ShortCircuitParameters> {
-            @Override
-            public String getName() {
-                return "RandomExtension";
-            }
-        }
-
-        ShortCircuitParameters parametersWithExtentions = new ShortCircuitParameters();
-        parametersWithExtentions.addExtension(ShortCircuitParametersRandomExtension.class, new ShortCircuitParametersRandomExtension());
-
-        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class);
-            MockedStatic<ShortCircuitParameters> shortCircuitParametersMockedStatic = Mockito.mockStatic(ShortCircuitParameters.class)) {
-            shortCircuitParametersMockedStatic.when(ShortCircuitParameters::load).thenReturn(parametersWithExtentions);
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
-                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
-
-            MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
-                            .header(HEADER_USER_ID, "userId"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andReturn();
-            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
-
-            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
-            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", runMessage.getHeaders().get("receiver"));
-
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
         }
     }
 

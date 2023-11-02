@@ -42,7 +42,7 @@
     </developers>
 
     <properties>
-        <gridsuite-dependencies.version>26</gridsuite-dependencies.version>
+        <gridsuite-dependencies.version>27</gridsuite-dependencies.version>
         <liquibase-hibernate-package>org.gridsuite.shortcircuit.server</liquibase-hibernate-package>
         <mockito-inline.version>3.11.1</mockito-inline.version>
         <assertj.version>3.24.2</assertj.version>
@@ -120,10 +120,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-iidm-mergingview</artifactId>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
