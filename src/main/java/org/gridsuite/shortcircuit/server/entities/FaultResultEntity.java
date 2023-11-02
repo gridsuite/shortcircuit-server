@@ -51,11 +51,16 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<LimitViolationEmbeddable> limitViolations;
 
-    @ElementCollection
-    @CollectionTable(name = "feeder_results",
-            indexes = {@Index(name = "feeder_results_fault_result_idx",
-                    columnList = "fault_result_entity_fault_result_uuid")})
-    private List<FeederResultEmbeddable> feederResults;
+    /*
+    Bidirectional relation is not needed here and is done for performance
+    https://vladmihalcea.com/the-best-way-to-map-a-onetomany-association-with-jpa-and-hibernate/
+     */
+    @OneToMany(
+            mappedBy = "faultResult",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<FeederResultEntity> feederResults;
 
     @Column
     private double ipMax;
@@ -99,19 +104,28 @@ public class FaultResultEntity {
     @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_voltage_angle_c"))
     private FortescueResultEmbeddable fortescueVoltage;
 
-    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEmbeddable> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage, double deltaCurrentIpMin, double deltaCurrentIpMax) {
+    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEntity> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage, double deltaCurrentIpMin, double deltaCurrentIpMax) {
         this.fault = fault;
         this.current = current;
         this.shortCircuitPower = shortCircuitPower;
-        this.limitViolations = limitViolations;
-        this.nbLimitViolations = limitViolations.size();
-        this.feederResults = feederResults;
+        if (limitViolations != null) {
+            this.limitViolations = limitViolations;
+            this.nbLimitViolations = limitViolations.size();
+        }
         this.ipMin = ipMin;
         this.ipMax = ipMax;
         this.fortescueCurrent = fortescueCurrent;
         this.fortescueVoltage = fortescueVoltage;
         this.deltaCurrentIpMin = deltaCurrentIpMin;
         this.deltaCurrentIpMax = deltaCurrentIpMax;
+        if (feederResults != null) {
+            setFeederResults(feederResults);
+        }
+    }
+
+    public void setFeederResults(List<FeederResultEntity> feederResults) {
+        this.feederResults = feederResults;
+        feederResults.stream().forEach(feederResultEntity -> feederResultEntity.setFaultResult(this));
     }
 
     @Override

@@ -8,11 +8,13 @@ package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
+import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,14 +33,17 @@ public class ShortCircuitAnalysisResultRepository {
     private final GlobalStatusRepository globalStatusRepository;
     private final ResultRepository resultRepository;
     private final FaultResultRepository faultResultRepository;
+    private final FeederResultRepository feederResultRepository;
 
     @Autowired
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
-            ResultRepository resultRepository,
-            FaultResultRepository faultResultRepository) {
+                                                ResultRepository resultRepository,
+                                                FaultResultRepository faultResultRepository,
+                                                FeederResultRepository feederResultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
         this.faultResultRepository = faultResultRepository;
+        this.feederResultRepository = feederResultRepository;
     }
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
@@ -49,7 +54,7 @@ public class ShortCircuitAnalysisResultRepository {
             .collect(Collectors.toList());
     }
 
-    private static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
+    public static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
         Set<FaultResultEntity> faultResults = result.getFaultResults()
                 .stream()
                 .map(faultResult -> {
@@ -95,7 +100,7 @@ public class ShortCircuitAnalysisResultRepository {
         final double current = faultResult.getCurrent();
         entity.setCurrent(current);
         entity.setFeederResults(faultResult.getFeederResults().stream()
-                .map(feederResult -> new FeederResultEmbeddable(feederResult.getConnectableId(),
+                .map(feederResult -> new FeederResultEntity(feederResult.getConnectableId(),
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
                 .collect(Collectors.toList()));
         if (shortCircuitLimits != null) {
@@ -111,7 +116,7 @@ public class ShortCircuitAnalysisResultRepository {
                 .map(feederResult -> {
                     final FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
                     final FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = feederFortescueCurrent.toThreePhaseValue();
-                    return new FeederResultEmbeddable(feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
+                    return new FeederResultEntity(feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
                             feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(),
                             feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(),
                             feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(),
@@ -176,16 +181,22 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
+    public Optional<ShortCircuitAnalysisResultEntity> findWithFaultResults(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return resultRepository.findWithFaultResultsByResultUuid(resultUuid);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findAllWithLimitViolationsByResultUuid(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
         if (!result.isPresent()) {
             return result;
         }
         // using the the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
-            resultRepository.findAllWithFeederResultsByResultUuid(resultUuid);
+            resultRepository.findWithFaultResultsAndFeederResultsByResultUuid(resultUuid);
         }
         return result;
     }
@@ -193,7 +204,7 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public Optional<ShortCircuitAnalysisResultEntity> findResultsWithLimitViolations(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findAllWithLimitViolationsByResultUuid(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
         if (!result.isPresent()) {
             return result;
         }
@@ -210,17 +221,23 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Page<FaultResultEntity>> findFaultResultsPage(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+    public Optional<Page<FaultResultEntity>> findFaultResultsPage(ShortCircuitAnalysisResultEntity result, Pageable pageable, FaultResultsMode mode) {
         Objects.requireNonNull(result);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
         Optional<Page<FaultResultEntity>> faultResultsPage = faultResultRepository.findPagedByResult(result, pageable);
-        if (faultResultsPage.isPresent()) {
+        if (faultResultsPage.isPresent() && mode != FaultResultsMode.BASIC) {
             appendLimitViolationsAndFeederResults(faultResultsPage.get());
         }
         return faultResultsPage;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<FeederResultEntity> findFeederResultsPage(Specification<FeederResultEntity> specification, Pageable pageable) {
+        Objects.requireNonNull(specification);
+        return feederResultRepository.findAll(specification, pageable);
     }
 
     @Transactional(readOnly = true)

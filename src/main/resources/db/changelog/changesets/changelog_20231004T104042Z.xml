@@ -1,0 +1,154 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- RECREATION OF THE ENTIRE DATABASE -->
+
+    <!-- First we drop the tables manually -->
+    <changeSet author="millotflo" id="1696416067509-1">
+        <dropTable tableName="limit_violations"/>
+    </changeSet>
+    <changeSet author="millotflo" id="1696416067509-2">
+        <dropTable tableName="feeder_results"/>
+    </changeSet>
+    <changeSet author="millotflo" id="1696416067509-3">
+        <dropTable tableName="fault_result_entity"/>
+    </changeSet>
+    <changeSet author="millotflo" id="1696416067509-4">
+        <dropTable tableName="global_status"/>
+    </changeSet>
+    <changeSet author="millotflo" id="1696416067509-5">
+        <dropTable tableName="shortcircuit_result"/>
+    </changeSet>
+
+    <!-- Then we use the liquidbase diff changesets to rebuild everything-->
+    <changeSet author="millotflo (generated)" id="1698317588137-1">
+        <createTable tableName="fault_result_entity">
+            <column name="fault_result_uuid" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="fault_result_entityPK"/>
+            </column>
+            <column name="current" type="FLOAT(53)"/>
+            <column name="delta_current_ip_max" type="FLOAT(53)"/>
+            <column name="delta_current_ip_min" type="FLOAT(53)"/>
+            <column name="element_id" type="VARCHAR(255)"/>
+            <column name="fault_type" type="VARCHAR(255)"/>
+            <column name="id" type="VARCHAR(255)"/>
+            <column name="fortescue_current_angle_a" type="FLOAT(53)"/>
+            <column name="fortescue_current_angle_b" type="FLOAT(53)"/>
+            <column name="fortescue_current_angle_c" type="FLOAT(53)"/>
+            <column name="fortescue_current_magnitude_a" type="FLOAT(53)"/>
+            <column name="fortescue_current_magnitude_b" type="FLOAT(53)"/>
+            <column name="fortescue_current_magnitude_c" type="FLOAT(53)"/>
+            <column name="fortescue_current_negative_angle" type="FLOAT(53)"/>
+            <column name="fortescue_current_negative_magnitude" type="FLOAT(53)"/>
+            <column name="fortescue_current_positive_angle" type="FLOAT(53)"/>
+            <column name="fortescue_current_positive_magnitude" type="FLOAT(53)"/>
+            <column name="fortescue_current_zero_angle" type="FLOAT(53)"/>
+            <column name="fortescue_current_zero_magnitude" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_angle_a" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_angle_b" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_angle_c" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_magnitude_a" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_magnitude_b" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_magnitude_c" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_negative_angle" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_negative_magnitude" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_positive_angle" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_positive_magnitude" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_zero_angle" type="FLOAT(53)"/>
+            <column name="fortescue_voltage_zero_magnitude" type="FLOAT(53)"/>
+            <column name="ip_max" type="FLOAT(53)"/>
+            <column name="ip_min" type="FLOAT(53)"/>
+            <column name="nb_limit_violations" type="INT"/>
+            <column name="short_circuit_power" type="FLOAT(53)"/>
+            <column name="result_result_uuid" type="UUID"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-2">
+        <createTable tableName="feeder_results">
+            <column name="feeder_result_uuid" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="feeder_resultsPK"/>
+            </column>
+            <column name="connectable_id" type="VARCHAR(255)"/>
+            <column name="current" type="FLOAT(53)"/>
+            <column name="fortescue_current_angle_a" type="FLOAT(53)"/>
+            <column name="fortescue_current_angle_b" type="FLOAT(53)"/>
+            <column name="fortescue_current_angle_c" type="FLOAT(53)"/>
+            <column name="fortescue_current_magnitude_a" type="FLOAT(53)"/>
+            <column name="fortescue_current_magnitude_b" type="FLOAT(53)"/>
+            <column name="fortescue_current_magnitude_c" type="FLOAT(53)"/>
+            <column name="fortescue_current_negative_angle" type="FLOAT(53)"/>
+            <column name="fortescue_current_negative_magnitude" type="FLOAT(53)"/>
+            <column name="fortescue_current_positive_angle" type="FLOAT(53)"/>
+            <column name="fortescue_current_positive_magnitude" type="FLOAT(53)"/>
+            <column name="fortescue_current_zero_angle" type="FLOAT(53)"/>
+            <column name="fortescue_current_zero_magnitude" type="FLOAT(53)"/>
+            <column name="fault_result_entity_fault_result_uuid" type="UUID"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-3">
+        <createTable tableName="global_status">
+            <column name="result_uuid" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="global_statusPK"/>
+            </column>
+            <column name="status" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-4">
+        <createTable tableName="limit_violations">
+            <column name="fault_result_entity_fault_result_uuid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="limit_value" type="FLOAT(53)"/>
+            <column name="limit_name" type="VARCHAR(255)"/>
+            <column name="limit_type" type="VARCHAR(255)"/>
+            <column name="subject_id" type="VARCHAR(255)"/>
+            <column name="actual_value" type="FLOAT(53)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-5">
+        <createTable tableName="shortcircuit_result">
+            <column name="result_uuid" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="shortcircuit_resultPK"/>
+            </column>
+            <column name="write_time_stamp" type="TIMESTAMP(6)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-6">
+        <createIndex indexName="feeder_results_fault_result_idx" tableName="feeder_results">
+            <column name="fault_result_entity_fault_result_uuid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-7">
+        <createIndex indexName="limit_violations_fault_result_idx" tableName="limit_violations">
+            <column name="fault_result_entity_fault_result_uuid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-8">
+        <createIndex indexName="result_uuid_nbLimitViolations_idx" tableName="fault_result_entity">
+            <column name="result_result_uuid"/>
+            <column name="nb_limit_violations"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-9">
+        <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid" baseTableName="feeder_results"
+                                 constraintName="FK5i906qwbrlywclxt3glntj8fq" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="fault_result_uuid"
+                                 referencedTableName="fault_result_entity" validate="true"/>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-10">
+        <addForeignKeyConstraint baseColumnNames="result_result_uuid" baseTableName="fault_result_entity"
+                                 constraintName="FKn82b8umwxov4hcqeejfbpur9t" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="result_uuid"
+                                 referencedTableName="shortcircuit_result" validate="true"/>
+    </changeSet>
+    <changeSet author="millotflo (generated)" id="1698317588137-11">
+        <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid"
+                                 baseTableName="limit_violations" constraintName="FKq49f3rci12nktv40sdb0b23nd"
+                                 deferrable="false" initiallyDeferred="false" referencedColumnNames="fault_result_uuid"
+                                 referencedTableName="fault_result_entity" validate="true"/>
+    </changeSet>
+
+</databaseChangeLog>

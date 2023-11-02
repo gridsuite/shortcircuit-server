@@ -7,10 +7,24 @@
 package org.gridsuite.shortcircuit.server.dto;
 
 /**
+ * Specify if the faults are present in the result DTO and if so what they contain
  * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
  */
 public enum FaultResultsMode {
+    /**
+     * No fault present
+     */
     NONE,
+    /**
+     * Present but without the limit violations and feeders
+     */
+    BASIC,
+    /**
+     * Present with all fields but filtered by limit violations presence
+     */
     WITH_LIMIT_VIOLATIONS,
+    /**
+     * Present with all fields
+     */
     FULL
 }
