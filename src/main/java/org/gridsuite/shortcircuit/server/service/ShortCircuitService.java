@@ -6,20 +6,17 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.powsybl.ws.commons.LogUtils;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.ws.commons.LogUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
-import org.gridsuite.shortcircuit.server.utils.FeederResultSpecifications;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -65,10 +62,10 @@ public class ShortCircuitService {
         List<FaultResult> faultResults = new ArrayList<>();
         switch (mode) {
             case BASIC, FULL:
-                faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr, mode)).collect(Collectors.toList());
+                faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr, mode)).toList();
                 break;
             case WITH_LIMIT_VIOLATIONS:
-                faultResults = resultEntity.getFaultResults().stream().filter(fr -> !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr, mode)).collect(Collectors.toList());
+                faultResults = resultEntity.getFaultResults().stream().filter(fr -> !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr, mode)).toList();
                 break;
             case NONE:
             default:
@@ -87,8 +84,8 @@ public class ShortCircuitService {
         List<FeederResult> feederResults = new ArrayList<>();
         if (mode != FaultResultsMode.BASIC) {
             // if we enter here, by calling the getters, the limit violations and feeder results will be loaded even if we don't want to in some mode
-            limitViolations = faultResultEntity.getLimitViolations().stream().map(lv -> fromEntity(lv)).collect(Collectors.toList());
-            feederResults = faultResultEntity.getFeederResults().stream().map(fr -> fromEntity(fr)).collect(Collectors.toList());
+            limitViolations = faultResultEntity.getLimitViolations().stream().map(ShortCircuitService::fromEntity).toList();
+            feederResults = faultResultEntity.getFeederResults().stream().map(ShortCircuitService::fromEntity).toList();
         }
         return new FaultResult(fault, current, positiveMagnitude, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
     }
@@ -136,39 +133,40 @@ public class ShortCircuitService {
             ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
 
             ShortCircuitAnalysisResult res = fromEntity(sortedResult, mode);
-            LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+            }
             return res;
         }
         return null;
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResult> getFaultResultsPage(UUID resultUuid, FaultResultsMode mode, Pageable pageable) {
+    public Page<FaultResult> getFaultResultsPage(UUID resultUuid, FaultResultsMode mode, List<ResourceFilter> resourceFilters, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
         // get without faultResults : FaultResultsM.NONE
         result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
-            Optional<Page<FaultResultEntity>> faultResultEntitiesPage = Optional.empty();
+            Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
             switch (mode) {
                 case BASIC, FULL:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), pageable, mode);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), pageable);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable);
                     break;
                 case NONE:
                 default:
                     break;
             }
-            if (faultResultEntitiesPage.isPresent()) {
-                Page<FaultResult> faultResultsPage = faultResultEntitiesPage.get().map(fr -> fromEntity(fr, mode));
+            Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
+            if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                String pageableStr = LogUtils.sanitizeParam(pageable.toString());
-                LOGGER.info("pageable =  {}", pageableStr);
-                return faultResultsPage;
+                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
             }
+            return faultResultsPage;
         }
         return null;
     }
@@ -179,12 +177,12 @@ public class ShortCircuitService {
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
-            Specification<FeederResultEntity> specification = FeederResultSpecifications.buildSpecification(result.get().getResultUuid(), resourceFilters);
-            Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(specification, pageable);
-            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(fr -> fromEntity(fr));
-            LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-            String pageableStr = LogUtils.sanitizeParam(pageable.toString());
-            LOGGER.info("pageable =  {}", pageableStr);
+            Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(result.get(), resourceFilters, pageable);
+            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+            }
             return feederResultsPage;
         }
         return null;

@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,9 +25,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
+import static com.powsybl.shortcircuit.Fault.FaultType;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -88,9 +89,11 @@ public class ShortCircuitController {
                                                                   @Parameter(description = "BASIC (faults without limits and feeders), " +
                                                                       "FULL (faults with both), " +
                                                                       "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
-                                                                      "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
-                                                                  Pageable pageable) {
-        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, pageable);
+                                                                      "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
+                                                                  @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
+                                                                  Pageable pageable) throws JsonProcessingException {
+        List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
+        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, resourceFilters, pageable);
         return faultResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage)
             : ResponseEntity.notFound().build();
     }
@@ -147,6 +150,20 @@ public class ShortCircuitController {
                                      @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver) {
         shortCircuitService.stop(resultUuid, receiver);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/fault-types", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get list of fault types")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of fault types")})
+    public ResponseEntity<FaultType[]> getFaultTypes() {
+        return ResponseEntity.ok().body(FaultType.values());
+    }
+
+    @GetMapping(value = "/limit-violation-types", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get list of limit violation types")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of limit violation types")})
+    public ResponseEntity<LimitViolationType[]> getLimitTypes() {
+        return ResponseEntity.ok().body(LimitViolationType.values());
     }
 
 }

@@ -9,8 +9,11 @@ package org.gridsuite.shortcircuit.server.repositories;
 import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
+import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.utils.FaultResultSpecificationBuilder;
+import org.gridsuite.shortcircuit.server.utils.FeederResultSpecificationBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -221,35 +224,39 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Page<FaultResultEntity>> findFaultResultsPage(ShortCircuitAnalysisResultEntity result, Pageable pageable, FaultResultsMode mode) {
+    public Page<FaultResultEntity> findFaultResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable, FaultResultsMode mode) {
         Objects.requireNonNull(result);
+        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Optional<Page<FaultResultEntity>> faultResultsPage = faultResultRepository.findPagedByResult(result, pageable);
-        if (faultResultsPage.isPresent() && mode != FaultResultsMode.BASIC) {
-            appendLimitViolationsAndFeederResults(faultResultsPage.get());
+        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, pageable);
+        if (faultResultsPage.hasContent() && mode != FaultResultsMode.BASIC) {
+            appendLimitViolationsAndFeederResults(faultResultsPage);
         }
         return faultResultsPage;
     }
 
     @Transactional(readOnly = true)
-    public Page<FeederResultEntity> findFeederResultsPage(Specification<FeederResultEntity> specification, Pageable pageable) {
-        Objects.requireNonNull(specification);
+    public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
+        Objects.requireNonNull(result);
+        Specification<FeederResultEntity> specification = FeederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         return feederResultRepository.findAll(specification, pageable);
     }
 
     @Transactional(readOnly = true)
-    public Optional<Page<FaultResultEntity>> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result, Pageable pageable) {
+    public Page<FaultResultEntity> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
         Objects.requireNonNull(result);
+        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Optional<Page<FaultResultEntity>> faultResultsPage = faultResultRepository.findPagedByResultAndNbLimitViolationsGreaterThan(result, 0, pageable);
-        if (faultResultsPage.isPresent()) {
-            appendLimitViolationsAndFeederResults(faultResultsPage.get());
+        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, pageable);
+        if (faultResultsPage.hasContent()) {
+            appendLimitViolationsAndFeederResults(faultResultsPage);
         }
         return faultResultsPage;
     }
