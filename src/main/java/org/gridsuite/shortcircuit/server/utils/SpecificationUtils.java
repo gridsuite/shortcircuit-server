@@ -34,15 +34,15 @@ public final class SpecificationUtils {
 
     // we use .as(String.class) to be able to works on enum fields
     public static <X> Specification<X> equals(String field, String value) {
-        return (root, cq, cb) -> cb.equal(getColumnPath(root, field).as(String.class), value);
+        return (root, cq, cb) -> cb.equal(cb.upper(getColumnPath(root, field)).as(String.class), value.toUpperCase());
     }
 
     public static <X> Specification<X> contains(String field, String value) {
-        return (root, cq, cb) -> cb.like(getColumnPath(root, field), "%" + EscapeCharacter.DEFAULT.escape(value) + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
+        return (root, cq, cb) -> cb.like(cb.upper(getColumnPath(root, field)), "%" + EscapeCharacter.DEFAULT.escape(value).toUpperCase() + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
     }
 
     public static <X> Specification<X> startsWith(String field, String value) {
-        return (root, cq, cb) -> cb.like(getColumnPath(root, field), EscapeCharacter.DEFAULT.escape(value) + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
+        return (root, cq, cb) -> cb.like(cb.upper(getColumnPath(root, field)), EscapeCharacter.DEFAULT.escape(value).toUpperCase() + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
     }
 
     public static <X> Specification<X> notEqual(String field, Double value) {
