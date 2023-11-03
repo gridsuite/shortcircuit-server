@@ -169,7 +169,13 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "_D_1", "connectableId")),
-                List.of())
+                List.of()),
+            // case insensitive
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "id_2", "connectableId")),
+                List.of(feederResultEntity2))
         );
     }
 
@@ -195,7 +201,13 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId"),
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
-                List.of())
+                List.of()),
+            // case insensitive
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "a_conn", "connectableId")),
+                List.of(feederResultEntity1, feederResultEntity2))
         );
     }
 

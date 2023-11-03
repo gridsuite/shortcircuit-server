@@ -162,8 +162,8 @@ public class ShortCircuitController {
     @GetMapping(value = "/limit-violation-types", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get list of limit violation types")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of limit violation types")})
-    public ResponseEntity<LimitViolationType[]> getLimitTypes() {
-        return ResponseEntity.ok().body(LimitViolationType.values());
+    public ResponseEntity<List<LimitViolationType>> getLimitTypes() {
+        return ResponseEntity.ok().body(List.of(LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT));
     }
 
 }
