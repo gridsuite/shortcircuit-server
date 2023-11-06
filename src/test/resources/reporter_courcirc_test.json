@@ -178,6 +178,30 @@
             }
           }
         }, {
+          "reportKey" : "REC_15",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_16",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_17",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
           "reportKey" : "REC_245",
           "values" : {
             "reportSeverity" : {
@@ -273,6 +297,9 @@
       "REC_11" : "T:NODE2 : transient reactance too low ==> generator ignored",
       "REC_12" : "T NODE3 : transient reactance too low ==> generator ignored",
       "REC_13" : "T—NODE4 : transient reactance too low ==> generator ignored",
+      "REC_15" : "NODE-1 : transient reactance undefined ==> generator ignored",
+      "REC_16" : "NODE-2 : transient reactance undefined ==> generator ignored",
+      "REC_17" : "NODE-3 : transient reactance undefined ==> generator ignored",
       "REC_245" : "Simulating : short-circuits located on nodes with branches contributions",
       "REC_246" : "Simulating : short-circuit located on node NODE123_0",
       "REC_274" : "Simulating : short-circuit located on node ABCDEFG_1",
