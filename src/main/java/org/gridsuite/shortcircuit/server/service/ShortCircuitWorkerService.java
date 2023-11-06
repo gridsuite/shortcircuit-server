@@ -104,6 +104,8 @@ public class ShortCircuitWorkerService {
             String rootReporterId = context.getReporterId() == null ? SHORTCIRCUIT_TYPE_REPORT : context.getReporterId() + "@" + SHORTCIRCUIT_TYPE_REPORT;
             rootReporter = new ReporterModel(rootReporterId, rootReporterId);
             reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            // Delete any previous short-circuit computation logs
+            reportService.deleteReport(context.getReportUuid(), SHORTCIRCUIT_TYPE_REPORT);
         }
 
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);
