@@ -31,6 +31,7 @@ public class ShortCircuitResultContext {
     public static final String VARIANT_ID_HEADER = "variantId";
 
     public static final String REPORTER_ID_HEADER = "reporterId";
+    public static final String REPORT_TYPE_HEADER = "reporterType";
 
     private static final String MESSAGE_ROOT_NAME = "parameters";
 
@@ -71,9 +72,9 @@ public class ShortCircuitResultContext {
         }
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
-        ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid,
-            variantId, receiver,
-            parameters, reportUuid, reporterId, userId, busId);
+        String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
+        ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters,
+                reportUuid, reporterId, reportType, userId, busId);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
@@ -94,6 +95,7 @@ public class ShortCircuitResultContext {
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid() != null ? runContext.getReportUuid().toString() : null)
                 .setHeader(REPORTER_ID_HEADER, runContext.getReporterId())
+                .setHeader(REPORT_TYPE_HEADER, runContext.getReportType())
                 .setHeader(HEADER_BUS_ID, runContext.getBusId())
                 .build();
     }

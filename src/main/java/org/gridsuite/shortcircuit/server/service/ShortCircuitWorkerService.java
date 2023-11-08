@@ -49,8 +49,6 @@ public class ShortCircuitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
 
-    private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
-
     private NetworkStoreService networkStoreService;
     private ReportService reportService;
     private ShortCircuitAnalysisResultRepository resultRepository;
@@ -101,11 +99,12 @@ public class ShortCircuitWorkerService {
         Reporter rootReporter = Reporter.NO_OP;
         Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
-            String rootReporterId = context.getReporterId() == null ? SHORTCIRCUIT_TYPE_REPORT : context.getReporterId() + "@" + SHORTCIRCUIT_TYPE_REPORT;
+            final String reportType = context.getReportType();
+            String rootReporterId = context.getReporterId() == null ? reportType : context.getReporterId() + "@" + reportType;
             rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            reporter = rootReporter.createSubReporter(reportType, reportType + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
             // Delete any previous short-circuit computation logs
-            reportService.deleteReport(context.getReportUuid(), SHORTCIRCUIT_TYPE_REPORT);
+            reportService.deleteReport(context.getReportUuid(), reportType);
         }
 
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);

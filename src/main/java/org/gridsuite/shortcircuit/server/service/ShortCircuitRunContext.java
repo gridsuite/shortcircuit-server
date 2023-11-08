@@ -30,17 +30,21 @@ public class ShortCircuitRunContext {
 
     private final String reporterId;
 
+    private final String reportType;
+
     private final String userId;
 
     private final String busId;
 
-    public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters, UUID reportUuid, String reporterId, String userId, String busId) {
+    public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
+                                  UUID reportUuid, String reporterId, String reportType, String userId, String busId) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
         this.variantId = variantId;
         this.receiver = receiver;
         this.parameters = Objects.requireNonNull(parameters);
         this.reportUuid = reportUuid;
         this.reporterId = reporterId;
+        this.reportType = reportType;
         this.userId = userId;
         this.busId = busId;
     }
