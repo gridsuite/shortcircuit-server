@@ -158,7 +158,7 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional
     public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, String status) {
         Objects.requireNonNull(resultUuid);
-        if (result != null && result.getFaultResults().stream().map(FaultResult::getStatus).noneMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
+        if (result != null && !result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
             resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits));
         }
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
