@@ -223,7 +223,7 @@ public class ShortCircuitWorkerService {
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
                 if (result != null) {  // result available
-                    if (result.getFaultResults().size() > 0 &&
+                    if (!result.getFaultResults().isEmpty() &&
                         result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
                         LOGGER.error("Short circuit analysis failed (resultUuid='{}')", resultContext.getResultUuid());
                         notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
