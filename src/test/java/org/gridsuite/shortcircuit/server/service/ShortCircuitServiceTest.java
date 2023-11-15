@@ -46,6 +46,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         final AbstractReportMapper reportMapperMocked = Mockito.mock(AbstractReportMapper.class);
         final NetworkStoreService networkStoreServiceMocked = Mockito.mock(NetworkStoreService.class);
         final ReportService reportServiceMocked = Mockito.mock(ReportService.class);
+        final ShortCircuitExecutionService shortCircuitExecutionService = Mockito.mock(ShortCircuitExecutionService.class);
         final NotificationService notificationServiceMocked = Mockito.mock(NotificationService.class);
         final ShortCircuitAnalysisResultRepository resultRepositoryMocked = Mockito.mock(ShortCircuitAnalysisResultRepository.class);
         final ObjectMapper objectMapperMocked = Mockito.mock(ObjectMapper.class);
@@ -76,7 +77,7 @@ class ShortCircuitServiceTest implements WithAssertions {
             Mockito.when(networkMocked.getBusView()).thenReturn(busViewMocked);
             Mockito.when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             Mockito.when(reportMapperMocked.processReporter(any(Reporter.class))).thenReturn(reporter);
-            final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, List.of(reportMapperMocked));
+            final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, shortCircuitExecutionService, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, List.of(reportMapperMocked));
             workerService.consumeRun().accept(message);
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             Mockito.verify(reportMapperMocked, times(1)).processReporter(any(ReporterModel.class));
