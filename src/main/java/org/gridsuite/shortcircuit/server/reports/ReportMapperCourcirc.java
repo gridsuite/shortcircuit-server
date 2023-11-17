@@ -102,6 +102,10 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
         ReportWrapper logsTransientReactanceTooLowSummary = null;
         TypedValue logsTransientReactanceTooLowSeverity = null;
 
+        long logsTransientReactanceUndefinedCount = 0L;
+        ReportWrapper logsTransientReactanceUndefinedSummary = null;
+        TypedValue logsTransientReactanceUndefinedSeverity = null;
+
         long logsSimulatingShortCircuitLocatedCount = 0L;
         ReportWrapper logsSimulatingShortCircuitLocatedSummary = null;
         TypedValue logsSimulatingShortCircuitLocatedSeverity = null;
@@ -121,6 +125,15 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                 }
                 copyReportAsTrace(newReporter, report);
                 logsTransientReactanceTooLowCount++;
+            } else if (StringUtils.endsWith(report.getDefaultMessage(), " : transient reactance undefined ==> generator ignored")) {
+                //we match line "X.ABCDEF2 : transient reactance undefined ==> generator ignored"
+                if (logsTransientReactanceUndefinedSummary == null) {
+                    logsTransientReactanceUndefinedSummary = new ReportWrapper();
+                    newReporter.report(logsTransientReactanceUndefinedSummary);
+                    logsTransientReactanceUndefinedSeverity = report.getValue(Report.REPORT_SEVERITY_KEY);
+                }
+                copyReportAsTrace(newReporter, report);
+                logsTransientReactanceUndefinedCount++;
             } else if (StringUtils.startsWith(report.getDefaultMessage(), "Simulating : short-circuit located on node ")) {
                 //we match line "Simulating : short-circuit located on node .BRIDGE_0"
                 if (logsSimulatingShortCircuitLocatedSummary == null) {
@@ -152,6 +165,13 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
                     "${nb} node(s) with transient reactance too low ==> generator ignored",
                     Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsTransientReactanceTooLowSeverity, TypedValue.WARN_SEVERITY),
                             "nb", new TypedValue(logsTransientReactanceTooLowCount, TypedValue.UNTYPED))));
+        }
+        log.debug("Found {} lines in courcirc logs matching \"MYNODE : transient reactance undefined ==> generator ignored\"", logsTransientReactanceUndefinedCount);
+        if (logsTransientReactanceUndefinedSummary != null) {
+            logsTransientReactanceUndefinedSummary.setReport(new Report("transientReactanceUndefinedSummary",
+                    "${nb} node(s) with transient reactance undefined ==> generator ignored",
+                    Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsTransientReactanceUndefinedSeverity, TypedValue.WARN_SEVERITY),
+                            "nb", new TypedValue(logsTransientReactanceUndefinedCount, TypedValue.UNTYPED))));
         }
         log.debug("Found {} lines in courcirc logs matching \"Simulating : short-circuit located on node MYNODE\"", logsSimulatingShortCircuitLocatedCount);
         if (logsSimulatingShortCircuitLocatedSummary != null) {
