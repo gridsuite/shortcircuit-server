@@ -33,10 +33,12 @@ public class ShortCircuitAnalysisResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
-    @OneToMany(mappedBy = "result", cascade = {
-        CascadeType.PERSIST,
-        CascadeType.MERGE
-    }
+    @OneToMany(
+            mappedBy = "result",
+            cascade = {
+                CascadeType.PERSIST,
+                CascadeType.MERGE
+            }
     )
     // https://vladmihalcea.com/how-to-batch-delete-statements-with-hibernate/
     @OnDelete(action = OnDeleteAction.CASCADE)
