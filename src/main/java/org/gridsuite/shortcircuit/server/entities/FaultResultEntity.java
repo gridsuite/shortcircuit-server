@@ -10,6 +10,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.List;
 import java.util.UUID;
@@ -57,9 +59,13 @@ public class FaultResultEntity {
      */
     @OneToMany(
             mappedBy = "faultResult",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+            cascade = {
+                CascadeType.PERSIST,
+                CascadeType.MERGE
+            }
     )
+    // https://vladmihalcea.com/how-to-batch-delete-statements-with-hibernate/
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<FeederResultEntity> feederResults;
 
     @Column

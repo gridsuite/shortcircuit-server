@@ -1,0 +1,54 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet  author="homereti"  id="dropForeignKeyConstraint-1">
+        <dropForeignKeyConstraint
+                baseTableName="feeder_results"
+                constraintName="FK5i906qwbrlywclxt3glntj8fq"/>
+    </changeSet>
+    <changeSet  author="homereti"  id="dropForeignKeyConstraint-2">
+        <dropForeignKeyConstraint
+                baseTableName="fault_result_entity"
+                constraintName="FKn82b8umwxov4hcqeejfbpur9t"/>
+    </changeSet>
+    <changeSet  author="homereti"  id="dropForeignKeyConstraint-3">
+        <dropForeignKeyConstraint
+                baseTableName="limit_violations"
+                constraintName="FKq49f3rci12nktv40sdb0b23nd"/>
+    </changeSet>
+
+    <changeSet author="homereti" id="1700474063189-1">
+        <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid"
+                                 baseTableName="feeder_results"
+                                 constraintName="fault_result_entity_fault_result_uuid_fk"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedColumnNames="fault_result_uuid"
+                                 referencedTableName="fault_result_entity"
+                                 onDelete="CASCADE"
+                                 validate="true"/>
+    </changeSet>
+
+    <changeSet author="homereti" id="1700474063189-2">
+        <addForeignKeyConstraint baseColumnNames="result_result_uuid"
+                                 baseTableName="fault_result_entity"
+                                 constraintName="result_result_uuid_fk"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedColumnNames="result_uuid"
+                                 referencedTableName="shortcircuit_result"
+                                 onDelete="CASCADE"
+                                 validate="true"/>
+    </changeSet>
+    <changeSet author="homereti" id="1700474063189-3">
+        <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid"
+                                 baseTableName="limit_violations"
+                                 constraintName="fault_result_entity_fault_result_uuid_fk"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedColumnNames="fault_result_uuid"
+                                 referencedTableName="fault_result_entity"
+                                 onDelete="CASCADE"
+                                 validate="true"/>
+    </changeSet>
+</databaseChangeLog>

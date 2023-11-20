@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
@@ -30,7 +33,13 @@ public class ShortCircuitAnalysisResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
-    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "result", cascade = {
+        CascadeType.PERSIST,
+        CascadeType.MERGE
+    }
+    )
+    // https://vladmihalcea.com/how-to-batch-delete-statements-with-hibernate/
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Setter
     private Set<FaultResultEntity> faultResults;
 
