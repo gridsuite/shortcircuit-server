@@ -64,8 +64,6 @@ public class ShortCircuitWorkerService {
 
     private Set<UUID> runRequests = Sets.newConcurrentHashSet();
 
-    private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
-
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
 
     @Autowired
@@ -118,8 +116,9 @@ public class ShortCircuitWorkerService {
         return result;
     }
 
-    private List<Fault> getAllBusfaultFromNetwork(Network network) {
-        return network.getBusView().getBusStream()
+    private List<Fault> getAllBusfaultFromNetwork(Network network, ShortCircuitRunContext context) {
+        Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+        List<Fault> faults = network.getBusView().getBusStream()
             .map(bus -> {
                 IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                 if (shortCircuitExtension != null) {
@@ -128,10 +127,14 @@ public class ShortCircuitWorkerService {
                 return new BusFault(bus.getId(), bus.getId());
             })
             .collect(Collectors.toList());
+        context.setShortCircuitLimits(shortCircuitLimits);
+        return faults;
     }
 
-    private List<Fault> getBusFaultFromBusId(String busId, Network network) {
+    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
+        String busId = context.getBusId();
         Identifiable<?> identifiable = network.getIdentifiable(busId);
+        Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
         if (identifiable instanceof BusbarSection) {
             String busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
@@ -150,7 +153,7 @@ public class ShortCircuitWorkerService {
             }
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
-
+        context.setShortCircuitLimits(shortCircuitLimits);
         throw new NoSuchElementException("No bus found for bus id " + busId);
     }
 
@@ -165,8 +168,8 @@ public class ShortCircuitWorkerService {
             }
 
             List<Fault> faults = context.getBusId() == null
-                ? getAllBusfaultFromNetwork(network)
-                : getBusFaultFromBusId(context.getBusId(), network);
+                ? getAllBusfaultFromNetwork(network, context)
+                : getBusFaultFromBusId(network, context);
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
@@ -218,7 +221,7 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitLimits, ShortCircuitAnalysisStatus.COMPLETED.name());
+                resultRepository.insert(resultContext.getResultUuid(), result, resultContext.getRunContext().getShortCircuitLimits(), ShortCircuitAnalysisStatus.COMPLETED.name());
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
