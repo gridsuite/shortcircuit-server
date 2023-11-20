@@ -20,7 +20,7 @@
     <changeSet author="homereti" id="1700474063189-1">
         <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid"
                                  baseTableName="feeder_results"
-                                 constraintName="fault_result_entity_fault_result_uuid_fk"
+                                 constraintName="fr_fault_result_entity_fault_result_uuid_fk"
                                  deferrable="false"
                                  initiallyDeferred="false"
                                  referencedColumnNames="fault_result_uuid"
@@ -43,7 +43,7 @@
     <changeSet author="homereti" id="1700474063189-3">
         <addForeignKeyConstraint baseColumnNames="fault_result_entity_fault_result_uuid"
                                  baseTableName="limit_violations"
-                                 constraintName="fault_result_entity_fault_result_uuid_fk"
+                                 constraintName="lv_fault_result_entity_fault_result_uuid_fk"
                                  deferrable="false"
                                  initiallyDeferred="false"
                                  referencedColumnNames="fault_result_uuid"
