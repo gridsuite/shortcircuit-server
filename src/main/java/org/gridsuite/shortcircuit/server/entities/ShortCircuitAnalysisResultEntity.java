@@ -40,7 +40,12 @@ public class ShortCircuitAnalysisResultEntity {
                 CascadeType.MERGE
             }
     )
-    // https://vladmihalcea.com/how-to-batch-delete-statements-with-hibernate/
+    /*
+    https://vladmihalcea.com/how-to-batch-delete-statements-with-hibernate/  - "SQL Cascade Delete" section
+    These annotations have been added to follow the recommandations of the page above. But they are not taken in account by
+    liquibase at the moment (https://github.com/liquibase/liquibase-hibernate/issues/145).
+    The ON DELETE CASCADE property has beeen manually in changelog_20231117T144236Z.xml
+    */
     @OnDelete(action = OnDeleteAction.CASCADE)
     @Setter
     private Set<FaultResultEntity> faultResults;

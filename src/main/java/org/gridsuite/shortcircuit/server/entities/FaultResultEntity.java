@@ -51,6 +51,9 @@ public class FaultResultEntity {
     @CollectionTable(name = "limit_violations",
             indexes = {@Index(name = "limit_violations_fault_result_idx",
                     columnList = "fault_result_entity_fault_result_uuid")})
+    // See comment in ShortCircuitAnalysisResultEntity.java for cascade deletion
+    @JoinColumn(name = "faultResultUuid")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<LimitViolationEmbeddable> limitViolations;
 
     /*
@@ -64,7 +67,7 @@ public class FaultResultEntity {
                 CascadeType.MERGE
             }
     )
-    // https://vladmihalcea.com/how-to-batch-delete-statements-with-hibernate/
+    // See comment in ShortCircuitAnalysisResultEntity.java for cascade deletion
     @OnDelete(action = OnDeleteAction.CASCADE)
     private List<FeederResultEntity> feederResults;
 
