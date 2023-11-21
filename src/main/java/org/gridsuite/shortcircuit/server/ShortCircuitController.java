@@ -59,7 +59,7 @@ public class ShortCircuitController {
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
-                                           @Parameter(description = "The type of report for short-circuit") @RequestParam(name = "reportType") String reportType,
+                                           @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false, defaultValue = "ShortCircuitAnalysis") String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
                                            @RequestBody(required = false) ShortCircuitParameters parameters,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
