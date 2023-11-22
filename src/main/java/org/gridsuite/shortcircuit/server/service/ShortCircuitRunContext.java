@@ -8,7 +8,10 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -36,6 +39,8 @@ public class ShortCircuitRunContext {
 
     private final String busId;
 
+    private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
                                   UUID reportUuid, String reporterId, String reportType, String userId, String busId) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
@@ -47,5 +52,9 @@ public class ShortCircuitRunContext {
         this.reportType = reportType;
         this.userId = userId;
         this.busId = busId;
+    }
+
+    public void setShortCircuitLimits(Map<String, ShortCircuitLimits> shortCircuitLimits) {
+        this.shortCircuitLimits = shortCircuitLimits;
     }
 }
