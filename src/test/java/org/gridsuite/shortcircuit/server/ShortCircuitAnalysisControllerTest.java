@@ -250,12 +250,6 @@ public class ShortCircuitAnalysisControllerTest {
 
         // Network for nodeBreakerView tests
         nodeBreakerNetwork = FourSubstationsNodeBreakerFactory.create(new NetworkFactoryImpl());
-//        nodeBreakerNetwork.getVoltageLevels().forEach(voltageLevel -> {
-//            IdentifiableShortCircuitAdder<VoltageLevel> identifiableShortCircuitAdder = voltageLevel.newExtension(IdentifiableShortCircuitAdder.class);
-//            identifiableShortCircuitAdder.withIpMin(25.5);
-//            identifiableShortCircuitAdder.withIpMax(100.0);
-//            identifiableShortCircuitAdder.add();
-//        });
         nodeBreakerNetwork.getVoltageLevels().forEach(voltageLevel -> voltageLevel.newExtension(IdentifiableShortCircuitAdder.class).withIpMin(10.5).withIpMax(200.0).add());
         nodeBreakerNetwork.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, NODE_BREAKER_NETWORK_VARIANT_ID);
 
