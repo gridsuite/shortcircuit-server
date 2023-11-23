@@ -24,7 +24,6 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     @EntityGraph(attributePaths = {"limitViolations"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithLimitViolationsByFaultResultUuidIn(List<UUID> faultResultsUUID);
 
-    @Modifying
     @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithFeederResultsByFaultResultUuidIn(List<UUID> faultResultsUUID);
 
