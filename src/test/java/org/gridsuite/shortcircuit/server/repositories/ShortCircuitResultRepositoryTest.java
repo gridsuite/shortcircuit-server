@@ -9,18 +9,11 @@ package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
-import org.gridsuite.shortcircuit.server.ShortCircuitApplication;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Tag;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.*;
