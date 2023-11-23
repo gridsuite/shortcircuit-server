@@ -168,6 +168,9 @@ public class ShortCircuitAnalysisResultRepository {
     public void delete(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         globalStatusRepository.deleteByResultUuid(resultUuid);
+        faultResultRepository.deleteFeederResultsByShortCircuitResultUUid(resultUuid);
+        faultResultRepository.deleteLimitViolationsByShortCircuitResultUUid(resultUuid);
+        faultResultRepository.deleteFaultResultsByShortCircuitResultUUid(resultUuid);
         resultRepository.deleteByResultUuid(resultUuid);
     }
 

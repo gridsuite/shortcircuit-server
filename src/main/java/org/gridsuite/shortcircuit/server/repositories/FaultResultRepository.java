@@ -7,10 +7,8 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
-import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,6 +24,19 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     @EntityGraph(attributePaths = {"limitViolations"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithLimitViolationsByFaultResultUuidIn(List<UUID> faultResultsUUID);
 
+    @Modifying
     @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithFeederResultsByFaultResultUuidIn(List<UUID> faultResultsUUID);
+
+    @Modifying
+    @Query(value = "DELETE FROM fault_result_entity WHERE result_result_uuid = ?1", nativeQuery = true)
+    void deleteFaultResultsByShortCircuitResultUUid(UUID resultUuid);
+    @Modifying
+    @Query(value = "DELETE FROM limit_violations WHERE fault_result_entity_fault_result_uuid IN (SELECT fault_result_uuid FROM fault_result_entity where result_result_uuid = ?1)", nativeQuery = true)
+    void deleteLimitViolationsByShortCircuitResultUUid(UUID resultUuid);
+
+    @Modifying
+    @Query(value = "DELETE FROM feeder_results WHERE fault_result_entity_fault_result_uuid IN (SELECT fault_result_uuid FROM fault_result_entity where result_result_uuid = ?1)", nativeQuery = true)
+    void deleteFeederResultsByShortCircuitResultUUid(UUID resultUuid);
+
 }
