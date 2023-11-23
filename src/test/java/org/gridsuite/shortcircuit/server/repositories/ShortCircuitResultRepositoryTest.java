@@ -56,7 +56,7 @@ public class ShortCircuitResultRepositoryTest {
 
         shortCircuitAnalysisResultRepository.delete(RESULT_UUID);
 
-        assertRequestsCount(3, 0, 0, 5);
+        assertRequestsCount(2, 0, 0, 2);
     }
 
     public static void assertRequestsCount(long select, long insert, long update, long delete) {
