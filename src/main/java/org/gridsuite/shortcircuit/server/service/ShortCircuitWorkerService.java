@@ -48,8 +48,8 @@ import static org.gridsuite.shortcircuit.server.service.NotificationService.FAIL
 public class ShortCircuitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
-
-    private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
+    private static final String SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT = "AllBusesShortCircuitAnalysis";
+    private static final String SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT = "OneBusShortCircuitAnalysis";
 
     private NetworkStoreService networkStoreService;
     private ReportService reportService;
@@ -63,8 +63,6 @@ public class ShortCircuitWorkerService {
     private Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
 
     private Set<UUID> runRequests = Sets.newConcurrentHashSet();
-
-    private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
 
@@ -101,9 +99,15 @@ public class ShortCircuitWorkerService {
         Reporter rootReporter = Reporter.NO_OP;
         Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
-            String rootReporterId = context.getReporterId() == null ? SHORTCIRCUIT_TYPE_REPORT : context.getReporterId() + "@" + SHORTCIRCUIT_TYPE_REPORT;
+            String reportType = context.getReportType();
+            if (StringUtils.isEmpty(reportType)) {
+                reportType = StringUtils.isEmpty(context.getBusId()) ? SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT : SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT;
+            }
+            String rootReporterId = context.getReporterId() == null ? reportType : context.getReporterId() + "@" + reportType;
             rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            reporter = rootReporter.createSubReporter(reportType, reportType + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            // Delete any previous short-circuit computation logs
+            reportService.deleteReport(context.getReportUuid(), reportType);
         }
 
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);
@@ -118,8 +122,9 @@ public class ShortCircuitWorkerService {
         return result;
     }
 
-    private List<Fault> getAllBusfaultFromNetwork(Network network) {
-        return network.getBusView().getBusStream()
+    private List<Fault> getAllBusfaultFromNetwork(Network network, ShortCircuitRunContext context) {
+        Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+        List<Fault> faults = network.getBusView().getBusStream()
             .map(bus -> {
                 IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                 if (shortCircuitExtension != null) {
@@ -128,10 +133,14 @@ public class ShortCircuitWorkerService {
                 return new BusFault(bus.getId(), bus.getId());
             })
             .collect(Collectors.toList());
+        context.setShortCircuitLimits(shortCircuitLimits);
+        return faults;
     }
 
-    private List<Fault> getBusFaultFromBusId(String busId, Network network) {
+    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
+        String busId = context.getBusId();
         Identifiable<?> identifiable = network.getIdentifiable(busId);
+        Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
         if (identifiable instanceof BusbarSection) {
             String busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
@@ -139,6 +148,7 @@ public class ShortCircuitWorkerService {
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
+            context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
 
@@ -148,9 +158,9 @@ public class ShortCircuitWorkerService {
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
+            context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
-
         throw new NoSuchElementException("No bus found for bus id " + busId);
     }
 
@@ -165,8 +175,8 @@ public class ShortCircuitWorkerService {
             }
 
             List<Fault> faults = context.getBusId() == null
-                ? getAllBusfaultFromNetwork(network)
-                : getBusFaultFromBusId(context.getBusId(), network);
+                ? getAllBusfaultFromNetwork(network, context)
+                : getBusFaultFromBusId(network, context);
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
@@ -218,7 +228,7 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitLimits, ShortCircuitAnalysisStatus.COMPLETED.name());
+                resultRepository.insert(resultContext.getResultUuid(), result, resultContext.getRunContext().getShortCircuitLimits(), ShortCircuitAnalysisStatus.COMPLETED.name());
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 

@@ -47,7 +47,7 @@ public class ReportMapperCourcirc extends AbstractReportMapper {
         final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
         reporterModel.getReports().forEach(newReporter::report);
         reporterModel.getSubReporters().forEach(reporter -> {
-            if ("ShortCircuitAnalysis".equals(reporter.getTaskKey())
+            if (reporter.getTaskKey() != null && reporter.getTaskKey().endsWith("ShortCircuitAnalysis")
                 && "Courcirc".equals(reporter.getTaskValues().getOrDefault("providerToUse", new TypedValue("", "")).getValue())) {
                 newReporter.addSubReporter(forShortCircuitAnalysis(reporter));
             } else {
