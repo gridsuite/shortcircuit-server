@@ -142,6 +142,7 @@ public class ShortCircuitWorkerService {
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
+            context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
 
@@ -151,9 +152,9 @@ public class ShortCircuitWorkerService {
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
+            context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
-        context.setShortCircuitLimits(shortCircuitLimits);
         throw new NoSuchElementException("No bus found for bus id " + busId);
     }
 
