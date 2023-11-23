@@ -135,27 +135,22 @@ public class ShortCircuitWorkerService {
         String busId = context.getBusId();
         Identifiable<?> identifiable = network.getIdentifiable(busId);
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
-
+        String busIdFromBusView = null;
         if (identifiable instanceof BusbarSection) {
-            String busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
-            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
-            if (shortCircuitExtension != null) {
-                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
-            }
-            context.setShortCircuitLimits(shortCircuitLimits);
-            return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
+            busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
         }
-
         if (identifiable instanceof Bus) {
-            String busIdFromBusView = ((Bus) identifiable).getVoltageLevel().getBusView().getMergedBus(busId).getId();
-            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((Bus) identifiable).getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
-            if (shortCircuitExtension != null) {
-                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
-            }
-            context.setShortCircuitLimits(shortCircuitLimits);
-            return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
+            busIdFromBusView = ((Bus) identifiable).getVoltageLevel().getBusView().getMergedBus(busId).getId();
         }
-        throw new NoSuchElementException("No bus found for bus id " + busId);
+        if (busIdFromBusView == null) {
+            throw new NoSuchElementException("No bus found for bus id " + busId);
+        }
+        IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+        if (shortCircuitExtension != null) {
+            shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+        }
+        context.setShortCircuitLimits(shortCircuitLimits);
+        return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
     }
 
     private CompletableFuture<ShortCircuitAnalysisResult> runShortCircuitAnalysisAsync(ShortCircuitRunContext context,
