@@ -48,8 +48,8 @@ import static org.gridsuite.shortcircuit.server.service.NotificationService.FAIL
 public class ShortCircuitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
-
-    private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
+    private static final String SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT = "AllBusesShortCircuitAnalysis";
+    private static final String SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT = "OneBusShortCircuitAnalysis";
 
     private NetworkStoreService networkStoreService;
     private ReportService reportService;
@@ -99,9 +99,15 @@ public class ShortCircuitWorkerService {
         Reporter rootReporter = Reporter.NO_OP;
         Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
-            String rootReporterId = context.getReporterId() == null ? SHORTCIRCUIT_TYPE_REPORT : context.getReporterId() + "@" + SHORTCIRCUIT_TYPE_REPORT;
+            String reportType = context.getReportType();
+            if (StringUtils.isEmpty(reportType)) {
+                reportType = StringUtils.isEmpty(context.getBusId()) ? SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT : SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT;
+            }
+            String rootReporterId = context.getReporterId() == null ? reportType : context.getReporterId() + "@" + reportType;
             rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            reporter = rootReporter.createSubReporter(reportType, reportType + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            // Delete any previous short-circuit computation logs
+            reportService.deleteReport(context.getReportUuid(), reportType);
         }
 
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);

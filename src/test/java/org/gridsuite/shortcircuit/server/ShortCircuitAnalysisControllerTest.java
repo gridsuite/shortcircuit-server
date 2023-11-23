@@ -289,7 +289,7 @@ public class ShortCircuitAnalysisControllerTest {
             shortCircuitParameters.setWithFortescueResult(false);
             String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(parametersJson))
@@ -402,7 +402,7 @@ public class ShortCircuitAnalysisControllerTest {
             shortCircuitParameters.setWithFortescueResult(true);
             String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=OneBusShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                     .param(HEADER_BUS_ID, "NGEN")
                     .header(HEADER_USER_ID, "userId")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -460,7 +460,7 @@ public class ShortCircuitAnalysisControllerTest {
             shortCircuitParameters.setWithFortescueResult(true);
             String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + NODE_BREAKER_NETWORK_VARIANT_ID, NODE_BREAKER_NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=OneBusShortCircuitAnalysis&receiver=me&variantId=" + NODE_BREAKER_NETWORK_VARIANT_ID, NODE_BREAKER_NETWORK_UUID)
                     .param(HEADER_BUS_ID, "S1VL2_BBS1")
                     .header(HEADER_USER_ID, "userId")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -499,7 +499,7 @@ public class ShortCircuitAnalysisControllerTest {
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
 
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + NODE_BREAKER_NETWORK_VARIANT_ID, NODE_BREAKER_NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=OneBusShortCircuitAnalysis&receiver=me&variantId=" + NODE_BREAKER_NETWORK_VARIANT_ID, NODE_BREAKER_NETWORK_UUID)
                     .param(HEADER_BUS_ID, "BUSBARSECTION_ID_NOT_EXISTING")
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
@@ -533,7 +533,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
 
             mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -583,7 +583,7 @@ public class ShortCircuitAnalysisControllerTest {
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
 
             mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportUuid=" + REPORT_UUID + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportType=AllBusesShortCircuitAnalysis&reportUuid=" + REPORT_UUID + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "user"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -607,7 +607,7 @@ public class ShortCircuitAnalysisControllerTest {
                 .thenReturn(CompletableFuture.completedFuture(RESULT));
 
             mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportUuid=" + REPORT_UUID + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportType=AllBusesShortCircuitAnalysis&reportUuid=" + REPORT_UUID + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                     .header(HEADER_USER_ID, "user"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
