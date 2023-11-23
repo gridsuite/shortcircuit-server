@@ -23,8 +23,12 @@ import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
+import com.vladmihalcea.sql.SQLStatementCountValidator;
 import lombok.SneakyThrows;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
+import org.gridsuite.shortcircuit.server.repositories.ResultRepository;
+import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.service.ReportService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
 import org.junit.After;
@@ -50,14 +54,13 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
+import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
+import static com.vladmihalcea.sql.SQLStatementCountValidator.assertDeleteCount;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -93,6 +96,15 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
 
     private static final int TIMEOUT = 1000;
+
+    @Autowired
+    private ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private FaultResultRepository faultResultRepository;
 
     private static final class ShortCircuitAnalysisResultMock {
 
@@ -681,5 +693,32 @@ public class ShortCircuitAnalysisControllerTest {
             assertEquals(5.0, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMin(), 0.1);
             assertEquals(100.5, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMax(), 0.1);
         }
+    }
+
+    @SneakyThrows
+    @Test
+    public void deleteResultTest() {
+        FaultResult fault1 = new MagnitudeFaultResult(new BusFault("VLHV1_0", "ELEMENT_ID_1"), 17.0,
+                List.of(), List.of(),
+                45.3, FaultResult.Status.SUCCESS);
+        FaultResult fault2 = new MagnitudeFaultResult(new BusFault("VLHV2_0", "ELEMENT_ID_2"), 18.0,
+                List.of(), List.of(),
+                47.3, FaultResult.Status.SUCCESS);
+        FaultResult fault3 = new MagnitudeFaultResult(new BusFault("VLGEN_0", "ELEMENT_ID_3"), 19.0,
+                List.of(), List.of(),
+                49.3, FaultResult.Status.SUCCESS);
+        ShortCircuitAnalysisResult results = new ShortCircuitAnalysisResult(List.of(fault1, fault2, fault3));
+        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, results, Map.of(), "OK");
+        SQLStatementCountValidator.reset();
+
+        shortCircuitAnalysisResultRepository.delete(RESULT_UUID);
+
+        assertRequestsCount(2, 0, 1, 2);
+    }
+    public static void assertRequestsCount(long select, long insert, long update, long delete) {
+        assertSelectCount(select);
+        assertInsertCount(insert);
+        assertUpdateCount(update);
+        assertDeleteCount(delete);
     }
 }
