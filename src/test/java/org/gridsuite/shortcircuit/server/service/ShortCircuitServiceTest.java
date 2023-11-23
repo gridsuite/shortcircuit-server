@@ -58,7 +58,8 @@ class ShortCircuitServiceTest implements WithAssertions {
         final UUID reportUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
         final UUID resultUuid = UUID.fromString("33333333-3333-3333-3333-333333333333");
         final String reporterId = "44444444-4444-4444-4444-444444444444";
-        final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null, new ShortCircuitParameters(), reportUuid, reporterId, null, null);
+        final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
+                new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network networkMocked = Mockito.mock(Network.class);
         final VariantManager variantManagerMocked = Mockito.mock(VariantManager.class);
