@@ -44,7 +44,8 @@ public abstract class AbstractReportMapper {
      * @implNote currently support only some implementations of {@link Reporter}
      */
     public Reporter processReporter(@NonNull final Reporter reporter) {
-        if (reporter instanceof ReporterModel reporterModel && reporterModel.getTaskKey().matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@)?ShortCircuitAnalysis$")) {
+        if (reporter instanceof ReporterModel reporterModel && reporterModel.getTaskKey()
+                .matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@)?.*ShortCircuitAnalysis$")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
             return forUuidAtShortCircuitAnalysis(reporterModel);
         } else {
@@ -62,7 +63,7 @@ public abstract class AbstractReportMapper {
         final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
         reporterModel.getReports().forEach(newReporter::report);
         reporterModel.getSubReporters().forEach(reporter -> {
-            if ("ShortCircuitAnalysis".equals(reporter.getTaskKey())) {
+            if (reporter.getTaskKey() != null && reporter.getTaskKey().endsWith("ShortCircuitAnalysis")) {
                 newReporter.addSubReporter(forShortCircuitAnalysis(reporter));
             } else {
                 newReporter.addSubReporter(reporter);
