@@ -31,6 +31,7 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     @Modifying
     @Query(value = "DELETE FROM fault_result_entity WHERE result_result_uuid = ?1", nativeQuery = true)
     void deleteFaultResultsByShortCircuitResultUUid(UUID resultUuid);
+
     @Modifying
     @Query(value = "DELETE FROM limit_violations WHERE fault_result_entity_fault_result_uuid IN (SELECT fault_result_uuid FROM fault_result_entity where result_result_uuid = ?1)", nativeQuery = true)
     void deleteLimitViolationsByShortCircuitResultUUid(UUID resultUuid);
