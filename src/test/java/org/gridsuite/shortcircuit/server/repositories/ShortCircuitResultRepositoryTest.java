@@ -13,6 +13,7 @@ import org.gridsuite.shortcircuit.server.ShortCircuitApplication;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Tag;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,9 +31,7 @@ import static org.gridsuite.shortcircuit.server.TestUtils.assertRequestsCount;
  * @author Etienne HOMER <etienne.homer@rte-france.com>
  */
 @RunWith(SpringRunner.class)
-@AutoConfigureMockMvc
 @SpringBootTest
-@ContextHierarchy({@ContextConfiguration(classes = {ShortCircuitApplication.class, TestChannelBinderConfiguration.class})})
 public class ShortCircuitResultRepositoryTest {
 
     FaultResult fault1 = new MagnitudeFaultResult(new BusFault("VLHV1_0", "ELEMENT_ID_1"), 17.0,
@@ -52,11 +51,8 @@ public class ShortCircuitResultRepositoryTest {
 
     @Before
     public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
         shortCircuitAnalysisResultRepository.deleteAll();
+        SQLStatementCountValidator.reset();
     }
 
     @Test
@@ -67,7 +63,7 @@ public class ShortCircuitResultRepositoryTest {
 
         shortCircuitAnalysisResultRepository.delete(RESULT_UUID);
 
-        assertRequestsCount(0, 0, 0, 0);
+        assertRequestsCount(3, 0, 0, 5);
     }
 
 }
