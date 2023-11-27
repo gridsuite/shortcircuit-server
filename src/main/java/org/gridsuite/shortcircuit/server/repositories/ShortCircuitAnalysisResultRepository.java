@@ -12,8 +12,11 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
 import org.gridsuite.shortcircuit.server.utils.FaultResultSpecificationBuilder;
 import org.gridsuite.shortcircuit.server.utils.FeederResultSpecificationBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +28,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +38,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Repository
 public class ShortCircuitAnalysisResultRepository {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitAnalysisResultRepository.class);
     private final GlobalStatusRepository globalStatusRepository;
     private final ResultRepository resultRepository;
     private final FaultResultRepository faultResultRepository;
@@ -166,9 +172,12 @@ public class ShortCircuitAnalysisResultRepository {
 
     @Transactional
     public void delete(UUID resultUuid) {
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
         Objects.requireNonNull(resultUuid);
         globalStatusRepository.deleteByResultUuid(resultUuid);
         deleteShortCircuitResult(resultUuid);
+        LOGGER.info("Shortcircuit result '{}' has been deleted in {}ms",resultUuid , TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
     }
 
     private void deleteShortCircuitResult(UUID resultUuid) {
