@@ -31,8 +31,8 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     Set<UUID> findAllFaultResultUuidsByShortCircuitResultUuid(UUID resultUuid);
 
     // From: https://www.baeldung.com/spring-data-jpa-deleteby
-    //"The @Query method creates a single SQL query against the database. By comparison, the deleteBy methods execute a read query, then delete each of the items one by one."
-    // As we need here to delete thousands of fault results, using native SQL query was mandatory for efficiency.
+    // "The @Query method creates a single SQL query against the database. By comparison, the deleteBy methods execute a read query, then delete each of the items one by one."
+    // As we need here to delete thousands of fault results, using native SQL query was required for having decent performance.
     @Modifying
     @Query(value = "DELETE FROM fault_result_entity WHERE result_result_uuid = ?1", nativeQuery = true)
     void deleteFaultResultsByShortCircuitResultUUid(UUID resultUuid);
