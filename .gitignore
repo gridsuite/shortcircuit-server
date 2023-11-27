@@ -10,5 +10,4 @@ target/
 # IntelliJ
 /.idea
 *.iml
-
 Dockerfile
