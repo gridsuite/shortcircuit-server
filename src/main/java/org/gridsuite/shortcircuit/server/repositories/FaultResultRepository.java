@@ -27,16 +27,23 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithFeederResultsByFaultResultUuidIn(List<UUID> faultResultsUUID);
 
+    @Query(value = "SELECT fault_result_uuid FROM fault_result_entity where result_result_uuid = ?1", nativeQuery = true)
+    Set<UUID> findAllFaultResultUuidsByShortCircuitResultUuid(UUID resultUuid);
+
+    // From: https://www.baeldung.com/spring-data-jpa-deleteby
+    //"The @Query method creates a single SQL query against the database. By comparison, the deleteBy methods execute a read query, then delete each of the items one by one."
+    // As we need here to delete thousands of fault results, using native SQL query was mandatory for efficiency.
     @Modifying
     @Query(value = "DELETE FROM fault_result_entity WHERE result_result_uuid = ?1", nativeQuery = true)
     void deleteFaultResultsByShortCircuitResultUUid(UUID resultUuid);
 
     @Modifying
-    @Query(value = "DELETE FROM limit_violations WHERE fault_result_entity_fault_result_uuid IN (SELECT fault_result_uuid FROM fault_result_entity where result_result_uuid = ?1)", nativeQuery = true)
-    void deleteLimitViolationsByShortCircuitResultUUid(UUID resultUuid);
+    @Query(value = "DELETE FROM limit_violations WHERE fault_result_entity_fault_result_uuid IN ?1", nativeQuery = true)
+    void deleteLimitViolationsByFaultResultUuids(Set<UUID> ids);
 
+    // We keep this method in this repository instead of FeederResultRepository to help readability as it is executed with the two queries above.
     @Modifying
-    @Query(value = "DELETE FROM feeder_results WHERE fault_result_entity_fault_result_uuid IN (SELECT fault_result_uuid FROM fault_result_entity where result_result_uuid = ?1)", nativeQuery = true)
-    void deleteFeederResultsByShortCircuitResultUUid(UUID resultUuid);
+    @Query(value = "DELETE FROM feeder_results WHERE fault_result_entity_fault_result_uuid IN ?1", nativeQuery = true)
+    void deleteFeederResultsByFaultResultUuids(Set<UUID> ids);
 
 }
