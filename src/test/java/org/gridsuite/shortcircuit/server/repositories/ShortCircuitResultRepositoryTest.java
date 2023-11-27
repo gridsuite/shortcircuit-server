@@ -7,6 +7,8 @@
 
 package org.gridsuite.shortcircuit.server.repositories;
 
+import com.powsybl.security.LimitViolation;
+import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
 import org.junit.Before;
@@ -27,14 +29,19 @@ import static org.gridsuite.shortcircuit.server.TestUtils.assertRequestsCount;
 @SpringBootTest
 public class ShortCircuitResultRepositoryTest {
 
+    static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("CONN_ID_1", 22.17);
+    static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("CONN_ID_2", 18.57);
+    static final LimitViolation LIMIT_VIOLATION_1 = new LimitViolation("SUBJECT_1", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 25.63, 4f, 33.54);
+    static final LimitViolation LIMIT_VIOLATION_2 = new LimitViolation("SUBJECT_2", LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, 12.17, 2f, 10.56);
+
     FaultResult fault1 = new MagnitudeFaultResult(new BusFault("VLHV1_0", "ELEMENT_ID_1"), 17.0,
-            List.of(), List.of(),
+            List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2),
             45.3, FaultResult.Status.SUCCESS);
     FaultResult fault2 = new MagnitudeFaultResult(new BusFault("VLHV2_0", "ELEMENT_ID_2"), 18.0,
-            List.of(), List.of(),
+            List.of(FEEDER_RESULT_1), List.of(LIMIT_VIOLATION_1),
             47.3, FaultResult.Status.SUCCESS);
     FaultResult fault3 = new MagnitudeFaultResult(new BusFault("VLGEN_0", "ELEMENT_ID_3"), 19.0,
-            List.of(), List.of(),
+            List.of(FEEDER_RESULT_1, FEEDER_RESULT_2), List.of(),
             49.3, FaultResult.Status.SUCCESS);
 
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
@@ -56,7 +63,13 @@ public class ShortCircuitResultRepositoryTest {
 
         shortCircuitAnalysisResultRepository.delete(RESULT_UUID);
 
-        assertRequestsCount(3, 0, 0, 5);
+        // 5 deletes for one result :
+        // - its global status,
+        // - all its limitVioltions
+        // - all its feeders
+        // - all its faultResults
+        // - the result itself
+        assertRequestsCount(4, 0, 0, 5);
     }
 
 }
