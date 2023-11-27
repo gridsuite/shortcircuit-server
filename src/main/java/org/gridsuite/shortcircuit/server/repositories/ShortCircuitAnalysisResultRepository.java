@@ -12,7 +12,6 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService;
 import org.gridsuite.shortcircuit.server.utils.FaultResultSpecificationBuilder;
 import org.gridsuite.shortcircuit.server.utils.FeederResultSpecificationBuilder;
 import org.slf4j.Logger;
@@ -177,7 +176,7 @@ public class ShortCircuitAnalysisResultRepository {
         Objects.requireNonNull(resultUuid);
         globalStatusRepository.deleteByResultUuid(resultUuid);
         deleteShortCircuitResult(resultUuid);
-        LOGGER.info("Shortcircuit result '{}' has been deleted in {}ms",resultUuid , TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        LOGGER.info("Shortcircuit result '{}' has been deleted in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
     }
 
     private void deleteShortCircuitResult(UUID resultUuid) {
