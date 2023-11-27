@@ -27,7 +27,7 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithFeederResultsByFaultResultUuidIn(List<UUID> faultResultsUUID);
 
-    @Query(value = "SELECT fault_result_uuid FROM fault_result_entity where result_result_uuid = ?1", nativeQuery = true)
+    @Query(value = "SELECT faultResultUuid FROM FaultResultEntity WHERE result.resultUuid = ?1")
     Set<UUID> findAllFaultResultUuidsByShortCircuitResultUuid(UUID resultUuid);
 
     // From: https://www.baeldung.com/spring-data-jpa-deleteby
