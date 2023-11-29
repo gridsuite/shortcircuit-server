@@ -17,6 +17,8 @@ import org.springframework.cloud.stream.binder.test.OutputDestination;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
+import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
+import static com.vladmihalcea.sql.SQLStatementCountValidator.assertDeleteCount;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -61,5 +63,12 @@ public final class TestUtils {
             }
             throw ex;
         }
+    }
+
+    public static void assertRequestsCount(long select, long insert, long update, long delete) {
+        assertSelectCount(select);
+        assertInsertCount(insert);
+        assertUpdateCount(update);
+        assertDeleteCount(delete);
     }
 }

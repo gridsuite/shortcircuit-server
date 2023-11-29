@@ -21,7 +21,10 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(indexes = @Index(name = "result_uuid_nbLimitViolations_idx", columnList = "result_result_uuid, nbLimitViolations"))
+@Table(indexes = {
+    @Index(name = "result_uuid_nbLimitViolations_idx", columnList = "result_result_uuid, nbLimitViolations"),
+    @Index(name = "result_uuid_idx", columnList = "result_result_uuid")
+})
 public class FaultResultEntity {
 
     @Id
