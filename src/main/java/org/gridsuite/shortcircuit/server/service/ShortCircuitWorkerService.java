@@ -39,6 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository.st;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.FAIL_MESSAGE;
 
 /**
@@ -113,12 +114,6 @@ public class ShortCircuitWorkerService {
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);
 
         ShortCircuitAnalysisResult result = future == null ? null : future.get();
-        if (context.getReportUuid() != null) {
-            for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReporter = reportMapper.processReporter(rootReporter);
-            }
-            reportService.sendReport(context.getReportUuid(), rootReporter);
-        }
         return result;
     }
 
@@ -222,27 +217,19 @@ public class ShortCircuitWorkerService {
             try {
                 runRequests.add(resultContext.getResultUuid());
                 AtomicReference<Long> startTime = new AtomicReference<>();
-
                 startTime.set(System.nanoTime());
                 ShortCircuitAnalysisResult result = run(resultContext.getRunContext(), resultContext.getResultUuid());
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
                 resultRepository.insert(resultContext.getResultUuid(), result, resultContext.getRunContext().getShortCircuitLimits(), ShortCircuitAnalysisStatus.COMPLETED.name());
+                LOGGER.info("Just after insert in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - st.get()));
                 long finalNanoTime = System.nanoTime();
-                LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
+                LOGGER.info("Stored in {}ms", TimeUnit.NANOSECONDS.toMillis(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
                 if (result != null) {  // result available
-                    if (!result.getFaultResults().isEmpty() &&
-                        result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
-                        LOGGER.error("Short circuit analysis failed (resultUuid='{}')", resultContext.getResultUuid());
-                        notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                                "Missing short-circuit extension data",
-                                resultContext.getRunContext().getUserId(), resultContext.getRunContext().getBusId());
-                    } else {
-                        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getBusId());
-                        LOGGER.info("Short circuit analysis complete (resultUuid='{}')", resultContext.getResultUuid());
-                    }
+                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getBusId());
+                    LOGGER.info("Short circuit analysis complete (resultUuid='{}')", resultContext.getResultUuid());
                 } else {  // result not available : stop computation request
                     if (cancelComputationRequests.get(resultContext.getResultUuid()) != null) {
                         cleanShortCircuitAnalysisResultsAndPublishCancel(resultContext.getResultUuid(), cancelComputationRequests.get(resultContext.getResultUuid()).getReceiver());

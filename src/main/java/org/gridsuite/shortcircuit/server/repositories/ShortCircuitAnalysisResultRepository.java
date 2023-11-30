@@ -63,21 +63,26 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     public static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+
         Set<FaultResultEntity> faultResults = result.getFaultResults()
                 .stream()
                 .map(faultResult -> {
+                    if (faultResult instanceof MagnitudeFaultResult magnitudeFaultResult) {
+                        return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
+                    }
                     if (faultResult instanceof FailedFaultResult failedFaultResult) {
                         return toGenericFaultResultEntity(failedFaultResult, null);
                     } else if (faultResult instanceof FortescueFaultResult fortescueFaultResult) {
                         return toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
-                    } else if (faultResult instanceof MagnitudeFaultResult magnitudeFaultResult) {
-                        return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     } else {
                         log.warn("Unknown FaultResult class: {}", faultResult.getClass());
                         return toGenericFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     }
                 })
                 .collect(Collectors.toSet());
+        LOGGER.info("IN THE TOENTITY in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
     }
@@ -160,13 +165,47 @@ public class ShortCircuitAnalysisResultRepository {
             .map(uuid -> toStatusEntity(uuid, status)).collect(Collectors.toList()));
     }
 
+    public static AtomicReference<Long> st = new AtomicReference<>();
+
     @Transactional
     public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, String status) {
+        AtomicReference<Long> totalTime = new AtomicReference<>();
+        totalTime.set(System.nanoTime());
         Objects.requireNonNull(resultUuid);
-        if (result != null && !result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
-            resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits));
+        if (result != null) {
+            AtomicReference<Long> startTime = new AtomicReference<>();
+            startTime.set(System.nanoTime());
+            ShortCircuitAnalysisResultEntity entity = toResultEntity(resultUuid, result, allCurrentLimits);
+            LOGGER.info("toResultEntity in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+            AtomicReference<Long> startTime2 = new AtomicReference<>();
+            startTime2.set(System.nanoTime());
+            resultRepository.save(entity);
+            LOGGER.info("resultRepository.save in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime2.get()));
         }
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
+        LOGGER.info("globalStatusRepository in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        st.set(System.nanoTime());
+        LOGGER.info("totalTime in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - totalTime.get()));
+    }
+
+    @Transactional
+    public void insert2(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, String status) {
+        Objects.requireNonNull(resultUuid);
+        if (result != null) {
+            ShortCircuitAnalysisResultEntity e = toResultEntity(resultUuid, result, allCurrentLimits);
+            AtomicReference<Long> startTime = new AtomicReference<>();
+            startTime.set(System.nanoTime());
+            resultRepository.save(e);
+            long nanoTime = System.nanoTime();
+            LOGGER.info("save in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.get()));
+        }
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+        globalStatusRepository.save(toStatusEntity(resultUuid, status));
+        long nanoTime = System.nanoTime();
+        LOGGER.info("globalStatusRepository in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.get()));
     }
 
     @Transactional

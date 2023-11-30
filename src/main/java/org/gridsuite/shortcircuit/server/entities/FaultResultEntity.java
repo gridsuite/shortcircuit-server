@@ -32,6 +32,7 @@ public class FaultResultEntity {
     private UUID faultResultUuid;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "result_result_uuid")
     @Setter
     private ShortCircuitAnalysisResultEntity result;
 
