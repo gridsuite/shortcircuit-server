@@ -1,0 +1,78 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="homereti (generated)" id="1701341967584-2">
+        <dropTable tableName="LIMIT_VIOLATIONS"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-1">
+        <dropColumn columnName="FORTESCUE_CURRENT_ANGLE_A" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-2">
+        <dropColumn columnName="FORTESCUE_CURRENT_ANGLE_B" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-3">
+        <dropColumn columnName="FORTESCUE_CURRENT_ANGLE_C" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-4">
+        <dropColumn columnName="FORTESCUE_CURRENT_MAGNITUDE_A" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-5">
+        <dropColumn columnName="FORTESCUE_CURRENT_MAGNITUDE_B" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-6">
+        <dropColumn columnName="FORTESCUE_CURRENT_MAGNITUDE_C" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-7">
+        <dropColumn columnName="FORTESCUE_CURRENT_NEGATIVE_ANGLE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-8">
+        <dropColumn columnName="FORTESCUE_CURRENT_NEGATIVE_MAGNITUDE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-9">
+        <dropColumn columnName="FORTESCUE_CURRENT_POSITIVE_ANGLE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-10">
+        <dropColumn columnName="FORTESCUE_CURRENT_POSITIVE_MAGNITUDE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-11">
+        <dropColumn columnName="FORTESCUE_CURRENT_ZERO_ANGLE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-12">
+        <dropColumn columnName="FORTESCUE_CURRENT_ZERO_MAGNITUDE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-13">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_ANGLE_A" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-14">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_ANGLE_B" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-15">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_ANGLE_C" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-16">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_MAGNITUDE_A" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-17">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_MAGNITUDE_B" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-18">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_MAGNITUDE_C" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-19">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_NEGATIVE_ANGLE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-20">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_NEGATIVE_MAGNITUDE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-21">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_POSITIVE_ANGLE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-22">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_POSITIVE_MAGNITUDE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-23">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_ZERO_ANGLE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+    <changeSet author="homereti (generated)" id="1701342404492-24">
+        <dropColumn columnName="FORTESCUE_VOLTAGE_ZERO_MAGNITUDE" tableName="FAULT_RESULT_ENTITY"/>
+    </changeSet>
+</databaseChangeLog>

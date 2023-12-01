@@ -112,10 +112,6 @@ public class ShortCircuitAnalysisResultRepository {
         FaultResultEntity entity = toGenericFaultResultEntity(faultResult, shortCircuitLimits);
         final double current = faultResult.getCurrent();
         entity.setCurrent(current);
-        entity.setFeederResults(faultResult.getFeederResults().stream()
-                .map(feederResult -> new FeederResultEntity(feederResult.getConnectableId(),
-                        ((MagnitudeFeederResult) feederResult).getCurrent(), null))
-                .collect(Collectors.toList()));
         if (shortCircuitLimits != null) {
             entity.setDeltaCurrentIpMin(current - entity.getIpMin() / 1000.0);
             entity.setDeltaCurrentIpMax(current - entity.getIpMax() / 1000.0);
@@ -125,19 +121,6 @@ public class ShortCircuitAnalysisResultRepository {
 
     private static FaultResultEntity toFortescueFaultResultEntity(FortescueFaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
         FaultResultEntity entity = toGenericFaultResultEntity(faultResult, shortCircuitLimits);
-        entity.setFeederResults(faultResult.getFeederResults().stream()
-                .map(feederResult -> {
-                    final FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
-                    final FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = feederFortescueCurrent.toThreePhaseValue();
-                    return new FeederResultEntity(feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
-                            feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(),
-                            feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(),
-                            feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(),
-                            feederFortescueThreePhaseValue.getMagnitudeA(), feederFortescueThreePhaseValue.getMagnitudeB(),
-                            feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(),
-                            feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
-                })
-                .collect(Collectors.toList()));
 
         final FortescueValue current = faultResult.getCurrent();
         if (shortCircuitLimits != null) {
@@ -146,10 +129,8 @@ public class ShortCircuitAnalysisResultRepository {
         }
 
         final FortescueValue.ThreePhaseValue currentThreePhaseValue = current.toThreePhaseValue();
-        entity.setFortescueCurrent(new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(), current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(), currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(), currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC()));
         final FortescueValue voltage = faultResult.getVoltage();
         final FortescueValue.ThreePhaseValue voltageThreePhaseValue = voltage.toThreePhaseValue();
-        entity.setFortescueVoltage(new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(), voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(), voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(), voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC()));
 
         return entity;
     }
@@ -247,15 +228,6 @@ public class ShortCircuitAnalysisResultRepository {
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
         if (!result.isPresent()) {
             return result;
-        }
-        List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
-                                                            .filter(fr -> !fr.getLimitViolations().isEmpty())
-                                                            .map(FaultResultEntity::getFaultResultUuid)
-                                                            .collect(Collectors.toList());
-        // using the the Hibernate First-Level Cache or Persistence Context
-        // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
-        if (!result.get().getFaultResults().isEmpty()) {
-            faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuidWithLimitViolations);
         }
         return result;
     }

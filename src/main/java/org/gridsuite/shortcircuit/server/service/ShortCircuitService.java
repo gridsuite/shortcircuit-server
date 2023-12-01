@@ -65,7 +65,7 @@ public class ShortCircuitService {
                 faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr, mode)).toList();
                 break;
             case WITH_LIMIT_VIOLATIONS:
-                faultResults = resultEntity.getFaultResults().stream().filter(fr -> !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr, mode)).toList();
+                faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr, mode)).toList();
                 break;
             case NONE:
             default:
@@ -82,11 +82,6 @@ public class ShortCircuitService {
         ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMin(), faultResultEntity.getIpMax(), faultResultEntity.getDeltaCurrentIpMin(), faultResultEntity.getDeltaCurrentIpMax());
         List<LimitViolation> limitViolations = new ArrayList<>();
         List<FeederResult> feederResults = new ArrayList<>();
-        if (mode != FaultResultsMode.BASIC) {
-            // if we enter here, by calling the getters, the limit violations and feeder results will be loaded even if we don't want to in some mode
-            limitViolations = faultResultEntity.getLimitViolations().stream().map(ShortCircuitService::fromEntity).toList();
-            feederResults = faultResultEntity.getFeederResults().stream().map(ShortCircuitService::fromEntity).toList();
-        }
         return new FaultResult(fault, current, positiveMagnitude, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
     }
 
