@@ -184,7 +184,6 @@ public class ShortCircuitAnalysisResultRepository {
     private void deleteShortCircuitResult(UUID resultUuid) {
         Set<UUID> faultResultUuids = faultResultRepository.findAllFaultResultUuidsByShortCircuitResultUuid(resultUuid);
         faultResultRepository.deleteFeederResultsByFaultResultUuids(faultResultUuids);
-        faultResultRepository.deleteLimitViolationsByFaultResultUuids(faultResultUuids);
         faultResultRepository.deleteFaultResultsByShortCircuitResultUUid(resultUuid);
         resultRepository.deleteByResultUuid(resultUuid);
     }
