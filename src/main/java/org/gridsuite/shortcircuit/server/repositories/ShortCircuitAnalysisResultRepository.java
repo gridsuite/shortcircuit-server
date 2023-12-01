@@ -191,24 +191,6 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional
-    public void insert2(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, String status) {
-        Objects.requireNonNull(resultUuid);
-        if (result != null) {
-            ShortCircuitAnalysisResultEntity e = toResultEntity(resultUuid, result, allCurrentLimits);
-            AtomicReference<Long> startTime = new AtomicReference<>();
-            startTime.set(System.nanoTime());
-            resultRepository.save(e);
-            long nanoTime = System.nanoTime();
-            LOGGER.info("save in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.get()));
-        }
-        AtomicReference<Long> startTime = new AtomicReference<>();
-        startTime.set(System.nanoTime());
-        globalStatusRepository.save(toStatusEntity(resultUuid, status));
-        long nanoTime = System.nanoTime();
-        LOGGER.info("globalStatusRepository in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.get()));
-    }
-
-    @Transactional
     public void delete(UUID resultUuid) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
