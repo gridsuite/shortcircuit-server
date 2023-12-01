@@ -70,10 +70,7 @@ public class FaultResultEntity {
         this.ipMax = ipMax;
         this.deltaCurrentIpMin = deltaCurrentIpMin;
         this.deltaCurrentIpMax = deltaCurrentIpMax;
-        if (feederResults != null) {
-            setFeederResults(feederResults);
-        }
-    }
+    }it s
 
     @Override
     public boolean equals(Object o) {
