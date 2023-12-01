@@ -72,7 +72,7 @@ public class ShortCircuitAnalysisResultRepository {
                     if (faultResult instanceof MagnitudeFaultResult magnitudeFaultResult) {
                         return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     }
-                    if (faultResult instanceof FailedFaultResult failedFaultResult) {
+                    else if (faultResult instanceof FailedFaultResult failedFaultResult) {
                         return toGenericFaultResultEntity(failedFaultResult, null);
                     } else if (faultResult instanceof FortescueFaultResult fortescueFaultResult) {
                         return toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));

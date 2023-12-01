@@ -70,19 +70,4 @@ public class FeederResultEntity {
         this.fortescueCurrent = fortescueCurrent;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof FeederResultEntity)) {
-            return false;
-        }
-        return feederResultUuid != null && feederResultUuid.equals(((FeederResultEntity) o).getFeederResultUuid());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }
