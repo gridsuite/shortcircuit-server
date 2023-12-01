@@ -47,21 +47,4 @@ public class ShortCircuitAnalysisResultEntity {
             faultResults.forEach(f -> f.setResult(this));
         }
     }
-
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) {
-//            return true;
-//        }
-//        if (!(o instanceof ShortCircuitAnalysisResultEntity)) {
-//            return false;
-//        }
-//        return resultUuid != null && resultUuid.equals(((ShortCircuitAnalysisResultEntity) o).getResultUuid());
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return getClass().hashCode();
-//    }
-    //https://stackoverflow.com/questions/74981727/spring-data-jpa-one-to-many-takes-more-time-when-saving
 }

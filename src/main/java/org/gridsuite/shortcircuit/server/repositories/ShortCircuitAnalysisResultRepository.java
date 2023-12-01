@@ -64,27 +64,6 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional
-    public void addFaultResults(int start, int end, ShortCircuitAnalysisResultEntity shortCircuitAnalysisResultEntity, List<FaultResult> faultResults, Map<String, ShortCircuitLimits> allShortCircuitLimits){
-        Set<FaultResultEntity> faultResultEntities = new HashSet<>();
-        for (int i = start; i < end && i < faultResults.size(); i++) {
-            FaultResultEntity entity;
-            if (faultResults.get(i) instanceof MagnitudeFaultResult magnitudeFaultResult) {
-                entity = toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
-            } else if (faultResults.get(i) instanceof FailedFaultResult failedFaultResult) {
-                entity = toGenericFaultResultEntity(failedFaultResult, null);
-            } else if (faultResults.get(i) instanceof FortescueFaultResult fortescueFaultResult) {
-                entity = toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
-            } else {
-                log.warn("Unknown FaultResult class: {}", faultResults.get(i).getClass());
-                entity = toGenericFaultResultEntity(faultResults.get(i), allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
-            }
-            faultResultEntities.add(entity);
-        }
-        shortCircuitAnalysisResultEntity.addFaultResults(faultResultEntities);
-        faultResultRepository.saveAllAndFlush(faultResultEntities);
-    }
-
-    @Transactional
     public void addFaultResults(ShortCircuitAnalysisResultEntity shortCircuitAnalysisResultEntity, List<FaultResult> faultResults, Map<String, ShortCircuitLimits> allShortCircuitLimits){
         Set<FaultResultEntity> faultResultEntities = new HashSet<>();
         for (int i = 0; i < faultResults.size(); i++) {
