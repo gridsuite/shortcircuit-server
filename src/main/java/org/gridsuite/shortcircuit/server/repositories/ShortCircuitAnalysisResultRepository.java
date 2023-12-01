@@ -187,7 +187,7 @@ public class ShortCircuitAnalysisResultRepository {
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
         LOGGER.info("globalStatusRepository in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
         st.set(System.nanoTime());
-        LOGGER.info("totalTime in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - totalTime.get()));
+        LOGGER.info("insert method in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - totalTime.get()));
     }
 
     @Transactional
