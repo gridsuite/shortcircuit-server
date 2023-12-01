@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
+import com.google.common.collect.Lists;
 import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
@@ -62,29 +63,60 @@ public class ShortCircuitAnalysisResultRepository {
             .collect(Collectors.toList());
     }
 
-    public static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
+    @Transactional
+    public void addFaultResults(int start, int end, ShortCircuitAnalysisResultEntity shortCircuitAnalysisResultEntity, List<FaultResult> faultResults, Map<String, ShortCircuitLimits> allShortCircuitLimits){
+        Set<FaultResultEntity> faultResultEntities = new HashSet<>();
+        for (int i = start; i < end && i < faultResults.size(); i++) {
+            FaultResultEntity entity;
+            if (faultResults.get(i) instanceof MagnitudeFaultResult magnitudeFaultResult) {
+                entity = toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
+            } else if (faultResults.get(i) instanceof FailedFaultResult failedFaultResult) {
+                entity = toGenericFaultResultEntity(failedFaultResult, null);
+            } else if (faultResults.get(i) instanceof FortescueFaultResult fortescueFaultResult) {
+                entity = toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
+            } else {
+                log.warn("Unknown FaultResult class: {}", faultResults.get(i).getClass());
+                entity = toGenericFaultResultEntity(faultResults.get(i), allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
+            }
+            faultResultEntities.add(entity);
+        }
+        shortCircuitAnalysisResultEntity.addFaultResults(faultResultEntities);
+        faultResultRepository.saveAllAndFlush(faultResultEntities);
+    }
+
+    @Transactional
+    public void addFaultResults(ShortCircuitAnalysisResultEntity shortCircuitAnalysisResultEntity, List<FaultResult> faultResults, Map<String, ShortCircuitLimits> allShortCircuitLimits){
+        Set<FaultResultEntity> faultResultEntities = new HashSet<>();
+        for (int i = 0; i < faultResults.size(); i++) {
+            FaultResultEntity entity;
+            if (faultResults.get(i) instanceof MagnitudeFaultResult magnitudeFaultResult) {
+                entity = toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
+            } else if (faultResults.get(i) instanceof FailedFaultResult failedFaultResult) {
+                entity = toGenericFaultResultEntity(failedFaultResult, null);
+            } else if (faultResults.get(i) instanceof FortescueFaultResult fortescueFaultResult) {
+                entity = toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
+            } else {
+                log.warn("Unknown FaultResult class: {}", faultResults.get(i).getClass());
+                entity = toGenericFaultResultEntity(faultResults.get(i), allShortCircuitLimits.get(faultResults.get(i).getFault().getId()));
+            }
+            faultResultEntities.add(entity);
+        }
+        shortCircuitAnalysisResultEntity.addFaultResults(faultResultEntities);
+        faultResultRepository.saveAll(faultResultEntities);
+    }
+
+    public void saveResults(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
+        ShortCircuitAnalysisResultEntity shortCircuitAnalysisResultEntity = new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), Set.of());
+        int batchSize = 1000;
 
-        Set<FaultResultEntity> faultResults = result.getFaultResults()
-                .stream()
-                .map(faultResult -> {
-                    if (faultResult instanceof MagnitudeFaultResult magnitudeFaultResult) {
-                        return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
-                    }
-                    if (faultResult instanceof FailedFaultResult failedFaultResult) {
-                        return toGenericFaultResultEntity(failedFaultResult, null);
-                    } else if (faultResult instanceof FortescueFaultResult fortescueFaultResult) {
-                        return toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
-                    } else {
-                        log.warn("Unknown FaultResult class: {}", faultResult.getClass());
-                        return toGenericFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
-                    }
-                })
-                .collect(Collectors.toSet());
-        LOGGER.info("IN THE TOENTITY in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        resultRepository.save(shortCircuitAnalysisResultEntity);
+
+        Lists.partition(result.getFaultResults(), batchSize).forEach(faultResults -> addFaultResults(shortCircuitAnalysisResultEntity, faultResults, allShortCircuitLimits));
+
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
-        return new ShortCircuitAnalysisResultEntity(resultUuid, ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS), faultResults);
+        LOGGER.info("IN THE TOENTITY in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
     }
 
     private static FaultResultEntity toGenericFaultResultEntity(final FaultResult faultResult, final ShortCircuitLimits shortCircuitLimits) {
@@ -112,10 +144,6 @@ public class ShortCircuitAnalysisResultRepository {
         FaultResultEntity entity = toGenericFaultResultEntity(faultResult, shortCircuitLimits);
         final double current = faultResult.getCurrent();
         entity.setCurrent(current);
-        entity.setFeederResults(faultResult.getFeederResults().stream()
-                .map(feederResult -> new FeederResultEntity(feederResult.getConnectableId(),
-                        ((MagnitudeFeederResult) feederResult).getCurrent(), null))
-                .collect(Collectors.toList()));
         if (shortCircuitLimits != null) {
             entity.setDeltaCurrentIpMin(current - entity.getIpMin() / 1000.0);
             entity.setDeltaCurrentIpMax(current - entity.getIpMax() / 1000.0);
@@ -125,31 +153,12 @@ public class ShortCircuitAnalysisResultRepository {
 
     private static FaultResultEntity toFortescueFaultResultEntity(FortescueFaultResult faultResult, ShortCircuitLimits shortCircuitLimits) {
         FaultResultEntity entity = toGenericFaultResultEntity(faultResult, shortCircuitLimits);
-        entity.setFeederResults(faultResult.getFeederResults().stream()
-                .map(feederResult -> {
-                    final FortescueValue feederFortescueCurrent = ((FortescueFeederResult) feederResult).getCurrent();
-                    final FortescueValue.ThreePhaseValue feederFortescueThreePhaseValue = feederFortescueCurrent.toThreePhaseValue();
-                    return new FeederResultEntity(feederResult.getConnectableId(), Double.NaN, new FortescueResultEmbeddable(
-                            feederFortescueCurrent.getPositiveMagnitude(), feederFortescueCurrent.getZeroMagnitude(),
-                            feederFortescueCurrent.getNegativeMagnitude(), feederFortescueCurrent.getPositiveAngle(),
-                            feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(),
-                            feederFortescueThreePhaseValue.getMagnitudeA(), feederFortescueThreePhaseValue.getMagnitudeB(),
-                            feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(),
-                            feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
-                })
-                .collect(Collectors.toList()));
 
         final FortescueValue current = faultResult.getCurrent();
         if (shortCircuitLimits != null) {
             entity.setDeltaCurrentIpMin(current.getPositiveMagnitude() - entity.getIpMin() / 1000.0);
             entity.setDeltaCurrentIpMax(current.getPositiveMagnitude() - entity.getIpMax() / 1000.0);
         }
-
-        final FortescueValue.ThreePhaseValue currentThreePhaseValue = current.toThreePhaseValue();
-        entity.setFortescueCurrent(new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(), current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(), currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(), currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC()));
-        final FortescueValue voltage = faultResult.getVoltage();
-        final FortescueValue.ThreePhaseValue voltageThreePhaseValue = voltage.toThreePhaseValue();
-        entity.setFortescueVoltage(new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(), voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(), voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(), voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC()));
 
         return entity;
     }
@@ -167,7 +176,6 @@ public class ShortCircuitAnalysisResultRepository {
 
     public static AtomicReference<Long> st = new AtomicReference<>();
 
-    @Transactional
     public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, String status) {
         AtomicReference<Long> totalTime = new AtomicReference<>();
         totalTime.set(System.nanoTime());
@@ -175,11 +183,10 @@ public class ShortCircuitAnalysisResultRepository {
         if (result != null) {
             AtomicReference<Long> startTime = new AtomicReference<>();
             startTime.set(System.nanoTime());
-            ShortCircuitAnalysisResultEntity entity = toResultEntity(resultUuid, result, allCurrentLimits);
+            saveResults(resultUuid, result, allCurrentLimits);
             LOGGER.info("toResultEntity in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
             AtomicReference<Long> startTime2 = new AtomicReference<>();
             startTime2.set(System.nanoTime());
-            resultRepository.save(entity);
             LOGGER.info("resultRepository.save in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime2.get()));
         }
         AtomicReference<Long> startTime = new AtomicReference<>();
@@ -188,24 +195,6 @@ public class ShortCircuitAnalysisResultRepository {
         LOGGER.info("globalStatusRepository in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
         st.set(System.nanoTime());
         LOGGER.info("totalTime in {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - totalTime.get()));
-    }
-
-    @Transactional
-    public void insert2(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, String status) {
-        Objects.requireNonNull(resultUuid);
-        if (result != null) {
-            ShortCircuitAnalysisResultEntity e = toResultEntity(resultUuid, result, allCurrentLimits);
-            AtomicReference<Long> startTime = new AtomicReference<>();
-            startTime.set(System.nanoTime());
-            resultRepository.save(e);
-            long nanoTime = System.nanoTime();
-            LOGGER.info("save in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.get()));
-        }
-        AtomicReference<Long> startTime = new AtomicReference<>();
-        startTime.set(System.nanoTime());
-        globalStatusRepository.save(toStatusEntity(resultUuid, status));
-        long nanoTime = System.nanoTime();
-        LOGGER.info("globalStatusRepository in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.get()));
     }
 
     @Transactional
@@ -221,7 +210,6 @@ public class ShortCircuitAnalysisResultRepository {
     private void deleteShortCircuitResult(UUID resultUuid) {
         Set<UUID> faultResultUuids = faultResultRepository.findAllFaultResultUuidsByShortCircuitResultUuid(resultUuid);
         faultResultRepository.deleteFeederResultsByFaultResultUuids(faultResultUuids);
-        faultResultRepository.deleteLimitViolationsByFaultResultUuids(faultResultUuids);
         faultResultRepository.deleteFaultResultsByShortCircuitResultUUid(resultUuid);
         resultRepository.deleteByResultUuid(resultUuid);
     }
@@ -265,15 +253,6 @@ public class ShortCircuitAnalysisResultRepository {
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
         if (!result.isPresent()) {
             return result;
-        }
-        List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
-                                                            .filter(fr -> !fr.getLimitViolations().isEmpty())
-                                                            .map(FaultResultEntity::getFaultResultUuid)
-                                                            .collect(Collectors.toList());
-        // using the the Hibernate First-Level Cache or Persistence Context
-        // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
-        if (!result.get().getFaultResults().isEmpty()) {
-            faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuidWithLimitViolations);
         }
         return result;
     }

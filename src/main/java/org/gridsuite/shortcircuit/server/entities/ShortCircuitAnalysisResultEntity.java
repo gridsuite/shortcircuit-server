@@ -12,6 +12,7 @@ import lombok.Setter;
 
 import jakarta.persistence.*;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,9 +31,9 @@ public class ShortCircuitAnalysisResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
-    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL)
     @Setter
-    private Set<FaultResultEntity> faultResults;
+    private Set<FaultResultEntity> faultResults = new HashSet<>();
 
     public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Set<FaultResultEntity> faultResults) {
         this.resultUuid = resultUuid;
@@ -40,27 +41,27 @@ public class ShortCircuitAnalysisResultEntity {
         addFaultResults(faultResults);
     }
 
-    //https://stackoverflow.com/questions/74981727/spring-data-jpa-one-to-many-takes-more-time-when-saving
     public void addFaultResults(Set<FaultResultEntity> faultResults) {
         if (faultResults != null) {
-            this.faultResults = faultResults;
+            this.faultResults.addAll(faultResults);
             faultResults.forEach(f -> f.setResult(this));
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ShortCircuitAnalysisResultEntity)) {
-            return false;
-        }
-        return resultUuid != null && resultUuid.equals(((ShortCircuitAnalysisResultEntity) o).getResultUuid());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) {
+//            return true;
+//        }
+//        if (!(o instanceof ShortCircuitAnalysisResultEntity)) {
+//            return false;
+//        }
+//        return resultUuid != null && resultUuid.equals(((ShortCircuitAnalysisResultEntity) o).getResultUuid());
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return getClass().hashCode();
+//    }
+    //https://stackoverflow.com/questions/74981727/spring-data-jpa-one-to-many-takes-more-time-when-saving
 }
