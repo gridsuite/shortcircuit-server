@@ -11,7 +11,6 @@ import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -52,27 +51,29 @@ public class ShortCircuitWorkerService {
     private static final String SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT = "AllBusesShortCircuitAnalysis";
     private static final String SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT = "OneBusShortCircuitAnalysis";
 
-    private NetworkStoreService networkStoreService;
-    private ReportService reportService;
-    private ShortCircuitAnalysisResultRepository resultRepository;
-    private NotificationService notificationService;
-    private ObjectMapper objectMapper;
+    private final NetworkStoreService networkStoreService;
+    private final ReportService reportService;
+    private final ShortCircuitAnalysisResultRepository resultRepository;
+    private final NotificationService notificationService;
+    private final ShortCircuitExecutionService shortCircuitExecutionService;
+    private final ObjectMapper objectMapper;
     private final Collection<AbstractReportMapper> reportMappers;
 
-    private Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
+    private final Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
 
-    private Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
+    private final Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
 
-    private Set<UUID> runRequests = Sets.newConcurrentHashSet();
+    private final Set<UUID> runRequests = Sets.newConcurrentHashSet();
 
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
 
     @Autowired
-    public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
+    public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ShortCircuitExecutionService shortCircuitExecutionService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
                                      ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
+        this.shortCircuitExecutionService = Objects.requireNonNull(shortCircuitExecutionService);
         this.notificationService = Objects.requireNonNull(notificationService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -183,7 +184,7 @@ public class ShortCircuitWorkerService {
                 network,
                 faults,
                 context.getParameters(),
-                LocalComputationManager.getDefault(),
+                shortCircuitExecutionService.getComputationManager(),
                 List.of(),
                 reporter);
             if (resultUuid != null) {
