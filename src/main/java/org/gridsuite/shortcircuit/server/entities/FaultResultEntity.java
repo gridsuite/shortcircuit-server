@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -31,7 +32,7 @@ public class FaultResultEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID faultResultUuid;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @Setter
     private ShortCircuitAnalysisResultEntity result;
 
@@ -129,22 +130,6 @@ public class FaultResultEntity {
     public void setFeederResults(List<FeederResultEntity> feederResults) {
         this.feederResults = feederResults;
         feederResults.stream().forEach(feederResultEntity -> feederResultEntity.setFaultResult(this));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof FaultResultEntity)) {
-            return false;
-        }
-        return faultResultUuid != null && faultResultUuid.equals(((FaultResultEntity) o).getFaultResultUuid());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
     }
 
     public double getPositiveMagnitude() {
