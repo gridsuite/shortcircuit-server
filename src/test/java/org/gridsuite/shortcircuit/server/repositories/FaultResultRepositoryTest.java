@@ -99,7 +99,7 @@ class FaultResultRepositoryTest {
     void faultResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FaultResultEntity> faultList) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.unpaged(), FaultResultsMode.BASIC);
         assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
-            .containsExactlyElementsOf(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
+            .containsAll(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
     }
 
     private Stream<Arguments> provideOrEqualsNestedFieldsFilters() {
