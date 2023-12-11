@@ -30,6 +30,12 @@ public class ShortCircuitAnalysisResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
+    /*
+    Bidirectional relation is not needed here and is done for performance
+    https://vladmihalcea.com/the-best-way-to-map-a-onetomany-association-with-jpa-and-hibernate/
+    equals() and hashCode() methods are not overrided as the article above recommands it because we use a Set of FaultResultEntity
+    and having a constant hashCode() causes performance issues.
+     */
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @Setter
     private Set<FaultResultEntity> faultResults;
