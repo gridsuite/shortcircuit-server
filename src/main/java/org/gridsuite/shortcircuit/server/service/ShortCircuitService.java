@@ -8,12 +8,13 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.LogUtils;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,26 +28,16 @@ import java.util.stream.Collectors;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@RequiredArgsConstructor
 @Service
 public class ShortCircuitService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
 
-    @Autowired
-    NotificationService notificationService;
-
-    private UuidGeneratorService uuidGeneratorService;
-
-    private ShortCircuitAnalysisResultRepository resultRepository;
-
-    private ObjectMapper objectMapper;
-
-    public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
-        this.notificationService = Objects.requireNonNull(notificationService);
-        this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
-        this.resultRepository = Objects.requireNonNull(resultRepository);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
-    }
+    @NonNull private final NotificationService notificationService;
+    @NonNull private final UuidGeneratorService uuidGeneratorService;
+    @NonNull private final ShortCircuitAnalysisResultRepository resultRepository;
+    @NonNull private final ObjectMapper objectMapper;
 
     public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
         Objects.requireNonNull(runContext);
