@@ -164,4 +164,12 @@ public class ShortCircuitController {
     public ResponseEntity<UUID> createParameters(@Parameter(description = "The parameters to save. It no body or empty string/json, then default parameters will be used instead.", allowEmptyValue = true) @RequestBody(required = false) @Nullable final ShortCircuitParametersInfos parameters) {
         return ResponseEntity.ok(shortCircuitService.createParameters(parameters));
     }
+
+    @PostMapping(value = "/parameters/{parametersUuid}/duplicate")
+    @Operation(summary = "Create a entry for parameters")
+    @ApiResponse(responseCode = "201", description = "A new entry has been created")
+    @ApiResponse(responseCode = "404", description = "No parameters found with this UUID (if fallback=false)")
+    public ResponseEntity<UUID> duplicateParameter(@Parameter(description = "Parameters UUID") @PathVariable("parametersUuid") UUID parametersUuid) {
+        return ResponseEntity.ok(shortCircuitService.duplicateParameters(parametersUuid));
+    }
 }

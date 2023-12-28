@@ -17,14 +17,17 @@ import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitParametersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -172,5 +175,12 @@ public class ShortCircuitService {
 
     public UUID createParameters(ShortCircuitParametersInfos parametersInfos) {
         return parametersRepository.save(EntityDtoUtils.convert(parametersInfos)).getId();
+    }
+
+    public UUID duplicateParameters(final UUID parametersUuid) {
+        return parametersRepository.save(parametersRepository.findById(parametersUuid)
+                                                             .map(ShortCircuitParametersEntity::new)
+                                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found parameters " + parametersUuid))
+                ).getId();
     }
 }
