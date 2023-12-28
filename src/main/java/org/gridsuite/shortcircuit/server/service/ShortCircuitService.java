@@ -20,6 +20,7 @@ import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEnti
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitParametersRepository;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -173,8 +174,8 @@ public class ShortCircuitService {
         notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
     }
 
-    public UUID createParameters(ShortCircuitParametersInfos parametersInfos) {
-        return parametersRepository.save(EntityDtoUtils.convert(parametersInfos)).getId();
+    public UUID createParameters(@Nullable final ShortCircuitParametersInfos parametersInfos) {
+        return parametersRepository.save(parametersInfos != null ? EntityDtoUtils.convert(parametersInfos) : new ShortCircuitParametersEntity()).getId();
     }
 
     public UUID duplicateParameters(final UUID parametersUuid) {
