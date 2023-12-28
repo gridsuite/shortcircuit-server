@@ -79,21 +79,6 @@ final class EntityDtoUtils {
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
     }
 
-    static ShortCircuitParametersEntity convert(@NonNull final ShortCircuitParameters parameters, final ShortCircuitPredefinedConfiguration shortCircuitPredefinedConfiguration) {
-        return new ShortCircuitParametersEntity(parameters.isWithLimitViolations(),
-                parameters.isWithVoltageResult(),
-                parameters.isWithFortescueResult(),
-                parameters.isWithFeederResult(),
-                parameters.getStudyType(),
-                parameters.getMinVoltageDropProportionalThreshold(),
-                parameters.isWithLoads(),
-                parameters.isWithShuntCompensators(),
-                parameters.isWithVSCConverterStations(),
-                parameters.isWithNeutralPosition(),
-                parameters.getInitialVoltageProfileMode(),
-                shortCircuitPredefinedConfiguration);
-    }
-
     static ShortCircuitParameters convert(@NonNull final ShortCircuitParametersEntity entity) {
         return new ShortCircuitParameters()
                 .setStudyType(entity.getStudyType())

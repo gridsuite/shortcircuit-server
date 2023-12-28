@@ -6,18 +6,19 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import com.powsybl.shortcircuit.StudyType;
 import com.powsybl.ws.commons.LogUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
+import org.gridsuite.shortcircuit.server.repositories.ShortCircuitParametersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -41,15 +42,26 @@ public class ShortCircuitService {
     @NonNull private final NotificationService notificationService;
     @NonNull private final UuidGeneratorService uuidGeneratorService;
     @NonNull private final ShortCircuitAnalysisResultRepository resultRepository;
+    @NonNull private final ShortCircuitParametersRepository parametersRepository;
     @NonNull private final ObjectMapper objectMapper;
 
-    public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
-        Objects.requireNonNull(runContext);
-        var resultUuid = uuidGeneratorService.generate();
-
+    public UUID runAndSaveResult(@NonNull final UUID networkUuid, final String variantId, final String receiver,
+                                 final UUID parametersUuid, final Map<String, Object> parametersOverride,
+                                 final UUID reportUuid, final String reporterId, final String reportType,
+                                 @NonNull final String userId, final String busId) {
+        ShortCircuitParameters scParameters = EntityDtoUtils.convertInfos(parametersRepository.getByIdOrDefault(parametersUuid)).parameters();
+        if (parametersOverride != null && !parametersOverride.isEmpty()) {
+            try {
+                scParameters = objectMapper.updateValue(scParameters, parametersOverride);
+            } catch (final JsonMappingException ex) {
+                throw new RuntimeException("Error while updating parameters", ex);
+            }
+        }
+        scParameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
+        final UUID resultUuid = uuidGeneratorService.generate();
         // update status to running status
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING.name());
-        notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
+        notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, new ShortCircuitRunContext(networkUuid, variantId, receiver, scParameters, reportUuid, reporterId, reportType, userId, busId)).toMessage(objectMapper));
         return resultUuid;
     }
 
@@ -156,23 +168,6 @@ public class ShortCircuitService {
 
     public void stop(UUID resultUuid, String receiver) {
         notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
-    }
-
-    private static ShortCircuitParameters getDefaultShortCircuitParameters() {
-        return new ShortCircuitParameters()
-            .setStudyType(StudyType.TRANSIENT)
-            .setMinVoltageDropProportionalThreshold(20)
-            .setWithFeederResult(true)
-            .setWithLimitViolations(true)
-            .setWithVoltageResult(false)
-            .setWithFortescueResult(false)
-            .setWithLoads(false)
-            .setWithShuntCompensators(false)
-            .setWithVSCConverterStations(true)
-            .setWithNeutralPosition(true)
-            .setInitialVoltageProfileMode(InitialVoltageProfileMode.NOMINAL)
-            // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
-            .setVoltageRanges(null);
     }
 
     private static ShortCircuitParameters copy(ShortCircuitParameters shortCircuitParameters) {
