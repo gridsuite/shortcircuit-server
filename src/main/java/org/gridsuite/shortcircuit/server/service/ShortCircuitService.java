@@ -7,6 +7,9 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.StudyType;
 import com.powsybl.ws.commons.LogUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -153,5 +156,38 @@ public class ShortCircuitService {
 
     public void stop(UUID resultUuid, String receiver) {
         notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
+    }
+
+    private static ShortCircuitParameters getDefaultShortCircuitParameters() {
+        return new ShortCircuitParameters()
+            .setStudyType(StudyType.TRANSIENT)
+            .setMinVoltageDropProportionalThreshold(20)
+            .setWithFeederResult(true)
+            .setWithLimitViolations(true)
+            .setWithVoltageResult(false)
+            .setWithFortescueResult(false)
+            .setWithLoads(false)
+            .setWithShuntCompensators(false)
+            .setWithVSCConverterStations(true)
+            .setWithNeutralPosition(true)
+            .setInitialVoltageProfileMode(InitialVoltageProfileMode.NOMINAL)
+            // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
+            .setVoltageRanges(null);
+    }
+
+    private static ShortCircuitParameters copy(ShortCircuitParameters shortCircuitParameters) {
+        return new ShortCircuitParameters()
+                .setStudyType(shortCircuitParameters.getStudyType())
+                .setMinVoltageDropProportionalThreshold(shortCircuitParameters.getMinVoltageDropProportionalThreshold())
+                .setWithFeederResult(shortCircuitParameters.isWithFeederResult())
+                .setWithLimitViolations(shortCircuitParameters.isWithLimitViolations())
+                .setWithVoltageResult(shortCircuitParameters.isWithVoltageResult())
+                .setWithFortescueResult(shortCircuitParameters.isWithFortescueResult())
+                .setWithLoads(shortCircuitParameters.isWithLoads())
+                .setWithShuntCompensators(shortCircuitParameters.isWithShuntCompensators())
+                .setWithVSCConverterStations(shortCircuitParameters.isWithVSCConverterStations())
+                .setWithNeutralPosition(shortCircuitParameters.isWithNeutralPosition())
+                .setInitialVoltageProfileMode(shortCircuitParameters.getInitialVoltageProfileMode())
+                .setVoltageRanges(shortCircuitParameters.getVoltageRanges());
     }
 }

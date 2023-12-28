@@ -6,6 +6,9 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.VoltageRange;
 import lombok.NonNull;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
@@ -20,6 +23,12 @@ final class EntityDtoUtils {
     private EntityDtoUtils() {
         throw new UnsupportedOperationException("Utility class");
     }
+
+    private static final List<VoltageRange> CEI909_VOLTAGE_PROFILE = List.of(
+            new VoltageRange(10.0, 199.99, 1.1),
+            new VoltageRange(200.0, 299.99, 1.09),
+            new VoltageRange(300.0, 500.0, 1.05)
+    );
 
     static ShortCircuitAnalysisResult convert(ShortCircuitAnalysisResultEntity resultEntity, FaultResultsMode mode) {
         final List<FaultResult> faultResults = switch (mode) {
@@ -68,5 +77,40 @@ final class EntityDtoUtils {
 
     static FeederResult convert(@NonNull final FeederResultEntity feederResultEntity) {
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
+    }
+
+    static ShortCircuitParametersEntity convert(@NonNull final ShortCircuitParameters parameters, final ShortCircuitPredefinedConfiguration shortCircuitPredefinedConfiguration) {
+        return new ShortCircuitParametersEntity(parameters.isWithLimitViolations(),
+                parameters.isWithVoltageResult(),
+                parameters.isWithFortescueResult(),
+                parameters.isWithFeederResult(),
+                parameters.getStudyType(),
+                parameters.getMinVoltageDropProportionalThreshold(),
+                parameters.isWithLoads(),
+                parameters.isWithShuntCompensators(),
+                parameters.isWithVSCConverterStations(),
+                parameters.isWithNeutralPosition(),
+                parameters.getInitialVoltageProfileMode(),
+                shortCircuitPredefinedConfiguration);
+    }
+
+    static ShortCircuitParameters convert(@NonNull final ShortCircuitParametersEntity entity) {
+        return new ShortCircuitParameters()
+                .setStudyType(entity.getStudyType())
+                .setMinVoltageDropProportionalThreshold(entity.getMinVoltageDropProportionalThreshold())
+                .setWithFeederResult(entity.isWithFeederResult())
+                .setWithLimitViolations(entity.isWithLimitViolations())
+                .setWithVoltageResult(entity.isWithVoltageResult())
+                .setWithFortescueResult(entity.isWithFortescueResult())
+                .setWithLoads(entity.isWithLoads())
+                .setWithShuntCompensators(entity.isWithShuntCompensators())
+                .setWithVSCConverterStations(entity.isWithVscConverterStations())
+                .setWithNeutralPosition(entity.isWithNeutralPosition())
+                .setInitialVoltageProfileMode(entity.getInitialVoltageProfileMode())
+                .setVoltageRanges(InitialVoltageProfileMode.CONFIGURED.equals(entity.getInitialVoltageProfileMode()) ? CEI909_VOLTAGE_PROFILE : null);
+    }
+
+    static ShortCircuitParametersInfos convertInfos(final @NonNull ShortCircuitParametersEntity entity) {
+        return new ShortCircuitParametersInfos(entity.getPredefinedParameters(), convert(entity), CEI909_VOLTAGE_PROFILE);
     }
 }
