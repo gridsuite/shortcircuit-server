@@ -98,4 +98,23 @@ final class EntityDtoUtils {
     static ShortCircuitParametersInfos convertInfos(final @NonNull ShortCircuitParametersEntity entity) {
         return new ShortCircuitParametersInfos(entity.getPredefinedParameters(), convert(entity), CEI909_VOLTAGE_PROFILE);
     }
+
+    static ShortCircuitParametersEntity convert(@NonNull final ShortCircuitParametersInfos parameters) {
+        return convert(parameters.parameters(), parameters.predefinedParameters());
+    }
+
+    static ShortCircuitParametersEntity convert(@NonNull final ShortCircuitParameters parameters, final ShortCircuitPredefinedConfiguration shortCircuitPredefinedConfiguration) {
+        return new ShortCircuitParametersEntity(parameters.isWithLimitViolations(),
+                parameters.isWithVoltageResult(),
+                parameters.isWithFortescueResult(),
+                parameters.isWithFeederResult(),
+                parameters.getStudyType(),
+                parameters.getMinVoltageDropProportionalThreshold(),
+                parameters.isWithLoads(),
+                parameters.isWithShuntCompensators(),
+                parameters.isWithVSCConverterStations(),
+                parameters.isWithNeutralPosition(),
+                parameters.getInitialVoltageProfileMode(),
+                shortCircuitPredefinedConfiguration);
+    }
 }

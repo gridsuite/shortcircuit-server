@@ -49,7 +49,7 @@ public class ShortCircuitService {
                                  final UUID parametersUuid, final Map<String, Object> parametersOverride,
                                  final UUID reportUuid, final String reporterId, final String reportType,
                                  @NonNull final String userId, final String busId) {
-        ShortCircuitParameters scParameters = EntityDtoUtils.convertInfos(parametersRepository.getByIdOrDefault(parametersUuid)).parameters();
+        ShortCircuitParameters scParameters = EntityDtoUtils.convert(parametersRepository.getByIdOrDefault(parametersUuid));
         if (parametersOverride != null && !parametersOverride.isEmpty()) {
             try {
                 scParameters = objectMapper.updateValue(scParameters, parametersOverride);
@@ -184,5 +184,9 @@ public class ShortCircuitService {
                 .setWithNeutralPosition(shortCircuitParameters.isWithNeutralPosition())
                 .setInitialVoltageProfileMode(shortCircuitParameters.getInitialVoltageProfileMode())
                 .setVoltageRanges(shortCircuitParameters.getVoltageRanges());
+    }
+
+    public UUID createParameters(ShortCircuitParametersInfos parametersInfos) {
+        return parametersRepository.save(EntityDtoUtils.convert(parametersInfos)).getId();
     }
 }

@@ -9,7 +9,6 @@ package org.gridsuite.shortcircuit.server.repositories;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
-import lombok.NonNull;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,17 +19,17 @@ import java.util.UUID;
 @Repository
 public interface ShortCircuitParametersRepository extends JpaRepository<ShortCircuitParametersEntity, UUID> {
     default ShortCircuitParametersEntity getByIdOrDefault(final UUID id) {
-        return findById(id).orElseGet(() -> this.save(convert(getDefaultShortCircuitParameters(), ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)));
+        return findById(id).orElseGet(() -> this.save(getDefaultEntity()));
     }
 
-    private static ShortCircuitParameters getDefaultShortCircuitParameters() {
+    static ShortCircuitParameters getDefaultShortCircuitParameters() {
         return new ShortCircuitParameters()
-                .setStudyType(StudyType.TRANSIENT)
-                .setMinVoltageDropProportionalThreshold(20)
-                .setWithFeederResult(true)
                 .setWithLimitViolations(true)
                 .setWithVoltageResult(false)
                 .setWithFortescueResult(false)
+                .setWithFeederResult(true)
+                .setStudyType(StudyType.TRANSIENT)
+                .setMinVoltageDropProportionalThreshold(20.0)
                 .setWithLoads(false)
                 .setWithShuntCompensators(false)
                 .setWithVSCConverterStations(true)
@@ -40,18 +39,19 @@ public interface ShortCircuitParametersRepository extends JpaRepository<ShortCir
                 .setVoltageRanges(null);
     }
 
-    private static ShortCircuitParametersEntity convert(@NonNull final ShortCircuitParameters parameters, final ShortCircuitPredefinedConfiguration shortCircuitPredefinedConfiguration) {
-        return new ShortCircuitParametersEntity(parameters.isWithLimitViolations(),
-                parameters.isWithVoltageResult(),
-                parameters.isWithFortescueResult(),
-                parameters.isWithFeederResult(),
-                parameters.getStudyType(),
-                parameters.getMinVoltageDropProportionalThreshold(),
-                parameters.isWithLoads(),
-                parameters.isWithShuntCompensators(),
-                parameters.isWithVSCConverterStations(),
-                parameters.isWithNeutralPosition(),
-                parameters.getInitialVoltageProfileMode(),
-                shortCircuitPredefinedConfiguration);
+    static ShortCircuitParametersEntity getDefaultEntity() {
+        return new ShortCircuitParametersEntity(
+                true,
+                false,
+                false,
+                true,
+                StudyType.TRANSIENT,
+                20.0,
+                false,
+                false,
+                true,
+                true,
+                InitialVoltageProfileMode.NOMINAL,
+                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP);
     }
 }

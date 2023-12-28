@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -157,4 +158,10 @@ public class ShortCircuitController {
         return ResponseEntity.ok().body(List.of(LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT));
     }
 
+    @PutMapping(value = "/parameters", consumes = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a entry for parameters")
+    @ApiResponse(responseCode = "201", description = "A new entry has been created")
+    public ResponseEntity<UUID> createParameters(@Parameter(description = "The parameters to save. It no body or empty string/json, then default parameters will be used instead.", allowEmptyValue = true) @RequestBody(required = false) @Nullable final ShortCircuitParametersInfos parameters) {
+        return ResponseEntity.ok(shortCircuitService.createParameters(parameters));
+    }
 }
