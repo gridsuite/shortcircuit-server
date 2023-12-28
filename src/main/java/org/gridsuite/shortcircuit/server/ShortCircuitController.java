@@ -183,6 +183,20 @@ public class ShortCircuitController {
         }
     }
 
+    @GetMapping(value = "/parameters/{parametersUuid}", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get parameters for a study")
+    @ApiResponse(responseCode = "200", description = "The parameters fot the study")
+    @ApiResponse(responseCode = "404", description = "No parameters found with this UUID (if fallback=false)")
+    public ResponseEntity<ShortCircuitParametersInfos> getParameter(
+            @Parameter(description = "Parameters UUID") @PathVariable("parametersUuid") UUID parametersUuid,
+            @Parameter(description = "Fallback to default parameters if not found") @RequestParam(name = "fallback", required = false, defaultValue = "true") boolean fallback) {
+        if (fallback) {
+            return ResponseEntity.ok(shortCircuitService.getParametersOrCreateDefault(parametersUuid));
+        } else {
+            return ResponseEntity.of(shortCircuitService.getParameters(parametersUuid));
+        }
+    }
+
     @PostMapping(value = "/parameters/{parametersUuid}/duplicate")
     @Operation(summary = "Create a entry for parameters")
     @ApiResponse(responseCode = "201", description = "A new entry has been created")

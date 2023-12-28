@@ -190,6 +190,14 @@ public class ShortCircuitService {
         return entity.isEmpty();
     }
 
+    public Optional<ShortCircuitParametersInfos> getParameters(@NonNull final UUID uuid) {
+        return parametersRepository.findById(uuid).map(EntityDtoUtils::convertInfos);
+    }
+
+    public ShortCircuitParametersInfos getParametersOrCreateDefault(@NonNull final UUID uuid) {
+        return EntityDtoUtils.convertInfos(parametersRepository.getByIdOrDefault(uuid));
+    }
+
     public UUID duplicateParameters(final UUID parametersUuid) {
         return parametersRepository.save(parametersRepository.findById(parametersUuid)
                                                              .map(ShortCircuitParametersEntity::new)
