@@ -25,9 +25,27 @@ import java.util.UUID;
 @Entity
 @Table(name = "shortCircuitParameters")
 public class ShortCircuitParametersEntity {
-
-    public ShortCircuitParametersEntity(boolean withLimitViolations, boolean withVoltageResult, boolean withFortescueResult, boolean withFeederResult, StudyType studyType, double minVoltageDropProportionalThreshold, boolean withLoads, boolean withShuntCompensators, boolean withVscConverterStations, boolean withNeutralPosition, InitialVoltageProfileMode initialVoltageProfileMode, ShortCircuitPredefinedConfiguration predefinedParameters) {
+    public ShortCircuitParametersEntity(boolean withLimitViolations, boolean withVoltageResult, boolean withFortescueResult,
+                                        boolean withFeederResult, StudyType studyType, double minVoltageDropProportionalThreshold,
+                                        ShortCircuitPredefinedConfiguration predefinedParameters, boolean withLoads,
+                                        boolean withShuntCompensators, boolean withVscConverterStations,
+                                        boolean withNeutralPosition, InitialVoltageProfileMode initialVoltageProfileMode) {
         this(null, withLimitViolations, withVoltageResult, withFortescueResult, withFeederResult, studyType, minVoltageDropProportionalThreshold, predefinedParameters, withLoads, withShuntCompensators, withVscConverterStations, withNeutralPosition, initialVoltageProfileMode);
+    }
+
+    public ShortCircuitParametersEntity(ShortCircuitParametersEntity entity) {
+        this(entity.withLimitViolations,
+             entity.withVoltageResult,
+             entity.withFortescueResult,
+             entity.withFeederResult,
+             entity.studyType,
+             entity.minVoltageDropProportionalThreshold,
+             entity.predefinedParameters,
+             entity.withLoads,
+             entity.withShuntCompensators,
+             entity.withVscConverterStations,
+             entity.withNeutralPosition,
+             entity.initialVoltageProfileMode);
     }
 
     @Id
@@ -36,41 +54,41 @@ public class ShortCircuitParametersEntity {
     private UUID id;
 
     @Column(name = "withLimitViolations", columnDefinition = "boolean default true")
-    private boolean withLimitViolations;
+    private boolean withLimitViolations = true;
 
-    @Column(name = "withVoltageResult", columnDefinition = "boolean default true")
-    private boolean withVoltageResult;
+    @Column(name = "withVoltageResult", columnDefinition = "boolean default false")
+    private boolean withVoltageResult = false;
 
-    @Column(name = "withFortescueResult", columnDefinition = "boolean default true")
-    private boolean withFortescueResult;
+    @Column(name = "withFortescueResult", columnDefinition = "boolean default false")
+    private boolean withFortescueResult = false;
 
     @Column(name = "withFeederResult", columnDefinition = "boolean default true")
-    private boolean withFeederResult;
+    private boolean withFeederResult = true;
 
-    @Column(name = "studyType")
+    @Column(name = "studyType", columnDefinition = "varchar(15) default \"TRANSIENT\"")
     @Enumerated(EnumType.STRING)
-    private StudyType studyType;
+    private StudyType studyType = StudyType.TRANSIENT;
 
-    @Column(name = "minVoltageDropProportionalThreshold")
-    private double minVoltageDropProportionalThreshold;
+    @Column(name = "minVoltageDropProportionalThreshold", columnDefinition = "double precision default '20.0'")
+    private double minVoltageDropProportionalThreshold = 20.0;
 
-    @Column(name = "predefinedParameters")
+    @Column(name = "predefinedParameters", columnDefinition = "varchar(35) default \"ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP\"")
     @Enumerated(EnumType.STRING)
-    private ShortCircuitPredefinedConfiguration predefinedParameters;
+    private ShortCircuitPredefinedConfiguration predefinedParameters = ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP;
 
     @Column(name = "withLoads", columnDefinition = "boolean default false")
-    private boolean withLoads;
+    private boolean withLoads = false;
 
     @Column(name = "withShuntCompensators", columnDefinition = "boolean default false")
-    private boolean withShuntCompensators;
+    private boolean withShuntCompensators = false;
 
     @Column(name = "withVscConverterStations", columnDefinition = "boolean default true")
-    private boolean withVscConverterStations;
+    private boolean withVscConverterStations = true;
 
     @Column(name = "withNeutralPosition", columnDefinition = "boolean default true")
-    private boolean withNeutralPosition;
+    private boolean withNeutralPosition = true;
 
-    @Column(name = "initialVoltageProfileMode")
+    @Column(name = "initialVoltageProfileMode", columnDefinition = "varchar(15) default \"NOMINAL\"")
     @Enumerated(EnumType.STRING)
-    private InitialVoltageProfileMode initialVoltageProfileMode;
+    private InitialVoltageProfileMode initialVoltageProfileMode = InitialVoltageProfileMode.NOMINAL;
 }

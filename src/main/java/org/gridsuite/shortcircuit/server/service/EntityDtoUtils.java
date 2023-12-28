@@ -92,6 +92,7 @@ final class EntityDtoUtils {
                 .setWithVSCConverterStations(entity.isWithVscConverterStations())
                 .setWithNeutralPosition(entity.isWithNeutralPosition())
                 .setInitialVoltageProfileMode(entity.getInitialVoltageProfileMode())
+                // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
                 .setVoltageRanges(InitialVoltageProfileMode.CONFIGURED.equals(entity.getInitialVoltageProfileMode()) ? CEI909_VOLTAGE_PROFILE : null);
     }
 
@@ -110,11 +111,11 @@ final class EntityDtoUtils {
                 parameters.isWithFeederResult(),
                 parameters.getStudyType(),
                 parameters.getMinVoltageDropProportionalThreshold(),
+                shortCircuitPredefinedConfiguration,
                 parameters.isWithLoads(),
                 parameters.isWithShuntCompensators(),
                 parameters.isWithVSCConverterStations(),
                 parameters.isWithNeutralPosition(),
-                parameters.getInitialVoltageProfileMode(),
-                shortCircuitPredefinedConfiguration);
+                parameters.getInitialVoltageProfileMode());
     }
 }

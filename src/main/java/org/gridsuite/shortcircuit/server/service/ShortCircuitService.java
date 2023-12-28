@@ -170,22 +170,6 @@ public class ShortCircuitService {
         notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
     }
 
-    private static ShortCircuitParameters copy(ShortCircuitParameters shortCircuitParameters) {
-        return new ShortCircuitParameters()
-                .setStudyType(shortCircuitParameters.getStudyType())
-                .setMinVoltageDropProportionalThreshold(shortCircuitParameters.getMinVoltageDropProportionalThreshold())
-                .setWithFeederResult(shortCircuitParameters.isWithFeederResult())
-                .setWithLimitViolations(shortCircuitParameters.isWithLimitViolations())
-                .setWithVoltageResult(shortCircuitParameters.isWithVoltageResult())
-                .setWithFortescueResult(shortCircuitParameters.isWithFortescueResult())
-                .setWithLoads(shortCircuitParameters.isWithLoads())
-                .setWithShuntCompensators(shortCircuitParameters.isWithShuntCompensators())
-                .setWithVSCConverterStations(shortCircuitParameters.isWithVSCConverterStations())
-                .setWithNeutralPosition(shortCircuitParameters.isWithNeutralPosition())
-                .setInitialVoltageProfileMode(shortCircuitParameters.getInitialVoltageProfileMode())
-                .setVoltageRanges(shortCircuitParameters.getVoltageRanges());
-    }
-
     public UUID createParameters(ShortCircuitParametersInfos parametersInfos) {
         return parametersRepository.save(EntityDtoUtils.convert(parametersInfos)).getId();
     }

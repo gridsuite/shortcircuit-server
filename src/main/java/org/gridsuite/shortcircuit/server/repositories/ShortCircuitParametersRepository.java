@@ -6,10 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.powsybl.shortcircuit.InitialVoltageProfileMode;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
-import com.powsybl.shortcircuit.StudyType;
-import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
+import lombok.NonNull;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,40 +15,7 @@ import java.util.UUID;
 
 @Repository
 public interface ShortCircuitParametersRepository extends JpaRepository<ShortCircuitParametersEntity, UUID> {
-    default ShortCircuitParametersEntity getByIdOrDefault(final UUID id) {
-        return findById(id).orElseGet(() -> this.save(getDefaultEntity()));
-    }
-
-    static ShortCircuitParameters getDefaultShortCircuitParameters() {
-        return new ShortCircuitParameters()
-                .setWithLimitViolations(true)
-                .setWithVoltageResult(false)
-                .setWithFortescueResult(false)
-                .setWithFeederResult(true)
-                .setStudyType(StudyType.TRANSIENT)
-                .setMinVoltageDropProportionalThreshold(20.0)
-                .setWithLoads(false)
-                .setWithShuntCompensators(false)
-                .setWithVSCConverterStations(true)
-                .setWithNeutralPosition(true)
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.NOMINAL)
-                // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
-                .setVoltageRanges(null);
-    }
-
-    static ShortCircuitParametersEntity getDefaultEntity() {
-        return new ShortCircuitParametersEntity(
-                true,
-                false,
-                false,
-                true,
-                StudyType.TRANSIENT,
-                20.0,
-                false,
-                false,
-                true,
-                true,
-                InitialVoltageProfileMode.NOMINAL,
-                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP);
+    default ShortCircuitParametersEntity getByIdOrDefault(@NonNull final UUID id) {
+        return findById(id).orElseGet(() -> this.save(new ShortCircuitParametersEntity()));
     }
 }
