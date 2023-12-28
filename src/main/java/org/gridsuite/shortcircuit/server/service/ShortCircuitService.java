@@ -11,7 +11,9 @@ import com.powsybl.ws.commons.LogUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.gridsuite.shortcircuit.server.dto.*;
-import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +33,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class ShortCircuitService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
 
     @NonNull private final NotificationService notificationService;
@@ -47,51 +48,6 @@ public class ShortCircuitService {
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING.name());
         notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
-    }
-
-    private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, FaultResultsMode mode) {
-        List<FaultResult> faultResults = new ArrayList<>();
-        switch (mode) {
-            case BASIC, FULL:
-                faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr, mode)).toList();
-                break;
-            case WITH_LIMIT_VIOLATIONS:
-                faultResults = resultEntity.getFaultResults().stream().filter(fr -> !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr, mode)).toList();
-                break;
-            case NONE:
-            default:
-                break;
-        }
-        return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
-    }
-
-    private static FaultResult fromEntity(FaultResultEntity faultResultEntity, FaultResultsMode mode) {
-        Fault fault = fromEntity(faultResultEntity.getFault());
-        double current = faultResultEntity.getCurrent();
-        double positiveMagnitude = faultResultEntity.getPositiveMagnitude();
-        double shortCircuitPower = faultResultEntity.getShortCircuitPower();
-        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMin(), faultResultEntity.getIpMax(), faultResultEntity.getDeltaCurrentIpMin(), faultResultEntity.getDeltaCurrentIpMax());
-        List<LimitViolation> limitViolations = new ArrayList<>();
-        List<FeederResult> feederResults = new ArrayList<>();
-        if (mode != FaultResultsMode.BASIC) {
-            // if we enter here, by calling the getters, the limit violations and feeder results will be loaded even if we don't want to in some mode
-            limitViolations = faultResultEntity.getLimitViolations().stream().map(ShortCircuitService::fromEntity).toList();
-            feederResults = faultResultEntity.getFeederResults().stream().map(ShortCircuitService::fromEntity).toList();
-        }
-        return new FaultResult(fault, current, positiveMagnitude, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
-    }
-
-    private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {
-        return new Fault(faultEmbeddable.getId(), faultEmbeddable.getElementId(), faultEmbeddable.getFaultType().name());
-    }
-
-    private static LimitViolation fromEntity(LimitViolationEmbeddable limitViolationEmbeddable) {
-        return new LimitViolation(limitViolationEmbeddable.getSubjectId(), limitViolationEmbeddable.getLimitType().name(),
-                limitViolationEmbeddable.getLimit(), limitViolationEmbeddable.getLimitName(), limitViolationEmbeddable.getValue());
-    }
-
-    private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
-        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
@@ -123,7 +79,7 @@ public class ShortCircuitService {
         if (result.isPresent()) {
             ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
 
-            ShortCircuitAnalysisResult res = fromEntity(sortedResult, mode);
+            ShortCircuitAnalysisResult res = EntityDtoUtils.convert(sortedResult, mode);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
             }
@@ -152,7 +108,7 @@ public class ShortCircuitService {
                 default:
                     break;
             }
-            Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
+            Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> EntityDtoUtils.convert(fr, mode));
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
                 LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
@@ -169,7 +125,7 @@ public class ShortCircuitService {
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
             Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(result.get(), resourceFilters, pageable);
-            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
+            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(EntityDtoUtils::convert);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
                 LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
