@@ -178,6 +178,18 @@ public class ShortCircuitService {
         return parametersRepository.save(parametersInfos != null ? EntityDtoUtils.convert(parametersInfos) : new ShortCircuitParametersEntity()).getId();
     }
 
+    /**
+     * @return {@code true} if new instance created, {@code false} if updated existing
+     */
+    public boolean createParameters(final UUID parametersUuid, @Nullable final ShortCircuitParametersInfos parametersInfos) {
+        final ShortCircuitParametersEntity newValues = parametersInfos == null ? null : EntityDtoUtils.convert(parametersInfos);
+        final Optional<ShortCircuitParametersEntity> entity = parametersRepository.findById(parametersUuid);
+        parametersRepository.save(entity.map(scpe -> scpe.updateFrom(newValues))
+                                        .or(() -> Optional.ofNullable(newValues))
+                                        .orElseGet(ShortCircuitParametersEntity::new));
+        return entity.isEmpty();
+    }
+
     public UUID duplicateParameters(final UUID parametersUuid) {
         return parametersRepository.save(parametersRepository.findById(parametersUuid)
                                                              .map(ShortCircuitParametersEntity::new)

@@ -11,6 +11,7 @@ import com.powsybl.shortcircuit.StudyType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -34,18 +35,8 @@ public class ShortCircuitParametersEntity {
     }
 
     public ShortCircuitParametersEntity(ShortCircuitParametersEntity entity) {
-        this(entity.withLimitViolations,
-             entity.withVoltageResult,
-             entity.withFortescueResult,
-             entity.withFeederResult,
-             entity.studyType,
-             entity.minVoltageDropProportionalThreshold,
-             entity.predefinedParameters,
-             entity.withLoads,
-             entity.withShuntCompensators,
-             entity.withVscConverterStations,
-             entity.withNeutralPosition,
-             entity.initialVoltageProfileMode);
+        this();
+        this.updateFrom(entity);
     }
 
     @Id
@@ -91,4 +82,38 @@ public class ShortCircuitParametersEntity {
     @Column(name = "initialVoltageProfileMode", columnDefinition = "varchar(15) default \"NOMINAL\"")
     @Enumerated(EnumType.STRING)
     private InitialVoltageProfileMode initialVoltageProfileMode = InitialVoltageProfileMode.NOMINAL;
+
+    /**
+     * Reset values to defaults ones
+     * @return this instance
+     */
+    public ShortCircuitParametersEntity resetToDefaults() {
+        this.updateFrom(new ShortCircuitParametersEntity());
+        return this;
+    }
+
+    /**
+     * Update an entity using values of another one
+     * @param entity the entity to take values from, will reset if {@code null}
+     * @return this instance
+     */
+    public ShortCircuitParametersEntity updateFrom(@Nullable final ShortCircuitParametersEntity entity) {
+        if (entity == null) {
+            this.resetToDefaults();
+        } else {
+            this.setWithLimitViolations(entity.withLimitViolations);
+            this.setWithVoltageResult(entity.withVoltageResult);
+            this.setWithFortescueResult(entity.withFortescueResult);
+            this.setWithFeederResult(entity.withFeederResult);
+            this.setStudyType(entity.studyType);
+            this.setMinVoltageDropProportionalThreshold(entity.minVoltageDropProportionalThreshold);
+            this.setPredefinedParameters(entity.predefinedParameters);
+            this.setWithLoads(entity.withLoads);
+            this.setWithShuntCompensators(entity.withShuntCompensators);
+            this.setWithVscConverterStations(entity.withVscConverterStations);
+            this.setWithNeutralPosition(entity.withNeutralPosition);
+            this.setInitialVoltageProfileMode(entity.initialVoltageProfileMode);
+        }
+        return this;
+    }
 }

@@ -17,6 +17,7 @@ import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -163,6 +164,23 @@ public class ShortCircuitController {
     @ApiResponse(responseCode = "201", description = "A new entry has been created")
     public ResponseEntity<UUID> createParameters(@Parameter(description = "The parameters to save. It no body or empty string/json, then default parameters will be used instead.", allowEmptyValue = true) @RequestBody(required = false) @Nullable final ShortCircuitParametersInfos parameters) {
         return ResponseEntity.ok(shortCircuitService.createParameters(parameters));
+    }
+
+    @PutMapping(value = "/parameters/{parametersUuid}")
+    @Operation(summary = "Create a entry for parameters")
+    @ApiResponse(responseCode = "201", description = "A new entry has been created")
+    @ApiResponse(responseCode = "204", description = "Entry updated with parameters passed")
+    @ApiResponse(responseCode = "200", description = "Entry reset to default parameters")
+    public ResponseEntity<Void> createParameters(
+            @Parameter(description = "Parameters UUID") @PathVariable("parametersUuid") UUID parametersUuid,
+            @Parameter(description = "The parameters to save. It no body or empty string/json, then default parameters will be used instead.", allowEmptyValue = true) @RequestBody(required = false) @Nullable final ShortCircuitParametersInfos parameters) {
+        if (shortCircuitService.createParameters(parametersUuid, parameters)) {
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } else if (parameters == null) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
 
     @PostMapping(value = "/parameters/{parametersUuid}/duplicate")
