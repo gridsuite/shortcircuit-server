@@ -1,0 +1,26 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="chuinetri (generated)" id="1703808925709-1">
+        <createTable tableName="short_circuit_parameters">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="short_circuit_parametersPK"/>
+            </column>
+            <column defaultValue="&quot;NOMINAL&quot;" name="initial_voltage_profile_mode" type="VARCHAR(15)"/>
+            <column defaultValueNumeric="20.0" name="min_voltage_drop_proportional_threshold" type="DOUBLE PRECISION"/>
+            <column defaultValue="&quot;ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP&quot;" name="predefined_parameters" type="VARCHAR(35)"/>
+            <column defaultValue="&quot;TRANSIENT&quot;" name="study_type" type="VARCHAR(15)"/>
+            <column defaultValueBoolean="true" name="with_feeder_result" type="BOOLEAN"/>
+            <column defaultValueBoolean="false" name="with_fortescue_result" type="BOOLEAN"/>
+            <column defaultValueBoolean="true" name="with_limit_violations" type="BOOLEAN"/>
+            <column defaultValueBoolean="false" name="with_loads" type="BOOLEAN"/>
+            <column defaultValueBoolean="true" name="with_neutral_position" type="BOOLEAN"/>
+            <column defaultValueBoolean="false" name="with_shunt_compensators" type="BOOLEAN"/>
+            <column defaultValueBoolean="false" name="with_voltage_result" type="BOOLEAN"/>
+            <column defaultValueBoolean="true" name="with_vsc_converter_stations" type="BOOLEAN"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

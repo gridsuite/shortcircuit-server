@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface ShortCircuitParametersRepository extends JpaRepository<ShortCircuitParametersEntity, UUID> {
+public interface ParametersRepository extends JpaRepository<ShortCircuitParametersEntity, UUID> {
     default ShortCircuitParametersEntity getByIdOrDefault(@NonNull final UUID id) {
         return findById(id).orElseGet(() -> this.save(new ShortCircuitParametersEntity()));
     }

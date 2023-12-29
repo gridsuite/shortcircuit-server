@@ -19,7 +19,7 @@ import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
-import org.gridsuite.shortcircuit.server.repositories.ShortCircuitParametersRepository;
+import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class ShortCircuitService {
     @NonNull private final NotificationService notificationService;
     @NonNull private final UuidGeneratorService uuidGeneratorService;
     @NonNull private final ShortCircuitAnalysisResultRepository resultRepository;
-    @NonNull private final ShortCircuitParametersRepository parametersRepository;
+    @NonNull private final ParametersRepository parametersRepository;
     @NonNull private final ObjectMapper objectMapper;
 
     public UUID runAndSaveResult(@NonNull final UUID networkUuid, final String variantId, final String receiver,
