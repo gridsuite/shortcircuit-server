@@ -46,6 +46,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         final AbstractReportMapper reportMapperMocked = Mockito.mock(AbstractReportMapper.class);
         final NetworkStoreService networkStoreServiceMocked = Mockito.mock(NetworkStoreService.class);
         final ReportService reportServiceMocked = Mockito.mock(ReportService.class);
+        final ShortCircuitExecutionService shortCircuitExecutionService = Mockito.mock(ShortCircuitExecutionService.class);
         final NotificationService notificationServiceMocked = Mockito.mock(NotificationService.class);
         final ShortCircuitAnalysisResultRepository resultRepositoryMocked = Mockito.mock(ShortCircuitAnalysisResultRepository.class);
         final ObjectMapper objectMapperMocked = Mockito.mock(ObjectMapper.class);
@@ -57,7 +58,8 @@ class ShortCircuitServiceTest implements WithAssertions {
         final UUID reportUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
         final UUID resultUuid = UUID.fromString("33333333-3333-3333-3333-333333333333");
         final String reporterId = "44444444-4444-4444-4444-444444444444";
-        final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, List.of(), null, new ShortCircuitParameters(), reportUuid, reporterId, null, null);
+        final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
+                new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network networkMocked = Mockito.mock(Network.class);
         final VariantManager variantManagerMocked = Mockito.mock(VariantManager.class);
@@ -76,7 +78,7 @@ class ShortCircuitServiceTest implements WithAssertions {
             Mockito.when(networkMocked.getBusView()).thenReturn(busViewMocked);
             Mockito.when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             Mockito.when(reportMapperMocked.processReporter(any(Reporter.class))).thenReturn(reporter);
-            final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, List.of(reportMapperMocked));
+            final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, shortCircuitExecutionService, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, List.of(reportMapperMocked));
             workerService.consumeRun().accept(message);
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             Mockito.verify(reportMapperMocked, times(1)).processReporter(any(ReporterModel.class));

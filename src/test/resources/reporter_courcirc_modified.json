@@ -190,6 +190,42 @@
             }
           }
         }, {
+          "reportKey" : "transientReactanceUndefinedSummary",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "WARN",
+              "type" : "SEVERITY"
+            },
+            "nb" : {
+              "value" : 3,
+              "type" : "UNTYPED"
+            }
+          }
+        }, {
+          "reportKey" : "REC_15",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_16",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
+          "reportKey" : "REC_17",
+          "values" : {
+            "reportSeverity" : {
+              "value" : "TRACE",
+              "type" : "SEVERITY"
+            }
+          }
+        }, {
           "reportKey" : "REC_245",
           "values" : {
             "reportSeverity" : {
@@ -309,6 +345,9 @@
       "REC_11" : "T:NODE2 : transient reactance too low ==> generator ignored",
       "REC_12" : "T NODE3 : transient reactance too low ==> generator ignored",
       "REC_13" : "T—NODE4 : transient reactance too low ==> generator ignored",
+      "REC_15" : "NODE-1 : transient reactance undefined ==> generator ignored",
+      "REC_16" : "NODE-2 : transient reactance undefined ==> generator ignored",
+      "REC_17" : "NODE-3 : transient reactance undefined ==> generator ignored",
       "REC_245" : "Simulating : short-circuits located on nodes with branches contributions",
       "REC_246" : "Simulating : short-circuit located on node NODE123_0",
       "REC_274" : "Simulating : short-circuit located on node ABCDEFG_1",
@@ -318,6 +357,7 @@
       "REC_306" : "Short circuit on node DUPOND2_0 is not simulated : it is located in an out of voltage part of the network",
       "REC_307" : "Simulating : short-circuit located on node CAPTAIN_0",
       "transientReactanceTooLowSummary" : "${nb} node(s) with transient reactance too low ==> generator ignored",
+      "transientReactanceUndefinedSummary" : "${nb} node(s) with transient reactance undefined ==> generator ignored",
       "simulatingShortCircuitLocatedNodeSummary": "Simulating: short-circuits located on ${nb} nodes",
       "shortCircuitNodeNotSimulatedOutOfVoltageSummary": "Short circuit on ${nb} nodes is not simulated : they are in an out of voltage part of the network."
     }

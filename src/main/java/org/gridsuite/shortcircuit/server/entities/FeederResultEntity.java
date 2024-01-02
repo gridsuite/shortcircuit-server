@@ -6,20 +6,31 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
-@Embeddable
-public class FeederResultEmbeddable {
+@Entity
+@Table(name = "feeder_results",
+        indexes = {@Index(name = "feeder_results_fault_result_idx",
+                columnList = "fault_result_entity_fault_result_uuid")})
+public class FeederResultEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID feederResultUuid;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fault_result_entity_fault_result_uuid")
+    private FaultResultEntity faultResult;
 
     @Column
     private String connectableId;
@@ -44,5 +55,15 @@ public class FeederResultEmbeddable {
 
     public double getPositiveMagnitude() {
         return this.getFortescueCurrent() != null ? this.getFortescueCurrent().getPositiveMagnitude() : Double.NaN;
+    }
+
+    public void setFaultResult(FaultResultEntity faultResult) {
+        this.faultResult = faultResult;
+    }
+
+    public FeederResultEntity(String connectableId, double current, FortescueResultEmbeddable fortescueCurrent) {
+        this.connectableId = connectableId;
+        this.current = current;
+        this.fortescueCurrent = fortescueCurrent;
     }
 }

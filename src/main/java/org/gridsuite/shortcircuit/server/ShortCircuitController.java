@@ -6,7 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server;
 
-import com.powsybl.commons.extensions.Extension;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,11 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import org.gridsuite.shortcircuit.server.dto.FaultResult;
-import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
-import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult;
-import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.data.domain.Page;
@@ -28,11 +25,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
+import static com.powsybl.shortcircuit.Fault.FaultType;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -50,15 +45,7 @@ public class ShortCircuitController {
     }
 
     private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
-        //FIXME : this hack has to be removed with the future powsybl version (should be 2023.3.0)
-        // See the related test to be removed parametersWithExtentionTest()
-        ShortCircuitParameters nonNullParameters = parameters != null ? parameters : new ShortCircuitParameters();
-        Collection<Extension<ShortCircuitParameters>> extensions = ShortCircuitParameters.load().getExtensions();
-        extensions.forEach(e -> {
-            e.setExtendable(null);
-            nonNullParameters.addExtension((Class) e.getClass(), e);
-        });
-        return nonNullParameters;
+        return parameters != null ? parameters : new ShortCircuitParameters();
     }
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
@@ -69,21 +56,16 @@ public class ShortCircuitController {
                                                             schema = @Schema(implementation = ShortCircuitParameters.class))})})
     public ResponseEntity<UUID> runAndSave(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
                                            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-                                           @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
+                                           @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false) String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
                                            @RequestBody(required = false) ShortCircuitParameters parameters,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
-        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, nonNullParameters, reportUuid, reporterId, userId, busId));
+        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, nonNullParameters, reportUuid, reporterId, reportType, userId, busId));
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
-    }
-
-    private static List<UUID> getNonNullOtherNetworkUuids(List<UUID> otherNetworkUuids) {
-        return otherNetworkUuids != null ? otherNetworkUuids : Collections.emptyList();
     }
 
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
@@ -91,7 +73,10 @@ public class ShortCircuitController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis result"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<ShortCircuitAnalysisResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode) {
+                                                                @Parameter(description = "BASIC (faults without limits and feeders), " +
+                                                                    "FULL (faults with both), " +
+                                                                    "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
+                                                                    "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode) {
         ShortCircuitAnalysisResult result = shortCircuitService.getResult(resultUuid, mode);
         return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
                 : ResponseEntity.notFound().build();
@@ -102,11 +87,29 @@ public class ShortCircuitController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<Page<FaultResult>> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                @Parameter(description = "Full or only those with limit violations or none fault results") @RequestParam(name = "mode", required = false, defaultValue = "WITH_LIMIT_VIOLATIONS") FaultResultsMode mode,
-                                                                Pageable pageable) {
-        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, pageable);
+                                                                  @Parameter(description = "BASIC (faults without limits and feeders), " +
+                                                                      "FULL (faults with both), " +
+                                                                      "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
+                                                                      "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
+                                                                  @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
+                                                                  Pageable pageable) throws JsonProcessingException {
+        List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
+        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, resourceFilters, pageable);
         return faultResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage)
-                : ResponseEntity.notFound().build();
+            : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping(value = "/results/{resultUuid}/feeder_results/paged", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a feeder results page for a given short circuit analysis result")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of feeder results"),
+        @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
+    public ResponseEntity<Page<FeederResult>> getPagedFeederResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                                    @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
+                                                                    Pageable pageable) throws JsonProcessingException {
+        List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
+        Page<FeederResult> feederResultsPage = shortCircuitService.getFeederResultsPage(resultUuid, resourceFilters, pageable);
+        return feederResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(feederResultsPage)
+            : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
@@ -148,6 +151,20 @@ public class ShortCircuitController {
                                      @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver) {
         shortCircuitService.stop(resultUuid, receiver);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/fault-types", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get list of fault types")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of fault types")})
+    public ResponseEntity<FaultType[]> getFaultTypes() {
+        return ResponseEntity.ok().body(FaultType.values());
+    }
+
+    @GetMapping(value = "/limit-violation-types", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get list of limit violation types")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of limit violation types")})
+    public ResponseEntity<List<LimitViolationType>> getLimitTypes() {
+        return ResponseEntity.ok().body(List.of(LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT));
     }
 
 }
