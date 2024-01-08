@@ -34,8 +34,8 @@ public class ShortCircuitObserver {
         this.meterRegistry = meterRegistry;
     }
 
-    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> callable) throws E {
-        createObservation(name).observeChecked(callable);
+    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> runnable) throws E {
+        createObservation(name).observeChecked(runnable);
     }
 
     public <T extends ShortCircuitAnalysisResult, E extends Throwable> T observeRun(String name, Observation.CheckedCallable<T, E> callable) throws E {
