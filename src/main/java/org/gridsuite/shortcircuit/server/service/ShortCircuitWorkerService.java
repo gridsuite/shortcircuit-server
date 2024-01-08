@@ -58,6 +58,7 @@ public class ShortCircuitWorkerService {
     private final ShortCircuitExecutionService shortCircuitExecutionService;
     private final ObjectMapper objectMapper;
     private final Collection<AbstractReportMapper> reportMappers;
+    private final ShortCircuitObserver shortCircuitObserver;
 
     private final Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
 
@@ -70,7 +71,7 @@ public class ShortCircuitWorkerService {
     @Autowired
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ShortCircuitExecutionService shortCircuitExecutionService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
-                                     ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers) {
+                                     ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers, ShortCircuitObserver shortCircuitObserver) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
         this.shortCircuitExecutionService = Objects.requireNonNull(shortCircuitExecutionService);
@@ -78,6 +79,7 @@ public class ShortCircuitWorkerService {
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.reportMappers = Objects.requireNonNull(reportMappers);
+        this.shortCircuitObserver = shortCircuitObserver;
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -92,34 +94,36 @@ public class ShortCircuitWorkerService {
         return network;
     }
 
-    private ShortCircuitAnalysisResult run(ShortCircuitRunContext context, UUID resultUuid) throws ExecutionException, InterruptedException {
+    private ShortCircuitAnalysisResult run(ShortCircuitRunContext context, UUID resultUuid) throws Exception {
         Objects.requireNonNull(context);
 
         LOGGER.info("Run short circuit analysis...");
-        Network network = getNetwork(context.getNetworkUuid(), context.getVariantId());
+        Network network = shortCircuitObserver.observe("network.load", () -> getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
-        Reporter rootReporter = Reporter.NO_OP;
+        AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
         Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
-            String reportType = context.getReportType();
-            if (StringUtils.isEmpty(reportType)) {
-                reportType = StringUtils.isEmpty(context.getBusId()) ? SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT : SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT;
+            AtomicReference<String> reportType = new AtomicReference<>();
+            reportType.set(context.getReportType());
+            if (StringUtils.isEmpty(reportType.get())) {
+                reportType.set(StringUtils.isEmpty(context.getBusId()) ? SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT : SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT);
             }
-            String rootReporterId = context.getReporterId() == null ? reportType : context.getReporterId() + "@" + reportType;
-            rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            reporter = rootReporter.createSubReporter(reportType, reportType + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            String rootReporterId = context.getReporterId() == null ? reportType.get() : context.getReporterId() + "@" + reportType.get();
+            rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
+            reporter = rootReporter.get().createSubReporter(reportType.get(), reportType + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
             // Delete any previous short-circuit computation logs
-            reportService.deleteReport(context.getReportUuid(), reportType);
+            shortCircuitObserver.observe("report.delete", () -> reportService.deleteReport(context.getReportUuid(), reportType.get()));
         }
 
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);
 
-        ShortCircuitAnalysisResult result = future == null ? null : future.get();
+        ShortCircuitAnalysisResult result = future == null ? null : shortCircuitObserver.observeRun("run", future::get);
+
         if (context.getReportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReporter = reportMapper.processReporter(rootReporter);
+                rootReporter.set(reportMapper.processReporter(rootReporter.get()));
             }
-            reportService.sendReport(context.getReportUuid(), rootReporter);
+            shortCircuitObserver.observe("report.send", () -> reportService.sendReport(context.getReportUuid(), rootReporter.get()));
         }
         return result;
     }
@@ -231,7 +235,7 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result, resultContext.getRunContext().getShortCircuitLimits(), ShortCircuitAnalysisStatus.COMPLETED.name());
+                shortCircuitObserver.observe("results.save", () -> resultRepository.insert(resultContext.getResultUuid(), result, resultContext.getRunContext().getShortCircuitLimits(), ShortCircuitAnalysisStatus.COMPLETED.name()));
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 

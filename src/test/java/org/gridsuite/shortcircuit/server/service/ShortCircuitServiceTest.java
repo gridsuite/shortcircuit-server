@@ -15,6 +15,8 @@ import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
@@ -65,6 +67,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         final VariantManager variantManagerMocked = Mockito.mock(VariantManager.class);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         final Reporter reporter = new ReporterModel("test", "test");
+        final ShortCircuitObserver shortCircuitObserver = new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry());
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
              final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = Mockito.mockStatic(ShortCircuitResultContext.class)) {
@@ -78,7 +81,7 @@ class ShortCircuitServiceTest implements WithAssertions {
             Mockito.when(networkMocked.getBusView()).thenReturn(busViewMocked);
             Mockito.when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             Mockito.when(reportMapperMocked.processReporter(any(Reporter.class))).thenReturn(reporter);
-            final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, shortCircuitExecutionService, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, List.of(reportMapperMocked));
+            final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, shortCircuitExecutionService, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, List.of(reportMapperMocked), shortCircuitObserver);
             workerService.consumeRun().accept(message);
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             Mockito.verify(reportMapperMocked, times(1)).processReporter(any(ReporterModel.class));

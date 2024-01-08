@@ -60,6 +60,7 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -167,6 +168,9 @@ public class ShortCircuitAnalysisControllerTest {
 
     @MockBean
     private UuidGeneratorService uuidGeneratorService;
+
+    @MockBean
+    ShortCircuitAnalysis.Runner runner;
 
     private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
@@ -279,8 +283,11 @@ public class ShortCircuitAnalysisControllerTest {
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         LocalDateTime testTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
             shortCircuitParameters.setWithFortescueResult(false);
@@ -394,6 +401,8 @@ public class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
             shortCircuitParameters.setWithFortescueResult(true);
@@ -452,6 +461,8 @@ public class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(nodeBreakerNetwork), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
             shortCircuitParameters.setWithFortescueResult(true);
@@ -528,6 +539,8 @@ public class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
@@ -628,6 +641,8 @@ public class ShortCircuitAnalysisControllerTest {
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network1), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters().setWithFortescueResult(false);
             String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
