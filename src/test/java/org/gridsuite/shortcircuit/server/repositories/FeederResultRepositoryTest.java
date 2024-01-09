@@ -11,6 +11,7 @@ import com.powsybl.shortcircuit.*;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -27,7 +28,6 @@ import org.springframework.data.domain.Sort;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -75,7 +75,17 @@ class FeederResultRepositoryTest {
     @BeforeAll
     void setUp() {
         // Magnitude fault
-        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, new ShortCircuitRunContext(
+                UUID.randomUUID(),
+                null,
+                null,
+                new ShortCircuitParameters(),
+                null,
+                null,
+                null,
+                null,
+                null
+        ), "");
         resultMagnitudeEntity = shortCircuitAnalysisResultRepository.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FeederResultEntity> feederResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
@@ -85,7 +95,17 @@ class FeederResultRepositoryTest {
         feederResultEntity2 = feederResultEntities.get(1);
         feederResultEntity3 = feederResultEntities.get(2);
         // Fortescue fault
-        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, new ShortCircuitRunContext(
+                UUID.randomUUID(),
+                null,
+                null,
+                new ShortCircuitParameters(),
+                null,
+                null,
+                null,
+                null,
+                null
+        ), "");
         resultFortescueEntity = shortCircuitAnalysisResultRepository.findFullResults(FORTESCUE_RESULT_UUID).get();
         feederResultEntities = resultFortescueEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())

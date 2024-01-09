@@ -14,6 +14,7 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -70,7 +71,17 @@ class FaultResultRepositoryTest {
     @BeforeAll
     void setUp() {
         // Magnitude faults
-        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, new ShortCircuitRunContext(
+                UUID.randomUUID(),
+                null,
+                null,
+                new ShortCircuitParameters(),
+                null,
+                null,
+                null,
+                null,
+                null
+        ), "");
         resultMagnitudeEntity = shortCircuitAnalysisResultRepository.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FaultResultEntity> faultResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .sorted(Comparator.comparing(faultResultEntity -> faultResultEntity.getFault().getId()))
@@ -79,7 +90,17 @@ class FaultResultRepositoryTest {
         faultResultEntity2 = faultResultEntities.get(1);
         faultResultEntity3 = faultResultEntities.get(2);
         // Fortescue fault
-        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, new ShortCircuitRunContext(
+                UUID.randomUUID(),
+                null,
+                null,
+                new ShortCircuitParameters(),
+                null,
+                null,
+                null,
+                null,
+                null
+        ), "");
         resultFortescueEntity = shortCircuitAnalysisResultRepository.findFullResults(FORTESCUE_RESULT_UUID).get();
         faultResultEntity4 = resultFortescueEntity.getFaultResults().stream().findFirst().get();
     }

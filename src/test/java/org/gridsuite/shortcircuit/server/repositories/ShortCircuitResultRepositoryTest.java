@@ -11,6 +11,7 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +59,17 @@ public class ShortCircuitResultRepositoryTest {
     @Test
     public void deleteResultTest() {
         ShortCircuitAnalysisResult results = new ShortCircuitAnalysisResult(List.of(fault1, fault2, fault3));
-        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, results, Map.of(), "OK");
+        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, results, new ShortCircuitRunContext(
+                UUID.randomUUID(),
+                null,
+                null,
+                new ShortCircuitParameters(),
+                null,
+                null,
+                null,
+                null,
+                null
+        ), "OK");
         SQLStatementCountValidator.reset();
 
         shortCircuitAnalysisResultRepository.delete(RESULT_UUID);
