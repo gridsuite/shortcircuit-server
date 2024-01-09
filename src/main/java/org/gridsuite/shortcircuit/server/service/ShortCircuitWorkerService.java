@@ -240,8 +240,16 @@ public class ShortCircuitWorkerService {
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
                 if (result != null) {  // result available
-                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getBusId());
-                    LOGGER.info("Short circuit analysis complete (resultUuid='{}')", resultContext.getResultUuid());
+                    if (!result.getFaultResults().isEmpty() &&
+                        result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
+                        LOGGER.error("Short circuit analysis failed (resultUuid='{}')", resultContext.getResultUuid());
+                        notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                                "Missing short-circuit extension data",
+                                resultContext.getRunContext().getUserId(), resultContext.getRunContext().getBusId());
+                    } else {
+                        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getBusId());
+                        LOGGER.info("Short circuit analysis complete (resultUuid='{}')", resultContext.getResultUuid());
+                    }
                 } else {  // result not available : stop computation request
                     if (cancelComputationRequests.get(resultContext.getResultUuid()) != null) {
                         cleanShortCircuitAnalysisResultsAndPublishCancel(resultContext.getResultUuid(), cancelComputationRequests.get(resultContext.getResultUuid()).getReceiver());
