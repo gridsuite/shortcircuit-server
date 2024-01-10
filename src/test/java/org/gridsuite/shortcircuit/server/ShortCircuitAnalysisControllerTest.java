@@ -189,9 +189,14 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static void assertPagedFaultResultsEquals(ShortCircuitAnalysisResult result, List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResults) {
         assertEquals(result.getFaultResults().size(), faultResults.size());
-        List<FaultResult> orderedFaultResults = result.getFaultResults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
-        // don't need to sort here it's done in the paged request
-        assertFaultResultsEquals(orderedFaultResults, faultResults);
+        List<FaultResult> orderedFaultResults = result.getFaultResults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).toList();
+        List<org.gridsuite.shortcircuit.server.dto.FaultResult> orderedFaultResultsDto = faultResults.stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).toList();
+        assertFaultResultsEquals(orderedFaultResults, orderedFaultResultsDto);
+    }
+
+    private static void assertPagedFaultResultsEqualsSorted(ShortCircuitAnalysisResult result, List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResults) {
+        assertEquals(result.getFaultResults().size(), faultResults.size());
+        assertFaultResultsEquals(result.getFaultResults(), faultResults);
     }
 
     private static void assertFaultResultsEquals(List<FaultResult> faultResults, List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsDto) {
@@ -366,7 +371,7 @@ public class ShortCircuitAnalysisControllerTest {
                      .andReturn();
             JsonNode faultResultsPageNode0 = mapper.readTree(result.getResponse().getContentAsString());
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0Full = faultResultsReader.readValue(faultResultsPageNode0.get("content"));
-            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_0, faultResultsPageDto0Full);
+            assertPagedFaultResultsEqualsSorted(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_0, faultResultsPageDto0Full);
 
             result = mockMvc.perform(get(
                              "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
@@ -379,7 +384,7 @@ public class ShortCircuitAnalysisControllerTest {
                      .andReturn();
             JsonNode faultResultsPageNode1 = mapper.readTree(result.getResponse().getContentAsString());
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto1Full = faultResultsReader.readValue(faultResultsPageNode1.get("content"));
-            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full);
+            assertPagedFaultResultsEqualsSorted(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full);
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
