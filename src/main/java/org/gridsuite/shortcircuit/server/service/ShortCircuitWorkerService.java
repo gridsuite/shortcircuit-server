@@ -235,12 +235,17 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                shortCircuitObserver.observe("results.save", () -> resultRepository.insert(resultContext.getResultUuid(), result, resultContext.getRunContext().getShortCircuitLimits(), ShortCircuitAnalysisStatus.COMPLETED.name()));
+                shortCircuitObserver.observe("results.save", () -> resultRepository.insert(
+                        resultContext.getResultUuid(),
+                        result,
+                        resultContext.getRunContext(),
+                        ShortCircuitAnalysisStatus.COMPLETED.name()
+                ));
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
                 if (result != null) {  // result available
-                    if (!result.getFaultResults().isEmpty() &&
+                    if (!result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
                         result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
                         LOGGER.error("Short circuit analysis failed (resultUuid='{}')", resultContext.getResultUuid());
                         notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),

@@ -9,7 +9,12 @@ package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
-import com.powsybl.shortcircuit.*;
+import com.powsybl.shortcircuit.BusFault;
+import com.powsybl.shortcircuit.FaultResult;
+import com.powsybl.shortcircuit.FeederResult;
+import com.powsybl.shortcircuit.MagnitudeFaultResult;
+import com.powsybl.shortcircuit.MagnitudeFeederResult;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,8 +23,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
+import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 import static org.gridsuite.shortcircuit.server.TestUtils.assertRequestsCount;
 
 /**
@@ -58,7 +65,7 @@ public class ShortCircuitResultRepositoryTest {
     @Test
     public void deleteResultTest() {
         ShortCircuitAnalysisResult results = new ShortCircuitAnalysisResult(List.of(fault1, fault2, fault3));
-        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, results, Map.of(), "OK");
+        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, results, MOCK_RUN_CONTEXT, "OK");
         SQLStatementCountValidator.reset();
 
         shortCircuitAnalysisResultRepository.delete(RESULT_UUID);
