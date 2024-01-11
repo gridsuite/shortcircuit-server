@@ -12,6 +12,7 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.utils.FaultResultSpecificationBuilder;
 import org.gridsuite.shortcircuit.server.utils.FeederResultSpecificationBuilder;
 import org.slf4j.Logger;
@@ -161,10 +162,12 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allCurrentLimits, String status) {
+    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, ShortCircuitRunContext runContext, String status) {
         Objects.requireNonNull(resultUuid);
-        if (result != null && !result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
-            resultRepository.save(toResultEntity(resultUuid, result, allCurrentLimits));
+        if (result != null && (runContext.getBusId() != null ||
+                        !result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals))
+        ) {
+            resultRepository.save(toResultEntity(resultUuid, result, runContext.getShortCircuitLimits()));
         }
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }
