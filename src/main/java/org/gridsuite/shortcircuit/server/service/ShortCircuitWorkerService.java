@@ -143,19 +143,23 @@ public class ShortCircuitWorkerService {
         return faults;
     }
 
-    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
+    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context, UUID resultUuid) {
         String busId = context.getBusId();
         Identifiable<?> identifiable = network.getIdentifiable(busId);
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
-        if (identifiable instanceof BusbarSection) {
-            String busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
+        if (identifiable instanceof BusbarSection busbarSection) {
+            Bus bus = busbarSection.getTerminal().getBusView().getBus();
+            if (bus == null) {
+                notificationService.publishFail(resultUuid, context.getReceiver(), "Selected bus is out of voltage", context.getUserId(), busId);
+                return Collections.emptyList();
+            }
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
-                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
-            return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
+            return List.of(new BusFault(bus.getId(), bus.getId()));
         }
 
         if (identifiable instanceof Bus) {
@@ -182,7 +186,11 @@ public class ShortCircuitWorkerService {
 
             List<Fault> faults = context.getBusId() == null
                 ? getAllBusfaultFromNetwork(network, context)
-                : getBusFaultFromBusId(network, context);
+                : getBusFaultFromBusId(network, context, resultUuid);
+
+            if (faults.isEmpty()) {
+                return null;
+            }
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
