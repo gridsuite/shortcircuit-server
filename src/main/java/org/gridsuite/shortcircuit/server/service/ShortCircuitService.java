@@ -214,7 +214,8 @@ public class ShortCircuitService {
     }
 
     // If the Sort Orders in Pageable contains already a sort Order on the property column then do not append it
-    // otherwise append it at THE END to allow sorting rules to happen with possibly duplicates and finally a deterministic order.
+    // otherwise append it at THE END to allow sorting rules to happen with rows containing same value on the sorted column
+    // and then finally define a deterministic order.
     private Sort appendUniqueOrderIfNecessary(Sort sourceSort, Order uniqueOrder) {
         Order order = sourceSort.getOrderFor(uniqueOrder.getProperty());
         if (order == null) {
