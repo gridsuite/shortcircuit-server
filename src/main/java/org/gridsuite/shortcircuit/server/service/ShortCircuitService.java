@@ -6,8 +6,11 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.LogUtils;
+import com.univocity.parsers.csv.CsvWriter;
+import com.univocity.parsers.csv.CsvWriterSettings;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
@@ -19,10 +22,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -108,6 +114,78 @@ public class ShortCircuitService {
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
         return result;
+    }
+
+    public byte[] getZippedCsvExportResult(UUID resultUuid, String headersCsv) {
+        ShortCircuitAnalysisResult result = getResult(resultUuid, FaultResultsMode.FULL);
+
+        if (result == null) {
+            return new byte[0];
+        }
+
+        List<FaultResult> faultResults = result.getFaults();
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+
+            CsvWriterSettings settings = new CsvWriterSettings();
+            CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
+
+            zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
+            List<String> headersList = objectMapper.readValue(headersCsv, new TypeReference<>() { });
+            csvWriter.writeHeaders(headersList);
+
+            for (FaultResult faultResult : faultResults) {
+                // Process faultResult data
+                List<String> faultRowData = new ArrayList<>(List.of(
+                        faultResult.getFault().getId(),
+                        faultResult.getFault().getFaultType(),
+                        "",
+                        String.valueOf(faultResult.getPositiveMagnitude())
+                ));
+
+                List<LimitViolation> limitViolations = faultResult.getLimitViolations();
+                if (!limitViolations.isEmpty()) {
+                    limitViolations.stream()
+                            .map(LimitViolation::getLimitType)
+                            .forEach(faultRowData::add);
+                } else {
+                    faultRowData.add("");
+                }
+
+                ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
+                faultRowData.addAll(List.of(
+                        String.valueOf(shortCircuitLimits.getIpMin()),
+                        String.valueOf(shortCircuitLimits.getIpMax()),
+                        String.valueOf(faultResult.getShortCircuitPower()),
+                        String.valueOf(shortCircuitLimits.getDeltaCurrentIpMin()),
+                        String.valueOf(shortCircuitLimits.getDeltaCurrentIpMax())
+                ));
+
+                csvWriter.writeRow(faultRowData);
+
+                // Process feederResults data
+                List<FeederResult> feederResults = faultResult.getFeederResults();
+                if (!feederResults.isEmpty()) {
+                    for (FeederResult feederResult : feederResults) {
+                        List<String> feederRowData = new ArrayList<>(List.of(
+                                faultResult.getFault().getId(),
+                                "",
+                                feederResult.getConnectableId(),
+                                String.valueOf(feederResult.getPositiveMagnitude())
+                        ));
+                        csvWriter.writeRow(feederRowData);
+                    }
+                } else {
+                    csvWriter.writeRow(List.of("", "", "", ""));
+                }
+            }
+
+            csvWriter.close();
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {
