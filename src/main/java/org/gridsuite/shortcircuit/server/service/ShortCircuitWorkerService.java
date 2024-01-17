@@ -19,6 +19,7 @@ import com.powsybl.shortcircuit.*;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.FAIL_MESSAGE;
 
@@ -143,7 +145,7 @@ public class ShortCircuitWorkerService {
         return faults;
     }
 
-    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context, UUID resultUuid) {
+    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
         String busId = context.getBusId();
         Identifiable<?> identifiable = network.getIdentifiable(busId);
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
@@ -151,8 +153,7 @@ public class ShortCircuitWorkerService {
         if (identifiable instanceof BusbarSection busbarSection) {
             Bus bus = busbarSection.getTerminal().getBusView().getBus();
             if (bus == null) {
-                notificationService.publishFail(resultUuid, context.getReceiver(), "Selected bus is out of voltage", context.getUserId(), busId);
-                return Collections.emptyList();
+                throw new ShortCircuitException(BUS_OUT_OF_VOLTAGE, "Selected bus is out of voltage");
             }
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
@@ -186,11 +187,7 @@ public class ShortCircuitWorkerService {
 
             List<Fault> faults = context.getBusId() == null
                 ? getAllBusfaultFromNetwork(network, context)
-                : getBusFaultFromBusId(network, context, resultUuid);
-
-            if (faults.isEmpty()) {
-                return null;
-            }
+                : getBusFaultFromBusId(network, context);
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
