@@ -49,14 +49,15 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
@@ -92,6 +93,17 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_3_ID = "variant_3";
 
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
+
+    private static final String CSV_HEADERS = "[\"ID nœud\"," +
+            "\"Type\"," +
+            "\"Départs\"," +
+            "\"Icc (kA)\"," +
+            "\"Type de limite\"," +
+            "\"Icc min (kA)\"," +
+            "\"IMACC (kA)\"," +
+            "\"Pcc (MVA)\"," +
+            "\"Icc - Icc min (kA)\"," +
+            "\"Icc - IMACC (kA)\"]";
 
     private static final int TIMEOUT = 1000;
 
@@ -385,6 +397,36 @@ public class ShortCircuitAnalysisControllerTest {
             JsonNode faultResultsPageNode1 = mapper.readTree(result.getResponse().getContentAsString());
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto1Full = faultResultsReader.readValue(faultResultsPageNode1.get("content"));
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full);
+
+            // export zipped csv result
+            result = mockMvc.perform(post(
+                            "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(CSV_HEADERS))
+                    .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                    .andReturn();
+            byte[] zippedResult = result.getResponse().getContentAsByteArray();
+            try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zippedResult);
+                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
+
+                ZipEntry zipEntry = zipInputStream.getNextEntry();
+                if (zipEntry != null) {
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+
+                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+                    }
+
+                    List<String> unzippedData = List.of(Arrays.asList(byteArrayOutputStream.toString()
+                            .split("\n")).get(0).split(","));
+                    List<String> expectedLines2 = new ArrayList<>(List.of("ID nœud", "Type", "Départs",
+                            "Icc (kA)", "Type de limite", "Icc min (kA)", "IMACC (kA)", "Pcc (MVA)",
+                            "Icc - Icc min (kA)", "Icc - IMACC (kA)"));
+                    assertEquals(unzippedData, expectedLines2);
+                }
+            }
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
