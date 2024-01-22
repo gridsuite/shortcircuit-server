@@ -25,6 +25,7 @@ import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
@@ -168,7 +169,9 @@ class ShortCircuitServiceTest implements WithAssertions {
         }
     }
 
-    private record ShortCircuitAnalysisProviderMock(ShortCircuitAnalysisResult result) implements ShortCircuitAnalysisProvider {
+    @AllArgsConstructor
+    private static class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
+        private final ShortCircuitAnalysisResult result;
 
         @Override
         public String getName() {
