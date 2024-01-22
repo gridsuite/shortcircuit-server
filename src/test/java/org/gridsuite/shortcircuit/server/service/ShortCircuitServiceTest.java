@@ -14,45 +14,86 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.shortcircuit.*;
+import com.powsybl.shortcircuit.Fault;
+import com.powsybl.shortcircuit.FaultParameters;
+import com.powsybl.shortcircuit.ShortCircuitAnalysis;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.TestUtils;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith({ MockitoExtension.class })
 @Slf4j
 class ShortCircuitServiceTest implements WithAssertions {
+
+    @Mock
+    private NetworkStoreService networkStoreService;
+
+    @Mock
+    private ReportService reportService;
+
+    @Mock
+    private ShortCircuitExecutionService shortCircuitExecutionService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private ShortCircuitAnalysisResultRepository resultRepository;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private AbstractReportMapper reportMapper;
+
+    private ShortCircuitWorkerService workerService;
+
+    @BeforeEach
+    void init() {
+        workerService = new ShortCircuitWorkerService(
+                networkStoreService,
+                reportService,
+                shortCircuitExecutionService,
+                notificationService,
+                resultRepository,
+                objectMapper,
+                Collections.singletonList(reportMapper),
+                new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
+        );
+    }
+
     @Test
     void testLogsMappersIsCalled() throws Exception {
-        final AbstractReportMapper reportMapperMocked = Mockito.mock(AbstractReportMapper.class);
-        final NetworkStoreService networkStoreServiceMocked = Mockito.mock(NetworkStoreService.class);
-        final ReportService reportServiceMocked = Mockito.mock(ReportService.class);
-        final ShortCircuitExecutionService shortCircuitExecutionService = Mockito.mock(ShortCircuitExecutionService.class);
-        final NotificationService notificationServiceMocked = Mockito.mock(NotificationService.class);
-        final ShortCircuitAnalysisResultRepository resultRepositoryMocked = Mockito.mock(ShortCircuitAnalysisResultRepository.class);
-        final ObjectMapper objectMapperMocked = Mockito.mock(ObjectMapper.class);
-
         final ShortCircuitAnalysisResult analysisResult = new ShortCircuitAnalysisResult(List.of());
         final ShortCircuitAnalysisProvider providerMock = Mockito.spy(new ShortCircuitAnalysisProviderMock(analysisResult));
         final Message<String> message = new GenericMessage<>("test");
@@ -67,7 +108,6 @@ class ShortCircuitServiceTest implements WithAssertions {
         final VariantManager variantManagerMocked = Mockito.mock(VariantManager.class);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         final Reporter reporter = new ReporterModel("test", "test");
-        final ShortCircuitObserver shortCircuitObserver = new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry());
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
              final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = Mockito.mockStatic(ShortCircuitResultContext.class)) {
@@ -75,23 +115,20 @@ class ShortCircuitServiceTest implements WithAssertions {
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
-            shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapperMocked)).thenReturn(resultContext);
-            Mockito.when(networkStoreServiceMocked.getNetwork(eq(networkUuid), any(PreloadingStrategy.class))).thenReturn(networkMocked);
-            Mockito.when(networkMocked.getVariantManager()).thenReturn(variantManagerMocked);
-            Mockito.when(networkMocked.getBusView()).thenReturn(busViewMocked);
-            Mockito.when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
-            Mockito.when(reportMapperMocked.processReporter(any(Reporter.class))).thenReturn(reporter);
-            final ShortCircuitWorkerService workerService = new ShortCircuitWorkerService(networkStoreServiceMocked, reportServiceMocked, shortCircuitExecutionService, notificationServiceMocked, resultRepositoryMocked, objectMapperMocked, List.of(reportMapperMocked), shortCircuitObserver);
+            shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
+            when(networkStoreService.getNetwork(eq(networkUuid), any(PreloadingStrategy.class))).thenReturn(networkMocked);
+            when(networkMocked.getVariantManager()).thenReturn(variantManagerMocked);
+            when(networkMocked.getBusView()).thenReturn(busViewMocked);
+            when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
+            when(reportMapper.processReporter(any(Reporter.class))).thenReturn(reporter);
             workerService.consumeRun().accept(message);
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
-            Mockito.verify(reportMapperMocked, times(1)).processReporter(any(ReporterModel.class));
-            Mockito.verify(reportServiceMocked, times(1)).sendReport(reportUuid, reporter);
+            verify(reportMapper, times(1)).processReporter(any(ReporterModel.class));
+            verify(reportService, times(1)).sendReport(reportUuid, reporter);
         }
     }
 
-    @AllArgsConstructor
-    private static class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
-        private final ShortCircuitAnalysisResult result;
+    private record ShortCircuitAnalysisProviderMock(ShortCircuitAnalysisResult result) implements ShortCircuitAnalysisProvider {
 
         @Override
         public String getName() {
