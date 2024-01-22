@@ -28,12 +28,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -109,6 +108,37 @@ class FaultResultRepositoryTest {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.unpaged(), FaultResultsMode.BASIC);
         assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
             .containsExactlyInAnyOrderElementsOf(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
+    }
+
+    @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
+    @MethodSource({
+        "provideOrEqualsNestedFieldsFilters",
+        "provideContainsNestedFieldsFilters",
+        "provideNotEqualFilters",
+        "provideNotEqualNestedFieldsFilters"
+    })
+    void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FaultResultEntity> faultList) {
+        //Test with unpaged request and expect the result to be sorted by uuid anyway
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC);
+        List<String> sortedFaultPageUuid = faultPage.getContent().stream().sorted(Comparator.comparing(o -> o.getFaultResultUuid().toString()))
+                .map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+        assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
+                .containsExactlyElementsOf(sortedFaultPageUuid);
+
+        //Test with pageable containing a sort by current and expect the results to be sorted by current
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "current"))), FaultResultsMode.BASIC);
+        sortedFaultPageUuid = faultPage.getContent().stream().sorted(Comparator.comparing(FaultResultEntity::getCurrent))
+                .map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+        assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
+                .containsExactlyElementsOf(sortedFaultPageUuid);
+
+        //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
+        //Test with pageable containing a sort by current and expect the results to be sorted by current
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
+        sortedFaultPageUuid = faultPage.getContent().stream().sorted(Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()))
+                .map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+        assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
+                .containsExactlyElementsOf(sortedFaultPageUuid);
     }
 
     private Stream<Arguments> provideOrEqualsNestedFieldsFilters() {

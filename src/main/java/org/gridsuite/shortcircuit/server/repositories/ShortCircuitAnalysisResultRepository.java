@@ -18,8 +18,7 @@ import org.gridsuite.shortcircuit.server.utils.FeederResultSpecificationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +42,12 @@ public class ShortCircuitAnalysisResultRepository {
     private final ResultRepository resultRepository;
     private final FaultResultRepository faultResultRepository;
     private final FeederResultRepository feederResultRepository;
+
+    private static final String DEFAULT_FAULT_RESULT_SORT_COLUMN = "faultResultUuid";
+
+    private static final String DEFAULT_FEEDER_RESULT_SORT_COLUMN = "feederResultUuid";
+
+    private static final Sort.Direction DEFAULT_SORT_DIRECTION = Sort.Direction.ASC;
 
     @Autowired
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
@@ -212,10 +217,10 @@ public class ShortCircuitAnalysisResultRepository {
     public Optional<ShortCircuitAnalysisResultEntity> findFullResults(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
-        if (!result.isPresent()) {
+        if (result.isEmpty()) {
             return result;
         }
-        // using the the Hibernate First-Level Cache or Persistence Context
+        // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
             resultRepository.findWithFaultResultsAndFeederResultsByResultUuid(resultUuid);
@@ -227,14 +232,14 @@ public class ShortCircuitAnalysisResultRepository {
     public Optional<ShortCircuitAnalysisResultEntity> findResultsWithLimitViolations(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.findWithFaultResultsAndLimitViolationsByResultUuid(resultUuid);
-        if (!result.isPresent()) {
+        if (result.isEmpty()) {
             return result;
         }
         List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
                                                             .filter(fr -> !fr.getLimitViolations().isEmpty())
                                                             .map(FaultResultEntity::getFaultResultUuid)
                                                             .collect(Collectors.toList());
-        // using the the Hibernate First-Level Cache or Persistence Context
+        // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
             faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuidWithLimitViolations);
@@ -250,7 +255,9 @@ public class ShortCircuitAnalysisResultRepository {
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, pageable);
+        Page<FaultResultEntity> faultResultsPage;
+        Pageable modifiedPageable = addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN);
+        faultResultsPage = faultResultRepository.findAll(specification, modifiedPageable);
         if (faultResultsPage.hasContent() && mode != FaultResultsMode.BASIC) {
             appendLimitViolationsAndFeederResults(faultResultsPage);
         }
@@ -261,7 +268,8 @@ public class ShortCircuitAnalysisResultRepository {
     public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
         Objects.requireNonNull(result);
         Specification<FeederResultEntity> specification = FeederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
-        return feederResultRepository.findAll(specification, pageable);
+        Pageable modifiedPageable = addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN);
+        return feederResultRepository.findAll(specification, modifiedPageable);
     }
 
     @Transactional(readOnly = true)
@@ -273,7 +281,8 @@ public class ShortCircuitAnalysisResultRepository {
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, pageable);
+        Pageable modifiedPageable = addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN);
+        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, modifiedPageable);
         if (faultResultsPage.hasContent()) {
             appendLimitViolationsAndFeederResults(faultResultsPage);
         }
@@ -281,7 +290,7 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults) {
-        // using the the Hibernate First-Level Cache or Persistence Context
+        // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!pagedFaultResults.isEmpty()) {
             List<UUID> faultResultsUuids = pagedFaultResults.stream()
@@ -301,5 +310,21 @@ public class ShortCircuitAnalysisResultRepository {
         } else {
             return null;
         }
+    }
+
+    private Pageable addDefaultSort(Pageable pageable, String defaultSortColumn) {
+        if (pageable.isPaged()) {
+            if (pageable.getSort().equals(Sort.unsorted())) {
+                //if there is no sort on the original request we just add the default one
+                return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(DEFAULT_SORT_DIRECTION, defaultSortColumn));
+            } else {
+                //else we restore the original sort, and then we add the default sort on top of it to ensure there is a deterministic result
+                Sort additionalSort = Sort.by(new Sort.Order(DEFAULT_SORT_DIRECTION, defaultSortColumn));
+                Sort finalSort = pageable.getSort().and(additionalSort);
+                return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
+            }
+        }
+        //nothing to do if the request is not paged
+        return pageable;
     }
 }
