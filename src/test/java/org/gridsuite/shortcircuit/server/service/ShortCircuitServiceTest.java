@@ -54,6 +54,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,6 +84,12 @@ class ShortCircuitServiceTest implements WithAssertions {
     @Mock
     private AbstractReportMapper reportMapper;
 
+    @Mock
+    private Network network;
+
+    @Mock
+    private VariantManager variantManager;
+
     private ShortCircuitWorkerService workerService;
 
     @BeforeEach
@@ -111,21 +118,19 @@ class ShortCircuitServiceTest implements WithAssertions {
         final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
                 new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
-        final Network networkMocked = Mockito.mock(Network.class);
-        final VariantManager variantManagerMocked = Mockito.mock(VariantManager.class);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         final Reporter reporter = new ReporterModel("test", "test");
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
-             final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = Mockito.mockStatic(ShortCircuitResultContext.class)) {
+             final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
-            when(networkStoreService.getNetwork(eq(networkUuid), any(PreloadingStrategy.class))).thenReturn(networkMocked);
-            when(networkMocked.getVariantManager()).thenReturn(variantManagerMocked);
-            when(networkMocked.getBusView()).thenReturn(busViewMocked);
+            when(networkStoreService.getNetwork(eq(networkUuid), any(PreloadingStrategy.class))).thenReturn(network);
+            when(network.getVariantManager()).thenReturn(variantManager);
+            when(network.getBusView()).thenReturn(busViewMocked);
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             when(reportMapper.processReporter(any(Reporter.class))).thenReturn(reporter);
             workerService.consumeRun().accept(message);
@@ -137,21 +142,27 @@ class ShortCircuitServiceTest implements WithAssertions {
 
     @Test
     void testGetBusFaultFromOutOfVoltageBus() {
-        var network = mock(Network.class);
-        var context = mock(ShortCircuitRunContext.class);
+        var message = new GenericMessage<>("test");
+        var runContext = mock(ShortCircuitRunContext.class);
+        var resultContext = new ShortCircuitResultContext(UUID.randomUUID(), runContext);
         var busbarSection = mock(BusbarSection.class);
         var terminal = mock(Terminal.class);
         var busView = mock(BusView.class);
         var busId = "bus1";
 
-        when(context.getBusId()).thenReturn(busId);
+        when(runContext.getBusId()).thenReturn(busId);
+        when(networkStoreService.getNetwork(any(), any())).thenReturn(network);
         doReturn(busbarSection).when(network).getIdentifiable(busId);
+        when(network.getVariantManager()).thenReturn(variantManager);
         when(busbarSection.getTerminal()).thenReturn(terminal);
         when(terminal.getBusView()).thenReturn(busView);
-        when(busView.getBus()).thenReturn(null);
 
-        var exception = (ShortCircuitException) catchRuntimeException(() -> workerService.getBusFaultFromBusId(network, context));
-        assertThat(exception.getType()).isEqualTo(BUS_OUT_OF_VOLTAGE);
+        try (var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
+            shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
+            workerService.consumeRun().accept(message);
+        } catch (ShortCircuitException expectedException) {
+            assertThat(expectedException.getType()).isEqualTo(BUS_OUT_OF_VOLTAGE);
+        }
     }
 
     private record ShortCircuitAnalysisProviderMock(ShortCircuitAnalysisResult result) implements ShortCircuitAnalysisProvider {
