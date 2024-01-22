@@ -55,6 +55,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -109,7 +110,7 @@ class ShortCircuitServiceTest implements WithAssertions {
     @Test
     void testLogsMappersIsCalled() throws Exception {
         final ShortCircuitAnalysisResult analysisResult = new ShortCircuitAnalysisResult(List.of());
-        final ShortCircuitAnalysisProvider providerMock = Mockito.spy(new ShortCircuitAnalysisProviderMock(analysisResult));
+        final ShortCircuitAnalysisProvider providerMock = spy(new ShortCircuitAnalysisProviderMock(analysisResult));
         final Message<String> message = new GenericMessage<>("test");
         final UUID networkUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
         final UUID reportUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
@@ -141,7 +142,8 @@ class ShortCircuitServiceTest implements WithAssertions {
     }
 
     @Test
-    void testGetBusFaultFromOutOfVoltageBus() {
+    void testGetBusFaultFromOutOfVoltageBus() throws Exception {
+        var analysisProvider = spy(new ShortCircuitAnalysisProviderMock(new ShortCircuitAnalysisResult(Collections.emptyList())));
         var message = new GenericMessage<>("test");
         var runContext = mock(ShortCircuitRunContext.class);
         var resultContext = new ShortCircuitResultContext(UUID.randomUUID(), runContext);
@@ -157,7 +159,8 @@ class ShortCircuitServiceTest implements WithAssertions {
         when(busbarSection.getTerminal()).thenReturn(terminal);
         when(terminal.getBusView()).thenReturn(busView);
 
-        try (var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
+        try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
+             var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             workerService.consumeRun().accept(message);
         } catch (ShortCircuitException expectedException) {
