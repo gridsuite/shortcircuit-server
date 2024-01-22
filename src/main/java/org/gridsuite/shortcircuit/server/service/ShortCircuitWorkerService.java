@@ -145,7 +145,7 @@ public class ShortCircuitWorkerService {
         return faults;
     }
 
-    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
+    public List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
         String busId = context.getBusId();
         Identifiable<?> identifiable = network.getIdentifiable(busId);
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();

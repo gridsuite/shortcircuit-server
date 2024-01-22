@@ -10,7 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.computation.ComputationManager;
+import com.powsybl.iidm.network.BusbarSection;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Terminal;
+import com.powsybl.iidm.network.Terminal.BusView;
 import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
@@ -24,6 +27,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.TestUtils;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
@@ -43,10 +47,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -126,6 +133,25 @@ class ShortCircuitServiceTest implements WithAssertions {
             verify(reportMapper, times(1)).processReporter(any(ReporterModel.class));
             verify(reportService, times(1)).sendReport(reportUuid, reporter);
         }
+    }
+
+    @Test
+    void testGetBusFaultFromOutOfVoltageBus() {
+        var network = mock(Network.class);
+        var context = mock(ShortCircuitRunContext.class);
+        var busbarSection = mock(BusbarSection.class);
+        var terminal = mock(Terminal.class);
+        var busView = mock(BusView.class);
+        var busId = "bus1";
+
+        when(context.getBusId()).thenReturn(busId);
+        doReturn(busbarSection).when(network).getIdentifiable(busId);
+        when(busbarSection.getTerminal()).thenReturn(terminal);
+        when(terminal.getBusView()).thenReturn(busView);
+        when(busView.getBus()).thenReturn(null);
+
+        var exception = (ShortCircuitException) catchRuntimeException(() -> workerService.getBusFaultFromBusId(network, context));
+        assertThat(exception.getType()).isEqualTo(BUS_OUT_OF_VOLTAGE);
     }
 
     private record ShortCircuitAnalysisProviderMock(ShortCircuitAnalysisResult result) implements ShortCircuitAnalysisProvider {

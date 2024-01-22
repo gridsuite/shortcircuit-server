@@ -6,11 +6,14 @@
  */
 package org.gridsuite.shortcircuit.server;
 
+import lombok.Getter;
+
 import java.util.Objects;
 
 /**
  * @author David SARTORI <david.sartori_externe at rte-france.com>
  */
+@Getter
 public class ShortCircuitException extends RuntimeException {
 
     public enum Type {
@@ -27,9 +30,5 @@ public class ShortCircuitException extends RuntimeException {
     public ShortCircuitException(Type type, String message) {
         super(message);
         this.type = type;
-    }
-
-    Type getType() {
-        return type;
     }
 }
