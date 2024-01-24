@@ -157,6 +157,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         when(network.getVariantManager()).thenReturn(variantManager);
         when(busbarSection.getTerminal()).thenReturn(terminal);
         when(terminal.getBusView()).thenReturn(busView);
+        when(busView.getBus()).thenReturn(null);
 
         try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
