@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvWriter;
@@ -116,50 +115,42 @@ public class ShortCircuitService {
         return result;
     }
 
-    public byte[] getZippedCsvExportResult(UUID resultUuid, String headersCsv) {
-        ShortCircuitAnalysisResult result = getResult(resultUuid, FaultResultsMode.FULL);
-
-        if (result == null) {
-            return new byte[0];
-        }
-
+    public byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations) {
         List<FaultResult> faultResults = result.getFaults();
-
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-
             CsvWriterSettings settings = new CsvWriterSettings();
             CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
-
             zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
-            List<String> headersList = objectMapper.readValue(headersCsv, new TypeReference<>() { });
             csvWriter.writeHeaders(headersList);
 
             for (FaultResult faultResult : faultResults) {
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
                         faultResult.getFault().getId(),
-                        faultResult.getFault().getFaultType(),
+                        enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        String.valueOf(faultResult.getPositiveMagnitude())
+                        String.format("%.2f", faultResult.getPositiveMagnitude())
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
                 if (!limitViolations.isEmpty()) {
-                    limitViolations.stream()
+                    String limitTypes = limitViolations.stream()
                             .map(LimitViolation::getLimitType)
-                            .forEach(faultRowData::add);
+                            .map(type -> enumValueTranslations.getOrDefault(type, ""))
+                            .collect(Collectors.joining(", "));
+                    faultRowData.add(limitTypes);
                 } else {
                     faultRowData.add("");
                 }
 
                 ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
                 faultRowData.addAll(List.of(
-                        String.valueOf(shortCircuitLimits.getIpMin()),
-                        String.valueOf(shortCircuitLimits.getIpMax()),
-                        String.valueOf(faultResult.getShortCircuitPower()),
-                        String.valueOf(shortCircuitLimits.getDeltaCurrentIpMin()),
-                        String.valueOf(shortCircuitLimits.getDeltaCurrentIpMax())
+                        String.format("%.2f", shortCircuitLimits.getIpMin()),
+                        Double.toString(shortCircuitLimits.getIpMax()),
+                        String.format("%.2f", faultResult.getShortCircuitPower()),
+                        String.format("%.2f", shortCircuitLimits.getDeltaCurrentIpMin()),
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
                 ));
 
                 csvWriter.writeRow(faultRowData);
@@ -172,7 +163,7 @@ public class ShortCircuitService {
                                 faultResult.getFault().getId(),
                                 "",
                                 feederResult.getConnectableId(),
-                                String.valueOf(feederResult.getPositiveMagnitude())
+                                String.format("%.2f", feederResult.getPositiveMagnitude())
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
@@ -186,6 +177,16 @@ public class ShortCircuitService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public byte[] getZippedCsvExportResult(UUID resultUuid, CsvTranslation csvTranslation) {
+        ShortCircuitAnalysisResult result = getResult(resultUuid, FaultResultsMode.FULL);
+        if (result == null) {
+            return new byte[0];
+        }
+        List<String> headersList = csvTranslation.headersCsv();
+        Map<String, String> enumValueTranslations = csvTranslation.enumValueTranslations();
+        return exportToCsv(result, headersList, enumValueTranslations);
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {

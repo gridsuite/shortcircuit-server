@@ -87,10 +87,10 @@ public class ShortCircuitController {
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<byte[]> getZippedCsvExportFaultResult(
             @Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-            @RequestBody String headersCsv) {
+            @RequestBody CsvTranslation csvTranslation) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
-                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, headersCsv));
+                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, csvTranslation));
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)

@@ -25,6 +25,7 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
+import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.service.ReportService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
@@ -94,16 +95,31 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
 
-    private static final String CSV_HEADERS = "[\"ID nœud\"," +
-            "\"Type\"," +
-            "\"Départs\"," +
-            "\"Icc (kA)\"," +
-            "\"Type de limite\"," +
-            "\"Icc min (kA)\"," +
-            "\"IMACC (kA)\"," +
-            "\"Pcc (MVA)\"," +
-            "\"Icc - Icc min (kA)\"," +
-            "\"Icc - IMACC (kA)\"]";
+    private static final List<String> CSV_HEADERS = List.of(
+            "ID nœud",
+            "Type",
+            "Départs",
+            "Icc (kA)",
+            "Type de limite",
+            "Icc min (kA)",
+            "IMACC (kA)",
+            "Pcc (MVA)",
+            "Icc - Icc min (kA)",
+            "Icc - IMACC (kA)"
+    );
+
+    private final Map<String, String> enumTranslations = Map.of(
+            "THREE_PHASE", "Triphasé",
+            "SINGLE_PHASE", "Monophasé",
+            "ACTIVE_POWER", "Puissance active",
+            "APPARENT_POWER", "Puissance apparente",
+            "CURRENT", "Intensité",
+            "LOW_VOLTAGE", "Tension basse",
+            "HIGH_VOLTAGE", "Tension haute",
+            "LOW_SHORT_CIRCUIT_CURRENT", "Icc min",
+            "HIGH_SHORT_CIRCUIT_CURRENT", "Icc max",
+            "OTHER", "Autre"
+    );
 
     private static final int TIMEOUT = 1000;
 
@@ -402,7 +418,8 @@ public class ShortCircuitAnalysisControllerTest {
             result = mockMvc.perform(post(
                             "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(CSV_HEADERS))
+                            .content(mapper.writeValueAsString(CsvTranslation.builder().headersCsv(CSV_HEADERS).
+                                    enumValueTranslations(enumTranslations).build())))
                     .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                     .andReturn();
             byte[] zippedResult = result.getResponse().getContentAsByteArray();
