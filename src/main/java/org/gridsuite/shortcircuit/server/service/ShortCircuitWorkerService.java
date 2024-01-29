@@ -11,7 +11,6 @@ import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -20,6 +19,7 @@ import com.powsybl.shortcircuit.*;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
@@ -39,6 +39,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
+import static org.gridsuite.shortcircuit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.FAIL_MESSAGE;
 
 /**
@@ -48,36 +50,38 @@ import static org.gridsuite.shortcircuit.server.service.NotificationService.FAIL
 public class ShortCircuitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
+    private static final String SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT = "AllBusesShortCircuitAnalysis";
+    private static final String SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT = "OneBusShortCircuitAnalysis";
 
-    private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
-
-    private NetworkStoreService networkStoreService;
-    private ReportService reportService;
-    private ShortCircuitAnalysisResultRepository resultRepository;
-    private NotificationService notificationService;
-    private ObjectMapper objectMapper;
+    private final NetworkStoreService networkStoreService;
+    private final ReportService reportService;
+    private final ShortCircuitAnalysisResultRepository resultRepository;
+    private final NotificationService notificationService;
+    private final ShortCircuitExecutionService shortCircuitExecutionService;
+    private final ObjectMapper objectMapper;
     private final Collection<AbstractReportMapper> reportMappers;
+    private final ShortCircuitObserver shortCircuitObserver;
 
-    private Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
+    private final Map<UUID, CompletableFuture<ShortCircuitAnalysisResult>> futures = new ConcurrentHashMap<>();
 
-    private Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
+    private final Map<UUID, ShortCircuitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
 
-    private Set<UUID> runRequests = Sets.newConcurrentHashSet();
-
-    private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+    private final Set<UUID> runRequests = Sets.newConcurrentHashSet();
 
     private final Lock lockRunAndCancelShortCircuitAnalysis = new ReentrantLock();
 
     @Autowired
-    public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
+    public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ShortCircuitExecutionService shortCircuitExecutionService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultRepository resultRepository,
-                                     ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers) {
+                                     ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers, ShortCircuitObserver shortCircuitObserver) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.reportService = Objects.requireNonNull(reportService);
+        this.shortCircuitExecutionService = Objects.requireNonNull(shortCircuitExecutionService);
         this.notificationService = Objects.requireNonNull(notificationService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.reportMappers = Objects.requireNonNull(reportMappers);
+        this.shortCircuitObserver = shortCircuitObserver;
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -92,34 +96,43 @@ public class ShortCircuitWorkerService {
         return network;
     }
 
-    private ShortCircuitAnalysisResult run(ShortCircuitRunContext context, UUID resultUuid) throws ExecutionException, InterruptedException {
+    private ShortCircuitAnalysisResult run(ShortCircuitRunContext context, UUID resultUuid) throws Exception {
         Objects.requireNonNull(context);
 
         LOGGER.info("Run short circuit analysis...");
-        Network network = getNetwork(context.getNetworkUuid(), context.getVariantId());
+        Network network = shortCircuitObserver.observe("network.load", () -> getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
-        Reporter rootReporter = Reporter.NO_OP;
+        AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
         Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
-            String rootReporterId = context.getReporterId() == null ? SHORTCIRCUIT_TYPE_REPORT : context.getReporterId() + "@" + SHORTCIRCUIT_TYPE_REPORT;
-            rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            reporter = rootReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            AtomicReference<String> reportType = new AtomicReference<>();
+            reportType.set(context.getReportType());
+            if (StringUtils.isEmpty(reportType.get())) {
+                reportType.set(StringUtils.isEmpty(context.getBusId()) ? SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT : SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT);
+            }
+            String rootReporterId = context.getReporterId() == null ? reportType.get() : context.getReporterId() + "@" + reportType.get();
+            rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
+            reporter = rootReporter.get().createSubReporter(reportType.get(), reportType + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            // Delete any previous short-circuit computation logs
+            shortCircuitObserver.observe("report.delete", () -> reportService.deleteReport(context.getReportUuid(), reportType.get()));
         }
 
         CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);
 
-        ShortCircuitAnalysisResult result = future == null ? null : future.get();
+        ShortCircuitAnalysisResult result = future == null ? null : shortCircuitObserver.observeRun("run", future::get);
+
         if (context.getReportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReporter = reportMapper.processReporter(rootReporter);
+                rootReporter.set(reportMapper.processReporter(rootReporter.get()));
             }
-            reportService.sendReport(context.getReportUuid(), rootReporter);
+            shortCircuitObserver.observe("report.send", () -> reportService.sendReport(context.getReportUuid(), rootReporter.get()));
         }
         return result;
     }
 
-    private List<Fault> getAllBusfaultFromNetwork(Network network) {
-        return network.getBusView().getBusStream()
+    private List<Fault> getAllBusfaultFromNetwork(Network network, ShortCircuitRunContext context) {
+        Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+        List<Fault> faults = network.getBusView().getBusStream()
             .map(bus -> {
                 IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                 if (shortCircuitExtension != null) {
@@ -128,18 +141,26 @@ public class ShortCircuitWorkerService {
                 return new BusFault(bus.getId(), bus.getId());
             })
             .collect(Collectors.toList());
+        context.setShortCircuitLimits(shortCircuitLimits);
+        return faults;
     }
 
-    private List<Fault> getBusFaultFromBusId(String busId, Network network) {
+    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
+        String busId = context.getBusId();
         Identifiable<?> identifiable = network.getIdentifiable(busId);
+        Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
-        if (identifiable instanceof BusbarSection) {
-            String busIdFromBusView = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getId();
+        if (identifiable instanceof BusbarSection busbarSection) {
+            Bus bus = busbarSection.getTerminal().getBusView().getBus();
+            if (bus == null) {
+                throw new ShortCircuitException(BUS_OUT_OF_VOLTAGE, "Selected bus is out of voltage");
+            }
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
-                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
-            return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
+            context.setShortCircuitLimits(shortCircuitLimits);
+            return List.of(new BusFault(bus.getId(), bus.getId()));
         }
 
         if (identifiable instanceof Bus) {
@@ -148,9 +169,9 @@ public class ShortCircuitWorkerService {
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
+            context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
-
         throw new NoSuchElementException("No bus found for bus id " + busId);
     }
 
@@ -165,14 +186,14 @@ public class ShortCircuitWorkerService {
             }
 
             List<Fault> faults = context.getBusId() == null
-                ? getAllBusfaultFromNetwork(network)
-                : getBusFaultFromBusId(context.getBusId(), network);
+                ? getAllBusfaultFromNetwork(network, context)
+                : getBusFaultFromBusId(network, context);
 
             CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(
                 network,
                 faults,
                 context.getParameters(),
-                LocalComputationManager.getDefault(),
+                shortCircuitExecutionService.getComputationManager(),
                 List.of(),
                 reporter);
             if (resultUuid != null) {
@@ -203,6 +224,7 @@ public class ShortCircuitWorkerService {
     private void cleanShortCircuitAnalysisResultsAndPublishCancel(UUID resultUuid, String receiver) {
         resultRepository.delete(resultUuid);
         notificationService.publishStop(resultUuid, receiver);
+        LOGGER.info(CANCEL_MESSAGE + " (resultUuid='{}')", resultUuid);
     }
 
     @Bean
@@ -218,12 +240,17 @@ public class ShortCircuitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result, shortCircuitLimits, ShortCircuitAnalysisStatus.COMPLETED.name());
+                shortCircuitObserver.observe("results.save", () -> resultRepository.insert(
+                        resultContext.getResultUuid(),
+                        result,
+                        resultContext.getRunContext(),
+                        ShortCircuitAnalysisStatus.COMPLETED.name()
+                ));
                 long finalNanoTime = System.nanoTime();
                 LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
                 if (result != null) {  // result available
-                    if (!result.getFaultResults().isEmpty() &&
+                    if (!result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
                         result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
                         LOGGER.error("Short circuit analysis failed (resultUuid='{}')", resultContext.getResultUuid());
                         notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
@@ -241,8 +268,8 @@ public class ShortCircuitWorkerService {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
-                LOGGER.error(FAIL_MESSAGE, e);
                 if (!(e instanceof CancellationException)) {
+                    LOGGER.error(FAIL_MESSAGE, e);
                     notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage(), resultContext.getRunContext().getUserId(), resultContext.getRunContext().getBusId());
                     resultRepository.delete(resultContext.getResultUuid());
                 }

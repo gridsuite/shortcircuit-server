@@ -28,10 +28,7 @@ public class FeederResultEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID feederResultUuid;
 
-    @ManyToOne(
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fault_result_entity_fault_result_uuid")
     private FaultResultEntity faultResult;
 

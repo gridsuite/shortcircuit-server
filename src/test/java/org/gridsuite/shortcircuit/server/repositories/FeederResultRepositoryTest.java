@@ -7,7 +7,15 @@
 
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.powsybl.shortcircuit.*;
+import com.powsybl.shortcircuit.BusFault;
+import com.powsybl.shortcircuit.FaultResult;
+import com.powsybl.shortcircuit.FeederResult;
+import com.powsybl.shortcircuit.FortescueFaultResult;
+import com.powsybl.shortcircuit.FortescueFeederResult;
+import com.powsybl.shortcircuit.FortescueValue;
+import com.powsybl.shortcircuit.MagnitudeFaultResult;
+import com.powsybl.shortcircuit.MagnitudeFeederResult;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
@@ -27,11 +35,11 @@ import org.springframework.data.domain.Sort;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -75,7 +83,7 @@ class FeederResultRepositoryTest {
     @BeforeAll
     void setUp() {
         // Magnitude fault
-        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, MOCK_RUN_CONTEXT, "");
         resultMagnitudeEntity = shortCircuitAnalysisResultRepository.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FeederResultEntity> feederResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
@@ -85,7 +93,7 @@ class FeederResultRepositoryTest {
         feederResultEntity2 = feederResultEntities.get(1);
         feederResultEntity3 = feederResultEntities.get(2);
         // Fortescue fault
-        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, MOCK_RUN_CONTEXT, "");
         resultFortescueEntity = shortCircuitAnalysisResultRepository.findFullResults(FORTESCUE_RESULT_UUID).get();
         feederResultEntities = resultFortescueEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
