@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
@@ -28,6 +29,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.FILE_EXPORT_ERROR;
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.RESULT_NOT_FOUND;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -130,7 +134,7 @@ public class ShortCircuitService {
                         faultResult.getFault().getId(),
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        String.format("%.2f", faultResult.getPositiveMagnitude())
+                        Double.toString(faultResult.getPositiveMagnitude())
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
@@ -146,10 +150,10 @@ public class ShortCircuitService {
 
                 ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
                 faultRowData.addAll(List.of(
-                        String.format("%.2f", shortCircuitLimits.getIpMin()),
+                        Double.toString(shortCircuitLimits.getIpMin()),
                         Double.toString(shortCircuitLimits.getIpMax()),
-                        String.format("%.2f", faultResult.getShortCircuitPower()),
-                        String.format("%.2f", shortCircuitLimits.getDeltaCurrentIpMin()),
+                        Double.toString(faultResult.getShortCircuitPower()),
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
                 ));
 
@@ -163,7 +167,7 @@ public class ShortCircuitService {
                                 faultResult.getFault().getId(),
                                 "",
                                 feederResult.getConnectableId(),
-                                String.format("%.2f", feederResult.getPositiveMagnitude())
+                                Double.toString(feederResult.getPositiveMagnitude())
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
@@ -175,14 +179,14 @@ public class ShortCircuitService {
             csvWriter.close();
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            throw new ShortCircuitException(FILE_EXPORT_ERROR, e.getMessage());
         }
     }
 
     public byte[] getZippedCsvExportResult(UUID resultUuid, CsvTranslation csvTranslation) {
         ShortCircuitAnalysisResult result = getResult(resultUuid, FaultResultsMode.FULL);
         if (result == null) {
-            return new byte[0];
+            throw new ShortCircuitException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
         List<String> headersList = csvTranslation.headersCsv();
         Map<String, String> enumValueTranslations = csvTranslation.enumValueTranslations();

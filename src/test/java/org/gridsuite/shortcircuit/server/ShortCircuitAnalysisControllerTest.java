@@ -51,6 +51,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -60,6 +61,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
+import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -96,16 +98,18 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
 
     private static final List<String> CSV_HEADERS = List.of(
-            "ID nœud",
-            "Type",
-            "Départs",
-            "Icc (kA)",
-            "Type de limite",
-            "Icc min (kA)",
-            "IMACC (kA)",
-            "Pcc (MVA)",
-            "Icc - Icc min (kA)",
-            "Icc - IMACC (kA)"
+            """
+            ID nœud
+            Type
+            Départs
+            Icc (kA)
+            Type de limite
+            Icc min (kA)
+            IMACC (kA)
+            Pcc (MVA)
+            Icc - Icc min (kA)
+            Icc - IMACC (kA)
+            """
     );
 
     private final Map<String, String> enumTranslations = Map.of(
@@ -420,28 +424,18 @@ public class ShortCircuitAnalysisControllerTest {
                                     enumValueTranslations(enumTranslations).build())))
                     .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                     .andReturn();
-            byte[] zippedResult = result.getResponse().getContentAsByteArray();
-            try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zippedResult);
-                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
+            byte[] zipFile = result.getResponse().getContentAsByteArray();
+            byte[] unzippedCsvFile = unzip(zipFile);
+            String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
+            List<String> actualCsvLines = Arrays.asList(unzippedCsvFileAsString.split("\n"));
+            List<String> expectedLines = new ArrayList<>(List.of("Départs", "ID nœud", "IMACC (kA)", "Icc (kA)", "Icc - IMACC (kA)",
+                    "Icc - Icc min (kA)", "Pcc (MVA)",
+                    "Type", "Type de limite"
+                    ));
 
-                ZipEntry zipEntry = zipInputStream.getNextEntry();
-                if (zipEntry != null) {
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-
-                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
-                        byteArrayOutputStream.write(buffer, 0, bytesRead);
-                    }
-
-                    List<String> unzippedData = List.of(Arrays.asList(byteArrayOutputStream.toString()
-                            .split("\n")).get(0).split(","));
-                    List<String> expectedLines2 = new ArrayList<>(List.of("ID nœud", "Type", "Départs",
-                            "Icc (kA)", "Type de limite", "Icc min (kA)", "IMACC (kA)", "Pcc (MVA)",
-                            "Icc - Icc min (kA)", "Icc - IMACC (kA)"));
-                    assertEquals(unzippedData, expectedLines2);
-                }
-            }
+            actualCsvLines.sort(String::compareTo);
+            expectedLines.sort(String::compareTo);
+            assertEquals(expectedLines, actualCsvLines);
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
