@@ -94,18 +94,16 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
 
     private static final List<String> CSV_HEADERS = List.of(
-            """
-            ID nœud
-            Type
-            Départs
-            Icc (kA)
-            Type de limite
-            Icc min (kA)
-            IMACC (kA)
-            Pcc (MVA)
-            Icc - Icc min (kA)
-            Icc - IMACC (kA)
-            """
+            "ID nœud",
+            "Type",
+            "Départs",
+            "Icc (kA)",
+            "Type de limite",
+            "Icc min (kA)",
+            "IMACC (kA)",
+            "Pcc (MVA)",
+            "Icc - Icc min (kA)",
+            "Icc - IMACC (kA)"
     );
 
     private final Map<String, String> enumTranslations = Map.of(
@@ -423,14 +421,8 @@ public class ShortCircuitAnalysisControllerTest {
             byte[] zipFile = result.getResponse().getContentAsByteArray();
             byte[] unzippedCsvFile = unzip(zipFile);
             String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
-            List<String> actualCsvLines = Arrays.asList(unzippedCsvFileAsString.split("\n"));
-            List<String> expectedLines = new ArrayList<>(List.of("Départs", "ID nœud", "IMACC (kA)", "Icc (kA)", "Icc - IMACC (kA)",
-                    "Icc - Icc min (kA)", "Pcc (MVA)",
-                    "Type", "Type de limite"
-                    ));
-
-            actualCsvLines.sort(String::compareTo);
-            expectedLines.sort(String::compareTo);
+            List<String> actualCsvLines = List.of(Arrays.asList(unzippedCsvFileAsString.split("\n")).get(0).split(","));
+            List<String> expectedLines = new ArrayList<>(CSV_HEADERS);
             assertEquals(expectedLines, actualCsvLines);
 
             // should throw not found if result does not exist
