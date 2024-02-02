@@ -266,8 +266,7 @@ public class ShortCircuitAnalysisResultRepository {
     public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
         Objects.requireNonNull(result);
         Specification<FeederResultEntity> specification = FeederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
-        Pageable modifiedPageable = addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN);
-        return feederResultRepository.findAll(specification, modifiedPageable);
+        return feederResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN));
     }
 
     @Transactional(readOnly = true)
@@ -279,8 +278,7 @@ public class ShortCircuitAnalysisResultRepository {
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Pageable modifiedPageable = addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN);
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, modifiedPageable);
+        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
         if (faultResultsPage.hasContent()) {
             appendLimitViolationsAndFeederResults(faultResultsPage);
         }
@@ -311,19 +309,10 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private Pageable addDefaultSort(Pageable pageable, String defaultSortColumn) {
-        if (pageable.isPaged()) {
-            if (pageable.getSort().equals(Sort.unsorted())) {
-                //if there is no sort on the original request we just add the default one
-                return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(DEFAULT_SORT_DIRECTION, defaultSortColumn));
-            } else {
-                //else we restore the original sort, and then we add the default sort on top of it to ensure there is a deterministic result
-                if (pageable.getSort().getOrderFor(defaultSortColumn) == null) {
-                    //if it's already sorted by our defaultColumn we don't add another sort by the same column
-                    Sort additionalSort = Sort.by(new Sort.Order(DEFAULT_SORT_DIRECTION, defaultSortColumn));
-                    Sort finalSort = pageable.getSort().and(additionalSort);
-                    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
-                }
-            }
+        if (pageable.isPaged() && pageable.getSort().getOrderFor(defaultSortColumn) == null) {
+            //if it's already sorted by our defaultColumn we don't add another sort by the same column
+            Sort finalSort = pageable.getSort().and(Sort.by(new Sort.Order(DEFAULT_SORT_DIRECTION, defaultSortColumn)));
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
         }
         //nothing to do if the request is not paged
         return pageable;

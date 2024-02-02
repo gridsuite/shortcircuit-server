@@ -379,19 +379,19 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("connectableId")),
-                    feederResultListByConnectableId),
+                feederResultListByConnectableId),
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("connectableId").descending()),
-                    feederResultListByConnectableIdDesc),
+                feederResultListByConnectableIdDesc),
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("current")),
-                    feederResultListByCurrent),
+                feederResultListByCurrent),
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("current").descending()),
-                    feederResultListByCurrentDesc)
+                feederResultListByCurrentDesc)
         );
     }
 

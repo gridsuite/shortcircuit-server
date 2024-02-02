@@ -118,7 +118,7 @@ class FaultResultRepositoryTest {
         "provideNotEqualNestedFieldsFilters"
     })
     void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FaultResultEntity> faultList) {
-        //Test with unpaged request and expect the result to be sorted by uuid anyway
+        //Test with unsorted request and expect the result to be sorted by uuid anyway
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC);
         List<String> sortedFaultPageUuid = faultPage.getContent().stream().sorted(Comparator.comparing(o -> o.getFaultResultUuid().toString()))
                 .map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
@@ -133,7 +133,6 @@ class FaultResultRepositoryTest {
                 .containsExactlyElementsOf(sortedFaultPageUuid);
 
         //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
-        //Test with pageable containing a sort by current and expect the results to be sorted by current
         faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
         sortedFaultPageUuid = faultPage.getContent().stream().sorted(Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()))
                 .map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
