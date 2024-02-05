@@ -15,7 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -150,12 +153,13 @@ public class ShortCircuitService {
         result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
             Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
+            Pageable deterministicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), appendUniqueOrderIfNecessary(pageable.getSort(), new Order(Sort.Direction.ASC, "fault.id")));
             switch (mode) {
                 case BASIC, FULL:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), resourceFilters, deterministicPageable, mode);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, deterministicPageable);
                     break;
                 case NONE:
                 default:
@@ -164,7 +168,7 @@ public class ShortCircuitService {
             Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(deterministicPageable.toString()));
             }
             return faultResultsPage;
         }
@@ -177,11 +181,12 @@ public class ShortCircuitService {
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
-            Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(result.get(), resourceFilters, pageable);
+            Pageable deterministicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), appendUniqueOrderIfNecessary(pageable.getSort(), new Order(Sort.Direction.ASC, "feederResultUuid")));
+            Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(result.get(), resourceFilters, deterministicPageable);
             Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(deterministicPageable.toString()));
             }
             return feederResultsPage;
         }
@@ -206,5 +211,16 @@ public class ShortCircuitService {
 
     public void stop(UUID resultUuid, String receiver) {
         notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
+    }
+
+    // If the Sort Orders in Pageable contains already a sort Order on the property column then do not append it
+    // otherwise append it at THE END to allow sorting rules to happen with rows containing same value on the sorted column
+    // and then finally define a deterministic order.
+    private Sort appendUniqueOrderIfNecessary(Sort sourceSort, Order uniqueOrder) {
+        Order order = sourceSort.getOrderFor(uniqueOrder.getProperty());
+        if (order == null) {
+            return sourceSort.and(Sort.by(uniqueOrder));
+        }
+        return sourceSort;
     }
 }
