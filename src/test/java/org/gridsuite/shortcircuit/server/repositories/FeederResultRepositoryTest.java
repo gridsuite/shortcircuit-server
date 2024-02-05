@@ -163,26 +163,26 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_2", "connectableId")),
-                    feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_2")).toList()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_2")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_4", "connectableId")),
-                    feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_4")).toList()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_4")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_1", "connectableId"),
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_3", "connectableId")),
-                    feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_1")
-                            && feederResultEntity.getConnectableId().contains("ID_3")).toList()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_1")
+                && feederResultEntity.getConnectableId().contains("ID_3")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "CONN", "connectableId"),
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID", "connectableId")),
-                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("CONN")
-                        && feederResultEntity.getConnectableId().contains("ID")).toList()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("CONN")
+                && feederResultEntity.getConnectableId().contains("ID")).toList()),
             // we test escaping of wildcard chars also
             Arguments.of(
                 resultMagnitudeEntity,
@@ -194,13 +194,13 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "_D_1", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("_D_1")).toList()),
-                // case insensitive
+            // case insensitive
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "id_2", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.containsIgnoreCase(feederResultEntity.getConnectableId(), "id_2")).toList())
-                );
+        );
     }
 
     private Stream<Arguments> provideStartsWithFilters() {
@@ -210,7 +210,7 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "A_CONN")).toList()),
-                Arguments.of(
+            Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
@@ -232,7 +232,7 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "a_conn", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWithIgnoreCase(feederResultEntity.getConnectableId(), "a_conn")).toList())
-                );
+        );
     }
 
     private Stream<Arguments> provideNotEqualFilters() {
@@ -285,7 +285,7 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current")),
-                    feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
