@@ -218,7 +218,7 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static void assertPagedFaultResultsEquals(ShortCircuitAnalysisResult result, List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResults) {
         assertEquals(result.getFaultResults().size(), faultResults.size());
-        var orderedFaultResults = faultResults.stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
+        List<org.gridsuite.shortcircuit.server.dto.FaultResult> orderedFaultResults = faultResults.stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
         // don't need to sort here it's done in the paged request
         assertFaultResultsEquals(result.getFaultResults(), orderedFaultResults);
     }

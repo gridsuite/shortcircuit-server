@@ -1,6 +1,6 @@
 package org.gridsuite.shortcircuit.server.dto;
 
-import lombok.*;
+import lombok.Builder;
 
 import java.util.List;
 import java.util.Map;
