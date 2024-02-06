@@ -16,6 +16,7 @@ import com.powsybl.shortcircuit.FortescueValue;
 import com.powsybl.shortcircuit.MagnitudeFaultResult;
 import com.powsybl.shortcircuit.MagnitudeFeederResult;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
@@ -33,9 +34,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,11 +73,18 @@ class FeederResultRepositoryTest {
     private FeederResultEntity feederResultEntity4;
     private FeederResultEntity feederResultEntity5;
     private FeederResultEntity feederResultEntity6;
+
+    private final ArrayList<FeederResultEntity> feederResultEntityMagnitudeList = new ArrayList<>();
+
+    private final ArrayList<FeederResultEntity> feederResultEntityFortescueList = new ArrayList<>();
     private ShortCircuitAnalysisResultEntity resultMagnitudeEntity;
     private ShortCircuitAnalysisResultEntity resultFortescueEntity;
 
     @Autowired
     private ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
+
+    @Autowired
+    FeederResultRepository feederResultRepository;
 
     @BeforeAll
     void setUp() {
@@ -87,21 +93,28 @@ class FeederResultRepositoryTest {
         resultMagnitudeEntity = shortCircuitAnalysisResultRepository.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FeederResultEntity> feederResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
-            .sorted(Comparator.comparing(FeederResultEntity::getConnectableId))
+            .sorted(Comparator.comparing(f1 -> f1.getFeederResultUuid().toString()))
             .toList();
         feederResultEntity1 = feederResultEntities.get(0);
         feederResultEntity2 = feederResultEntities.get(1);
         feederResultEntity3 = feederResultEntities.get(2);
+        feederResultEntityMagnitudeList.add(feederResultEntity1);
+        feederResultEntityMagnitudeList.add(feederResultEntity2);
+        feederResultEntityMagnitudeList.add(feederResultEntity3);
+
         // Fortescue fault
         shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, MOCK_RUN_CONTEXT, "");
         resultFortescueEntity = shortCircuitAnalysisResultRepository.findFullResults(FORTESCUE_RESULT_UUID).get();
         feederResultEntities = resultFortescueEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
-            .sorted(Comparator.comparing(FeederResultEntity::getConnectableId))
+            .sorted(Comparator.comparing(f1 -> f1.getFeederResultUuid().toString()))
             .toList();
         feederResultEntity4 = feederResultEntities.get(0);
         feederResultEntity5 = feederResultEntities.get(1);
         feederResultEntity6 = feederResultEntities.get(2);
+        feederResultEntityFortescueList.add(feederResultEntity4);
+        feederResultEntityFortescueList.add(feederResultEntity5);
+        feederResultEntityFortescueList.add(feederResultEntity6);
     }
 
     @AfterAll
@@ -120,8 +133,9 @@ class FeederResultRepositoryTest {
     })
     void feederResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FeederResultEntity> feederList) {
         Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged());
+        //since the request is unpaged we only care about the result and not the order
         assertThat(feederPage.getContent()).extracting("feederResultUuid").describedAs("Check if the IDs of the feeder page are correct")
-            .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
+            .containsExactlyInAnyOrderElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
 
     @ParameterizedTest(name = "[{index}] Using the pageable {1} should return the given entities")
@@ -149,41 +163,43 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_2", "connectableId")),
-                List.of(feederResultEntity2)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_2")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_4", "connectableId")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_4")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_1", "connectableId"),
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_3", "connectableId")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_1")
+                && feederResultEntity.getConnectableId().contains("ID_3")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "CONN", "connectableId"),
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID", "connectableId")),
-                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("CONN")
+                && feederResultEntity.getConnectableId().contains("ID")).toList()),
             // we test escaping of wildcard chars also
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "%", "connectableId")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("%")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "_D_1", "connectableId")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("_D_1")).toList()),
             // case insensitive
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "id_2", "connectableId")),
-                List.of(feederResultEntity2))
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.containsIgnoreCase(feederResultEntity.getConnectableId(), "id_2")).toList())
         );
     }
 
@@ -193,29 +209,29 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId")),
-                List.of(feederResultEntity1, feederResultEntity2)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "A_CONN")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
-                List.of(feederResultEntity3)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "B_CONN")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "CONN", "connectableId")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "CONN")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId"),
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "A_CONN") && StringUtils.startsWith(feederResultEntity.getConnectableId(), "B_CONN")).toList()),
             // case insensitive
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "a_conn", "connectableId")),
-                List.of(feederResultEntity1, feederResultEntity2))
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWithIgnoreCase(feederResultEntity.getConnectableId(), "a_conn")).toList())
         );
     }
 
@@ -225,18 +241,18 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 22.17, "current")),
-                List.of(feederResultEntity2, feederResultEntity3)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(22.17)).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 18.56, "current")),
-                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(18.56)).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 53.94, "current")),
-                List.of(feederResultEntity2))
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(22.17) && !((Double) feederResultEntity.getCurrent()).equals(53.94)).toList())
         );
     }
 
@@ -246,18 +262,20 @@ class FeederResultRepositoryTest {
                 resultFortescueEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.328664779663086, "fortescueCurrent.positiveMagnitude")),
-                List.of(feederResultEntity5, feederResultEntity6)),
+                feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(45.328664779663086)).toList()),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 42, "fortescueCurrent.positiveMagnitude")),
-                List.of(feederResultEntity4, feederResultEntity5, feederResultEntity6)),
+                feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(42d)).toList()),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.328664779663086, "fortescueCurrent.positiveMagnitude"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 18.170874567665456, "fortescueCurrent.positiveMagnitude")),
-                List.of(feederResultEntity5))
+                feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(45.328664779663086)
+                && !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(18.170874567665456)).toList())
+
         );
     }
 
@@ -267,23 +285,23 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current")),
-                List.of(feederResultEntity1, feederResultEntity2)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 18.56, "current")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 18.56) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
-                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
-                List.of(feederResultEntity1, feederResultEntity2))
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList())
         );
     }
 
@@ -293,23 +311,23 @@ class FeederResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current")),
-                List.of(feederResultEntity1, feederResultEntity3)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 18.56, "current")),
-                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 18.56) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.95, "current")),
-                List.of()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.95) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
-                List.of(feederResultEntity3))
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) >= 0).toList())
         );
     }
 
@@ -348,23 +366,32 @@ class FeederResultRepositoryTest {
     }
 
     private Stream<Arguments> provideSortingPageable() {
+        ArrayList<FeederResultEntity> feederResultList = new ArrayList<>() {{
+                add(feederResultEntity1);
+                add(feederResultEntity2);
+                add(feederResultEntity3);
+            }};
+        List<FeederResultEntity> feederResultListByConnectableId = feederResultList.stream().sorted(Comparator.comparing(FeederResultEntity::getConnectableId)).toList();
+        List<FeederResultEntity> feederResultListByConnectableIdDesc = feederResultList.stream().sorted(Comparator.comparing(FeederResultEntity::getConnectableId).reversed()).toList();
+        List<FeederResultEntity> feederResultListByCurrent = feederResultList.stream().sorted(Comparator.comparing(FeederResultEntity::getCurrent)).toList();
+        List<FeederResultEntity> feederResultListByCurrentDesc = feederResultList.stream().sorted(Comparator.comparing(FeederResultEntity::getCurrent).reversed()).toList();
         return Stream.of(
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("connectableId")),
-                List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3)),
+                feederResultListByConnectableId),
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("connectableId").descending()),
-                List.of(feederResultEntity3, feederResultEntity2, feederResultEntity1)),
+                feederResultListByConnectableIdDesc),
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("current")),
-                List.of(feederResultEntity2, feederResultEntity1, feederResultEntity3)),
+                feederResultListByCurrent),
             Arguments.of(
                 resultMagnitudeEntity,
                 PageRequest.of(0, 5, Sort.by("current").descending()),
-                List.of(feederResultEntity3, feederResultEntity1, feederResultEntity2))
+                feederResultListByCurrentDesc)
         );
     }
 
