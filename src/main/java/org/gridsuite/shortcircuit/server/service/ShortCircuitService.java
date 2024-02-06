@@ -8,6 +8,9 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.LogUtils;
+import com.univocity.parsers.csv.CsvWriter;
+import com.univocity.parsers.csv.CsvWriterSettings;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
@@ -19,10 +22,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -108,6 +116,83 @@ public class ShortCircuitService {
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
         return result;
+    }
+
+    public byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations) {
+        List<FaultResult> faultResults = result.getFaults();
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            CsvWriterSettings settings = new CsvWriterSettings();
+            CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
+            zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
+            csvWriter.writeHeaders(headersList);
+
+            for (FaultResult faultResult : faultResults) {
+                // Process faultResult data
+                List<String> faultRowData = new ArrayList<>(List.of(
+                        faultResult.getFault().getId(),
+                        enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
+                        "",
+                        Double.toString(faultResult.getPositiveMagnitude())
+                ));
+
+                List<LimitViolation> limitViolations = faultResult.getLimitViolations();
+                if (!limitViolations.isEmpty()) {
+                    String limitTypes = limitViolations.stream()
+                            .map(LimitViolation::getLimitType)
+                            .map(type -> enumValueTranslations.getOrDefault(type, ""))
+                            .collect(Collectors.joining(", "));
+                    faultRowData.add(limitTypes);
+                } else {
+                    faultRowData.add("");
+                }
+
+                ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
+                faultRowData.addAll(List.of(
+                        Double.toString(shortCircuitLimits.getIpMin()),
+                        Double.toString(shortCircuitLimits.getIpMax()),
+                        Double.toString(faultResult.getShortCircuitPower()),
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
+                ));
+
+                csvWriter.writeRow(faultRowData);
+
+                // Process feederResults data
+                List<FeederResult> feederResults = faultResult.getFeederResults();
+                if (!feederResults.isEmpty()) {
+                    for (FeederResult feederResult : feederResults) {
+                        List<String> feederRowData = new ArrayList<>(List.of(
+                                faultResult.getFault().getId(),
+                                "",
+                                feederResult.getConnectableId(),
+                                Double.toString(feederResult.getPositiveMagnitude())
+                        ));
+                        csvWriter.writeRow(feederRowData);
+                    }
+                } else {
+                    csvWriter.writeRow(List.of("", "", "", ""));
+                }
+            }
+
+            csvWriter.close();
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new ShortCircuitException(FILE_EXPORT_ERROR, e.getMessage());
+        }
+    }
+
+    public byte[] getZippedCsvExportResult(UUID resultUuid, CsvTranslation csvTranslation) {
+        ShortCircuitAnalysisResult result = getResult(resultUuid, FaultResultsMode.FULL);
+        if (result == null) {
+            throw new ShortCircuitException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
+        }
+        if (Objects.isNull(csvTranslation) || Objects.isNull(csvTranslation.headersCsv()) || Objects.isNull(csvTranslation.enumValueTranslations())) {
+            throw new ShortCircuitException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
+        }
+        List<String> headersList = csvTranslation.headersCsv();
+        Map<String, String> enumValueTranslations = csvTranslation.enumValueTranslations();
+        return exportToCsv(result, headersList, enumValueTranslations);
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {

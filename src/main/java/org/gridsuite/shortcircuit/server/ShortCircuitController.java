@@ -29,7 +29,7 @@ import java.util.*;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -80,6 +80,18 @@ public class ShortCircuitController {
         ShortCircuitAnalysisResult result = shortCircuitService.getResult(resultUuid, mode);
         return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
                 : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping(value = "/results/{resultUuid}/csv", produces = APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Get a short circuit analysis csv result from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis csv export"),
+        @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
+    public ResponseEntity<byte[]> getZippedCsvExportFaultResult(
+            @Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+            @Parameter(description = "Csv headers and translations payload") @RequestBody CsvTranslation csvTranslation) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
+                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, csvTranslation));
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)

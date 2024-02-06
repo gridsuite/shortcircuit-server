@@ -17,7 +17,10 @@ import java.util.Objects;
 public class ShortCircuitException extends RuntimeException {
 
     public enum Type {
-        BUS_OUT_OF_VOLTAGE
+        BUS_OUT_OF_VOLTAGE,
+        RESULT_NOT_FOUND,
+        INVALID_EXPORT_PARAMS,
+        FILE_EXPORT_ERROR,
     }
 
     private final Type type;
@@ -30,5 +33,9 @@ public class ShortCircuitException extends RuntimeException {
     public ShortCircuitException(Type type, String message) {
         super(message);
         this.type = type;
+    }
+
+    public Type getType() {
+        return type;
     }
 }

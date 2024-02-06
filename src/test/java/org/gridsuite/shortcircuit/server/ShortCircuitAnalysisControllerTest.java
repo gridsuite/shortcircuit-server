@@ -24,6 +24,7 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
+import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
@@ -52,6 +53,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -59,6 +61,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
+import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
@@ -95,6 +98,32 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_3_ID = "variant_3";
     private static final String VARIANT_4_ID = "variant_4";
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
+
+    private static final List<String> CSV_HEADERS = List.of(
+            "ID nœud",
+            "Type",
+            "Départs",
+            "Icc (kA)",
+            "Type de limite",
+            "Icc min (kA)",
+            "IMACC (kA)",
+            "Pcc (MVA)",
+            "Icc - Icc min (kA)",
+            "Icc - IMACC (kA)"
+    );
+
+    private final Map<String, String> enumTranslations = Map.of(
+            "THREE_PHASE", "Triphasé",
+            "SINGLE_PHASE", "Monophasé",
+            "ACTIVE_POWER", "Puissance active",
+            "APPARENT_POWER", "Puissance apparente",
+            "CURRENT", "Intensité",
+            "LOW_VOLTAGE", "Tension basse",
+            "HIGH_VOLTAGE", "Tension haute",
+            "LOW_SHORT_CIRCUIT_CURRENT", "Icc min",
+            "HIGH_SHORT_CIRCUIT_CURRENT", "Icc max",
+            "OTHER", "Autre"
+    );
 
     private static final int TIMEOUT = 1000;
 
@@ -421,6 +450,21 @@ public class ShortCircuitAnalysisControllerTest {
             //result should be sorted by fault.id + we add a sort by resultUuid
             expectedResultsIdInOrder = faultsFromDatabase.stream().sorted(comparatorByFaultIdDescAndResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full, expectedResultsIdInOrder);
+
+            // export zipped csv result
+            result = mockMvc.perform(post(
+                            "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(CsvTranslation.builder().headersCsv(CSV_HEADERS).
+                                    enumValueTranslations(enumTranslations).build())))
+                    .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                    .andReturn();
+            byte[] zipFile = result.getResponse().getContentAsByteArray();
+            byte[] unzippedCsvFile = unzip(zipFile);
+            String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
+            List<String> actualCsvLines = List.of(Arrays.asList(unzippedCsvFileAsString.split("\n")).get(0).split(","));
+            List<String> expectedLines = new ArrayList<>(CSV_HEADERS);
+            assertEquals(expectedLines, actualCsvLines);
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
