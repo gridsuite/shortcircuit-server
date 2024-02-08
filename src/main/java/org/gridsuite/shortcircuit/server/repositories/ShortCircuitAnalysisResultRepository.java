@@ -255,15 +255,42 @@ public class ShortCircuitAnalysisResultRepository {
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
+        Optional<Sort.Order> optBaseSort = pageable.getSort().stream().findFirst();
         Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
         if (faultResultsPage.hasContent() && mode != FaultResultsMode.BASIC) {
             appendLimitViolationsAndFeederResults(faultResultsPage);
+
+            // children "feeders" sorting :
+            // TODO : temporary fill method: it will be necessary to reuse the Order object directly without all these if/else
+            boolean childrenSorting = false;
+            if (optBaseSort.isPresent()) {
+                Sort.Order baseSort = optBaseSort.get();
+                if (baseSort.getProperty().equals("current")) {
+                    childrenSorting = true;
+                    if (baseSort.isAscending()) {
+                        faultResultsPage.map(res -> {
+                            res.getFeederResults().sort(
+                                    Comparator.comparingDouble(FeederResultEntity::getCurrent));
+                            return res;
+                        });
+                    } else {
+                        faultResultsPage.map(res -> {
+                            res.getFeederResults().sort(
+                                    Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed());
+                            return res;
+                        });
+                    }
+                }
+            }
+
             // by default feederResults (within each individual faultResult) are sorted by current in descending order :
-            faultResultsPage.map(res -> {
-                res.getFeederResults().sort(
-                        Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed());
-                return res;
-            });
+            if (!childrenSorting) {
+                faultResultsPage.map(res -> {
+                    res.getFeederResults().sort(
+                            Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed());
+                    return res;
+                });
+            }
         }
         return faultResultsPage;
     }
