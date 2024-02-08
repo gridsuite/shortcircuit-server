@@ -65,7 +65,7 @@ public class ShortCircuitAnalysisResultRepository {
             .map(limitViolation -> new LimitViolationEmbeddable(limitViolation.getSubjectId(),
                 limitViolation.getLimitType(), limitViolation.getLimit(),
                 limitViolation.getLimitName(), limitViolation.getValue()))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
@@ -116,7 +116,7 @@ public class ShortCircuitAnalysisResultRepository {
         entity.setFeederResults(faultResult.getFeederResults().stream()
                 .map(feederResult -> new FeederResultEntity(feederResult.getConnectableId(),
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
-                .collect(Collectors.toList()));
+                .toList());
         if (shortCircuitLimits != null) {
             entity.setDeltaCurrentIpMin(current - entity.getIpMin() / 1000.0);
             entity.setDeltaCurrentIpMax(current - entity.getIpMax() / 1000.0);
@@ -138,7 +138,7 @@ public class ShortCircuitAnalysisResultRepository {
                             feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(),
                             feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
                 })
-                .collect(Collectors.toList()));
+                .toList());
 
         final FortescueValue current = faultResult.getCurrent();
         if (shortCircuitLimits != null) {
@@ -163,7 +163,7 @@ public class ShortCircuitAnalysisResultRepository {
     public void insertStatus(List<UUID> resultUuids, String status) {
         Objects.requireNonNull(resultUuids);
         globalStatusRepository.saveAll(resultUuids.stream()
-            .map(uuid -> toStatusEntity(uuid, status)).collect(Collectors.toList()));
+            .map(uuid -> toStatusEntity(uuid, status)).toList());
     }
 
     @Transactional
@@ -238,7 +238,7 @@ public class ShortCircuitAnalysisResultRepository {
         List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
                                                             .filter(fr -> !fr.getLimitViolations().isEmpty())
                                                             .map(FaultResultEntity::getFaultResultUuid)
-                                                            .collect(Collectors.toList());
+                                                            .toList();
         // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
@@ -258,6 +258,12 @@ public class ShortCircuitAnalysisResultRepository {
         Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
         if (faultResultsPage.hasContent() && mode != FaultResultsMode.BASIC) {
             appendLimitViolationsAndFeederResults(faultResultsPage);
+            // by default feederResults (within each individual faultResult) are sorted by current in descending order :
+            faultResultsPage.map(res -> {
+                res.getFeederResults().sort(
+                        Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed());
+                return res;
+            });
         }
         return faultResultsPage;
     }
@@ -291,7 +297,7 @@ public class ShortCircuitAnalysisResultRepository {
         if (!pagedFaultResults.isEmpty()) {
             List<UUID> faultResultsUuids = pagedFaultResults.stream()
                     .map(FaultResultEntity::getFaultResultUuid)
-                    .collect(Collectors.toList());
+                    .toList();
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
             faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuids);
         }
