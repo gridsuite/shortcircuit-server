@@ -123,8 +123,11 @@ public class ShortCircuitService {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             CsvWriterSettings settings = new CsvWriterSettings();
-            CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
             zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
+            outputStream.write(0xef);
+            outputStream.write(0xbb);
+            outputStream.write(0xbf);
+            CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
             csvWriter.writeHeaders(headersList);
 
             for (FaultResult faultResult : faultResults) {
@@ -133,7 +136,7 @@ public class ShortCircuitService {
                         faultResult.getFault().getId(),
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        Double.toString(faultResult.getPositiveMagnitude())
+                        Double.isNaN(faultResult.getPositiveMagnitude()) ? "" : String.format("%.2f", faultResult.getPositiveMagnitude() / 1000.0)
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
@@ -150,7 +153,7 @@ public class ShortCircuitService {
                 ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
                 faultRowData.addAll(List.of(
                         Double.toString(shortCircuitLimits.getIpMin()),
-                        Double.toString(shortCircuitLimits.getIpMax()),
+                        String.format("%.2f",shortCircuitLimits.getIpMax() / 1000.0),
                         Double.toString(faultResult.getShortCircuitPower()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
@@ -166,7 +169,7 @@ public class ShortCircuitService {
                                 faultResult.getFault().getId(),
                                 "",
                                 feederResult.getConnectableId(),
-                                Double.toString(feederResult.getPositiveMagnitude())
+                                Double.isNaN(feederResult.getPositiveMagnitude()) ? "" : String.format("%.2f", feederResult.getPositiveMagnitude() / 1000.0)
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
