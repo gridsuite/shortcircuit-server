@@ -126,6 +126,7 @@ public class ShortCircuitService {
             zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
 
             // This code is for writing the UTF-8 Byte Order Mark (BOM) to a ZipOutputStream
+            // by adding BOM to the beginning of file to help excel in some versions to detect this is UTF-8 encoding bytes
             zipOutputStream.write(0xef);
             zipOutputStream.write(0xbb);
             zipOutputStream.write(0xbf);
