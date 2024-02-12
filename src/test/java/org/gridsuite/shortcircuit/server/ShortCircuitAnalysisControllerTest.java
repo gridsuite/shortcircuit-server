@@ -463,8 +463,20 @@ public class ShortCircuitAnalysisControllerTest {
             byte[] unzippedCsvFile = unzip(zipFile);
             String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
             List<String> actualCsvLines = List.of(Arrays.asList(unzippedCsvFileAsString.split("\n")).get(0).split(","));
-            List<String> expectedLines = new ArrayList<>(CSV_HEADERS);
-            assertEquals(expectedLines.size(), actualCsvLines.size());
+            // Including "\uFEFF" indicates the UTF-8 BOM at the start
+            List<String> expectedLines = List.of(
+                    "\uFEFFID nœud",
+                    "Type",
+                    "Départs",
+                    "Icc (kA)",
+                    "Type de limite",
+                    "Icc min (kA)",
+                    "IMACC (kA)",
+                    "Pcc (MVA)",
+                    "Icc - Icc min (kA)",
+                    "Icc - IMACC (kA)"
+            );
+            assertEquals(expectedLines, actualCsvLines);
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
