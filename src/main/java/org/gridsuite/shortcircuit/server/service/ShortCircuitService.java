@@ -142,7 +142,7 @@ public class ShortCircuitService {
                         faultResult.getFault().getId(),
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        Double.isNaN(faultResult.getPositiveMagnitude()) ? "" : String.format("%.2f", faultResult.getPositiveMagnitude() / 1000.0)
+                        Double.isNaN(faultResult.getPositiveMagnitude()) ? "" : Double.toString(faultResult.getPositiveMagnitude())
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
@@ -158,8 +158,8 @@ public class ShortCircuitService {
 
                 ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
                 faultRowData.addAll(List.of(
-                        Double.toString(shortCircuitLimits.getIpMin()),
-                        String.format("%.2f", shortCircuitLimits.getIpMax() / 1000.0),
+                        Double.toString(shortCircuitLimits.getIpMin() / 1000.0),
+                        Double.toString(shortCircuitLimits.getIpMax() / 1000.0),
                         Double.toString(faultResult.getShortCircuitPower()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
@@ -175,7 +175,7 @@ public class ShortCircuitService {
                                 faultResult.getFault().getId(),
                                 "",
                                 feederResult.getConnectableId(),
-                                Double.isNaN(feederResult.getPositiveMagnitude()) ? "" : String.format("%.2f", feederResult.getPositiveMagnitude() / 1000.0)
+                                Double.isNaN(feederResult.getPositiveMagnitude()) ? "" : Double.toString(feederResult.getPositiveMagnitude())
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
