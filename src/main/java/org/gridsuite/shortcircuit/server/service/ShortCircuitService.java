@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -124,13 +125,13 @@ public class ShortCircuitService {
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
 
-            // Write UTF-8 BOM
+            // This code is for writing the UTF-8 Byte Order Mark (BOM) to a ZipOutputStream
             zipOutputStream.write(0xef);
             zipOutputStream.write(0xbb);
             zipOutputStream.write(0xbf);
 
             CsvWriterSettings settings = new CsvWriterSettings();
-            CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
+            CsvWriter csvWriter = new CsvWriter(zipOutputStream, StandardCharsets.UTF_8, settings);
 
             // Write headers to the CSV file
             csvWriter.writeHeaders(headersList);
