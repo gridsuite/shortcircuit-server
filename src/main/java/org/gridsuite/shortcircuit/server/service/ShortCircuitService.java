@@ -153,7 +153,7 @@ public class ShortCircuitService {
                 ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
                 faultRowData.addAll(List.of(
                         Double.toString(shortCircuitLimits.getIpMin()),
-                        String.format("%.2f",shortCircuitLimits.getIpMax() / 1000.0),
+                        String.format("%.2f", shortCircuitLimits.getIpMax() / 1000.0),
                         Double.toString(faultResult.getShortCircuitPower()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
