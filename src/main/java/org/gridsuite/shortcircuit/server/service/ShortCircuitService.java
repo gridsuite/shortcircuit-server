@@ -122,14 +122,20 @@ public class ShortCircuitService {
         List<FaultResult> faultResults = result.getFaults();
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-            CsvWriterSettings settings = new CsvWriterSettings();
             zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
-            outputStream.write(0xef);
-            outputStream.write(0xbb);
-            outputStream.write(0xbf);
+
+            // Write UTF-8 BOM
+            zipOutputStream.write(0xef);
+            zipOutputStream.write(0xbb);
+            zipOutputStream.write(0xbf);
+
+            CsvWriterSettings settings = new CsvWriterSettings();
             CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
+
+            // Write headers to the CSV file
             csvWriter.writeHeaders(headersList);
 
+            // Write data to the CSV file
             for (FaultResult faultResult : faultResults) {
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
