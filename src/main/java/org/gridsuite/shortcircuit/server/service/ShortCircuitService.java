@@ -139,12 +139,16 @@ public class ShortCircuitService {
 
             // Write data to the CSV file
             for (FaultResult faultResult : faultResults) {
+                String faultResultId = faultResult.getFault().getId();
+                double faultCurrentValue = faultResults.size() == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent();
+                String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : Double.toString(faultCurrentValue);
+
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
-                        faultResult.getFault().getId(),
+                        faultResultId,
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        Double.isNaN(faultResult.getPositiveMagnitude()) ? "" : Double.toString(faultResult.getPositiveMagnitude())
+                        faultCurrentValueStr
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
@@ -173,11 +177,13 @@ public class ShortCircuitService {
                 List<FeederResult> feederResults = faultResult.getFeederResults();
                 if (!feederResults.isEmpty()) {
                     for (FeederResult feederResult : feederResults) {
+                        double feederCurrentValue = faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent();
+                        String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
                         List<String> feederRowData = new ArrayList<>(List.of(
-                                faultResult.getFault().getId(),
+                                faultResultId,
                                 "",
                                 feederResult.getConnectableId(),
-                                Double.isNaN(feederResult.getPositiveMagnitude()) ? "" : Double.toString(feederResult.getPositiveMagnitude())
+                                feederCurrentValueStr
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
