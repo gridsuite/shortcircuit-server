@@ -16,11 +16,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -104,9 +106,16 @@ public class ShortCircuitController {
                                                                       "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
                                                                       "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
+                                                                  @Parameter(description = "secSortKey") @RequestParam(name = "sec_sort_key", defaultValue = "") String secSortKey,
+                                                                  @Parameter(description = "secSortDirection") @RequestParam(name = "sec_sort_dir", required = false) String secSortDirection,
                                                                   Pageable pageable) throws JsonProcessingException {
         List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
-        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, resourceFilters, pageable);
+        // parse to get secondary sorting :
+        Sort.Order secondarySort = null;
+        if (StringUtils.isNotBlank(secSortKey)) {
+            secondarySort = new Sort.Order(Sort.Direction.fromString(secSortDirection), secSortKey);
+        }
+        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, resourceFilters, pageable, secondarySort);
         return faultResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage)
             : ResponseEntity.notFound().build();
     }

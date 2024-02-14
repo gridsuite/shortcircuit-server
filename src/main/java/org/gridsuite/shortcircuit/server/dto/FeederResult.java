@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FeederResult {
+    public static final String CONNECTABLE_ID_COL = "connectableId";
+
     private String connectableId;
 
     private double current;

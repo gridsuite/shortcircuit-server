@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -227,7 +228,11 @@ public class ShortCircuitService {
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResult> getFaultResultsPage(UUID resultUuid, FaultResultsMode mode, List<ResourceFilter> resourceFilters, Pageable pageable) {
+    public Page<FaultResult> getFaultResultsPage(UUID resultUuid,
+                                                 FaultResultsMode mode,
+                                                 List<ResourceFilter> resourceFilters,
+                                                 Pageable pageable,
+                                                 Sort.Order secSort) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
@@ -237,10 +242,10 @@ public class ShortCircuitService {
             Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
             switch (mode) {
                 case BASIC, FULL:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), resourceFilters, pageable, mode, secSort);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable);
+                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable, secSort);
                     break;
                 case NONE:
                 default:

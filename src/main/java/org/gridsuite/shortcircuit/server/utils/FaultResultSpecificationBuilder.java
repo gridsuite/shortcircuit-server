@@ -11,18 +11,15 @@ import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static org.gridsuite.shortcircuit.server.dto.FeederResult.CONNECTABLE_ID_COL;
 
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>
  */
 public final class FaultResultSpecificationBuilder {
-
-    // the following column names that belongs to the feeder results ie children of each of the main Fault results
-    private static final ArrayList<String> FEEDERS_COLS = new ArrayList<>(List.of(
-            "connectableId"));
 
     // Utility class, so no constructor
     private FaultResultSpecificationBuilder() {
@@ -37,9 +34,10 @@ public final class FaultResultSpecificationBuilder {
 
         List<ResourceFilter> parentsFilters = resourceFilters.stream()
                 .map(filter -> {
-                    if (FEEDERS_COLS.contains(filter.column())) {
-                        // those column belong to the feederResults "sub-columns" => a conversion has to be done
-                        // ===> on the front side those column are handled in 'const flattenResult = useCallback' in shortcircuit-analysis-result-table.tsx
+                    if (CONNECTABLE_ID_COL.equals(filter.column())) {
+                        // this column belong to the feederResults "sub-columns"
+                        // as a resource filter they will filter out when a FaultResult has no feeder result matching the filter
+                        // BUT individual feeder are not filtered within each Fault Result
                         return new ResourceFilter(filter.dataType(),
                                 filter.type(),
                                 filter.value(),
