@@ -10,8 +10,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 
 import java.util.UUID;
+
+import static org.gridsuite.shortcircuit.server.dto.FeederResult.CONNECTABLE_ID_COL;
+import static org.gridsuite.shortcircuit.server.dto.ResourceFilter.DataType.TEXT;
 
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
@@ -65,5 +69,22 @@ public class FeederResultEntity {
         this.connectableId = connectableId;
         this.current = current;
         this.fortescueCurrent = fortescueCurrent;
+    }
+
+    public boolean match(ResourceFilter filter) {
+        // FeederResultEntity may only be filtered through connectableId
+        if (filter.column().equals(CONNECTABLE_ID_COL) &&
+            filter.dataType() == TEXT) {
+            switch (filter.type()) {
+                case EQUALS: return connectableId.equals(filter.value().toString());
+                case CONTAINS : return connectableId.contains(filter.value().toString());
+                case STARTS_WITH: return connectableId.startsWith(filter.value().toString());
+                case NOT_EQUAL: return !connectableId.equals(filter.value().toString());
+                default:
+                    break;
+            }
+        }
+
+        return false;
     }
 }

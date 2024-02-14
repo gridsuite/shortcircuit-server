@@ -264,7 +264,7 @@ public class ShortCircuitAnalysisResultRepository {
         // We must separate in two requests, one with pagination the other one with Join Fetch
         Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
         if (faultResultsPage.hasContent() && mode != FaultResultsMode.BASIC) {
-            appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort);
+            appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
         }
         return faultResultsPage;
     }
@@ -291,13 +291,14 @@ public class ShortCircuitAnalysisResultRepository {
         // We must separate in two requests, one with pagination the other one with Join Fetch
         Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
         if (faultResultsPage.hasContent()) {
-            appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort);
+            appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
         }
         return faultResultsPage;
     }
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults,
-                                                       Sort.Order secondarySort) {
+                                                       Sort.Order secondarySort,
+                                                       List<ResourceFilter> resourceFilters) {
         // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!pagedFaultResults.isEmpty()) {
@@ -308,14 +309,14 @@ public class ShortCircuitAnalysisResultRepository {
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
             faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuids);
 
-            // "feeders"children  sorting
+            // "feeders"children sorting (connectableId field only)
             if (secondarySort != null && CONNECTABLE_ID_COL.equals(secondarySort.getProperty())) {
                 pagedFaultResults.map(res -> {
                     res.getFeederResults().sort(
-                            secondarySort.isAscending() ?
-                                Comparator.comparing(FeederResultEntity::getConnectableId) :
-                                Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
-                            );
+                        secondarySort.isAscending() ?
+                            Comparator.comparing(FeederResultEntity::getConnectableId) :
+                            Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
+                    );
                     return res;
                 });
             } else {
@@ -326,6 +327,20 @@ public class ShortCircuitAnalysisResultRepository {
                     return res;
                 });
             }
+
+            // children feeder filtering (connectableId field only)
+            Optional<ResourceFilter> connectableIdFilter = resourceFilters.stream()
+                    .filter(filter -> CONNECTABLE_ID_COL.equals(filter.column()))
+                    .findFirst();
+            connectableIdFilter.ifPresent(resourceFilter -> pagedFaultResults
+                    .map(faultRes -> {
+                        List<FeederResultEntity> feeders = faultRes.getFeederResults()
+                                .stream()
+                                .filter(feeder -> feeder.match(resourceFilter)
+                                ).toList();
+                        faultRes.setFeederResults(feeders);
+                        return faultRes;
+                    }));
         }
     }
 
