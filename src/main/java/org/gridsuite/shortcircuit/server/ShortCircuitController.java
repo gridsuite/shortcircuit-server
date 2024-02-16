@@ -106,8 +106,8 @@ public class ShortCircuitController {
                                                                       "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
                                                                       "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
-                                                                  @Parameter(description = "secSortKey") @RequestParam(name = "sec_sort_key", defaultValue = "") String secSortKey,
-                                                                  @Parameter(description = "secSortDirection") @RequestParam(name = "sec_sort_dir", required = false) String secSortDirection,
+                                                                  @Parameter(description = "Column id of the secondary sort") @RequestParam(name = "sec_sort_key", defaultValue = "") String secSortKey,
+                                                                  @Parameter(description = "Direction of the secondary sort") @RequestParam(name = "sec_sort_dir", required = false) String secSortDirection,
                                                                   Pageable pageable) throws JsonProcessingException {
         List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
         // parse to get secondary sorting :

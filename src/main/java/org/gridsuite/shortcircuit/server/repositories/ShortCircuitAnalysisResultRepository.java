@@ -276,7 +276,6 @@ public class ShortCircuitAnalysisResultRepository {
         return feederResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN));
     }
 
-    // TODO : il faudra surement partager ici le filtrage sur les enfants connectableId fait dans findFaultResultsPage
     @Transactional(readOnly = true)
     public Page<FaultResultEntity> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result,
                                                                            List<ResourceFilter> resourceFilters,
@@ -307,40 +306,47 @@ public class ShortCircuitAnalysisResultRepository {
                     .toList();
 
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
+
             faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuids);
+            sortFeeders(pagedFaultResults, secondarySort);
+            filterFeeders(pagedFaultResults, resourceFilters);
+        }
+    }
 
-            // "feeders"children sorting (connectableId field only)
-            if (secondarySort != null && CONNECTABLE_ID_COL.equals(secondarySort.getProperty())) {
-                pagedFaultResults.map(res -> {
-                    res.getFeederResults().sort(
-                        secondarySort.isAscending() ?
-                            Comparator.comparing(FeederResultEntity::getConnectableId) :
-                            Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
-                    );
-                    return res;
-                });
-            } else {
-                // by default feederResults (within each individual faultResult) are sorted by 'current' in descending order :
-                pagedFaultResults.map(res -> {
-                    res.getFeederResults().sort(
-                            Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed());
-                    return res;
-                });
-            }
+    private void filterFeeders(Page<FaultResultEntity> pagedFaultResults, List<ResourceFilter> resourceFilters) {
+        // feeders may only be filtered through connectableId
+        Optional<ResourceFilter> connectableIdFilter = resourceFilters.stream()
+                .filter(filter -> CONNECTABLE_ID_COL.equals(filter.column()))
+                .findFirst();
+        connectableIdFilter.ifPresent(resourceFilter -> pagedFaultResults
+                .map(faultRes -> {
+                    List<FeederResultEntity> feeders = faultRes.getFeederResults()
+                            .stream()
+                            .filter(feeder -> feeder.match(resourceFilter)
+                            ).toList();
+                    faultRes.setFeederResults(feeders);
+                    return faultRes;
+                }));
+    }
 
-            // children feeder filtering (connectableId field only)
-            Optional<ResourceFilter> connectableIdFilter = resourceFilters.stream()
-                    .filter(filter -> CONNECTABLE_ID_COL.equals(filter.column()))
-                    .findFirst();
-            connectableIdFilter.ifPresent(resourceFilter -> pagedFaultResults
-                    .map(faultRes -> {
-                        List<FeederResultEntity> feeders = faultRes.getFeederResults()
-                                .stream()
-                                .filter(feeder -> feeder.match(resourceFilter)
-                                ).toList();
-                        faultRes.setFeederResults(feeders);
-                        return faultRes;
-                    }));
+    private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Sort.Order secondarySort) {
+        // feeders may only be sorted by connectableId
+        if (secondarySort != null && CONNECTABLE_ID_COL.equals(secondarySort.getProperty())) {
+            pagedFaultResults.map(res -> {
+                res.getFeederResults().sort(
+                    secondarySort.isAscending() ?
+                        Comparator.comparing(FeederResultEntity::getConnectableId) :
+                        Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
+                );
+                return res;
+            });
+        } else {
+            // otherwise by default feederResults (within each individual faultResult) are sorted by 'current' in descending order :
+            pagedFaultResults.map(res -> {
+                res.getFeederResults().sort(
+                        Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed());
+                return res;
+            });
         }
     }
 

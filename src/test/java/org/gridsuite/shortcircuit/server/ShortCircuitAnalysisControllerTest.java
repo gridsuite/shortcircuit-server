@@ -425,7 +425,9 @@ public class ShortCircuitAnalysisControllerTest {
                              .param("mode", "FULL")
                              .param("page", "0")
                              .param("size", "2")
-                             .param("sort", "fault.id"))
+                             .param("sort", "fault.id")
+                             .param("sec_sort_key", "connectableId")
+                             .param("sec_sort_dir", "ASC"))
                      .andExpect(status().isOk())
                      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                      .andReturn();

@@ -11,15 +11,19 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.BusFault;
 import com.powsybl.shortcircuit.FaultResult;
+import com.powsybl.shortcircuit.FeederResult;
 import com.powsybl.shortcircuit.FortescueFaultResult;
 import com.powsybl.shortcircuit.FortescueValue;
 import com.powsybl.shortcircuit.MagnitudeFaultResult;
+import com.powsybl.shortcircuit.MagnitudeFeederResult;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,17 +49,23 @@ import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // improve tests speed as we only read DB
 class FaultResultRepositoryTest {
 
+    static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("CONN_ID_1", 22.17);
+    static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("CONN_ID_2", 18.57);
+    static final FeederResult FEEDER_RESULT_3 = new MagnitudeFeederResult("CONN_ID_3", 53.94);
+    static final FeederResult FEEDER_RESULT_4 = new MagnitudeFeederResult("RARDELNO15", 37.15);
     static final LimitViolation LIMIT_VIOLATION_1 = new LimitViolation("SUBJECT_1", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 25.63, 4f, 33.54);
     static final LimitViolation LIMIT_VIOLATION_2 = new LimitViolation("SUBJECT_2", LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, 12.17, 2f, 10.56);
     static final LimitViolation LIMIT_VIOLATION_3 = new LimitViolation("SUBJECT_3", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 45.12, 5f, 54.3);
     static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("A_VLHV1_0", "ELEMENT_ID_1"), 17.0,
-        List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2),
-        45.3, FaultResult.Status.SUCCESS);
+            List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3),
+            List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2),
+            45.3, FaultResult.Status.SUCCESS);
     static final FaultResult FAULT_RESULT_2 = new MagnitudeFaultResult(new BusFault("B_VLHV2_0", "ELEMENT_ID_2"), 18.0,
-        List.of(), List.of(LIMIT_VIOLATION_2),
+            List.of(FEEDER_RESULT_2, FEEDER_RESULT_1, FEEDER_RESULT_4, FEEDER_RESULT_3),
+            List.of(LIMIT_VIOLATION_2),
         47.3, FaultResult.Status.SUCCESS);
     static final FaultResult FAULT_RESULT_3 = new MagnitudeFaultResult(new BusFault("C_VLGEN_0", "ELEMENT_ID_3"), 19.0,
-        List.of(), List.of(LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
+            List.of(), List.of(LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
         49.3, FaultResult.Status.SUCCESS);
     static final FaultResult FAULT_RESULT_4 = new FortescueFaultResult(new BusFault("A_VLHV2_0", "ELEMENT_ID_2"), 18.0,
         List.of(), List.of(),
@@ -129,6 +139,37 @@ class FaultResultRepositoryTest {
         //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
         faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC, null);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()));
+
+        // Test with pageable containing :
+        // - a descending primary sort by current
+        // - a descending secondary sort by connectableId
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
+                resultEntity,
+                resourceFilters,
+                PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.DESC, "current"))),
+                FaultResultsMode.FULL,
+                new Sort.Order(Sort.Direction.DESC, "connectableId"));
+        assertFeedersEqualsInOrder(faultPage,
+                Comparator.comparing(FaultResultEntity::getCurrent).reversed(),
+                Comparator.comparing(FeederResultEntity::getConnectableId).reversed());
+    }
+
+    private void assertFeedersEqualsInOrder(Page<FaultResultEntity> resultFaultPage,
+                                            Comparator<FaultResultEntity> faultComparator,
+                                            Comparator<FeederResultEntity> feederComparator) {
+        List<List<String>> resultFeederIds = resultFaultPage.getContent().stream()
+                .map(faultRes -> faultRes.getFeederResults().stream()
+                                .map(feederRes -> feederRes.getFeederResultUuid().toString()).toList()).toList();
+
+        List<List<String>> expectedFaultFeedersTds = resultFaultPage.getContent().stream()
+                .sorted(faultComparator)
+                .map(faultResultEntity -> faultResultEntity.getFeederResults()
+                                .stream()
+                                .sorted(feederComparator)
+                                .map(feederRes ->
+                                    feederRes.getFeederResultUuid().toString())
+                                .toList()).toList();
+        Assertions.assertEquals(resultFeederIds, expectedFaultFeedersTds);
     }
 
     private void assertFaultEqualsInOrder(Page<FaultResultEntity> resultFaultPage, Comparator<FaultResultEntity> comparator) {
