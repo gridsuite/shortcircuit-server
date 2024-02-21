@@ -57,7 +57,7 @@ class FaultResultRepositoryTest {
     static final LimitViolation LIMIT_VIOLATION_2 = new LimitViolation("SUBJECT_2", LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, 12.17, 2f, 10.56);
     static final LimitViolation LIMIT_VIOLATION_3 = new LimitViolation("SUBJECT_3", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 45.12, 5f, 54.3);
     static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("A_VLHV1_0", "ELEMENT_ID_1"), 17.0,
-            List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3),
+            List.of(FEEDER_RESULT_1, FEEDER_RESULT_3),
             List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2),
             45.3, FaultResult.Status.SUCCESS);
     static final FaultResult FAULT_RESULT_2 = new MagnitudeFaultResult(new BusFault("B_VLHV2_0", "ELEMENT_ID_2"), 18.0,
@@ -154,6 +154,33 @@ class FaultResultRepositoryTest {
                 Comparator.comparing(FeederResultEntity::getConnectableId).reversed());
     }
 
+    @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
+    @MethodSource({
+        "provideOrEqualsFeederFieldsFilters"
+    })
+    void feedersFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<List<FeederResult>> expectedFeedersLists) {
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
+                resultEntity,
+                resourceFilters,
+                PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "current"))),
+                FaultResultsMode.FULL,
+                new Sort.Order(Sort.Direction.DESC, "connectableId"));
+
+        List<List<String>> feedersConnectableIds = faultPage.getContent().stream()
+                        .map(faultRes -> faultRes.getFeederResults().stream()
+                                .map(FeederResultEntity::getConnectableId)
+                                .toList()
+                        ).toList();
+
+        List<List<String>> expectedFeedersConnectableIds = expectedFeedersLists.stream()
+                        .map(feederList -> feederList.stream()
+                                .map(FeederResult::getConnectableId)
+                                .toList()
+                        ).toList();
+
+        Assertions.assertEquals(expectedFeedersConnectableIds, feedersConnectableIds);
+    }
+
     private void assertFeedersEqualsInOrder(Page<FaultResultEntity> resultFaultPage,
                                             Comparator<FaultResultEntity> faultComparator,
                                             Comparator<FeederResultEntity> feederComparator) {
@@ -210,7 +237,16 @@ class FaultResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, null, "limitViolations.limitType")),
-                List.of())
+                List.of()));
+    }
+
+    private Stream<Arguments> provideOrEqualsFeederFieldsFilters() {
+        return Stream.of(
+                Arguments.of(
+                        resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "C", "connectableId")),
+                List.of(List.of(FEEDER_RESULT_3, FEEDER_RESULT_1), List.of(FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1)))
         );
     }
 
