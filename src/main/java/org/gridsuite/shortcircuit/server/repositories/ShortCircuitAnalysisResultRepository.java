@@ -275,8 +275,9 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private Pageable filterOutChildrenSort(Pageable pageable, Sort.Order secondarySort) {
-        if (secondarySort == null)
+        if (secondarySort == null) {
             return pageable;
+        }
         return PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
