@@ -257,16 +257,17 @@ public class ShortCircuitAnalysisResultRepository {
         Objects.requireNonNull(result);
 
         Sort.Order secondarySort = extractSecondarySort(pageable);
-        if (secondarySort != null) {
-            pageable = filterOutChildrenSort(pageable, secondarySort);
-        }
 
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
+        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(
+                specification, addDefaultSort(
+                        filterOutChildrenSort(pageable, secondarySort),
+                        DEFAULT_FAULT_RESULT_SORT_COLUMN
+                ));
         if (faultResultsPage.hasContent() && mode != FaultResultsMode.BASIC) {
             appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
         }
@@ -274,6 +275,8 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private Pageable filterOutChildrenSort(Pageable pageable, Sort.Order secondarySort) {
+        if (secondarySort == null)
+            return pageable;
         return PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
@@ -310,9 +313,6 @@ public class ShortCircuitAnalysisResultRepository {
         Objects.requireNonNull(result);
 
         Sort.Order secondarySort = extractSecondarySort(pageable);
-        if (secondarySort != null) {
-            pageable = filterOutChildrenSort(pageable, secondarySort);
-        }
 
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
@@ -320,7 +320,12 @@ public class ShortCircuitAnalysisResultRepository {
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
+        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(
+                specification,
+                addDefaultSort(
+                        filterOutChildrenSort(pageable, secondarySort),
+                        DEFAULT_FAULT_RESULT_SORT_COLUMN
+                ));
         if (faultResultsPage.hasContent()) {
             appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
         }
