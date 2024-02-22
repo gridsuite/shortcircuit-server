@@ -115,7 +115,7 @@ class FaultResultRepositoryTest {
         "provideNotEqualNestedFieldsFilters"
     })
     void faultResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FaultResultEntity> faultList) {
-        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.unpaged(), FaultResultsMode.BASIC, null);
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.unpaged(), FaultResultsMode.BASIC);
         assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
             .containsExactlyInAnyOrderElementsOf(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
     }
@@ -129,15 +129,15 @@ class FaultResultRepositoryTest {
     })
     void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters) {
         //Test with unsorted request and expect the result to be sorted by uuid anyway
-        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC, null);
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(o -> o.getFaultResultUuid().toString()));
 
         //Test with pageable containing a sort by current and expect the results to be sorted by current
-        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "current"))), FaultResultsMode.BASIC, null);
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "current"))), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getCurrent));
 
         //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
-        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC, null);
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()));
 
         // Test with pageable containing :
@@ -146,9 +146,10 @@ class FaultResultRepositoryTest {
         faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
                 resultEntity,
                 resourceFilters,
-                PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.DESC, "current"))),
-                FaultResultsMode.FULL,
-                new Sort.Order(Sort.Direction.DESC, "connectableId"));
+                PageRequest.of(0, 3, Sort.by(
+                        new Sort.Order(Sort.Direction.DESC, "current"),
+                        new Sort.Order(Sort.Direction.DESC, "connectableId"))),
+                FaultResultsMode.FULL);
         assertFeedersEqualsInOrder(faultPage,
                 Comparator.comparing(FaultResultEntity::getCurrent).reversed(),
                 Comparator.comparing(FeederResultEntity::getConnectableId).reversed());
@@ -162,9 +163,10 @@ class FaultResultRepositoryTest {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
                 resultEntity,
                 resourceFilters,
-                PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "current"))),
-                FaultResultsMode.FULL,
-                new Sort.Order(Sort.Direction.DESC, "connectableId"));
+                PageRequest.of(0, 3, Sort.by(
+                        new Sort.Order(Sort.Direction.ASC, "current"),
+                        new Sort.Order(Sort.Direction.DESC, "connectableId"))),
+                FaultResultsMode.FULL);
 
         List<List<String>> feedersConnectableIds = faultPage.getContent().stream()
                         .map(faultRes -> faultRes.getFeederResults().stream()

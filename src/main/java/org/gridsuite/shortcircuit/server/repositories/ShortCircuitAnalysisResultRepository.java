@@ -253,9 +253,13 @@ public class ShortCircuitAnalysisResultRepository {
     public Page<FaultResultEntity> findFaultResultsPage(ShortCircuitAnalysisResultEntity result,
                                                         List<ResourceFilter> resourceFilters,
                                                         Pageable pageable,
-                                                        FaultResultsMode mode,
-                                                        Sort.Order secondarySort) {
+                                                        FaultResultsMode mode) {
         Objects.requireNonNull(result);
+
+        Sort.Order secondarySort = extractSecondarySort(pageable);
+        if (secondarySort != null) {
+            pageable = filterOutChildrenSort(pageable, secondarySort);
+        }
 
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
@@ -269,6 +273,29 @@ public class ShortCircuitAnalysisResultRepository {
         return faultResultsPage;
     }
 
+    private Pageable filterOutChildrenSort(Pageable pageable, Sort.Order secondarySort) {
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(pageable.getSort().stream().filter(sortOrder ->
+                                !sortOrder.getProperty().equals(secondarySort.getProperty())
+                        ).toList()
+                )
+        );
+    }
+
+    private Sort.Order extractSecondarySort(Pageable pageable) {
+        List<Sort.Order> childrenSort = pageable.getSort().stream()
+                .filter(sortOrder ->
+                        sortOrder.getProperty().equals(CONNECTABLE_ID_COL))
+                .toList();
+
+        if (!childrenSort.isEmpty()) {
+            return childrenSort.get(0);
+        }
+        return null;
+    }
+
     @Transactional(readOnly = true)
     public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
         Objects.requireNonNull(result);
@@ -279,9 +306,14 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public Page<FaultResultEntity> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result,
                                                                            List<ResourceFilter> resourceFilters,
-                                                                           Pageable pageable,
-                                                                           Sort.Order secondarySort) {
+                                                                           Pageable pageable) {
         Objects.requireNonNull(result);
+
+        Sort.Order secondarySort = extractSecondarySort(pageable);
+        if (secondarySort != null) {
+            pageable = filterOutChildrenSort(pageable, secondarySort);
+        }
+
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
