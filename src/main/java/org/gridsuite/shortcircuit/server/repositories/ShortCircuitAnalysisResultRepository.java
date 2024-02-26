@@ -31,8 +31,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.shortcircuit.server.dto.FeederResult.CONNECTABLE_ID_COL;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com
  */
@@ -291,7 +289,7 @@ public class ShortCircuitAnalysisResultRepository {
     private Sort.Order extractSecondarySort(Pageable pageable) {
         List<Sort.Order> childrenSort = pageable.getSort().stream()
                 .filter(sortOrder ->
-                        sortOrder.getProperty().equals(CONNECTABLE_ID_COL))
+                        sortOrder.getProperty().equals(FeederResultEntity.Fields.connectableId))
                 .toList();
 
         if (!childrenSort.isEmpty()) {
@@ -354,7 +352,7 @@ public class ShortCircuitAnalysisResultRepository {
     private void filterFeeders(Page<FaultResultEntity> pagedFaultResults, List<ResourceFilter> resourceFilters) {
         // feeders may only be filtered through connectableId
         Optional<ResourceFilter> connectableIdFilter = resourceFilters.stream()
-                .filter(filter -> CONNECTABLE_ID_COL.equals(filter.column()))
+                .filter(filter -> FeederResultEntity.Fields.connectableId.equals(filter.column()))
                 .findFirst();
         connectableIdFilter.ifPresent(resourceFilter -> pagedFaultResults
                 .map(faultRes -> {
@@ -369,7 +367,7 @@ public class ShortCircuitAnalysisResultRepository {
 
     private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Sort.Order secondarySort) {
         // feeders may only be sorted by connectableId
-        if (secondarySort != null && CONNECTABLE_ID_COL.equals(secondarySort.getProperty())) {
+        if (secondarySort != null && FeederResultEntity.Fields.connectableId.equals(secondarySort.getProperty())) {
             pagedFaultResults.map(res -> {
                 res.getFeederResults().sort(
                     secondarySort.isAscending() ?

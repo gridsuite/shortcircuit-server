@@ -10,11 +10,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import lombok.experimental.FieldNameConstants;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 
 import java.util.UUID;
 
-import static org.gridsuite.shortcircuit.server.dto.FeederResult.CONNECTABLE_ID_COL;
 import static org.gridsuite.shortcircuit.server.dto.ResourceFilter.DataType.TEXT;
 
 /**
@@ -23,6 +23,7 @@ import static org.gridsuite.shortcircuit.server.dto.ResourceFilter.DataType.TEXT
 @Getter
 @NoArgsConstructor
 @Entity
+@FieldNameConstants
 @Table(name = "feeder_results",
         indexes = {@Index(name = "feeder_results_fault_result_idx",
                 columnList = "fault_result_entity_fault_result_uuid")})
@@ -73,7 +74,7 @@ public class FeederResultEntity {
 
     public boolean match(ResourceFilter filter) {
         // FeederResultEntity may only be filtered through connectableId
-        if (filter.column().equals(CONNECTABLE_ID_COL) &&
+        if (filter.column().equals(FeederResultEntity.Fields.connectableId) &&
             filter.dataType() == TEXT) {
             switch (filter.type()) {
                 case EQUALS: return connectableId.equals(filter.value().toString());

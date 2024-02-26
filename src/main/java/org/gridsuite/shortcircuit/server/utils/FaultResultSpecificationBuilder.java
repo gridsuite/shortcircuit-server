@@ -12,12 +12,11 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.UUID;
-
-import static org.gridsuite.shortcircuit.server.dto.FeederResult.CONNECTABLE_ID_COL;
 
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>
@@ -39,7 +38,7 @@ public final class FaultResultSpecificationBuilder {
             Specification<FaultResultEntity> specification = Specification.where(resultUuidEquals(resultUuid));
             List<ResourceFilter> parentsFilters = resourceFilters.stream()
                     .map(filter -> {
-                        if (CONNECTABLE_ID_COL.equals(filter.column())) {
+                        if (FeederResultEntity.Fields.connectableId.equals(filter.column())) {
                             // this column belong to the feederResults "sub-columns"
                             // as a resource filter they will filter out when a FaultResult has no feeder result matching the filter
                             // BUT individual feeders are not filtered within each Fault Result
