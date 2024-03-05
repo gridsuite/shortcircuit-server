@@ -289,7 +289,7 @@ public class ShortCircuitAnalysisResultRepository {
     private Optional<Sort.Order> extractSecondarySort(Pageable pageable) {
         return pageable.getSort().stream()
                 .filter(sortOrder ->
-                        sortOrder.getProperty().equals(FeederResultEntity.Fields.connectableId))
+                        sortOrder.getProperty().contains(FeederResultEntity.Fields.connectableId))
                 .findFirst();
     }
 
@@ -347,7 +347,7 @@ public class ShortCircuitAnalysisResultRepository {
     private void filterFeeders(Page<FaultResultEntity> pagedFaultResults, List<ResourceFilter> resourceFilters) {
         // feeders may only be filtered through connectableId
         Optional<ResourceFilter> connectableIdFilter = resourceFilters.stream()
-                .filter(filter -> FeederResultEntity.Fields.connectableId.equals(filter.column()))
+                .filter(filter -> filter.column().contains(FeederResultEntity.Fields.connectableId))
                 .findFirst();
         connectableIdFilter.ifPresent(resourceFilter -> pagedFaultResults
                 .map(faultRes -> {

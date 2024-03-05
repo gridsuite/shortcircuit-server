@@ -148,7 +148,7 @@ class FaultResultRepositoryTest {
                 resourceFilters,
                 PageRequest.of(0, 3, Sort.by(
                         new Sort.Order(Sort.Direction.DESC, "current"),
-                        new Sort.Order(Sort.Direction.DESC, FeederResultEntity.Fields.connectableId))),
+                        new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"))),
                 FaultResultsMode.FULL);
         assertFeedersEqualsInOrder(faultPage,
                 Comparator.comparing(FaultResultEntity::getCurrent).reversed(),
@@ -165,7 +165,7 @@ class FaultResultRepositoryTest {
                 resourceFilters,
                 PageRequest.of(0, 3, Sort.by(
                         new Sort.Order(Sort.Direction.ASC, "current"),
-                        new Sort.Order(Sort.Direction.DESC, "connectableId"))),
+                        new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"))),
                 FaultResultsMode.FULL);
 
         List<List<String>> feedersConnectableIds = faultPage.getContent().stream()
@@ -247,7 +247,7 @@ class FaultResultRepositoryTest {
                 Arguments.of(
                         resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "C", "connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "C", "feederResults.connectableId")),
                 List.of(List.of(FEEDER_RESULT_3, FEEDER_RESULT_1), List.of(FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1)))
         );
     }

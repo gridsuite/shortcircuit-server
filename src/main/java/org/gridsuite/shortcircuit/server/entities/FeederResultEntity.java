@@ -74,7 +74,7 @@ public class FeederResultEntity {
 
     public boolean match(ResourceFilter filter) {
         // FeederResultEntity may only be filtered through connectableId
-        if (filter.column().equals(FeederResultEntity.Fields.connectableId) &&
+        if (filter.column().contains(FeederResultEntity.Fields.connectableId) &&
             filter.dataType() == TEXT) {
             return switch (filter.type()) {
                 case EQUALS -> connectableId.equals(filter.value().toString());
