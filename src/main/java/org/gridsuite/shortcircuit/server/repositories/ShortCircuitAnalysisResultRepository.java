@@ -254,7 +254,7 @@ public class ShortCircuitAnalysisResultRepository {
                                                         FaultResultsMode mode) {
         Objects.requireNonNull(result);
 
-        Sort.Order secondarySort = extractSecondarySort(pageable);
+        Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
 
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
@@ -272,30 +272,25 @@ public class ShortCircuitAnalysisResultRepository {
         return faultResultsPage;
     }
 
-    private Pageable filterOutChildrenSort(Pageable pageable, Sort.Order secondarySort) {
-        if (secondarySort == null) {
+    private Pageable filterOutChildrenSort(Pageable pageable, Optional<Sort.Order> secondarySort) {
+        if (secondarySort.isEmpty()) {
             return pageable;
         }
         return PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
                 Sort.by(pageable.getSort().stream().filter(sortOrder ->
-                                !sortOrder.getProperty().equals(secondarySort.getProperty())
+                                !sortOrder.getProperty().equals(secondarySort.get().getProperty())
                         ).toList()
                 )
         );
     }
 
-    private Sort.Order extractSecondarySort(Pageable pageable) {
-        List<Sort.Order> childrenSort = pageable.getSort().stream()
+    private Optional<Sort.Order> extractSecondarySort(Pageable pageable) {
+        return pageable.getSort().stream()
                 .filter(sortOrder ->
                         sortOrder.getProperty().equals(FeederResultEntity.Fields.connectableId))
-                .toList();
-
-        if (!childrenSort.isEmpty()) {
-            return childrenSort.get(0);
-        }
-        return null;
+                .findFirst();
     }
 
     @Transactional(readOnly = true)
@@ -311,7 +306,7 @@ public class ShortCircuitAnalysisResultRepository {
                                                                            Pageable pageable) {
         Objects.requireNonNull(result);
 
-        Sort.Order secondarySort = extractSecondarySort(pageable);
+        Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
 
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
@@ -332,7 +327,7 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults,
-                                                       Sort.Order secondarySort,
+                                                       Optional<Sort.Order> secondarySort,
                                                        List<ResourceFilter> resourceFilters) {
         // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
@@ -365,12 +360,12 @@ public class ShortCircuitAnalysisResultRepository {
                 }));
     }
 
-    private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Sort.Order secondarySort) {
+    private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Optional<Sort.Order> secondarySort) {
         // feeders may only be sorted by connectableId
-        if (secondarySort != null && FeederResultEntity.Fields.connectableId.equals(secondarySort.getProperty())) {
+        if (secondarySort.isPresent()) {
             pagedFaultResults.map(res -> {
                 res.getFeederResults().sort(
-                    secondarySort.isAscending() ?
+                    secondarySort.get().isAscending() ?
                         Comparator.comparing(FeederResultEntity::getConnectableId) :
                         Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
                 );

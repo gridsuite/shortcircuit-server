@@ -148,7 +148,7 @@ class FaultResultRepositoryTest {
                 resourceFilters,
                 PageRequest.of(0, 3, Sort.by(
                         new Sort.Order(Sort.Direction.DESC, "current"),
-                        new Sort.Order(Sort.Direction.DESC, "connectableId"))),
+                        new Sort.Order(Sort.Direction.DESC, FeederResultEntity.Fields.connectableId))),
                 FaultResultsMode.FULL);
         assertFeedersEqualsInOrder(faultPage,
                 Comparator.comparing(FaultResultEntity::getCurrent).reversed(),

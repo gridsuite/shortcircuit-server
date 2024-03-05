@@ -76,14 +76,13 @@ public class FeederResultEntity {
         // FeederResultEntity may only be filtered through connectableId
         if (filter.column().equals(FeederResultEntity.Fields.connectableId) &&
             filter.dataType() == TEXT) {
-            switch (filter.type()) {
-                case EQUALS: return connectableId.equals(filter.value().toString());
-                case CONTAINS : return connectableId.contains(filter.value().toString());
-                case STARTS_WITH: return connectableId.startsWith(filter.value().toString());
-                case NOT_EQUAL: return !connectableId.equals(filter.value().toString());
-                default:
-                    break;
-            }
+            return switch (filter.type()) {
+                case EQUALS -> connectableId.equals(filter.value().toString());
+                case CONTAINS -> connectableId.contains(filter.value().toString());
+                case STARTS_WITH -> connectableId.startsWith(filter.value().toString());
+                case NOT_EQUAL -> !connectableId.equals(filter.value().toString());
+                default -> false;
+            };
         }
 
         return false;
