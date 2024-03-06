@@ -10,6 +10,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import java.util.UUID;
  */
 @Getter
 @Setter
+@FieldNameConstants
 @NoArgsConstructor
 @Entity
 @Table(indexes = {

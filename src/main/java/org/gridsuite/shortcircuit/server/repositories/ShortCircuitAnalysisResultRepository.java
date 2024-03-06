@@ -12,9 +12,9 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.repositories.specifications.FaultResultSpecificationBuilder;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
-import org.gridsuite.shortcircuit.server.utils.FaultResultSpecificationBuilder;
-import org.gridsuite.shortcircuit.server.utils.FeederResultSpecificationBuilder;
+import org.gridsuite.shortcircuit.server.repositories.specifications.FeederResultSpecificationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +42,8 @@ public class ShortCircuitAnalysisResultRepository {
     private final ResultRepository resultRepository;
     private final FaultResultRepository faultResultRepository;
     private final FeederResultRepository feederResultRepository;
+    private final FeederResultSpecificationBuilder feederResultSpecificationBuilder;
+    private final FaultResultSpecificationBuilder faultResultSpecificationBuilder;
 
     private static final String DEFAULT_FAULT_RESULT_SORT_COLUMN = "faultResultUuid";
 
@@ -53,11 +55,15 @@ public class ShortCircuitAnalysisResultRepository {
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
                                                 ResultRepository resultRepository,
                                                 FaultResultRepository faultResultRepository,
-                                                FeederResultRepository feederResultRepository) {
+                                                FeederResultRepository feederResultRepository,
+                                                FaultResultSpecificationBuilder faultResultSpecificationBuilder,
+                                                FeederResultSpecificationBuilder feederResultSpecificationBuilder) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
         this.faultResultRepository = faultResultRepository;
         this.feederResultRepository = feederResultRepository;
+        this.faultResultSpecificationBuilder = faultResultSpecificationBuilder;
+        this.feederResultSpecificationBuilder = feederResultSpecificationBuilder;
     }
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
@@ -256,7 +262,7 @@ public class ShortCircuitAnalysisResultRepository {
 
         Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
 
-        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
@@ -296,7 +302,7 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
         Objects.requireNonNull(result);
-        Specification<FeederResultEntity> specification = FeederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        Specification<FeederResultEntity> specification = feederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         return feederResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN));
     }
 
@@ -308,8 +314,8 @@ public class ShortCircuitAnalysisResultRepository {
 
         Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
 
-        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
-        specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
+        Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        specification = faultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
