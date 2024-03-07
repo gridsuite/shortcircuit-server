@@ -262,8 +262,8 @@ public class ShortCircuitAnalysisResultRepository {
 
         Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
 
-        Pageable parentPageable = filterOutChildrenSort(pageable, secondarySort);
-        Pageable modifiedPageable = addDefaultSort(parentPageable, DEFAULT_FAULT_RESULT_SORT_COLUMN);
+        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, secondarySort),
+                DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultSpecBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
@@ -271,23 +271,25 @@ public class ShortCircuitAnalysisResultRepository {
         // We must separate in two requests, one with pagination the other one with Join Fetch
 
         Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
-                q.project("faultResultUuid")
+                q.project(FaultResultEntity.Fields.faultResultUuid)
                         .as(FaultResultRepository.EntityId.class)
                         .sortBy(modifiedPageable.getSort())
                         .page(modifiedPageable)
         );
 
-        if (uuidPage.hasContent() && mode != FaultResultsMode.BASIC) {
-            List<UUID> faultResultsUuids = uuidPage.map(u ->
-                            u.getFaultResultUuid())
+        if (uuidPage.hasContent()) {
+            List<UUID> faultResultsUuids = uuidPage
+                    .map(FaultResultRepository.EntityId::getFaultResultUuid)
                     .toList();
             // Then we fetch the main entities data for each UUID
             List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
             faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
             Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
 
-            // then we append the missing data, and filter some of the Lazy Loaded collections
-            appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
+            if (mode != FaultResultsMode.BASIC) {
+                // then we append the missing data, and filter some of the Lazy Loaded collections
+                appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
+            }
 
             return faultResultsPage;
         }
@@ -332,22 +334,39 @@ public class ShortCircuitAnalysisResultRepository {
 
         Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
 
+        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, secondarySort),
+                DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultSpecBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = faultSpecBuilder.appendWithLimitViolationsToSpecification(specification);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(
-                specification,
-                addDefaultSort(
-                        filterOutChildrenSort(pageable, secondarySort),
-                        DEFAULT_FAULT_RESULT_SORT_COLUMN
-                ));
-        if (faultResultsPage.hasContent()) {
+
+        Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
+                q.project(FaultResultEntity.Fields.faultResultUuid)
+                        .as(FaultResultRepository.EntityId.class)
+                        .sortBy(modifiedPageable.getSort())
+                        .page(modifiedPageable)
+        );
+
+        if (uuidPage.hasContent()) {
+            List<UUID> faultResultsUuids = uuidPage
+                    .map(FaultResultRepository.EntityId::getFaultResultUuid)
+                    .toList();
+            // Then we fetch the main entities data for each UUID
+            List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
+            faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
+            Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
+
+            // then we append the missing data, and filter some of the Lazy Loaded collections
             appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
+
+            return faultResultsPage;
         }
-        return faultResultsPage;
+        else  {
+            return Page.empty();
+        }
     }
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults,
@@ -363,41 +382,10 @@ public class ShortCircuitAnalysisResultRepository {
             Specification<FaultResultEntity> specification = faultSpecBuilder.buildFeedersSpecification(faultResultsUuids, resourceFilters);
             faultResultRepository.findAll(specification);
 
-            // TODO : dans pagedFaultResults contient toujours tous les feederUuids des result filtrés
-            List<UUID> feederUuids = pagedFaultResults
-                    .map(FaultResultEntity::getFeederResults)
-                    .flatMap(List::stream)
-                    .map(fee -> fee.getFeederResultUuid())
-                    .toList();
+            faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
 
-            //feederResultRepository.findAllWithContingencyElementsByUuidIn(feederUuids);
-            feederResultRepository.findAllByFeederResultUuidIn(feederUuids);
-            /*Specification<FeederResultEntity> feederSpecification = feederResultSpecificationBuilder
-                    .buildSpecification(faultResultsUuids, resourceFilters);
-            faultResultRepository.findAll(specification);*/
-
-            //faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
-            //faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuids);
-
-            sortFeeders(pagedFaultResults, secondarySort); // TODO : à discuter
-            //filterFeeders(pagedFaultResults, resourceFilters); // TODO : à discuter : j'ai commenté
+            sortFeeders(pagedFaultResults, secondarySort);
         }
-    }
-
-    private void filterFeeders(Page<FaultResultEntity> pagedFaultResults, List<ResourceFilter> resourceFilters) {
-        // feeders may only be filtered through connectableId
-        Optional<ResourceFilter> connectableIdFilter = resourceFilters.stream()
-                .filter(filter -> filter.column().contains(FeederResultEntity.Fields.connectableId))
-                .findFirst();
-        connectableIdFilter.ifPresent(resourceFilter -> pagedFaultResults
-                .map(faultRes -> {
-                    List<FeederResultEntity> feeders = faultRes.getFeederResults()
-                            .stream()
-                            .filter(feeder -> feeder.match(resourceFilter)
-                            ).toList();
-                    faultRes.setFeederResults(feeders);
-                    return faultRes;
-                }));
     }
 
     private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Optional<Sort.Order> secondarySort) {

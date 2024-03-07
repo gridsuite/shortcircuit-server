@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.stereotype.Repository;
@@ -23,6 +24,9 @@ import java.util.UUID;
 public interface FaultResultRepository extends JpaRepository<FaultResultEntity, UUID>, JpaSpecificationExecutor<FaultResultEntity> {
     @EntityGraph(attributePaths = {"limitViolations"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithLimitViolationsByFaultResultUuidIn(List<UUID> faultResultsUUID);
+
+    @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
+    List<FaultResultEntity> findAll(Specification<FaultResultEntity> specification);
 
     @EntityGraph(attributePaths = {"feederResults"}, type = EntityGraphType.LOAD)
     Set<FaultResultEntity> findAllWithFeederResultsByFaultResultUuidIn(List<UUID> faultResultsUUID);
