@@ -39,11 +39,6 @@ public class FaultResultSpecificationBuilder extends AbstractCommonSpecification
         return root.get(FaultResultEntity.Fields.result).get(ShortCircuitAnalysisResultEntity.Fields.resultUuid);
     }
 
-    @Override
-    public Specification<FaultResultEntity> addSpecificFilterWhenNoChildrenFilter() {
-        return this.childrenNotEmpty();
-    }
-
     public Specification<FaultResultEntity> childrenNotEmpty() {
         return SpecificationUtils.isNotEmpty(FaultResultEntity.Fields.feederResults);
     }

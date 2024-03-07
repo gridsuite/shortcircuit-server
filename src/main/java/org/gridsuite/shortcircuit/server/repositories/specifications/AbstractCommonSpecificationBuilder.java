@@ -50,6 +50,4 @@ public abstract class AbstractCommonSpecificationBuilder<T> {
     public abstract String getIdFieldName();
 
     public abstract Path<UUID> getResultIdPath(Root<T> root);
-
-    public abstract Specification<T> addSpecificFilterWhenNoChildrenFilter();
 }

@@ -260,9 +260,9 @@ public class ShortCircuitAnalysisResultRepository {
                                                         FaultResultsMode mode) {
         Objects.requireNonNull(result);
 
-        Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
+        Optional<Sort.Order> childrenSort = extractChildrenSort(pageable);
 
-        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, secondarySort),
+        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultSpecBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
@@ -288,31 +288,30 @@ public class ShortCircuitAnalysisResultRepository {
 
             if (mode != FaultResultsMode.BASIC) {
                 // then we append the missing data, and filter some of the Lazy Loaded collections
-                appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
+                appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
             }
 
             return faultResultsPage;
-        }
-        else  {
+        } else {
             return Page.empty();
         }
     }
 
-    private Pageable filterOutChildrenSort(Pageable pageable, Optional<Sort.Order> secondarySort) {
-        if (secondarySort.isEmpty()) {
+    private Pageable filterOutChildrenSort(Pageable pageable, Optional<Sort.Order> childrenSort) {
+        if (childrenSort.isEmpty()) {
             return pageable;
         }
         return PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
                 Sort.by(pageable.getSort().stream().filter(sortOrder ->
-                                !sortOrder.getProperty().equals(secondarySort.get().getProperty())
+                                !sortOrder.getProperty().equals(childrenSort.get().getProperty())
                         ).toList()
                 )
         );
     }
 
-    private Optional<Sort.Order> extractSecondarySort(Pageable pageable) {
+    private Optional<Sort.Order> extractChildrenSort(Pageable pageable) {
         return pageable.getSort().stream()
                 .filter(sortOrder ->
                         sortOrder.getProperty().contains(FeederResultEntity.Fields.connectableId))
@@ -332,9 +331,9 @@ public class ShortCircuitAnalysisResultRepository {
                                                                            Pageable pageable) {
         Objects.requireNonNull(result);
 
-        Optional<Sort.Order> secondarySort = extractSecondarySort(pageable);
+        Optional<Sort.Order> childrenSort = extractChildrenSort(pageable);
 
-        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, secondarySort),
+        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultSpecBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = faultSpecBuilder.appendWithLimitViolationsToSpecification(specification);
@@ -360,17 +359,16 @@ public class ShortCircuitAnalysisResultRepository {
             Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
 
             // then we append the missing data, and filter some of the Lazy Loaded collections
-            appendLimitViolationsAndFeederResults(faultResultsPage, secondarySort, resourceFilters);
+            appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
 
             return faultResultsPage;
-        }
-        else  {
+        } else {
             return Page.empty();
         }
     }
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults,
-                                                       Optional<Sort.Order> secondarySort,
+                                                       Optional<Sort.Order> childrenSort,
                                                        List<ResourceFilter> resourceFilters) {
         // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
@@ -384,16 +382,16 @@ public class ShortCircuitAnalysisResultRepository {
 
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
 
-            sortFeeders(pagedFaultResults, secondarySort);
+            sortFeeders(pagedFaultResults, childrenSort);
         }
     }
 
-    private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Optional<Sort.Order> secondarySort) {
+    private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Optional<Sort.Order> childrenSort) {
         // feeders may only be sorted by connectableId
-        if (secondarySort.isPresent()) {
+        if (childrenSort.isPresent()) {
             pagedFaultResults.map(res -> {
                 res.getFeederResults().sort(
-                    secondarySort.get().isAscending() ?
+                    childrenSort.get().isAscending() ?
                         Comparator.comparing(FeederResultEntity::getConnectableId) :
                         Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
                 );

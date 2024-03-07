@@ -11,11 +11,8 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import lombok.experimental.FieldNameConstants;
-import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 
 import java.util.UUID;
-
-import static org.gridsuite.shortcircuit.server.dto.ResourceFilter.DataType.TEXT;
 
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
