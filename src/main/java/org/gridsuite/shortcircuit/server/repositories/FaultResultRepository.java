@@ -46,4 +46,9 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     @Query(value = "DELETE FROM feeder_results WHERE fault_result_entity_fault_result_uuid IN ?1", nativeQuery = true)
     void deleteFeederResultsByFaultResultUuids(Set<UUID> ids);
 
+    List<FaultResultEntity> findAllByFaultResultUuidIn(List<UUID> uuids);
+
+    interface EntityId {
+        UUID getFaultResultUuid();
+    }
 }
