@@ -157,7 +157,9 @@ class FaultResultRepositoryTest {
 
     @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
     @MethodSource({
-        "provideOrEqualsFeederFieldsFilters"
+        "provideFeederFieldsStartFilters",
+        "provideFeederFieldsContainFilters",
+        "provideFeederFieldsUnfiltered"
     })
     void feedersFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<List<FeederResult>> expectedFeedersLists) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
@@ -242,13 +244,57 @@ class FaultResultRepositoryTest {
                 List.of()));
     }
 
-    private Stream<Arguments> provideOrEqualsFeederFieldsFilters() {
+    private Stream<Arguments> provideFeederFieldsStartFilters() {
         return Stream.of(
                 Arguments.of(
                         resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "C", "feederResults.connectableId")),
-                List.of(List.of(FEEDER_RESULT_3, FEEDER_RESULT_1), List.of(FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1)))
+                List.of(List.of(FEEDER_RESULT_3, FEEDER_RESULT_1), List.of(FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1))),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "RAR", "feederResults.connectableId")),
+                List.of(
+                        List.of(FEEDER_RESULT_4)
+                ))
+        );
+    }
+
+    private Stream<Arguments> provideFeederFieldsContainFilters() {
+        return Stream.of(
+                Arguments.of(
+                        resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                List.of(List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_4, FEEDER_RESULT_1))),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "NN_I", "feederResults.connectableId"),
+                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                List.of(
+                        List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_1)
+                )),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "OUPS", "feederResults.connectableId")),
+                List.of()
+                )
+        );
+    }
+
+    private Stream<Arguments> provideFeederFieldsUnfiltered() {
+        return Stream.of(
+                Arguments.of(
+                        resultMagnitudeEntity,
+                List.of(),
+                List.of(
+                        List.of(FEEDER_RESULT_3, FEEDER_RESULT_1),
+                        List.of(FEEDER_RESULT_4, FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1),
+                        List.of()
+                ))
         );
     }
 
