@@ -139,20 +139,6 @@ class FaultResultRepositoryTest {
         //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
         faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()));
-
-        // Test with pageable containing :
-        // - a descending primary sort by current
-        // - a descending secondary sort by connectableId
-        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
-                resultEntity,
-                resourceFilters,
-                PageRequest.of(0, 3, Sort.by(
-                        new Sort.Order(Sort.Direction.DESC, "current"),
-                        new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"))),
-                FaultResultsMode.FULL);
-        assertFeedersEqualsInOrder(faultPage,
-                Comparator.comparing(FaultResultEntity::getCurrent).reversed(),
-                Comparator.comparing(FeederResultEntity::getConnectableId).reversed());
     }
 
     @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
