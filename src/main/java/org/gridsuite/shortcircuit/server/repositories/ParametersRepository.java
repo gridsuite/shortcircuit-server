@@ -6,16 +6,19 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import lombok.NonNull;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ParametersRepository extends JpaRepository<ShortCircuitParametersEntity, UUID> {
-    default ShortCircuitParametersEntity getByIdOrDefault(@NonNull final UUID id) {
-        return findById(id).orElseGet(() -> this.save(new ShortCircuitParametersEntity()));
+    default ShortCircuitParametersEntity getByIdOrDefault(@Nullable final UUID id) {
+        return Optional.ofNullable(id)
+                       .flatMap(this::findById)
+                       .orElseGet(() -> this.save(new ShortCircuitParametersEntity()));
     }
 }
