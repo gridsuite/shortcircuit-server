@@ -9,7 +9,12 @@ package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
-import com.powsybl.shortcircuit.*;
+import com.powsybl.shortcircuit.BusFault;
+import com.powsybl.shortcircuit.FaultResult;
+import com.powsybl.shortcircuit.FortescueFaultResult;
+import com.powsybl.shortcircuit.FortescueValue;
+import com.powsybl.shortcircuit.MagnitudeFaultResult;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
@@ -23,12 +28,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.*;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>
@@ -70,7 +78,7 @@ class FaultResultRepositoryTest {
     @BeforeAll
     void setUp() {
         // Magnitude faults
-        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, MOCK_RUN_CONTEXT, "");
         resultMagnitudeEntity = shortCircuitAnalysisResultRepository.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FaultResultEntity> faultResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .sorted(Comparator.comparing(faultResultEntity -> faultResultEntity.getFault().getId()))
@@ -79,7 +87,7 @@ class FaultResultRepositoryTest {
         faultResultEntity2 = faultResultEntities.get(1);
         faultResultEntity3 = faultResultEntities.get(2);
         // Fortescue fault
-        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, Map.of(), "");
+        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, MOCK_RUN_CONTEXT, "");
         resultFortescueEntity = shortCircuitAnalysisResultRepository.findFullResults(FORTESCUE_RESULT_UUID).get();
         faultResultEntity4 = resultFortescueEntity.getFaultResults().stream().findFirst().get();
     }
@@ -100,6 +108,34 @@ class FaultResultRepositoryTest {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.unpaged(), FaultResultsMode.BASIC);
         assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
             .containsExactlyInAnyOrderElementsOf(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
+    }
+
+    @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
+    @MethodSource({
+        "provideOrEqualsNestedFieldsFilters",
+        "provideContainsNestedFieldsFilters",
+        "provideNotEqualFilters",
+        "provideNotEqualNestedFieldsFilters"
+    })
+    void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters) {
+        //Test with unsorted request and expect the result to be sorted by uuid anyway
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC);
+        assertFaultEqualsInOrder(faultPage, Comparator.comparing(o -> o.getFaultResultUuid().toString()));
+
+        //Test with pageable containing a sort by current and expect the results to be sorted by current
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "current"))), FaultResultsMode.BASIC);
+        assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getCurrent));
+
+        //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Sort.Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
+        assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()));
+    }
+
+    private void assertFaultEqualsInOrder(Page<FaultResultEntity> resultFaultPage, Comparator<FaultResultEntity> comparator) {
+        List<String> expectedFaultPageUuid = resultFaultPage.getContent().stream().sorted(comparator)
+                .map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+        assertThat(resultFaultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
+                .containsExactlyElementsOf(expectedFaultPageUuid);
     }
 
     private Stream<Arguments> provideOrEqualsNestedFieldsFilters() {

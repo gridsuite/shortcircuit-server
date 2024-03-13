@@ -10,16 +10,19 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.ws.commons.LogUtils;
+import com.univocity.parsers.csv.CsvWriter;
+import com.univocity.parsers.csv.CsvWriterSettings;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
-import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
+import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +33,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -74,6 +84,99 @@ public class ShortCircuitService {
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
         return result;
+    }
+
+    public byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations) {
+        List<FaultResult> faultResults = result.getFaults();
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
+
+            // This code is for writing the UTF-8 Byte Order Mark (BOM) to a ZipOutputStream
+            // by adding BOM to the beginning of file to help excel in some versions to detect this is UTF-8 encoding bytes
+            zipOutputStream.write(0xef);
+            zipOutputStream.write(0xbb);
+            zipOutputStream.write(0xbf);
+
+            CsvWriterSettings settings = new CsvWriterSettings();
+            CsvWriter csvWriter = new CsvWriter(zipOutputStream, StandardCharsets.UTF_8, settings);
+
+            // Write headers to the CSV file
+            csvWriter.writeHeaders(headersList);
+
+            // Write data to the CSV file
+            for (FaultResult faultResult : faultResults) {
+                String faultResultId = faultResult.getFault().getId();
+                double faultCurrentValue = faultResults.size() == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent();
+                String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : Double.toString(faultCurrentValue);
+
+                // Process faultResult data
+                List<String> faultRowData = new ArrayList<>(List.of(
+                        faultResultId,
+                        enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
+                        "",
+                        faultCurrentValueStr
+                ));
+
+                List<LimitViolation> limitViolations = faultResult.getLimitViolations();
+                if (!limitViolations.isEmpty()) {
+                    String limitTypes = limitViolations.stream()
+                            .map(LimitViolation::getLimitType)
+                            .map(type -> enumValueTranslations.getOrDefault(type, ""))
+                            .collect(Collectors.joining(", "));
+                    faultRowData.add(limitTypes);
+                } else {
+                    faultRowData.add("");
+                }
+
+                ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
+                faultRowData.addAll(List.of(
+                        Double.toString(shortCircuitLimits.getIpMin() / 1000.0),
+                        Double.toString(shortCircuitLimits.getIpMax() / 1000.0),
+                        Double.toString(faultResult.getShortCircuitPower()),
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
+                ));
+
+                csvWriter.writeRow(faultRowData);
+
+                // Process feederResults data
+                List<FeederResult> feederResults = faultResult.getFeederResults();
+                if (!feederResults.isEmpty()) {
+                    for (FeederResult feederResult : feederResults) {
+                        double feederCurrentValue = faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent();
+                        String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
+                        List<String> feederRowData = new ArrayList<>(List.of(
+                                faultResultId,
+                                "",
+                                feederResult.getConnectableId(),
+                                feederCurrentValueStr
+                        ));
+                        csvWriter.writeRow(feederRowData);
+                    }
+                } else {
+                    csvWriter.writeRow(List.of("", "", "", ""));
+                }
+            }
+
+            csvWriter.close();
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new ShortCircuitException(FILE_EXPORT_ERROR, e.getMessage());
+        }
+    }
+
+    public byte[] getZippedCsvExportResult(UUID resultUuid, CsvTranslation csvTranslation) {
+        ShortCircuitAnalysisResult result = getResult(resultUuid, FaultResultsMode.FULL);
+        if (result == null) {
+            throw new ShortCircuitException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
+        }
+        if (Objects.isNull(csvTranslation) || Objects.isNull(csvTranslation.headersCsv()) || Objects.isNull(csvTranslation.enumValueTranslations())) {
+            throw new ShortCircuitException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
+        }
+        List<String> headersList = csvTranslation.headersCsv();
+        Map<String, String> enumValueTranslations = csvTranslation.enumValueTranslations();
+        return exportToCsv(result, headersList, enumValueTranslations);
     }
 
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {

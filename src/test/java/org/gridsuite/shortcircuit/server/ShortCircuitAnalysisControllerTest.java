@@ -24,7 +24,12 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
+import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
+import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
+import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.gridsuite.shortcircuit.server.service.ReportService;
 import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
 import org.junit.After;
@@ -48,6 +53,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -55,11 +61,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
+import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.comparingDouble;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -89,6 +99,32 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_4_ID = "variant_4";
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
 
+    private static final List<String> CSV_HEADERS = List.of(
+            "ID nœud",
+            "Type",
+            "Départs",
+            "Icc (kA)",
+            "Type de limite",
+            "Icc min (kA)",
+            "IMACC (kA)",
+            "Pcc (MVA)",
+            "Icc - Icc min (kA)",
+            "Icc - IMACC (kA)"
+    );
+
+    private final Map<String, String> enumTranslations = Map.of(
+            "THREE_PHASE", "Triphasé",
+            "SINGLE_PHASE", "Monophasé",
+            "ACTIVE_POWER", "Puissance active",
+            "APPARENT_POWER", "Puissance apparente",
+            "CURRENT", "Intensité",
+            "LOW_VOLTAGE", "Tension basse",
+            "HIGH_VOLTAGE", "Tension haute",
+            "LOW_SHORT_CIRCUIT_CURRENT", "Icc min",
+            "HIGH_SHORT_CIRCUIT_CURRENT", "Icc max",
+            "OTHER", "Autre"
+    );
+
     private static final int TIMEOUT = 1000;
 
     private static final class ShortCircuitAnalysisResultMock {
@@ -116,6 +152,12 @@ public class ShortCircuitAnalysisControllerTest {
         static final FaultResult FAULT_RESULT_4 = new FortescueFaultResult(new BusFault("VLHV2_0", "ELEMENT_ID_2"), 18.0,
             List.of(FEEDER_RESULT_4, FEEDER_RESULT_5, FEEDER_RESULT_6), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
             new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), Collections.emptyList(), null, FaultResult.Status.SUCCESS);
+        static final FaultResult FAULT_RESULT_5 = new MagnitudeFaultResult(new BusFault("VLGEN_1", "ELEMENT_ID_5"), 19.0,
+                List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
+                49.3, FaultResult.Status.SUCCESS);
+        static final FaultResult FAULT_RESULT_6 = new MagnitudeFaultResult(new BusFault("VLGEN_2", "ELEMENT_ID_6"), 19.0,
+                List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
+                49.3, FaultResult.Status.SUCCESS);
         static final FaultResult FAULT_RESULT_BASIC_1 = new MagnitudeFaultResult(new BusFault("VLHV1_0", "ELEMENT_ID_1"), 17.0,
             List.of(), List.of(),
             45.3, FaultResult.Status.SUCCESS);
@@ -127,6 +169,7 @@ public class ShortCircuitAnalysisControllerTest {
             49.3, FaultResult.Status.SUCCESS);
 
         static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3));
+        static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL2 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3, FAULT_RESULT_5, FAULT_RESULT_6));
         static final ShortCircuitAnalysisResult RESULT_FORTESCUE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_4));
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_0 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_3));
         static final ShortCircuitAnalysisResult RESULT_SORTED_PAGE_1 = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_3));
@@ -168,6 +211,15 @@ public class ShortCircuitAnalysisControllerTest {
     @MockBean
     private UuidGeneratorService uuidGeneratorService;
 
+    @MockBean
+    ShortCircuitAnalysis.Runner runner;
+
+    @Autowired
+    ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
+
+    @Autowired
+    FaultResultRepository faultResultRepository;
+
     private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
@@ -178,14 +230,20 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static void assertResultsEquals(ShortCircuitAnalysisResult result, org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto) {
         assertEquals(result.getFaultResults().size(), resultDto.getFaults().size());
-        List<FaultResult> orderedFaultResults = result.getFaultResults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
-        List<org.gridsuite.shortcircuit.server.dto.FaultResult> orderedFaultResultsDto = resultDto.getFaults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
+        List<FaultResult> orderedFaultResults = result.getFaultResults().stream().sorted(comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
+        List<org.gridsuite.shortcircuit.server.dto.FaultResult> orderedFaultResultsDto = resultDto.getFaults().stream().sorted(comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
         assertFaultResultsEquals(orderedFaultResults, orderedFaultResultsDto);
     }
 
-    private static void assertPagedFaultResultsEquals(ShortCircuitAnalysisResult result, List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResults) {
+    private static void assertPagedFaultResultsEquals(ShortCircuitAnalysisResult result, List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResults, List<String> expectedIdsOrder) {
         assertEquals(result.getFaultResults().size(), faultResults.size());
-        List<FaultResult> orderedFaultResults = result.getFaultResults().stream().sorted(Comparator.comparing(fr -> fr.getFault().getId())).collect(Collectors.toList());
+        List<FaultResult> orderedFaultResults = new ArrayList<>();
+        expectedIdsOrder.forEach(s -> {
+            FaultResult faultResultToAdd = result.getFaultResults().stream().filter(faultResult -> faultResult.getFault().getId().equals(s)).findFirst().orElse(null);
+            if (faultResultToAdd != null) {
+                orderedFaultResults.add(faultResultToAdd);
+            }
+        });
         // don't need to sort here it's done in the paged request
         assertFaultResultsEquals(orderedFaultResults, faultResults);
     }
@@ -203,8 +261,8 @@ public class ShortCircuitAnalysisControllerTest {
                 assertEquals(faultResultsDto.get(i).getPositiveMagnitude(), ((FortescueFaultResult) faultResults.get(i)).getCurrent().getPositiveMagnitude(), 0.1);
             }
 
-            List<LimitViolation> orderedLimitViolations = faultResults.get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
-            List<org.gridsuite.shortcircuit.server.dto.LimitViolation> orderedLimitViolationsDto = faultResultsDto.get(i).getLimitViolations().stream().sorted(Comparator.comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
+            List<LimitViolation> orderedLimitViolations = faultResults.get(i).getLimitViolations().stream().sorted(comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
+            List<org.gridsuite.shortcircuit.server.dto.LimitViolation> orderedLimitViolationsDto = faultResultsDto.get(i).getLimitViolations().stream().sorted(comparing(lv -> lv.getSubjectId())).collect(Collectors.toList());
             assertEquals(orderedLimitViolationsDto.size(), orderedLimitViolations.size());
             for (int j = 0; j < orderedLimitViolationsDto.size(); j++) {
                 assertEquals(orderedLimitViolationsDto.get(j).getSubjectId(), orderedLimitViolations.get(j).getSubjectId());
@@ -213,15 +271,15 @@ public class ShortCircuitAnalysisControllerTest {
                 assertEquals(orderedLimitViolationsDto.get(j).getLimit(), orderedLimitViolations.get(j).getLimit(), 0.1);
                 assertEquals(orderedLimitViolationsDto.get(j).getValue(), orderedLimitViolations.get(j).getValue(), 0.1);
             }
-            List<FeederResult> orderedFeederResults = faultResults.get(i).getFeederResults().stream().sorted(Comparator.comparing(fr -> fr.getConnectableId())).collect(Collectors.toList());
-            List<org.gridsuite.shortcircuit.server.dto.FeederResult> orderedFeederResultsDto = faultResultsDto.get(i).getFeederResults().stream().sorted(Comparator.comparing(fr -> fr.getConnectableId())).collect(Collectors.toList());
+            List<FeederResult> orderedFeederResults = faultResults.get(i).getFeederResults().stream().sorted(comparing(fr -> fr.getConnectableId())).collect(Collectors.toList());
+            List<org.gridsuite.shortcircuit.server.dto.FeederResult> orderedFeederResultsDto = faultResultsDto.get(i).getFeederResults().stream().sorted(comparing(fr -> fr.getConnectableId())).collect(Collectors.toList());
             assertEquals(orderedFeederResultsDto.size(), orderedFeederResults.size());
             for (int j = 0; j < orderedFeederResultsDto.size(); j++) {
                 assertEquals(orderedFeederResultsDto.get(j).getConnectableId(), orderedFeederResults.get(j).getConnectableId());
-                if (orderedFeederResults.get(i) instanceof MagnitudeFaultResult) {
+                if (faultResults.get(i) instanceof MagnitudeFaultResult) {
                     assertEquals(orderedFeederResultsDto.get(j).getCurrent(), ((MagnitudeFeederResult) orderedFeederResults.get(j)).getCurrent(), 0.1);
                 } else if (faultResults.get(i) instanceof FortescueFaultResult) {
-                    assertEquals(faultResultsDto.get(i).getPositiveMagnitude(), ((FortescueFaultResult) faultResults.get(i)).getCurrent().getPositiveMagnitude(), 0.1);
+                    assertEquals(orderedFeederResultsDto.get(j).getPositiveMagnitude(), ((FortescueFeederResult) orderedFeederResults.get(j)).getCurrent().getPositiveMagnitude(), 0.1);
                 }
             }
         }
@@ -279,8 +337,20 @@ public class ShortCircuitAnalysisControllerTest {
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         LocalDateTime testTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
+
+            //fault.id comparator
+            Comparator<FaultEmbeddable> comparatorByFaultId = comparing(FaultEmbeddable::getId);
+            //FaultResultUuid comparator (the toString is needed because UUID comparator is not the same as the string one)
+            Comparator<FaultResultEntity> comparatorByResultUuid = comparing(faultResultEntity -> faultResultEntity.getFaultResultUuid().toString());
+            //fault.id and resultUuid (in that order) comparator
+            Comparator<FaultResultEntity> comparatorByFaultIdAndResultUuid = comparing(FaultResultEntity::getFault, comparatorByFaultId).thenComparing(comparatorByResultUuid);
+            //fault.id DESC and resultUuid (in that order) comparator
+            Comparator<FaultResultEntity> comparatorByFaultIdDescAndResultUuid = comparing(FaultResultEntity::getFault, comparatorByFaultId).reversed().thenComparing(comparatorByResultUuid);
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
             shortCircuitParameters.setWithFortescueResult(false);
@@ -344,9 +414,11 @@ public class ShortCircuitAnalysisControllerTest {
             // ( e.g. https://stackoverflow.com/questions/52490399/spring-boot-page-deserialization-pageimpl-no-constructor ),
             // but for tests we care only about the content so we deserialize to DTOs only the content subfield using the jackson treemodel api
             JsonNode faultResultsPageNode = mapper.readTree(result.getResponse().getContentAsString());
+            List<FaultResultEntity> faultsFromDatabase = faultResultRepository.findAll();
+            List<String> expectedResultsIdInOrder = faultsFromDatabase.stream().filter(faultResultEntity -> faultResultEntity.getNbLimitViolations() != 0).sorted(comparatorByResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
             ObjectReader faultResultsReader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FaultResult>>() { });
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0 = faultResultsReader.readValue(faultResultsPageNode.get("content"));
-            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_WITH_LIMIT_VIOLATIONS, faultResultsPageDto0);
+            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_WITH_LIMIT_VIOLATIONS, faultResultsPageDto0, expectedResultsIdInOrder);
 
             result = mockMvc.perform(get(
                             "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
@@ -359,7 +431,9 @@ public class ShortCircuitAnalysisControllerTest {
                      .andReturn();
             JsonNode faultResultsPageNode0 = mapper.readTree(result.getResponse().getContentAsString());
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0Full = faultResultsReader.readValue(faultResultsPageNode0.get("content"));
-            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_0, faultResultsPageDto0Full);
+            faultsFromDatabase = faultResultRepository.findAll();
+            expectedResultsIdInOrder = faultsFromDatabase.stream().sorted(comparatorByFaultIdAndResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_0, faultResultsPageDto0Full, expectedResultsIdInOrder);
 
             result = mockMvc.perform(get(
                              "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
@@ -372,7 +446,37 @@ public class ShortCircuitAnalysisControllerTest {
                      .andReturn();
             JsonNode faultResultsPageNode1 = mapper.readTree(result.getResponse().getContentAsString());
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto1Full = faultResultsReader.readValue(faultResultsPageNode1.get("content"));
-            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full);
+            faultsFromDatabase = faultResultRepository.findAll();
+            //result should be sorted by fault.id + we add a sort by resultUuid
+            expectedResultsIdInOrder = faultsFromDatabase.stream().sorted(comparatorByFaultIdDescAndResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full, expectedResultsIdInOrder);
+
+            // export zipped csv result
+            result = mockMvc.perform(post(
+                            "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(CsvTranslation.builder().headersCsv(CSV_HEADERS).
+                                    enumValueTranslations(enumTranslations).build())))
+                    .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                    .andReturn();
+            byte[] zipFile = result.getResponse().getContentAsByteArray();
+            byte[] unzippedCsvFile = unzip(zipFile);
+            String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
+            List<String> actualCsvLines = List.of(Arrays.asList(unzippedCsvFileAsString.split("\n")).get(0).split(","));
+            // Including "\uFEFF" indicates the UTF-8 BOM at the start
+            List<String> expectedLines = List.of(
+                    "\uFEFFID nœud",
+                    "Type",
+                    "Départs",
+                    "Icc (kA)",
+                    "Type de limite",
+                    "Icc min (kA)",
+                    "IMACC (kA)",
+                    "Pcc (MVA)",
+                    "Icc - Icc min (kA)",
+                    "Icc - IMACC (kA)"
+            );
+            assertEquals(expectedLines, actualCsvLines);
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
@@ -388,12 +492,67 @@ public class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
+    public void testDeterministicResults() throws Exception {
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
+                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL2));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
+
+            //faultResultUuid comparator (the toString is needed because UUID comparator is not the same as the string one)
+            Comparator<FaultResultEntity> comparatorByResultUuid = comparing(faultResultEntity -> faultResultEntity.getFaultResultUuid().toString());
+            //current and resultUuid (in that order) comparator
+            Comparator<FaultResultEntity> comparatorByCurrentAndResultUuid = comparingDouble(FaultResultEntity::getCurrent).thenComparing(comparatorByResultUuid);
+            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
+            shortCircuitParameters.setWithFortescueResult(false);
+            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
+            MvcResult result = mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            .header(HEADER_USER_ID, "userId")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(parametersJson))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+            //Get the fault_results sorted by current (3 of them have the same current) and expect them to be sorted by current and then by uuid (so the result is deterministic)
+            result = mockMvc.perform(get(
+                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                            .param("page", "0")
+                            .param("size", "10")
+                            .param("sort", "current"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+
+            JsonNode faultResultsPageNode = mapper.readTree(result.getResponse().getContentAsString());
+            List<FaultResultEntity> faultsFromDatabase = faultResultRepository.findAll();
+            List<String> expectedResultsIdInOrder = faultsFromDatabase.stream().sorted(comparatorByCurrentAndResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+            ObjectReader faultResultsReader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FaultResult>>() { });
+            List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0 = faultResultsReader.readValue(faultResultsPageNode.get("content"));
+            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL2, faultResultsPageDto0, expectedResultsIdInOrder);
+
+        }
+    }
+
+    @Test
     public void runWithBusIdTest() throws Exception {
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
         LocalDateTime testTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
             shortCircuitParameters.setWithFortescueResult(true);
@@ -441,7 +600,10 @@ public class ShortCircuitAnalysisControllerTest {
             List<org.gridsuite.shortcircuit.server.dto.FeederResult> feederResults = reader.readValue(feederResultsPage.get("content"));
             // we update the fault result with the feeders we just get to be able to use the assertion
             org.gridsuite.shortcircuit.server.dto.FaultResult formattedFaultResult = new org.gridsuite.shortcircuit.server.dto.FaultResult(faultResult.getFault(), faultResult.getCurrent(), faultResult.getPositiveMagnitude(), faultResult.getShortCircuitPower(), faultResult.getLimitViolations(), feederResults, faultResult.getShortCircuitLimits());
-            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL, List.of(formattedFaultResult));
+            List<FaultResultEntity> faultsFromDatabase = faultResultRepository.findAll();
+            Comparator<FaultResultEntity> comparatorByResultUuid = comparing(faultResultEntity -> faultResultEntity.getFaultResultUuid().toString());
+            List<String> expectedResultsIdInOrder = faultsFromDatabase.stream().sorted(comparatorByResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
+            assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL, List.of(formattedFaultResult), expectedResultsIdInOrder);
         }
     }
 
@@ -452,6 +614,8 @@ public class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(nodeBreakerNetwork), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
             shortCircuitParameters.setWithFortescueResult(true);
@@ -528,6 +692,8 @@ public class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
@@ -628,6 +794,8 @@ public class ShortCircuitAnalysisControllerTest {
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network1), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
 
             ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters().setWithFortescueResult(false);
             String parametersJson = mapper.writeValueAsString(shortCircuitParameters);

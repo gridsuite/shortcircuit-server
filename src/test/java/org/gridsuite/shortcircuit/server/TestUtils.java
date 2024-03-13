@@ -9,13 +9,19 @@ package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.NonNull;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.UUID;
+import java.util.zip.ZipInputStream;
 
 import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
 import static com.vladmihalcea.sql.SQLStatementCountValidator.assertDeleteCount;
@@ -30,6 +36,18 @@ public final class TestUtils {
     private TestUtils() {
         throw new IllegalStateException("Not implemented exception");
     }
+
+    public static final ShortCircuitRunContext MOCK_RUN_CONTEXT = new ShortCircuitRunContext(
+            UUID.randomUUID(),
+            null,
+            null,
+            new ShortCircuitParameters(),
+            null,
+            null,
+            null,
+            null,
+            null
+    );
 
     public static void assertQueuesEmptyThenClear(List<String> destinations, OutputDestination output) {
         try {
@@ -70,5 +88,19 @@ public final class TestUtils {
         assertInsertCount(insert);
         assertUpdateCount(update);
         assertDeleteCount(delete);
+    }
+
+    public static byte[] unzip(byte[] zippedBytes) throws Exception {
+        var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zippedBytes));
+        var buff = new byte[1024];
+        if (zipInputStream.getNextEntry() != null) {
+            var outputStream = new ByteArrayOutputStream();
+            int l;
+            while ((l = zipInputStream.read(buff)) > 0) {
+                outputStream.write(buff, 0, l);
+            }
+            return outputStream.toByteArray();
+        }
+        return new byte[0];
     }
 }
