@@ -19,7 +19,7 @@ import java.util.UUID;
  * @author Florent MILLOT <florent.millot@rte-france.com>
  */
 @Service
-public class FeederResultSpecificationBuilder {
+public final class FeederResultSpecificationBuilder {
 
     public Specification<FeederResultEntity> resultUuidEquals(UUID value) {
         return (feederResult, cq, cb) -> cb.equal(feederResult.get("faultResult").get("result").get("resultUuid"), value);

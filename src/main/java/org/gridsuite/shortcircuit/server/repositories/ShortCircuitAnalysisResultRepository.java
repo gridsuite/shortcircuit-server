@@ -389,21 +389,15 @@ public class ShortCircuitAnalysisResultRepository {
     private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Optional<Sort.Order> childrenSort) {
         // feeders may only be sorted by connectableId
         if (childrenSort.isPresent()) {
-            pagedFaultResults.map(res -> {
-                res.getFeederResults().sort(
-                    childrenSort.get().isAscending() ?
-                        Comparator.comparing(FeederResultEntity::getConnectableId) :
-                        Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
-                );
-                return res;
-            });
+            pagedFaultResults.forEach(res -> res.getFeederResults().sort(
+                childrenSort.get().isAscending() ?
+                    Comparator.comparing(FeederResultEntity::getConnectableId) :
+                    Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
+            ));
         } else {
             // otherwise by default feederResults (within each individual faultResult) are sorted by 'current' in descending order :
-            pagedFaultResults.map(res -> {
-                res.getFeederResults().sort(
-                        Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed());
-                return res;
-            });
+            pagedFaultResults.forEach(res -> res.getFeederResults().sort(
+                    Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed()));
         }
     }
 
