@@ -143,17 +143,19 @@ class FaultResultRepositoryTest {
 
     @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
     @MethodSource({
-        "provideFeederFieldsStartFilters",
-        "provideFeederFieldsContainFilters",
-        "provideFeederFieldsUnfiltered"
+        "provideFeederFieldsStartFiltersSortedAsc",
+        "provideFeederFieldsContainFiltersSortedDesc",
+        "provideFeederFieldsUnfilteredSortedAscAndDesc"
     })
-    void feedersFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<List<FeederResult>> expectedFeedersLists) {
+    void feedersFilterTest(ShortCircuitAnalysisResultEntity resultEntity,
+                           List<ResourceFilter> resourceFilters,
+                           Sort.Order sort,
+                           List<List<FeederResult>> expectedFeedersLists) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
                 resultEntity,
                 resourceFilters,
                 PageRequest.of(0, 3, Sort.by(
-                        new Sort.Order(Sort.Direction.ASC, "current"),
-                        new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"))),
+                        new Sort.Order(Sort.Direction.ASC, "current"), sort)),
                 FaultResultsMode.FULL);
 
         List<List<String>> feedersConnectableIds = faultPage.getContent().stream()
@@ -169,24 +171,6 @@ class FaultResultRepositoryTest {
                         ).toList();
 
         Assertions.assertEquals(expectedFeedersConnectableIds, feedersConnectableIds);
-    }
-
-    private void assertFeedersEqualsInOrder(Page<FaultResultEntity> resultFaultPage,
-                                            Comparator<FaultResultEntity> faultComparator,
-                                            Comparator<FeederResultEntity> feederComparator) {
-        List<List<String>> resultFeederIds = resultFaultPage.getContent().stream()
-                .map(faultRes -> faultRes.getFeederResults().stream()
-                                .map(feederRes -> feederRes.getFeederResultUuid().toString()).toList()).toList();
-
-        List<List<String>> expectedFaultFeedersTds = resultFaultPage.getContent().stream()
-                .sorted(faultComparator)
-                .map(faultResultEntity -> faultResultEntity.getFeederResults()
-                                .stream()
-                                .sorted(feederComparator)
-                                .map(feederRes ->
-                                    feederRes.getFeederResultUuid().toString())
-                                .toList()).toList();
-        Assertions.assertEquals(resultFeederIds, expectedFaultFeedersTds);
     }
 
     private void assertFaultEqualsInOrder(Page<FaultResultEntity> resultFaultPage, Comparator<FaultResultEntity> comparator) {
@@ -230,57 +214,72 @@ class FaultResultRepositoryTest {
                 List.of()));
     }
 
-    private Stream<Arguments> provideFeederFieldsStartFilters() {
+    private Stream<Arguments> provideFeederFieldsStartFiltersSortedAsc() {
         return Stream.of(
-                Arguments.of(
-                        resultMagnitudeEntity,
+            Arguments.of(
+                resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "C", "feederResults.connectableId")),
-                List.of(List.of(FEEDER_RESULT_3, FEEDER_RESULT_1), List.of(FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1))),
-                Arguments.of(
-                        resultMagnitudeEntity,
+                new Sort.Order(Sort.Direction.ASC, "feederResults.connectableId"),
+                List.of(List.of(FEEDER_RESULT_1, FEEDER_RESULT_3), List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3))),
+            Arguments.of(
+                resultMagnitudeEntity,
                 List.of(
-                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "RAR", "feederResults.connectableId")),
-                List.of(
-                        List.of(FEEDER_RESULT_4)
-                ))
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "RAR", "feederResults.connectableId")),
+                new Sort.Order(Sort.Direction.ASC, "feederResults.connectableId"),
+                List.of(List.of(FEEDER_RESULT_4))
+            )
         );
     }
 
-    private Stream<Arguments> provideFeederFieldsContainFilters() {
+    private Stream<Arguments> provideFeederFieldsContainFiltersSortedDesc() {
         return Stream.of(
-                Arguments.of(
-                        resultMagnitudeEntity,
+            Arguments.of(
+                resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"),
                 List.of(List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_4, FEEDER_RESULT_1))),
-                Arguments.of(
-                        resultMagnitudeEntity,
+            Arguments.of(
+                resultMagnitudeEntity,
                 List.of(
-                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "NN_I", "feederResults.connectableId"),
-                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "NN_I", "feederResults.connectableId"),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"),
                 List.of(
-                        List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_1)
+                    List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_1)
                 )),
-                Arguments.of(
-                        resultMagnitudeEntity,
+            Arguments.of(
+                resultMagnitudeEntity,
                 List.of(
                         new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "OUPS", "feederResults.connectableId")),
+                new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"),
                 List.of()
-                )
+            )
         );
     }
 
-    private Stream<Arguments> provideFeederFieldsUnfiltered() {
+    private Stream<Arguments> provideFeederFieldsUnfilteredSortedAscAndDesc() {
         return Stream.of(
-                Arguments.of(
-                        resultMagnitudeEntity,
+            Arguments.of(
+                resultMagnitudeEntity,
                 List.of(),
+                new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId"),
                 List.of(
-                        List.of(FEEDER_RESULT_3, FEEDER_RESULT_1),
-                        List.of(FEEDER_RESULT_4, FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1),
-                        List.of()
-                ))
+                    List.of(FEEDER_RESULT_3, FEEDER_RESULT_1),
+                    List.of(FEEDER_RESULT_4, FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1),
+                    List.of()
+                )),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(),
+                new Sort.Order(Sort.Direction.ASC, "feederResults.connectableId"),
+                List.of(
+                    List.of(FEEDER_RESULT_1, FEEDER_RESULT_3),
+                    List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3, FEEDER_RESULT_4),
+                    List.of()
+                )
+            )
         );
     }
 

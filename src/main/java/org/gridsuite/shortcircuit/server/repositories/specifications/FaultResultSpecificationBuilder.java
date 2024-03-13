@@ -12,7 +12,6 @@ import jakarta.persistence.criteria.Root;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
-import org.gridsuite.shortcircuit.server.entities.LimitViolationEmbeddable;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -27,8 +26,7 @@ import java.util.UUID;
 public class FaultResultSpecificationBuilder extends AbstractCommonSpecificationBuilder<FaultResultEntity> {
     @Override
     public boolean isNotParentFilter(ResourceFilter filter) {
-        return filter.column().contains(FeederResultEntity.Fields.connectableId) ||
-                filter.column().contains(LimitViolationEmbeddable.Fields.limitType);
+        return filter.column().contains(FeederResultEntity.Fields.connectableId);
     }
 
     @Override

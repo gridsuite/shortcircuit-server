@@ -314,8 +314,7 @@ public class ShortCircuitAnalysisResultRepository {
     private Optional<Sort.Order> extractChildrenSort(Pageable pageable) {
         return pageable.getSort().stream()
                 .filter(sortOrder ->
-                        sortOrder.getProperty().contains(FeederResultEntity.Fields.connectableId) ||
-                        sortOrder.getProperty().contains(LimitViolationEmbeddable.Fields.limitType))
+                        sortOrder.getProperty().contains(FeederResultEntity.Fields.connectableId))
                 .findFirst();
     }
 
