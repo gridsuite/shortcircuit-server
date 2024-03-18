@@ -23,18 +23,23 @@ import java.util.UUID;
  * @author Florent MILLOT <florent.millot@rte-france.com>
  */
 @Service
-public class FaultResultSpecificationBuilder extends AbstractCommonSpecificationBuilder<FaultResultEntity> {
-    @Override
+public class FaultResultSpecificationBuilder {
     public boolean isNotParentFilter(ResourceFilter filter) {
         return filter.column().contains(FeederResultEntity.Fields.connectableId);
     }
 
-    @Override
+    public Specification<FaultResultEntity> uuidIn(List<UUID> uuids) {
+        return (root, cq, cb) -> root.get(getIdFieldName()).in(uuids);
+    }
+
+    public Specification<FaultResultEntity> resultUuidEquals(UUID value) {
+        return (root, cq, cb) -> cb.equal(getResultIdPath(root), value);
+    }
+
     public String getIdFieldName() {
         return FaultResultEntity.Fields.faultResultUuid;
     }
 
-    @Override
     public Path<UUID> getResultIdPath(Root<FaultResultEntity> root) {
         return root.get(FaultResultEntity.Fields.result).get(ShortCircuitAnalysisResultEntity.Fields.resultUuid);
     }
@@ -45,6 +50,20 @@ public class FaultResultSpecificationBuilder extends AbstractCommonSpecification
 
     public Specification<FaultResultEntity> appendWithLimitViolationsToSpecification(Specification<FaultResultEntity> specification) {
         return specification.and(SpecificationUtils.isNotEmpty("limitViolations"));
+    }
+
+    public Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
+        List<ResourceFilter> childrenResourceFilter = resourceFilters.stream().filter(this::isNotParentFilter).toList();
+        // since sql joins generates duplicate results, we need to use distinct here
+        Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
+        // filter by resultUuid
+        specification = specification.and(Specification.where(resultUuidEquals(resultUuid)));
+        if (!childrenResourceFilter.isEmpty()) {
+            // needed here to filter main entities that would have empty collection when filters are applied
+            specification = specification.and(childrenNotEmpty());
+        }
+
+        return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
     }
 
     public Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilter> resourceFilters) {
