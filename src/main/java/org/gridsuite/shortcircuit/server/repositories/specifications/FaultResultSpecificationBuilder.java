@@ -1,0 +1,75 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+package org.gridsuite.shortcircuit.server.repositories.specifications;
+
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
+import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
+import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * @author Florent MILLOT <florent.millot@rte-france.com>
+ */
+@Service
+public class FaultResultSpecificationBuilder {
+    public boolean isNotParentFilter(ResourceFilter filter) {
+        return filter.column().contains(FeederResultEntity.Fields.connectableId);
+    }
+
+    public Specification<FaultResultEntity> uuidIn(List<UUID> uuids) {
+        return (root, cq, cb) -> root.get(getIdFieldName()).in(uuids);
+    }
+
+    public Specification<FaultResultEntity> resultUuidEquals(UUID value) {
+        return (root, cq, cb) -> cb.equal(getResultIdPath(root), value);
+    }
+
+    public String getIdFieldName() {
+        return FaultResultEntity.Fields.faultResultUuid;
+    }
+
+    public Path<UUID> getResultIdPath(Root<FaultResultEntity> root) {
+        return root.get(FaultResultEntity.Fields.result).get(ShortCircuitAnalysisResultEntity.Fields.resultUuid);
+    }
+
+    public Specification<FaultResultEntity> childrenNotEmpty() {
+        return SpecificationUtils.isNotEmpty(FaultResultEntity.Fields.feederResults);
+    }
+
+    public Specification<FaultResultEntity> appendWithLimitViolationsToSpecification(Specification<FaultResultEntity> specification) {
+        return specification.and(SpecificationUtils.isNotEmpty("limitViolations"));
+    }
+
+    public Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
+        List<ResourceFilter> childrenResourceFilter = resourceFilters.stream().filter(this::isNotParentFilter).toList();
+        // since sql joins generates duplicate results, we need to use distinct here
+        Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
+        // filter by resultUuid
+        specification = specification.and(Specification.where(resultUuidEquals(resultUuid)));
+        if (!childrenResourceFilter.isEmpty()) {
+            // needed here to filter main entities that would have empty collection when filters are applied
+            specification = specification.and(childrenNotEmpty());
+        }
+
+        return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
+    }
+
+    public Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilter> resourceFilters) {
+        List<ResourceFilter> childrenResourceFilter = resourceFilters.stream().filter(this::isNotParentFilter).toList();
+        Specification<FaultResultEntity> specification = Specification.where(uuidIn(uuids));
+
+        return SpecificationUtils.appendFiltersToSpecification(specification, childrenResourceFilter);
+    }
+}

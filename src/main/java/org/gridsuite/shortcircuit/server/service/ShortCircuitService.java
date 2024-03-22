@@ -244,7 +244,10 @@ public class ShortCircuitService {
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResult> getFaultResultsPage(UUID resultUuid, FaultResultsMode mode, List<ResourceFilter> resourceFilters, Pageable pageable) {
+    public Page<FaultResult> getFaultResultsPage(UUID resultUuid,
+                                                 FaultResultsMode mode,
+                                                 List<ResourceFilter> resourceFilters,
+                                                 Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
