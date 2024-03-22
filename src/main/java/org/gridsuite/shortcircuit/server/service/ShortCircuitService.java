@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -122,18 +123,32 @@ public class ShortCircuitService {
         List<FaultResult> faultResults = result.getFaults();
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-            CsvWriterSettings settings = new CsvWriterSettings();
-            CsvWriter csvWriter = new CsvWriter(zipOutputStream, settings);
             zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
+
+            // This code is for writing the UTF-8 Byte Order Mark (BOM) to a ZipOutputStream
+            // by adding BOM to the beginning of file to help excel in some versions to detect this is UTF-8 encoding bytes
+            zipOutputStream.write(0xef);
+            zipOutputStream.write(0xbb);
+            zipOutputStream.write(0xbf);
+
+            CsvWriterSettings settings = new CsvWriterSettings();
+            CsvWriter csvWriter = new CsvWriter(zipOutputStream, StandardCharsets.UTF_8, settings);
+
+            // Write headers to the CSV file
             csvWriter.writeHeaders(headersList);
 
+            // Write data to the CSV file
             for (FaultResult faultResult : faultResults) {
+                String faultResultId = faultResult.getFault().getId();
+                double faultCurrentValue = faultResults.size() == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent();
+                String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : Double.toString(faultCurrentValue);
+
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
-                        faultResult.getFault().getId(),
+                        faultResultId,
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        Double.toString(faultResult.getPositiveMagnitude())
+                        faultCurrentValueStr
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
@@ -149,8 +164,8 @@ public class ShortCircuitService {
 
                 ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
                 faultRowData.addAll(List.of(
-                        Double.toString(shortCircuitLimits.getIpMin()),
-                        Double.toString(shortCircuitLimits.getIpMax()),
+                        Double.toString(shortCircuitLimits.getIpMin() / 1000.0),
+                        Double.toString(shortCircuitLimits.getIpMax() / 1000.0),
                         Double.toString(faultResult.getShortCircuitPower()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
                         Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
@@ -162,11 +177,13 @@ public class ShortCircuitService {
                 List<FeederResult> feederResults = faultResult.getFeederResults();
                 if (!feederResults.isEmpty()) {
                     for (FeederResult feederResult : feederResults) {
+                        double feederCurrentValue = faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent();
+                        String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
                         List<String> feederRowData = new ArrayList<>(List.of(
-                                faultResult.getFault().getId(),
+                                faultResultId,
                                 "",
                                 feederResult.getConnectableId(),
-                                Double.toString(feederResult.getPositiveMagnitude())
+                                feederCurrentValueStr
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
