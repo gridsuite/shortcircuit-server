@@ -23,7 +23,7 @@ public class ShortCircuitObserver {
     private static final String OBSERVATION_PREFIX = "app.computation.";
     private static final String TYPE_TAG_NAME = "type";
     private static final String STATUS_TAG_NAME = "status";
-    private static final String COMPUTATION_TYPE = "shortcircuit";
+    private static final String COMPUTATION_TYPE = "shortcircuitanalysis";
     private static final String COMPUTATION_COUNTER_NAME = OBSERVATION_PREFIX + "count";
     private static final String PROVIDER_TAG_NAME = "provider";
     private final ObservationRegistry observationRegistry;
