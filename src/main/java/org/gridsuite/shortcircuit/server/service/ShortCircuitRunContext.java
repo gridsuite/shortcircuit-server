@@ -7,54 +7,32 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@Getter
+@Builder
+@AllArgsConstructor
+@RequiredArgsConstructor
+@Data
 public class ShortCircuitRunContext {
-
     private final UUID networkUuid;
-
     private final String variantId;
-
     private final String receiver;
-
     private final ShortCircuitParameters parameters;
-
     private final UUID reportUuid;
-
     private final String reporterId;
-
     private final String reportType;
-
     private final String userId;
-
     private final String busId;
-
     private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
-
-    public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
-                                  UUID reportUuid, String reporterId, String reportType, String userId, String busId) {
-        this.networkUuid = Objects.requireNonNull(networkUuid);
-        this.variantId = variantId;
-        this.receiver = receiver;
-        this.parameters = Objects.requireNonNull(parameters);
-        this.reportUuid = reportUuid;
-        this.reporterId = reporterId;
-        this.reportType = reportType;
-        this.userId = userId;
-        this.busId = busId;
-    }
-
-    public void setShortCircuitLimits(Map<String, ShortCircuitLimits> shortCircuitLimits) {
-        this.shortCircuitLimits = shortCircuitLimits;
-    }
 }

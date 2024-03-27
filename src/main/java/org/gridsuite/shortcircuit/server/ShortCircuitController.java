@@ -8,24 +8,24 @@ package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.powsybl.security.LimitViolationType;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.shortcircuit.server.dto.*;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
 import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
@@ -44,16 +44,9 @@ public class ShortCircuitController {
         this.shortCircuitService = shortCircuitService;
     }
 
-    private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
-        return parameters != null ? parameters : new ShortCircuitParameters();
-    }
-
-    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/networks/{networkUuid}/run-and-save", consumes = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a short circuit analysis on a network")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200",
-                                        description = "The short circuit analysis has been performed",
-                                        content = {@Content(mediaType = APPLICATION_JSON_VALUE,
-                                                            schema = @Schema(implementation = ShortCircuitParameters.class))})})
+    @ApiResponse(responseCode = "200", description = "The short circuit analysis has been started")
     public ResponseEntity<UUID> runAndSave(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
                                            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
@@ -61,11 +54,10 @@ public class ShortCircuitController {
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false) String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
-                                           @RequestBody(required = false) ShortCircuitParameters parameters,
+                                           @Parameter(description = "Parameters to use for the analysis") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid,
+                                           @Parameter(description = "Optional override of parameters for this analysis") @RequestBody(required = false) Map<String, Object> parametersOverride,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, nonNullParameters, reportUuid, reporterId, reportType, userId, busId));
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
+        return ResponseEntity.ok(shortCircuitService.runAndSaveResult(networkUuid, variantId, receiver, parametersUuid, parametersOverride, reportUuid, reporterId, reportType, userId, busId));
     }
 
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
@@ -179,4 +171,49 @@ public class ShortCircuitController {
         return ResponseEntity.ok().body(List.of(LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT));
     }
 
+    @PutMapping(value = "/parameters", consumes = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a entry for parameters")
+    @ApiResponse(responseCode = "201", description = "A new entry has been created")
+    public ResponseEntity<UUID> createParameters(@Parameter(description = "The parameters to save. It no body or empty string/json, then default parameters will be used instead.", allowEmptyValue = true) @RequestBody(required = false) @Nullable final ShortCircuitParametersInfos parameters) {
+        return ResponseEntity.ok(shortCircuitService.createParameters(parameters));
+    }
+
+    @PutMapping(value = "/parameters/{parametersUuid}")
+    @Operation(summary = "Create a entry for parameters")
+    @ApiResponse(responseCode = "201", description = "A new entry has been created")
+    @ApiResponse(responseCode = "204", description = "Entry updated with parameters passed")
+    @ApiResponse(responseCode = "200", description = "Entry reset to default parameters")
+    public ResponseEntity<Void> createParameters(
+            @Parameter(description = "Parameters UUID") @PathVariable("parametersUuid") UUID parametersUuid,
+            @Parameter(description = "The parameters to save. It no body or empty string/json, then default parameters will be used instead.", allowEmptyValue = true) @RequestBody(required = false) @Nullable final ShortCircuitParametersInfos parameters) {
+        if (shortCircuitService.createParameters(parametersUuid, parameters)) {
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } else if (parameters == null) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+    }
+
+    @GetMapping(value = "/parameters/{parametersUuid}", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get parameters for a study")
+    @ApiResponse(responseCode = "200", description = "The parameters fot the study")
+    @ApiResponse(responseCode = "404", description = "No parameters found with this UUID (if fallback=false)")
+    public ResponseEntity<ShortCircuitParametersInfos> getParameter(
+            @Parameter(description = "Parameters UUID") @PathVariable("parametersUuid") UUID parametersUuid,
+            @Parameter(description = "Fallback to default parameters if not found") @RequestParam(name = "fallback", required = false, defaultValue = "true") boolean fallback) {
+        if (fallback) {
+            return ResponseEntity.ok(shortCircuitService.getParametersOrCreateDefault(parametersUuid));
+        } else {
+            return ResponseEntity.of(shortCircuitService.getParameters(parametersUuid));
+        }
+    }
+
+    @PostMapping(value = "/parameters/{parametersUuid}/duplicate")
+    @Operation(summary = "Create a entry for parameters")
+    @ApiResponse(responseCode = "201", description = "A new entry has been created")
+    @ApiResponse(responseCode = "404", description = "No parameters found with this UUID (if fallback=false)")
+    public ResponseEntity<UUID> duplicateParameter(@Parameter(description = "Parameters UUID") @PathVariable("parametersUuid") UUID parametersUuid) {
+        return ResponseEntity.ok(shortCircuitService.duplicateParameters(parametersUuid));
+    }
 }

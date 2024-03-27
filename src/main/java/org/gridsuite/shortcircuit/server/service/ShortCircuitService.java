@@ -6,23 +6,35 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.*;
-import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
+import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -36,80 +48,35 @@ import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@RequiredArgsConstructor
 @Service
 public class ShortCircuitService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
 
-    @Autowired
-    NotificationService notificationService;
+    @NonNull private final NotificationService notificationService;
+    @NonNull private final UuidGeneratorService uuidGeneratorService;
+    @NonNull private final ShortCircuitAnalysisResultRepository resultRepository;
+    @NonNull private final ParametersRepository parametersRepository;
+    @NonNull private final ObjectMapper objectMapper;
 
-    private UuidGeneratorService uuidGeneratorService;
-
-    private ShortCircuitAnalysisResultRepository resultRepository;
-
-    private ObjectMapper objectMapper;
-
-    public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
-        this.notificationService = Objects.requireNonNull(notificationService);
-        this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
-        this.resultRepository = Objects.requireNonNull(resultRepository);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
-    }
-
-    public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
-        Objects.requireNonNull(runContext);
-        var resultUuid = uuidGeneratorService.generate();
-
+    public UUID runAndSaveResult(@NonNull final UUID networkUuid, final String variantId, final String receiver,
+                                 final UUID parametersUuid, final Map<String, Object> parametersOverride,
+                                 final UUID reportUuid, final String reporterId, final String reportType,
+                                 @NonNull final String userId, final String busId) {
+        ShortCircuitParameters scParameters = EntityDtoUtils.convert(parametersRepository.getByIdOrDefault(parametersUuid));
+        if (parametersOverride != null && !parametersOverride.isEmpty()) {
+            try {
+                scParameters = objectMapper.updateValue(scParameters, parametersOverride);
+            } catch (final JsonMappingException ex) {
+                throw new RuntimeException("Error while updating parameters", ex);
+            }
+        }
+        scParameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
+        final UUID resultUuid = uuidGeneratorService.generate();
         // update status to running status
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING.name());
-        notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
+        notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, new ShortCircuitRunContext(networkUuid, variantId, receiver, scParameters, reportUuid, reporterId, reportType, userId, busId)).toMessage(objectMapper));
         return resultUuid;
-    }
-
-    private static ShortCircuitAnalysisResult fromEntity(ShortCircuitAnalysisResultEntity resultEntity, FaultResultsMode mode) {
-        List<FaultResult> faultResults = new ArrayList<>();
-        switch (mode) {
-            case BASIC, FULL:
-                faultResults = resultEntity.getFaultResults().stream().map(fr -> fromEntity(fr, mode)).toList();
-                break;
-            case WITH_LIMIT_VIOLATIONS:
-                faultResults = resultEntity.getFaultResults().stream().filter(fr -> !fr.getLimitViolations().isEmpty()).map(fr -> fromEntity(fr, mode)).toList();
-                break;
-            case NONE:
-            default:
-                break;
-        }
-        return new ShortCircuitAnalysisResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), faultResults);
-    }
-
-    private static FaultResult fromEntity(FaultResultEntity faultResultEntity, FaultResultsMode mode) {
-        Fault fault = fromEntity(faultResultEntity.getFault());
-        double current = faultResultEntity.getCurrent();
-        double positiveMagnitude = faultResultEntity.getPositiveMagnitude();
-        double shortCircuitPower = faultResultEntity.getShortCircuitPower();
-        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMin(), faultResultEntity.getIpMax(), faultResultEntity.getDeltaCurrentIpMin(), faultResultEntity.getDeltaCurrentIpMax());
-        List<LimitViolation> limitViolations = new ArrayList<>();
-        List<FeederResult> feederResults = new ArrayList<>();
-        if (mode != FaultResultsMode.BASIC) {
-            // if we enter here, by calling the getters, the limit violations and feeder results will be loaded even if we don't want to in some mode
-            limitViolations = faultResultEntity.getLimitViolations().stream().map(ShortCircuitService::fromEntity).toList();
-            feederResults = faultResultEntity.getFeederResults().stream().map(ShortCircuitService::fromEntity).toList();
-        }
-        return new FaultResult(fault, current, positiveMagnitude, shortCircuitPower, limitViolations, feederResults, shortCircuitLimits);
-    }
-
-    private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {
-        return new Fault(faultEmbeddable.getId(), faultEmbeddable.getElementId(), faultEmbeddable.getFaultType().name());
-    }
-
-    private static LimitViolation fromEntity(LimitViolationEmbeddable limitViolationEmbeddable) {
-        return new LimitViolation(limitViolationEmbeddable.getSubjectId(), limitViolationEmbeddable.getLimitType().name(),
-                limitViolationEmbeddable.getLimit(), limitViolationEmbeddable.getLimitName(), limitViolationEmbeddable.getValue());
-    }
-
-    private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
-        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
@@ -234,7 +201,7 @@ public class ShortCircuitService {
         if (result.isPresent()) {
             ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
 
-            ShortCircuitAnalysisResult res = fromEntity(sortedResult, mode);
+            ShortCircuitAnalysisResult res = EntityDtoUtils.convert(sortedResult, mode);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
             }
@@ -263,7 +230,7 @@ public class ShortCircuitService {
                 default:
                     break;
             }
-            Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
+            Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> EntityDtoUtils.convert(fr, mode));
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
                 LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
@@ -280,7 +247,7 @@ public class ShortCircuitService {
         Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
         if (result.isPresent()) {
             Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(result.get(), resourceFilters, pageable);
-            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
+            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(EntityDtoUtils::convert);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
                 LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
@@ -308,5 +275,36 @@ public class ShortCircuitService {
 
     public void stop(UUID resultUuid, String receiver) {
         notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
+    }
+
+    public UUID createParameters(@Nullable final ShortCircuitParametersInfos parametersInfos) {
+        return parametersRepository.save(parametersInfos != null ? EntityDtoUtils.convert(parametersInfos) : new ShortCircuitParametersEntity()).getId();
+    }
+
+    /**
+     * @return {@code true} if new instance created, {@code false} if updated existing
+     */
+    public boolean createParameters(final UUID parametersUuid, @Nullable final ShortCircuitParametersInfos parametersInfos) {
+        final ShortCircuitParametersEntity newValues = parametersInfos == null ? null : EntityDtoUtils.convert(parametersInfos);
+        final Optional<ShortCircuitParametersEntity> entity = parametersRepository.findById(parametersUuid);
+        parametersRepository.save(entity.map(scpe -> scpe.updateFrom(newValues))
+                                        .or(() -> Optional.ofNullable(newValues))
+                                        .orElseGet(ShortCircuitParametersEntity::new));
+        return entity.isEmpty();
+    }
+
+    public Optional<ShortCircuitParametersInfos> getParameters(@NonNull final UUID uuid) {
+        return parametersRepository.findById(uuid).map(EntityDtoUtils::convertInfos);
+    }
+
+    public ShortCircuitParametersInfos getParametersOrCreateDefault(@NonNull final UUID uuid) {
+        return EntityDtoUtils.convertInfos(parametersRepository.getByIdOrDefault(uuid));
+    }
+
+    public UUID duplicateParameters(final UUID parametersUuid) {
+        return parametersRepository.save(parametersRepository.findById(parametersUuid)
+                                                             .map(ShortCircuitParametersEntity::new)
+                                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found parameters " + parametersUuid))
+                ).getId();
     }
 }
