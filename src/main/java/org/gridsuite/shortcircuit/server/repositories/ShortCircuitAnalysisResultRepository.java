@@ -42,7 +42,6 @@ public class ShortCircuitAnalysisResultRepository {
     private final ResultRepository resultRepository;
     private final FaultResultRepository faultResultRepository;
     private final FeederResultRepository feederResultRepository;
-    private final FeederResultSpecificationBuilder feederResultSpecificationBuilder;
     private final FaultResultSpecificationBuilder faultSpecBuilder;
 
     private static final String DEFAULT_FAULT_RESULT_SORT_COLUMN = "faultResultUuid";
@@ -56,14 +55,12 @@ public class ShortCircuitAnalysisResultRepository {
                                                 ResultRepository resultRepository,
                                                 FaultResultRepository faultResultRepository,
                                                 FeederResultRepository feederResultRepository,
-                                                FaultResultSpecificationBuilder faultSpecBuilder,
-                                                FeederResultSpecificationBuilder feederResultSpecificationBuilder) {
+                                                FaultResultSpecificationBuilder faultSpecBuilder) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
         this.faultResultRepository = faultResultRepository;
         this.feederResultRepository = feederResultRepository;
         this.faultSpecBuilder = faultSpecBuilder;
-        this.feederResultSpecificationBuilder = feederResultSpecificationBuilder;
     }
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
@@ -277,24 +274,24 @@ public class ShortCircuitAnalysisResultRepository {
                         .page(modifiedPageable)
         );
 
-        if (uuidPage.hasContent()) {
-            List<UUID> faultResultsUuids = uuidPage
-                    .map(FaultResultRepository.EntityId::getFaultResultUuid)
-                    .toList();
-            // Then we fetch the main entities data for each UUID
-            List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
-            faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
-            Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
-
-            if (mode != FaultResultsMode.BASIC) {
-                // then we append the missing data, and filter some of the Lazy Loaded collections
-                appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
-            }
-
-            return faultResultsPage;
-        } else {
+        if (!uuidPage.hasContent()) {
             return Page.empty();
         }
+
+        List<UUID> faultResultsUuids = uuidPage
+                .map(FaultResultRepository.EntityId::getFaultResultUuid)
+                .toList();
+        // Then we fetch the main entities data for each UUID
+        List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
+        faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
+        Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
+
+        if (mode != FaultResultsMode.BASIC) {
+            // then we append the missing data, and filter some of the Lazy Loaded collections
+            appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
+        }
+
+        return faultResultsPage;
     }
 
     private Pageable filterOutChildrenSort(Pageable pageable, Optional<Sort.Order> childrenSort) {
@@ -321,7 +318,7 @@ public class ShortCircuitAnalysisResultRepository {
     @Transactional(readOnly = true)
     public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
         Objects.requireNonNull(result);
-        Specification<FeederResultEntity> specification = feederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        Specification<FeederResultEntity> specification = FeederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         return feederResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN));
     }
 
@@ -349,22 +346,22 @@ public class ShortCircuitAnalysisResultRepository {
                         .page(modifiedPageable)
         );
 
-        if (uuidPage.hasContent()) {
-            List<UUID> faultResultsUuids = uuidPage
-                    .map(FaultResultRepository.EntityId::getFaultResultUuid)
-                    .toList();
-            // Then we fetch the main entities data for each UUID
-            List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
-            faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
-            Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
-
-            // then we append the missing data, and filter some of the Lazy Loaded collections
-            appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
-
-            return faultResultsPage;
-        } else {
+        if (!uuidPage.hasContent()) {
             return Page.empty();
         }
+
+        List<UUID> faultResultsUuids = uuidPage
+                .map(FaultResultRepository.EntityId::getFaultResultUuid)
+                .toList();
+        // Then we fetch the main entities data for each UUID
+        List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
+        faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
+        Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
+
+        // then we append the missing data, and filter some of the Lazy Loaded collections
+        appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
+
+        return faultResultsPage;
     }
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults,

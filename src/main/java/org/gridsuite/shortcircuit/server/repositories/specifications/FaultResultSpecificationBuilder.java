@@ -44,24 +44,15 @@ public class FaultResultSpecificationBuilder {
         return root.get(FaultResultEntity.Fields.result).get(ShortCircuitAnalysisResultEntity.Fields.resultUuid);
     }
 
-    public Specification<FaultResultEntity> childrenNotEmpty() {
-        return SpecificationUtils.isNotEmpty(FaultResultEntity.Fields.feederResults);
-    }
-
     public Specification<FaultResultEntity> appendWithLimitViolationsToSpecification(Specification<FaultResultEntity> specification) {
         return specification.and(SpecificationUtils.isNotEmpty("limitViolations"));
     }
 
     public Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
-        List<ResourceFilter> childrenResourceFilter = resourceFilters.stream().filter(this::isNotParentFilter).toList();
         // since sql joins generates duplicate results, we need to use distinct here
         Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
         // filter by resultUuid
         specification = specification.and(Specification.where(resultUuidEquals(resultUuid)));
-        if (!childrenResourceFilter.isEmpty()) {
-            // needed here to filter main entities that would have empty collection when filters are applied
-            specification = specification.and(childrenNotEmpty());
-        }
 
         return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
     }
