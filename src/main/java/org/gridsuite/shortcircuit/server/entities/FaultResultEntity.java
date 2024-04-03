@@ -56,6 +56,13 @@ public class FaultResultEntity {
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<LimitViolationEmbeddable> limitViolations;
 
+    /**
+     * first limit violation of the fault result entity, from 'limitViolations'
+     * Must save it the same table in order to get pageable FaultResultEntity sortable by this limitViolation data
+     */
+    @Embedded
+    private LimitViolationEmbeddable limitViolation;
+
     /*
     Bidirectional relation is not needed here and is done for performance
     https://vladmihalcea.com/the-best-way-to-map-a-onetomany-association-with-jpa-and-hibernate/
@@ -116,6 +123,9 @@ public class FaultResultEntity {
         if (limitViolations != null) {
             this.limitViolations = limitViolations;
             this.nbLimitViolations = limitViolations.size();
+            if (!this.limitViolations.isEmpty()) {
+                this.limitViolation = this.limitViolations.get(0);
+            }
         }
         this.ipMin = ipMin;
         this.ipMax = ipMax;
