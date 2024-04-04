@@ -261,18 +261,18 @@ class FaultResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
-                    Sort.by(
-                            new Sort.Order(Sort.Direction.ASC, "current"),
-                            new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
+                Sort.by(
+                    new Sort.Order(Sort.Direction.ASC, "current"),
+                    new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
                 List.of(List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_4, FEEDER_RESULT_1))),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "NN_I", "feederResults.connectableId"),
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
-                    Sort.by(
-                            new Sort.Order(Sort.Direction.ASC, "current"),
-                            new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
+                Sort.by(
+                    new Sort.Order(Sort.Direction.ASC, "current"),
+                    new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
                 List.of(
                     List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_1)
                 )),

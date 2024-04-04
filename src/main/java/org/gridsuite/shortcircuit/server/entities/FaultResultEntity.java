@@ -58,10 +58,10 @@ public class FaultResultEntity {
 
     /**
      * first limit violation of the fault result entity, from 'limitViolations'
-     * Must save it the same table in order to get pageable FaultResultEntity sortable by this limitViolation data
+     * Must save it inside the same table in order to get pageable FaultResultEntity sortable by this firstLimitViolation data
      */
     @Embedded
-    private LimitViolationEmbeddable limitViolation;
+    private LimitViolationEmbeddable firstLimitViolation;
 
     /*
     Bidirectional relation is not needed here and is done for performance
@@ -124,7 +124,7 @@ public class FaultResultEntity {
             this.limitViolations = limitViolations;
             this.nbLimitViolations = limitViolations.size();
             if (!this.limitViolations.isEmpty()) {
-                this.limitViolation = this.limitViolations.get(0);
+                this.firstLimitViolation = this.limitViolations.get(0);
             }
         }
         this.ipMin = ipMin;
