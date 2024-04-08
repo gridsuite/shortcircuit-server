@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import lombok.experimental.FieldNameConstants;
 
 import java.util.UUID;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @Entity
+@FieldNameConstants
 @Table(name = "feeder_results",
         indexes = {@Index(name = "feeder_results_fault_result_idx",
                 columnList = "fault_result_entity_fault_result_uuid")})

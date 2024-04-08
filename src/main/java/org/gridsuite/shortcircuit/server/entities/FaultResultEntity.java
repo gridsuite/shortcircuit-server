@@ -10,6 +10,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import java.util.UUID;
  */
 @Getter
 @Setter
+@FieldNameConstants
 @NoArgsConstructor
 @Entity
 @Table(indexes = {
@@ -53,6 +55,13 @@ public class FaultResultEntity {
             indexes = {@Index(name = "limit_violations_fault_result_idx",
                     columnList = "fault_result_entity_fault_result_uuid")})
     private List<LimitViolationEmbeddable> limitViolations;
+
+    /**
+     * first limit violation of the fault result entity, from 'limitViolations'
+     * Must save it inside the same table in order to get pageable FaultResultEntity sortable by this firstLimitViolation data
+     */
+    @Embedded
+    private LimitViolationEmbeddable firstLimitViolation;
 
     /*
     Bidirectional relation is not needed here and is done for performance
@@ -114,6 +123,9 @@ public class FaultResultEntity {
         if (limitViolations != null) {
             this.limitViolations = limitViolations;
             this.nbLimitViolations = limitViolations.size();
+            if (!this.limitViolations.isEmpty()) {
+                this.firstLimitViolation = this.limitViolations.get(0);
+            }
         }
         this.ipMin = ipMin;
         this.ipMax = ipMax;

@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import jakarta.persistence.*;
+import lombok.experimental.FieldNameConstants;
+
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import java.util.UUID;
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
  */
 @Getter
+@FieldNameConstants
 @NoArgsConstructor
 @Entity
 @Table(name = "shortcircuit_result")

@@ -15,6 +15,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import lombok.experimental.FieldNameConstants;
 
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>
@@ -23,6 +24,7 @@ import jakarta.persistence.Enumerated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Embeddable
+@FieldNameConstants
 public class LimitViolationEmbeddable {
 
     @Column

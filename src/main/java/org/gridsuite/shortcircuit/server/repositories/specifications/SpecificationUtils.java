@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package org.gridsuite.shortcircuit.server.utils;
+package org.gridsuite.shortcircuit.server.repositories.specifications;
 
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
@@ -59,6 +59,13 @@ public final class SpecificationUtils {
 
     public static <X> Specification<X> isNotEmpty(String field) {
         return (root, cq, cb) -> cb.isNotEmpty(getColumnPath(root, field));
+    }
+
+    public static <X> Specification<X> distinct() {
+        return (root, cq, cb) -> {
+            cq.distinct(true);
+            return null;
+        };
     }
 
     public static <X> Specification<X> appendFiltersToSpecification(Specification<X> specification, List<ResourceFilter> resourceFilters) {

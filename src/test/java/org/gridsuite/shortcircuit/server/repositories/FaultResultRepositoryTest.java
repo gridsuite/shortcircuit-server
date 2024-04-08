@@ -11,13 +11,16 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.BusFault;
 import com.powsybl.shortcircuit.FaultResult;
+import com.powsybl.shortcircuit.FeederResult;
 import com.powsybl.shortcircuit.FortescueFaultResult;
 import com.powsybl.shortcircuit.FortescueValue;
 import com.powsybl.shortcircuit.MagnitudeFaultResult;
+import com.powsybl.shortcircuit.MagnitudeFeederResult;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -45,17 +48,23 @@ import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // improve tests speed as we only read DB
 class FaultResultRepositoryTest {
 
+    static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("CONN_ID_1", 22.17);
+    static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("CONN_ID_2", 18.57);
+    static final FeederResult FEEDER_RESULT_3 = new MagnitudeFeederResult("CONN_ID_3", 53.94);
+    static final FeederResult FEEDER_RESULT_4 = new MagnitudeFeederResult("RARDELNO15", 37.15);
     static final LimitViolation LIMIT_VIOLATION_1 = new LimitViolation("SUBJECT_1", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 25.63, 4f, 33.54);
     static final LimitViolation LIMIT_VIOLATION_2 = new LimitViolation("SUBJECT_2", LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, 12.17, 2f, 10.56);
     static final LimitViolation LIMIT_VIOLATION_3 = new LimitViolation("SUBJECT_3", LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT, 45.12, 5f, 54.3);
     static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("A_VLHV1_0", "ELEMENT_ID_1"), 17.0,
-        List.of(), List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2),
-        45.3, FaultResult.Status.SUCCESS);
+            List.of(FEEDER_RESULT_1, FEEDER_RESULT_3),
+            List.of(LIMIT_VIOLATION_1, LIMIT_VIOLATION_2),
+            45.3, FaultResult.Status.SUCCESS);
     static final FaultResult FAULT_RESULT_2 = new MagnitudeFaultResult(new BusFault("B_VLHV2_0", "ELEMENT_ID_2"), 18.0,
-        List.of(), List.of(LIMIT_VIOLATION_2),
+            List.of(FEEDER_RESULT_2, FEEDER_RESULT_1, FEEDER_RESULT_4, FEEDER_RESULT_3),
+            List.of(LIMIT_VIOLATION_2),
         47.3, FaultResult.Status.SUCCESS);
     static final FaultResult FAULT_RESULT_3 = new MagnitudeFaultResult(new BusFault("C_VLGEN_0", "ELEMENT_ID_3"), 19.0,
-        List.of(), List.of(LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
+            List.of(), List.of(LIMIT_VIOLATION_2, LIMIT_VIOLATION_3),
         49.3, FaultResult.Status.SUCCESS);
     static final FaultResult FAULT_RESULT_4 = new FortescueFaultResult(new BusFault("A_VLHV2_0", "ELEMENT_ID_2"), 18.0,
         List.of(), List.of(),
@@ -131,6 +140,38 @@ class FaultResultRepositoryTest {
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()));
     }
 
+    @ParameterizedTest(name = "[{index}] Using the filter(s) {1} and sort {2} should return the given entities")
+    @MethodSource({
+        "provideFeederFieldsStartFilters",
+        "provideFeederFieldsSorted",
+        "provideFeederFieldsContainFiltersAndSorted",
+        "provideFeederFieldsUnfilteredSortedAscAndDesc"
+    })
+    void feedersFilterAndSortTest(ShortCircuitAnalysisResultEntity resultEntity,
+                           List<ResourceFilter> resourceFilters,
+                           Sort sort,
+                           List<List<FeederResult>> expectedFeedersLists) {
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
+                resultEntity,
+                resourceFilters,
+                PageRequest.of(0, 3, sort),
+                FaultResultsMode.FULL);
+
+        List<List<String>> feedersConnectableIds = faultPage.getContent().stream()
+                        .map(faultRes -> faultRes.getFeederResults().stream()
+                                .map(FeederResultEntity::getConnectableId)
+                                .toList()
+                        ).toList();
+
+        List<List<String>> expectedFeedersConnectableIds = expectedFeedersLists.stream()
+                        .map(feederList -> feederList.stream()
+                                .map(FeederResult::getConnectableId)
+                                .toList()
+                        ).toList();
+
+        assertThat(feedersConnectableIds).isEqualTo(expectedFeedersConnectableIds);
+    }
+
     private void assertFaultEqualsInOrder(Page<FaultResultEntity> resultFaultPage, Comparator<FaultResultEntity> comparator) {
         List<String> expectedFaultPageUuid = resultFaultPage.getContent().stream().sorted(comparator)
                 .map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
@@ -169,7 +210,109 @@ class FaultResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, null, "limitViolations.limitType")),
-                List.of())
+                List.of()));
+    }
+
+    private Stream<Arguments> provideFeederFieldsStartFilters() {
+        return Stream.of(
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "C", "feederResults.connectableId")),
+                Sort.by(new Sort.Order(Sort.Direction.ASC, "current")),
+                List.of(List.of(FEEDER_RESULT_3, FEEDER_RESULT_1), List.of(FEEDER_RESULT_3, FEEDER_RESULT_1, FEEDER_RESULT_2))),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "RAR", "feederResults.connectableId")),
+                Sort.by(new Sort.Order(Sort.Direction.ASC, "current")),
+                List.of(List.of(FEEDER_RESULT_4))
+            )
+        );
+    }
+
+    private Stream<Arguments> provideFeederFieldsSorted() {
+        return Stream.of(
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(),
+                Sort.by(
+                    new Sort.Order(Sort.Direction.ASC, "current"),
+                    new Sort.Order(Sort.Direction.ASC, "feederResults.connectableId")),
+                List.of(List.of(FEEDER_RESULT_1, FEEDER_RESULT_3), List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3, FEEDER_RESULT_4), List.of())
+            ),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(),
+                Sort.by(
+                    new Sort.Order(Sort.Direction.ASC, "current"),
+                    new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
+                List.of(
+                        List.of(FEEDER_RESULT_3, FEEDER_RESULT_1),
+                        List.of(FEEDER_RESULT_4, FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1),
+                        List.of()
+                ))
+        );
+    }
+
+    private Stream<Arguments> provideFeederFieldsContainFiltersAndSorted() {
+        return Stream.of(
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                Sort.by(
+                    new Sort.Order(Sort.Direction.ASC, "current"),
+                    new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
+                List.of(List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_4, FEEDER_RESULT_1))),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "NN_I", "feederResults.connectableId"),
+                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                Sort.by(
+                    new Sort.Order(Sort.Direction.ASC, "current"),
+                    new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
+                List.of(
+                    List.of(FEEDER_RESULT_1), List.of(FEEDER_RESULT_1)
+                )),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "OUPS", "feederResults.connectableId")),
+                Sort.by(
+                        new Sort.Order(Sort.Direction.ASC, "current"),
+                        new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
+                List.of()
+            )
+        );
+    }
+
+    private Stream<Arguments> provideFeederFieldsUnfilteredSortedAscAndDesc() {
+        return Stream.of(
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(),
+                    Sort.by(
+                            new Sort.Order(Sort.Direction.ASC, "current"),
+                            new Sort.Order(Sort.Direction.DESC, "feederResults.connectableId")),
+                List.of(
+                    List.of(FEEDER_RESULT_3, FEEDER_RESULT_1),
+                    List.of(FEEDER_RESULT_4, FEEDER_RESULT_3, FEEDER_RESULT_2, FEEDER_RESULT_1),
+                    List.of()
+                )),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(),
+                    Sort.by(
+                            new Sort.Order(Sort.Direction.ASC, "current"),
+                            new Sort.Order(Sort.Direction.ASC, "feederResults.connectableId")),
+                List.of(
+                    List.of(FEEDER_RESULT_1, FEEDER_RESULT_3),
+                    List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3, FEEDER_RESULT_4),
+                    List.of()
+                )
+            )
         );
     }
 

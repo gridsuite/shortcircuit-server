@@ -12,9 +12,9 @@ import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.repositories.specifications.FaultResultSpecificationBuilder;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
-import org.gridsuite.shortcircuit.server.utils.FaultResultSpecificationBuilder;
-import org.gridsuite.shortcircuit.server.utils.FeederResultSpecificationBuilder;
+import org.gridsuite.shortcircuit.server.repositories.specifications.FeederResultSpecificationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ public class ShortCircuitAnalysisResultRepository {
             .map(limitViolation -> new LimitViolationEmbeddable(limitViolation.getSubjectId(),
                 limitViolation.getLimitType(), limitViolation.getLimit(),
                 limitViolation.getLimitName(), limitViolation.getValue()))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
@@ -116,7 +116,7 @@ public class ShortCircuitAnalysisResultRepository {
         entity.setFeederResults(faultResult.getFeederResults().stream()
                 .map(feederResult -> new FeederResultEntity(feederResult.getConnectableId(),
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
-                .collect(Collectors.toList()));
+                .toList());
         if (shortCircuitLimits != null) {
             entity.setDeltaCurrentIpMin(current - entity.getIpMin() / 1000.0);
             entity.setDeltaCurrentIpMax(current - entity.getIpMax() / 1000.0);
@@ -138,7 +138,7 @@ public class ShortCircuitAnalysisResultRepository {
                             feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(),
                             feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
                 })
-                .collect(Collectors.toList()));
+                .toList());
 
         final FortescueValue current = faultResult.getCurrent();
         if (shortCircuitLimits != null) {
@@ -163,7 +163,7 @@ public class ShortCircuitAnalysisResultRepository {
     public void insertStatus(List<UUID> resultUuids, String status) {
         Objects.requireNonNull(resultUuids);
         globalStatusRepository.saveAll(resultUuids.stream()
-            .map(uuid -> toStatusEntity(uuid, status)).collect(Collectors.toList()));
+            .map(uuid -> toStatusEntity(uuid, status)).toList());
     }
 
     @Transactional
@@ -238,7 +238,7 @@ public class ShortCircuitAnalysisResultRepository {
         List<UUID> faultResultsUuidWithLimitViolations = result.get().getFaultResults().stream()
                                                             .filter(fr -> !fr.getLimitViolations().isEmpty())
                                                             .map(FaultResultEntity::getFaultResultUuid)
-                                                            .collect(Collectors.toList());
+                                                            .toList();
         // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!result.get().getFaultResults().isEmpty()) {
@@ -248,18 +248,68 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResultEntity> findFaultResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable, FaultResultsMode mode) {
+    public Page<FaultResultEntity> findFaultResultsPage(ShortCircuitAnalysisResultEntity result,
+                                                        List<ResourceFilter> resourceFilters,
+                                                        Pageable pageable,
+                                                        FaultResultsMode mode) {
         Objects.requireNonNull(result);
+
+        Optional<Sort.Order> childrenSort = extractChildrenSort(pageable);
+
+        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
+                DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
-        if (faultResultsPage.hasContent() && mode != FaultResultsMode.BASIC) {
-            appendLimitViolationsAndFeederResults(faultResultsPage);
+
+        Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
+                q.project(FaultResultEntity.Fields.faultResultUuid)
+                        .as(FaultResultRepository.EntityId.class)
+                        .sortBy(modifiedPageable.getSort())
+                        .page(modifiedPageable)
+        );
+
+        if (!uuidPage.hasContent()) {
+            return Page.empty();
         }
+
+        List<UUID> faultResultsUuids = uuidPage
+                .map(FaultResultRepository.EntityId::getFaultResultUuid)
+                .toList();
+        // Then we fetch the main entities data for each UUID
+        List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
+        faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
+        Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
+
+        if (mode != FaultResultsMode.BASIC) {
+            // then we append the missing data, and filter some of the Lazy Loaded collections
+            appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
+        }
+
         return faultResultsPage;
+    }
+
+    private Pageable filterOutChildrenSort(Pageable pageable, Optional<Sort.Order> childrenSort) {
+        if (childrenSort.isEmpty()) {
+            return pageable;
+        }
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(pageable.getSort().stream().filter(sortOrder ->
+                                !sortOrder.getProperty().equals(childrenSort.get().getProperty())
+                        ).toList()
+                )
+        );
+    }
+
+    private Optional<Sort.Order> extractChildrenSort(Pageable pageable) {
+        return pageable.getSort().stream()
+                .filter(sortOrder ->
+                        sortOrder.getProperty().contains(FeederResultEntity.Fields.connectableId))
+                .findFirst();
     }
 
     @Transactional(readOnly = true)
@@ -270,30 +320,78 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResultEntity> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
+    public Page<FaultResultEntity> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result,
+                                                                           List<ResourceFilter> resourceFilters,
+                                                                           Pageable pageable) {
         Objects.requireNonNull(result);
+
+        Optional<Sort.Order> childrenSort = extractChildrenSort(pageable);
+
+        Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
+                DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-        Page<FaultResultEntity> faultResultsPage = faultResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FAULT_RESULT_SORT_COLUMN));
-        if (faultResultsPage.hasContent()) {
-            appendLimitViolationsAndFeederResults(faultResultsPage);
+
+        Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
+                q.project(FaultResultEntity.Fields.faultResultUuid)
+                        .as(FaultResultRepository.EntityId.class)
+                        .sortBy(modifiedPageable.getSort())
+                        .page(modifiedPageable)
+        );
+
+        if (!uuidPage.hasContent()) {
+            return Page.empty();
         }
+
+        List<UUID> faultResultsUuids = uuidPage
+                .map(FaultResultRepository.EntityId::getFaultResultUuid)
+                .toList();
+        // Then we fetch the main entities data for each UUID
+        List<FaultResultEntity> faultResults = faultResultRepository.findAllByFaultResultUuidIn(faultResultsUuids);
+        faultResults.sort(Comparator.comparing(fault -> faultResultsUuids.indexOf(fault.getFaultResultUuid())));
+        Page<FaultResultEntity> faultResultsPage = new PageImpl<>(faultResults, modifiedPageable, uuidPage.getTotalElements());
+
+        // then we append the missing data, and filter some of the Lazy Loaded collections
+        appendLimitViolationsAndFeederResults(faultResultsPage, childrenSort, resourceFilters);
+
         return faultResultsPage;
     }
 
-    private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults) {
+    private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults,
+                                                       Optional<Sort.Order> childrenSort,
+                                                       List<ResourceFilter> resourceFilters) {
         // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!pagedFaultResults.isEmpty()) {
             List<UUID> faultResultsUuids = pagedFaultResults.stream()
                     .map(FaultResultEntity::getFaultResultUuid)
-                    .collect(Collectors.toList());
+                    .toList();
+
+            Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildFeedersSpecification(faultResultsUuids, resourceFilters);
+            faultResultRepository.findAll(specification);
+
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
-            faultResultRepository.findAllWithFeederResultsByFaultResultUuidIn(faultResultsUuids);
+
+            sortFeeders(pagedFaultResults, childrenSort);
+        }
+    }
+
+    private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Optional<Sort.Order> childrenSort) {
+        // feeders may only be sorted by connectableId
+        if (childrenSort.isPresent()) {
+            pagedFaultResults.forEach(res -> res.getFeederResults().sort(
+                childrenSort.get().isAscending() ?
+                    Comparator.comparing(FeederResultEntity::getConnectableId) :
+                    Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
+            ));
+        } else {
+            // otherwise by default feederResults (within each individual faultResult) are sorted by 'current' in descending order :
+            pagedFaultResults.forEach(res -> res.getFeederResults().sort(
+                    Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed()));
         }
     }
 
