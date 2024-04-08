@@ -42,7 +42,6 @@ public class ShortCircuitAnalysisResultRepository {
     private final ResultRepository resultRepository;
     private final FaultResultRepository faultResultRepository;
     private final FeederResultRepository feederResultRepository;
-    private final FaultResultSpecificationBuilder faultSpecBuilder;
 
     private static final String DEFAULT_FAULT_RESULT_SORT_COLUMN = "faultResultUuid";
 
@@ -54,13 +53,11 @@ public class ShortCircuitAnalysisResultRepository {
     public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
                                                 ResultRepository resultRepository,
                                                 FaultResultRepository faultResultRepository,
-                                                FeederResultRepository feederResultRepository,
-                                                FaultResultSpecificationBuilder faultSpecBuilder) {
+                                                FeederResultRepository feederResultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
         this.faultResultRepository = faultResultRepository;
         this.feederResultRepository = feederResultRepository;
-        this.faultSpecBuilder = faultSpecBuilder;
     }
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
@@ -261,7 +258,7 @@ public class ShortCircuitAnalysisResultRepository {
 
         Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
-        Specification<FaultResultEntity> specification = faultSpecBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
@@ -332,8 +329,8 @@ public class ShortCircuitAnalysisResultRepository {
 
         Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
-        Specification<FaultResultEntity> specification = faultSpecBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
-        specification = faultSpecBuilder.appendWithLimitViolationsToSpecification(specification);
+        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
@@ -374,7 +371,7 @@ public class ShortCircuitAnalysisResultRepository {
                     .map(FaultResultEntity::getFaultResultUuid)
                     .toList();
 
-            Specification<FaultResultEntity> specification = faultSpecBuilder.buildFeedersSpecification(faultResultsUuids, resourceFilters);
+            Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildFeedersSpecification(faultResultsUuids, resourceFilters);
             faultResultRepository.findAll(specification);
 
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
