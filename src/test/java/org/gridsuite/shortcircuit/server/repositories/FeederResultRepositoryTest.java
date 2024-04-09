@@ -301,7 +301,13 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList())
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22., "current"),
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53, "current")),
+                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22) <= 0).toList())
         );
     }
 
@@ -327,7 +333,13 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) >= 0).toList())
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) >= 0).toList()),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22, "current"),
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53, "current")),
+                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53) >= 0).toList())
         );
     }
 
