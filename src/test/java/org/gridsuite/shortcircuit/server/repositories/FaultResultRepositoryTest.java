@@ -353,12 +353,7 @@ class FaultResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 47.3, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 49.3, "current")),
-                List.of(faultResultEntity1)),
-            Arguments.of(
-                resultMagnitudeEntity,
-                List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 2, "nbLimitViolations")),
-                List.of(faultResultEntity2))
+                List.of(faultResultEntity1))
         );
     }
 

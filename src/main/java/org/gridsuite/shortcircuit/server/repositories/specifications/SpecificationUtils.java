@@ -49,6 +49,15 @@ public final class SpecificationUtils {
         return (root, cq, cb) -> cb.notEqual(getColumnPath(root, field), value);
     }
 
+    /**
+     * Returns a specification where the field value is not equal within the given tolerance.
+     *
+     * @param <X> Entity type.
+     * @param field Field name.
+     * @param value Comparison value.
+     * @param tolerance Tolerance range.
+     * @return Specification of non-equality with tolerance.
+     */
     public static <X> Specification<X> notEqual(String field, Double value, Double tolerance) {
         return (root, cq, cb) -> cb.or(
                 cb.greaterThan(getColumnPath(root, field), value + tolerance),
@@ -60,6 +69,15 @@ public final class SpecificationUtils {
         return (root, cq, cb) -> cb.lessThanOrEqualTo(getColumnPath(root, field), value);
     }
 
+    /**
+     * Returns a specification where the field value is less than or equal to the value plus tolerance.
+     *
+     * @param <X> Entity type.
+     * @param field Field name.
+     * @param value Comparison value.
+     * @param tolerance Tolerance range.
+     * @return Specification of less than or equal with tolerance.
+     */
     public static <X> Specification<X> lessThanOrEqual(String field, Double value, Double tolerance) {
         return (root, cq, cb) -> cb.lessThanOrEqualTo(getColumnPath(root, field), value + tolerance);
     }
@@ -68,6 +86,15 @@ public final class SpecificationUtils {
         return (root, cq, cb) -> cb.greaterThanOrEqualTo(getColumnPath(root, field), value);
     }
 
+    /**
+     * Returns a specification where the field value is greater than or equal to the value minus tolerance.
+     *
+     * @param <X> Entity type.
+     * @param field Field name.
+     * @param value Comparison value.
+     * @param tolerance Tolerance range.
+     * @return Specification of greater than or equal with tolerance.
+     */
     public static <X> Specification<X> greaterThanOrEqual(String field, Double value, Double tolerance) {
         return (root, cq, cb) -> cb.greaterThanOrEqualTo(getColumnPath(root, field), value - tolerance);
     }
@@ -131,30 +158,12 @@ public final class SpecificationUtils {
 
     @NotNull
     private static <X> Specification<X> appendNumberFilterToSpecification(Specification<X> specification, ResourceFilter resourceFilter) {
-        Specification<X> completedSpecification;
+        final double tolerence = 0.00001; // tolerance for comparison
         String value = resourceFilter.value().toString();
-
-        if (isInteger(value)) {
-            completedSpecification = createIntegerPredicate(specification, resourceFilter, value);
-        } else {
-            completedSpecification = createDoublePredicate(specification, resourceFilter, value, 0.00001);
-        }
-        return completedSpecification;
+        return createNumberPredicate(specification, resourceFilter, value, tolerence);
     }
 
-    private static <X> Specification<X> createIntegerPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value) {
-        Specification<X> completedSpecification = specification;
-        Integer valueInteger = Integer.valueOf(value);
-        switch (resourceFilter.type()) {
-            case NOT_EQUAL -> completedSpecification = specification.and(notEqual(resourceFilter.column(), valueInteger));
-            case LESS_THAN_OR_EQUAL -> completedSpecification = specification.and(lessThanOrEqual(resourceFilter.column(), valueInteger));
-            case GREATER_THAN_OR_EQUAL -> completedSpecification = specification.and(greaterThanOrEqual(resourceFilter.column(), valueInteger));
-            default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
-        }
-        return completedSpecification;
-    }
-
-    private static <X> Specification<X> createDoublePredicate(Specification<X> specification, ResourceFilter resourceFilter, String value, double tolerance) {
+    private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value, double tolerance) {
         Specification<X> completedSpecification = specification;
         Double valueDouble = Double.valueOf(value);
         switch (resourceFilter.type()) {
@@ -190,15 +199,6 @@ public final class SpecificationUtils {
             return path;
         } else {
             return root.get(dotSeparatedFields);
-        }
-    }
-
-    private static boolean isInteger(String input) {
-        try {
-            Integer.parseInt(input);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
         }
     }
 
