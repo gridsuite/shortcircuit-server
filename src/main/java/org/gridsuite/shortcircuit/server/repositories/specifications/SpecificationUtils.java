@@ -7,6 +7,7 @@
 
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
@@ -45,10 +46,6 @@ public final class SpecificationUtils {
         return (root, cq, cb) -> cb.like(cb.upper(getColumnPath(root, field)), EscapeCharacter.DEFAULT.escape(value).toUpperCase() + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
     }
 
-    public static <X> Specification<X> notEqual(String field, Integer value) {
-        return (root, cq, cb) -> cb.notEqual(getColumnPath(root, field), value);
-    }
-
     /**
      * Returns a specification where the field value is not equal within the given tolerance.
      *
@@ -59,14 +56,13 @@ public final class SpecificationUtils {
      * @return Specification of non-equality with tolerance.
      */
     public static <X> Specification<X> notEqual(String field, Double value, Double tolerance) {
-        return (root, cq, cb) -> cb.or(
-                cb.greaterThan(getColumnPath(root, field), value + tolerance),
-                cb.lessThan(getColumnPath(root, field), value - tolerance)
-        );
-    }
-
-    public static <X> Specification<X> lessThanOrEqual(String field, Integer value) {
-        return (root, cq, cb) -> cb.lessThanOrEqualTo(getColumnPath(root, field), value);
+        return (root, cq, cb) -> {
+            Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
+            return cb.or(
+                    cb.greaterThan(doubleExpression, value + tolerance),
+                    cb.lessThan(doubleExpression, value - tolerance)
+            );
+        };
     }
 
     /**
@@ -79,11 +75,10 @@ public final class SpecificationUtils {
      * @return Specification of less than or equal with tolerance.
      */
     public static <X> Specification<X> lessThanOrEqual(String field, Double value, Double tolerance) {
-        return (root, cq, cb) -> cb.lessThanOrEqualTo(getColumnPath(root, field), value + tolerance);
-    }
-
-    public static <X> Specification<X> greaterThanOrEqual(String field, Integer value) {
-        return (root, cq, cb) -> cb.greaterThanOrEqualTo(getColumnPath(root, field), value);
+        return (root, cq, cb) -> {
+            Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
+            return cb.lessThanOrEqualTo(doubleExpression, value + tolerance);
+        };
     }
 
     /**
@@ -96,7 +91,10 @@ public final class SpecificationUtils {
      * @return Specification of greater than or equal with tolerance.
      */
     public static <X> Specification<X> greaterThanOrEqual(String field, Double value, Double tolerance) {
-        return (root, cq, cb) -> cb.greaterThanOrEqualTo(getColumnPath(root, field), value - tolerance);
+        return (root, cq, cb) -> {
+            Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
+            return cb.greaterThanOrEqualTo(doubleExpression, value - tolerance);
+        };
     }
 
     public static <X> Specification<X> isNotEmpty(String field) {
