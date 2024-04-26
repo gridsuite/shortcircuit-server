@@ -7,6 +7,7 @@
 
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
@@ -45,16 +46,55 @@ public final class SpecificationUtils {
         return (root, cq, cb) -> cb.like(cb.upper(getColumnPath(root, field)), EscapeCharacter.DEFAULT.escape(value).toUpperCase() + "%", EscapeCharacter.DEFAULT.getEscapeCharacter());
     }
 
-    public static <X> Specification<X> notEqual(String field, Double value) {
-        return (root, cq, cb) -> cb.notEqual(getColumnPath(root, field), value);
+    /**
+     * Returns a specification where the field value is not equal within the given tolerance.
+     *
+     * @param <X> Entity type.
+     * @param field Field name.
+     * @param value Comparison value.
+     * @param tolerance Tolerance range.
+     * @return Specification of non-equality with tolerance.
+     */
+    public static <X> Specification<X> notEqual(String field, Double value, Double tolerance) {
+        return (root, cq, cb) -> {
+            Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
+            return cb.or(
+                    cb.greaterThan(doubleExpression, value + tolerance),
+                    cb.lessThan(doubleExpression, value - tolerance)
+            );
+        };
     }
 
-    public static <X> Specification<X> lessThanOrEqual(String field, Double value) {
-        return (root, cq, cb) -> cb.lessThanOrEqualTo(getColumnPath(root, field), value);
+    /**
+     * Returns a specification where the field value is less than or equal to the value plus tolerance.
+     *
+     * @param <X> Entity type.
+     * @param field Field name.
+     * @param value Comparison value.
+     * @param tolerance Tolerance range.
+     * @return Specification of less than or equal with tolerance.
+     */
+    public static <X> Specification<X> lessThanOrEqual(String field, Double value, Double tolerance) {
+        return (root, cq, cb) -> {
+            Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
+            return cb.lessThanOrEqualTo(doubleExpression, value + tolerance);
+        };
     }
 
-    public static <X> Specification<X> greaterThanOrEqual(String field, Double value) {
-        return (root, cq, cb) -> cb.greaterThanOrEqualTo(getColumnPath(root, field), value);
+    /**
+     * Returns a specification where the field value is greater than or equal to the value minus tolerance.
+     *
+     * @param <X> Entity type.
+     * @param field Field name.
+     * @param value Comparison value.
+     * @param tolerance Tolerance range.
+     * @return Specification of greater than or equal with tolerance.
+     */
+    public static <X> Specification<X> greaterThanOrEqual(String field, Double value, Double tolerance) {
+        return (root, cq, cb) -> {
+            Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
+            return cb.greaterThanOrEqualTo(doubleExpression, value - tolerance);
+        };
     }
 
     public static <X> Specification<X> isNotEmpty(String field) {
@@ -116,21 +156,23 @@ public final class SpecificationUtils {
 
     @NotNull
     private static <X> Specification<X> appendNumberFilterToSpecification(Specification<X> specification, ResourceFilter resourceFilter) {
+        final double tolerence = 0.00001; // tolerance for comparison
+        String value = resourceFilter.value().toString();
+        return createNumberPredicate(specification, resourceFilter, value, tolerence);
+    }
+
+    private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value, double tolerance) {
         Specification<X> completedSpecification = specification;
-
-        // We need to cast it as String before and use .valueOf to be able to works with integers
-        Double value = Double.valueOf(resourceFilter.value().toString());
-
+        Double valueDouble = Double.valueOf(value);
         switch (resourceFilter.type()) {
             case NOT_EQUAL ->
-                completedSpecification = completedSpecification.and(notEqual(resourceFilter.column(), value));
+                    completedSpecification = specification.and(notEqual(resourceFilter.column(), valueDouble, tolerance));
             case LESS_THAN_OR_EQUAL ->
-                completedSpecification = completedSpecification.and(lessThanOrEqual(resourceFilter.column(), value));
+                    completedSpecification = specification.and(lessThanOrEqual(resourceFilter.column(), valueDouble, tolerance));
             case GREATER_THAN_OR_EQUAL ->
-                completedSpecification = completedSpecification.and(greaterThanOrEqual(resourceFilter.column(), value));
+                    completedSpecification = specification.and(greaterThanOrEqual(resourceFilter.column(), valueDouble, tolerance));
             default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
         }
-
         return completedSpecification;
     }
 
@@ -159,7 +201,7 @@ public final class SpecificationUtils {
     }
 
     // will be overloaded by Spring as InvalidDataAccessApiUsageException
-    private static void throwBadFilterTypeException(ResourceFilter.Type filterType, ResourceFilter.DataType dataType) {
+    private static void throwBadFilterTypeException(ResourceFilter.Type filterType, ResourceFilter.DataType dataType) throws IllegalArgumentException {
         throw new IllegalArgumentException("The filter type " + filterType + " is not supported with the data type " + dataType);
     }
 }
