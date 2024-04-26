@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.security.LimitViolationType;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
@@ -311,5 +312,13 @@ public class ShortCircuitService {
 
     public void stop(UUID resultUuid, String receiver) {
         notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
+    }
+
+    public List<LimitViolationType> getLimitTypes(UUID resultUuid) {
+        return resultRepository.findLimitTypes(resultUuid);
+    }
+
+    public List<com.powsybl.shortcircuit.Fault.FaultType> getFaultTypes(UUID resultUuid) {
+        return resultRepository.findFaultTypes(resultUuid);
     }
 }

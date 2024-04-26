@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
+import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
@@ -164,6 +165,18 @@ public class ShortCircuitAnalysisResultRepository {
         Objects.requireNonNull(resultUuids);
         globalStatusRepository.saveAll(resultUuids.stream()
             .map(uuid -> toStatusEntity(uuid, status)).toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LimitViolationType> findLimitTypes(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return faultResultRepository.findLimitTypes(resultUuid);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Fault.FaultType> findFaultTypes(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return faultResultRepository.findFaultTypes(resultUuid);
     }
 
     @Transactional
