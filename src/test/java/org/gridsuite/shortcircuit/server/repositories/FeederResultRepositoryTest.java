@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // improve tests speed as we only read DB
 class FeederResultRepositoryTest {
 
-    static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("A_CONN_ID_1", 22.17);
+    static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("A_CONN_ID_1", 22.179775880774197);
     static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("A_CONN_ID_2", 18.57);
     static final FeederResult FEEDER_RESULT_3 = new MagnitudeFeederResult("B_CONN_ID_3", 53.94);
     static final FeederResult FEEDER_RESULT_4 = new FortescueFeederResult("A_CONN_ID_4", new FortescueValue(45.328664779663086, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
@@ -261,7 +261,7 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.328664779663086, "fortescueCurrent.positiveMagnitude")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.32867, "fortescueCurrent.positiveMagnitude")),
                 feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(45.328664779663086)).toList()),
             Arguments.of(
                 resultFortescueEntity,
@@ -284,8 +284,8 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17978, "current")),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.179775880774197) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
@@ -301,7 +301,13 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList())
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22., "current"),
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53, "current")),
+                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22) <= 0).toList())
         );
     }
 
@@ -310,8 +316,8 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) >= 0).toList()),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17976, "current")),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.179775880774197) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
@@ -327,7 +333,13 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) >= 0).toList())
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) >= 0).toList()),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22, "current"),
+                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53, "current")),
+                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53) >= 0).toList())
         );
     }
 
