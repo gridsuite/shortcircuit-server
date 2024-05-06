@@ -9,8 +9,8 @@ package org.gridsuite.shortcircuit.server.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModelJsonModule;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.ReportNodeJsonModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -46,8 +46,8 @@ public class ReportService {
                          @Value("${gridsuite.services.report-server.base-uri:http://report-server/}") String reportServerBaseUri) {
         this.reportServerBaseUri = reportServerBaseUri;
         this.objectMapper = objectMapper;
-        ReporterModelJsonModule reporterModelJsonModule = new ReporterModelJsonModule();
-        objectMapper.registerModule(reporterModelJsonModule);
+        ReportNodeJsonModule reportNodeJsonModule = new ReportNodeJsonModule();
+        objectMapper.registerModule(reportNodeJsonModule);
     }
 
     public void setReportServerBaseUri(String reportServerBaseUri) {
@@ -58,7 +58,7 @@ public class ReportService {
         return this.reportServerBaseUri + DELIMITER + REPORT_API_VERSION + DELIMITER + "reports" + DELIMITER;
     }
 
-    public void sendReport(UUID reportUuid, Reporter reporter) {
+    public void sendReport(UUID reportUuid, ReportNode reportNode) {
         Objects.requireNonNull(reportUuid);
 
         var path = UriComponentsBuilder.fromPath("{reportUuid}")
@@ -68,7 +68,7 @@ public class ReportService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         try {
-            restTemplate.exchange(getReportServerURI() + path, HttpMethod.PUT, new HttpEntity<>(objectMapper.writeValueAsString(reporter), headers), Reporter.class);
+            restTemplate.exchange(getReportServerURI() + path, HttpMethod.PUT, new HttpEntity<>(objectMapper.writeValueAsString(reportNode), headers), ReportNode.class);
         } catch (JsonProcessingException error) {
             throw new PowsyblException("Error sending report", error);
         }

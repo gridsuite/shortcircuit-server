@@ -7,8 +7,7 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.BusbarSection;
 import com.powsybl.iidm.network.Network;
@@ -119,7 +118,7 @@ class ShortCircuitServiceTest implements WithAssertions {
                 new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
-        final Reporter reporter = new ReporterModel("test", "test");
+        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "test").build();
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
              final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
@@ -132,11 +131,11 @@ class ShortCircuitServiceTest implements WithAssertions {
             when(network.getVariantManager()).thenReturn(variantManager);
             when(network.getBusView()).thenReturn(busViewMocked);
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
-            when(reportMapper.processReporter(any(Reporter.class))).thenReturn(reporter);
+            when(reportMapper.processReporter(any(ReportNode.class))).thenReturn(reportNode);
             workerService.consumeRun().accept(message);
             shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
-            verify(reportMapper, times(1)).processReporter(any(ReporterModel.class));
-            verify(reportService, times(1)).sendReport(reportUuid, reporter);
+            verify(reportMapper, times(1)).processReporter(any(ReportNode.class));
+            verify(reportService, times(1)).sendReport(reportUuid, reportNode);
         }
     }
 
@@ -187,7 +186,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         }
 
         @Override
-        public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters, Reporter reporter) {
+        public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters, ReportNode reportNode) {
             return CompletableFuture.completedFuture(this.result);
         }
     }

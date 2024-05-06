@@ -6,10 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.reports;
 
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.commons.report.*;
+import jdk.javadoc.doclet.Reporter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
@@ -38,20 +36,32 @@ import java.util.UUID;
 public abstract class AbstractReportMapper {
     /**
      * Will try to modify the reporter
-     * @param reporter the reporter to modify
+     * @param reportNode reportNode to modify
      * @return the result
      *
      * @implNote currently support only some implementations of {@link Reporter}
      */
-    public Reporter processReporter(@NonNull final Reporter reporter) {
-        if (reporter instanceof ReporterModel reporterModel && reporterModel.getTaskKey()
+    public ReportNode processReporter(@NonNull final ReportNode reportNode) {
+        if (reportNode.getMessageKey() != null && reportNode.getMessageKey()
                 .matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@)?.*ShortCircuitAnalysis$")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
-            return forUuidAtShortCircuitAnalysis(reporterModel);
+            return forUuidAtShortCircuitAnalysis(reportNode);
         } else {
-            log.trace("Unrecognized Reporter: {}", reporter);
-            return reporter;
+            log.trace("Unrecognized ReportNode: {}", reportNode);
+            return reportNode;
         }
+    }
+
+    public static void newReportNode(ReportNode parent, ReportNode child) {
+        ReportNodeAdder adder = parent.newReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
+        for (Map.Entry<String, TypedValue> valueEntry : child.getValues().entrySet()) {
+            adder.withUntypedValue(valueEntry.getKey(), valueEntry.getValue().toString());
+        }
+        TypedValue severity = child.getValue(ReportConstants.REPORT_SEVERITY_KEY).orElse(null);
+        if (severity != null) {
+            adder.withSeverity(severity);
+        }
+        adder.add();
     }
 
     /**
@@ -59,32 +69,38 @@ public abstract class AbstractReportMapper {
      *
      * @implNote we assume there will always be at least one modification
      */
-    protected Reporter forUuidAtShortCircuitAnalysis(@NonNull final ReporterModel reporterModel) {
-        final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
-        reporterModel.getReports().forEach(newReporter::report);
-        reporterModel.getSubReporters().forEach(reporter -> {
-            if (reporter.getTaskKey() != null && reporter.getTaskKey().endsWith("ShortCircuitAnalysis")) {
-                newReporter.addSubReporter(forShortCircuitAnalysis(reporter));
+    protected ReportNode forUuidAtShortCircuitAnalysis(@NonNull final ReportNode reportNode) {
+        ReportNodeBuilder builder = ReportNode.newRootReportNode()
+                .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
+        reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        final ReportNode newReportNode = builder.build();
+
+        reportNode.getChildren().forEach(child -> {
+            if (child.getMessageKey() != null && child.getMessageKey().endsWith("ShortCircuitAnalysis")) {
+                newReportNode(newReportNode, forShortCircuitAnalysis(child));
+                //newReportNode.include(forShortCircuitAnalysis(child));
             } else {
-                newReporter.addSubReporter(reporter);
+                newReportNode(newReportNode, child);
             }
         });
-        return newReporter;
+        return newReportNode;
     }
 
     /**
      * Modify node with key {@code ShortCircuitAnalysis}
      */
-    protected abstract ReporterModel forShortCircuitAnalysis(@NonNull final ReporterModel reporterModel);
+    protected abstract ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode);
 
     /**
-     * Copy the report, but with {@link TypedValue#TRACE_SEVERITY} severity
-     * @param reporterModel the {@link ReporterModel reporter} to which add the modified {@link Report}
-     * @param report the report to copy with {@code TRACE} severity
+     * Copy the reportNode, but with {@link TypedValue#TRACE_SEVERITY} severity
+     * @param reportNode the {@link ReportNode reporter} to which add the modified {@link ReportNode}
+     * @param child the report to copy with {@code TRACE} severity
      */
-    static void copyReportAsTrace(@NonNull final ReporterModel reporterModel, @NonNull final Report report) {
-        final Map<String, TypedValue> values = new HashMap<>(report.getValues());
-        values.put(Report.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
-        reporterModel.report(new Report(report.getReportKey(), report.getDefaultMessage(), values));
+    static void copyReportAsTrace(@NonNull final ReportNode reportNode, @NonNull final ReportNode child) {
+        final Map<String, TypedValue> values = new HashMap<>(child.getValues());
+        values.put(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
+        ReportNodeAdder adder = reportNode.newReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
+        values.entrySet().forEach(entry -> adder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        adder.add();
     }
 }

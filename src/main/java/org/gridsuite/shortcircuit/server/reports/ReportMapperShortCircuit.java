@@ -6,16 +6,11 @@
  */
 package org.gridsuite.shortcircuit.server.reports;
 
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.commons.report.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 /**
  * This class manages how to postprocess reports of the short-circuit server to reduce the number of reports
@@ -38,9 +33,7 @@ import java.util.Map;
  *
  * @implNote as the tree to aggregate seems relatively simple, a simple utility class will suffice
  *
- * @see Reporter
- * @see ReporterModel
- * @see Report
+ * @see ReportNode
  */
 @Slf4j
 @Component
@@ -51,55 +44,59 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
      * @implNote we assume there will always be at least one modification
      */
     @Override
-    protected ReporterModel forShortCircuitAnalysis(@NonNull final ReporterModel reporterModel) {
-        final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
-        reporterModel.getReports().forEach(newReporter::report);
-        reporterModel.getSubReporters().forEach(reporter -> newReporter.addSubReporter(
-            switch (reporter.getTaskKey()) {
-                case "generatorConversion" -> forGeneratorConversion(reporter);
-                default -> reporter;
-            }));
+    protected ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode) {
+        ReportNodeBuilder builder = ReportNode.newRootReportNode()
+                .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
+        reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        final ReportNode newReporter = builder.build();
+        reportNode.getChildren().forEach(child -> {
+            if (child.getMessageKey().equals("generatorConversion")) {
+                newReportNode(newReporter, forGeneratorConversion(child));
+            } else {
+                newReportNode(newReporter, child);
+            }
+        });
         return newReporter;
     }
 
     /**
      * Modify node with key {@code generatorConversion}
-     * @implNote we use {@link ReportWrapper} to insert a {@link Report} without knowing the exact content at that time, and
+     * @implNote we use {@link ReportNode} to insert a {@link ReportNode} without knowing the exact content at that time, and
      *           filling it later
      */
-    protected ReporterModel forGeneratorConversion(@NonNull final ReporterModel reporterModel) {
+    protected ReportNode forGeneratorConversion(@NonNull final ReportNode reportNode) {
         log.trace("short-circuit logs detected, will analyse them...");
-        final ReporterModel newReporter = new ReporterModel(reporterModel.getTaskKey(), reporterModel.getDefaultName(), reporterModel.getTaskValues());
-        reporterModel.getSubReporters().forEach(newReporter::addSubReporter);
+        ReportNodeBuilder builder = ReportNode.newRootReportNode()
+                .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
+        reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        final ReportNode newReporter = builder.build();
 
         /* preparing */
         long logsRegulatingTerminalCount = 0L;
-        ReportWrapper logsRegulatingTerminalSummary = null;
+        ReportNodeAdder logsRegulatingTerminalSummaryAdder = null;
         TypedValue logsRegulatingTerminalSeverity = null;
-
-        /* analyze and compute logs in one pass */
-        for (final Report report : reporterModel.getReports()) { //we modify logs conditionally here
-            if ("disconnectedTerminalGenerator".equals(report.getReportKey())) {
+        for (final ReportNode child : reportNode.getChildren()) {
+            if (child.getMessageKey().equals("disconnectedTerminalGenerator")) {
                 //we match line "Regulating terminal of connected generator MY-NODE is disconnected. Regulation is disabled."
-                if (logsRegulatingTerminalSummary == null) {
-                    logsRegulatingTerminalSummary = new ReportWrapper();
-                    newReporter.report(logsRegulatingTerminalSummary);
-                    logsRegulatingTerminalSeverity = report.getValue(Report.REPORT_SEVERITY_KEY);
+                if (logsRegulatingTerminalSummaryAdder == null) {
+                    logsRegulatingTerminalSummaryAdder = reportNode.newReportNode();
+                    logsRegulatingTerminalSeverity = child.getValue(ReportConstants.REPORT_SEVERITY_KEY).get();
                 }
-                copyReportAsTrace(newReporter, report);
+                copyReportAsTrace(newReporter, child);
                 logsRegulatingTerminalCount++;
-            } else { //we keep this log as is
-                newReporter.report(report);
+            } else {
+                newReportNode(newReporter, child);
             }
         }
 
         /* finalize computation of summaries */
         log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected generator MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalCount);
-        if (logsRegulatingTerminalSummary != null) {
-            logsRegulatingTerminalSummary.setReport(new Report("disconnectedTerminalGeneratorSummary",
-                    "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.",
-                    Map.of(Report.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY),
-                            "nb", new TypedValue(logsRegulatingTerminalCount, TypedValue.UNTYPED))));
+        if (logsRegulatingTerminalSummaryAdder != null) {
+            logsRegulatingTerminalSummaryAdder
+                .withMessageTemplate("disconnectedTerminalGeneratorSummary", "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.")
+                .withUntypedValue(ReportConstants.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY).toString())
+                .withUntypedValue("nb", logsRegulatingTerminalCount)
+                .add();
         }
 
         return newReporter;
