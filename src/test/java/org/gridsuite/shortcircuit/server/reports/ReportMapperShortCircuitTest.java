@@ -13,7 +13,6 @@ import org.json.JSONException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -33,8 +32,10 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     @Test
     void testAggregatedLogs() throws IOException, URISyntaxException, JSONException {
         final ReportNode result = reportMapper.processReporter(rootReportNode);
-        log.debug("Result = {}", Jackson2ObjectMapperBuilder.json().findModulesViaServiceLoader(true).build().writerWithDefaultPrettyPrinter().writeValueAsString(result));
-        JSONAssert.assertEquals("short-circuit logs aggregated", RestTemplateConfig.objectMapper().writeValueAsString(result),
-                Files.readString(Paths.get(this.getClass().getClassLoader().getResource("reporter_shortcircuit_modified.json").toURI())), false);
+        log.debug("Result = {}", RestTemplateConfig.objectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result));
+        JSONAssert.assertEquals("short-circuit logs aggregated",
+                Files.readString(Paths.get(this.getClass().getClassLoader().getResource("reporter_shortcircuit_modified.json").toURI())),
+                RestTemplateConfig.objectMapper().writeValueAsString(result),
+                false);
     }
 }

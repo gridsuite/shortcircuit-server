@@ -2,12 +2,9 @@
   "version": "2.0",
   "reportRoot": {
     "messageKey": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
-    "values": {},
     "children": [
       {
-        "messageKey": "TestReporter",
-        "values": {},
-        "children": []
+        "messageKey": "TestReporter"
       },
       {
         "messageKey": "ShortCircuitAnalysis",
@@ -20,7 +17,6 @@
         "children": [
           {
             "messageKey": "generatorConversion",
-            "values": {},
             "children": [
               {
                 "messageKey": "testReportLine",
@@ -83,13 +79,23 @@
           },
           {
             "messageKey": "batteryConversion",
-            "values": {},
-            "children": []
+            "children": [
+              {
+                "messageKey": "lineConversion"
+              },
+              {
+                "messageKey": "tieLineConversion"
+              },
+              {
+                "messageKey": "twoWindingsTransformerConversion"
+              },
+              {
+                "messageKey": "threeWindingsTransformerConversion"
+              }
+            ]
           },
           {
-            "messageKey": "danglinglinesConversion",
-            "values": {},
-            "children": []
+            "messageKey": "danglinglinesConversion"
           }
         ]
       }

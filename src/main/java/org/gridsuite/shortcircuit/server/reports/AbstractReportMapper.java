@@ -52,7 +52,7 @@ public abstract class AbstractReportMapper {
         }
     }
 
-    public static void newReportNode(ReportNode parent, ReportNode child) {
+    public static void insertReportNode(ReportNode parent, ReportNode child) {
         ReportNodeAdder adder = parent.newReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
         for (Map.Entry<String, TypedValue> valueEntry : child.getValues().entrySet()) {
             adder.withUntypedValue(valueEntry.getKey(), valueEntry.getValue().toString());
@@ -61,7 +61,10 @@ public abstract class AbstractReportMapper {
         if (severity != null) {
             adder.withSeverity(severity);
         }
-        adder.add();
+        ReportNode insertedChild = adder.add();
+        if (child.getChildren() != null) {
+            child.getChildren().forEach(grandChild -> insertReportNode(insertedChild, grandChild));
+        }
     }
 
     /**
@@ -77,10 +80,9 @@ public abstract class AbstractReportMapper {
 
         reportNode.getChildren().forEach(child -> {
             if (child.getMessageKey() != null && child.getMessageKey().endsWith("ShortCircuitAnalysis")) {
-                newReportNode(newReportNode, forShortCircuitAnalysis(child));
-                //newReportNode.include(forShortCircuitAnalysis(child));
+                insertReportNode(newReportNode, forShortCircuitAnalysis(child));
             } else {
-                newReportNode(newReportNode, child);
+                insertReportNode(newReportNode, child);
             }
         });
         return newReportNode;

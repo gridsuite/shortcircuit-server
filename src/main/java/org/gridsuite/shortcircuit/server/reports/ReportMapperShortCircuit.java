@@ -51,9 +51,9 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         final ReportNode newReporter = builder.build();
         reportNode.getChildren().forEach(child -> {
             if (child.getMessageKey().equals("generatorConversion")) {
-                newReportNode(newReporter, forGeneratorConversion(child));
+                insertReportNode(newReporter, forGeneratorConversion(child));
             } else {
-                newReportNode(newReporter, child);
+                insertReportNode(newReporter, child);
             }
         });
         return newReporter;
@@ -79,13 +79,13 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             if (child.getMessageKey().equals("disconnectedTerminalGenerator")) {
                 //we match line "Regulating terminal of connected generator MY-NODE is disconnected. Regulation is disabled."
                 if (logsRegulatingTerminalSummaryAdder == null) {
-                    logsRegulatingTerminalSummaryAdder = reportNode.newReportNode();
+                    logsRegulatingTerminalSummaryAdder = newReporter.newReportNode();
                     logsRegulatingTerminalSeverity = child.getValue(ReportConstants.REPORT_SEVERITY_KEY).get();
                 }
                 copyReportAsTrace(newReporter, child);
                 logsRegulatingTerminalCount++;
             } else {
-                newReportNode(newReporter, child);
+                insertReportNode(newReporter, child);
             }
         }
 
@@ -94,8 +94,8 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         if (logsRegulatingTerminalSummaryAdder != null) {
             logsRegulatingTerminalSummaryAdder
                 .withMessageTemplate("disconnectedTerminalGeneratorSummary", "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.")
-                .withUntypedValue(ReportConstants.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY).toString())
-                .withUntypedValue("nb", logsRegulatingTerminalCount)
+                .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
+                .withTypedValue("nb", logsRegulatingTerminalCount, TypedValue.UNTYPED)
                 .add();
         }
 

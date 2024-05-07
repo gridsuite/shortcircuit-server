@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -113,7 +114,7 @@ public class ShortCircuitWorkerService {
             rootReportNode.set(ReportNode.newRootReportNode().withMessageTemplate(rootReporterId, rootReporterId).build());
             reportNode = rootReportNode.get().newReportNode()
                     .withMessageTemplate(reportType.get(), reportType + " (${providerToUse})")
-                    .withUntypedValue("providerToUse", ShortCircuitAnalysis.find().getName())
+                    .withTypedValue("providerToUse", ShortCircuitAnalysis.find().getName(), TypedValue.UNTYPED)
                     .add();
             // Delete any previous short-circuit computation logs
             shortCircuitObserver.observe("report.delete", () -> reportService.deleteReport(context.getReportUuid(), reportType.get()));
