@@ -178,7 +178,7 @@ public class ShortCircuitService {
                 List<FeederResult> feederResults = faultResult.getFeederResults();
                 if (!feederResults.isEmpty()) {
                     for (FeederResult feederResult : feederResults) {
-                        double feederCurrentValue = (faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent())  / 1000.0;
+                        double feederCurrentValue = (faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent()) / 1000.0;
                         String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
                         List<String> feederRowData = new ArrayList<>(List.of(
                                 faultResultId,
