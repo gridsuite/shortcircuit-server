@@ -6,36 +6,34 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.NonNull;
+import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationObserver;
 import org.springframework.stereotype.Service;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
 @Service
-public class ShortCircuitObserver {
-    private static final String OBSERVATION_PREFIX = "app.computation.";
-    private static final String TYPE_TAG_NAME = "type";
-    private static final String STATUS_TAG_NAME = "status";
+public class ShortCircuitObserver extends AbstractComputationObserver<ShortCircuitAnalysisResult, ShortCircuitParameters> {
+
     private static final String COMPUTATION_TYPE = "shortcircuit";
-    private static final String COMPUTATION_COUNTER_NAME = OBSERVATION_PREFIX + "count";
-    private static final String PROVIDER_TAG_NAME = "provider";
-    private final ObservationRegistry observationRegistry;
-    private final MeterRegistry meterRegistry;
 
     public ShortCircuitObserver(@NonNull ObservationRegistry observationRegistry, @NonNull MeterRegistry meterRegistry) {
-        this.observationRegistry = observationRegistry;
-        this.meterRegistry = meterRegistry;
+        super(observationRegistry, meterRegistry);
     }
 
-    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> runnable) throws E {
-        createObservation(name).observeChecked(runnable);
+    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> callable) throws E {
+        createObservation(name).observeChecked(callable);
+    }
+
+    public <T, E extends Throwable> T observe(String name, Observation.CheckedCallable<T, E> callable) throws E {
+        return createObservation(name).observeChecked(callable);
     }
 
     public <T extends ShortCircuitAnalysisResult, E extends Throwable> T observeRun(String name, Observation.CheckedCallable<T, E> callable) throws E {
@@ -44,22 +42,28 @@ public class ShortCircuitObserver {
         return result;
     }
 
-    public <T, E extends Throwable> T observe(String name, Observation.CheckedCallable<T, E> callable) throws E {
-        return createObservation(name).observeChecked(callable);
-    }
-
     private Observation createObservation(String name) {
         return Observation.createNotStarted(OBSERVATION_PREFIX + name, observationRegistry)
-                .lowCardinalityKeyValue(PROVIDER_TAG_NAME, ShortCircuitAnalysis.find().getName())
+                .lowCardinalityKeyValue(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .lowCardinalityKeyValue(TYPE_TAG_NAME, COMPUTATION_TYPE);
     }
 
     private void incrementCount(ShortCircuitAnalysisResult result) {
         Counter.builder(COMPUTATION_COUNTER_NAME)
-                .tag(PROVIDER_TAG_NAME, ShortCircuitAnalysis.find().getName())
+                .tag(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .tag(TYPE_TAG_NAME, COMPUTATION_TYPE)
-                .tag(STATUS_TAG_NAME, result != null ? "OK" : "NOK")
+                .tag(STATUS_TAG_NAME, getResultStatus(result))
                 .register(meterRegistry)
                 .increment();
+    }
+
+    @Override
+    protected String getResultStatus(ShortCircuitAnalysisResult result) {
+        return result != null ? "OK" : "NOK";
+    }
+
+    @Override
+    protected String getComputationType() {
+        return COMPUTATION_TYPE;
     }
 }

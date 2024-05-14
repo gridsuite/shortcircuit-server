@@ -11,12 +11,13 @@ import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
+import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationService;
+import org.gridsuite.shortcircuit.server.computation.service.NotificationService;
+import org.gridsuite.shortcircuit.server.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
-import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,23 +38,14 @@ import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class ShortCircuitService {
+public class ShortCircuitService extends AbstractComputationService<ShortCircuitRunContext, ShortCircuitAnalysisResultService, ShortCircuitAnalysisStatus> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
 
-    @Autowired
-    NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
-    private UuidGeneratorService uuidGeneratorService;
-
-    private ShortCircuitAnalysisResultRepository resultRepository;
-
-    private ObjectMapper objectMapper;
-
-    public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultRepository resultRepository, ObjectMapper objectMapper) {
-        this.notificationService = Objects.requireNonNull(notificationService);
-        this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
-        this.resultRepository = Objects.requireNonNull(resultRepository);
+    public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultService resultService, ObjectMapper objectMapper) {
+        super(notificationService, resultService, objectMapper, uuidGeneratorService, "");
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
@@ -62,7 +54,7 @@ public class ShortCircuitService {
         var resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
-        setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING.name());
+        setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING);
         notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }
@@ -218,17 +210,17 @@ public class ShortCircuitService {
         Optional<ShortCircuitAnalysisResultEntity> result;
         switch (mode) {
             case BASIC:
-                result = resultRepository.findWithFaultResults(resultUuid);
+                result = resultService.findWithFaultResults(resultUuid);
                 break;
             case FULL:
-                result = resultRepository.findFullResults(resultUuid);
+                result = resultService.findFullResults(resultUuid);
                 break;
             case WITH_LIMIT_VIOLATIONS:
-                result = resultRepository.findResultsWithLimitViolations(resultUuid);
+                result = resultService.findResultsWithLimitViolations(resultUuid);
                 break;
             case NONE:
             default:
-                result = resultRepository.find(resultUuid);
+                result = resultService.find(resultUuid);
                 break;
         }
         if (result.isPresent()) {
@@ -252,15 +244,15 @@ public class ShortCircuitService {
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
         // get without faultResults : FaultResultsM.NONE
-        result = resultRepository.find(resultUuid);
+        result = resultService.find(resultUuid);
         if (result.isPresent()) {
             Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
             switch (mode) {
                 case BASIC, FULL:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
+                    faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultRepository.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable);
+                    faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable);
                     break;
                 case NONE:
                 default:
@@ -280,9 +272,9 @@ public class ShortCircuitService {
     public Page<FeederResult> getFeederResultsPage(UUID resultUuid, List<ResourceFilter> resourceFilters, Pageable pageable) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
-        Optional<ShortCircuitAnalysisResultEntity> result = resultRepository.find(resultUuid);
+        Optional<ShortCircuitAnalysisResultEntity> result = resultService.find(resultUuid);
         if (result.isPresent()) {
-            Page<FeederResultEntity> feederResultEntitiesPage = resultRepository.findFeederResultsPage(result.get(), resourceFilters, pageable);
+            Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(result.get(), resourceFilters, pageable);
             Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
@@ -294,22 +286,15 @@ public class ShortCircuitService {
     }
 
     public void deleteResult(UUID resultUuid) {
-        resultRepository.delete(resultUuid);
+        super.deleteResult(resultUuid);
     }
 
     public void deleteResults() {
-        resultRepository.deleteAll();
+        super.deleteResults();
     }
 
-    public String getStatus(UUID resultUuid) {
-        return resultRepository.findStatus(resultUuid);
-    }
-
-    public void setStatus(List<UUID> resultUuids, String status) {
-        resultRepository.insertStatus(resultUuids, status);
-    }
-
-    public void stop(UUID resultUuid, String receiver) {
-        notificationService.sendCancelMessage(new ShortCircuitCancelContext(resultUuid, receiver).toMessage());
+    @Override
+    public List<String> getProviders() {
+        return List.of();
     }
 }

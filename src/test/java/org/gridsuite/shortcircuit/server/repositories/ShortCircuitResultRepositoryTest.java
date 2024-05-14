@@ -16,6 +16,7 @@ import com.powsybl.shortcircuit.MagnitudeFaultResult;
 import com.powsybl.shortcircuit.MagnitudeFeederResult;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,7 +55,7 @@ public class ShortCircuitResultRepositoryTest {
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
 
     @Autowired
-    private ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
+    private ShortCircuitAnalysisResultService shortCircuitAnalysisResultRepository;
 
     @Before
     public void setUp() {

@@ -4,14 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server.service;
+package org.gridsuite.shortcircuit.server.computation.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModelJsonModule;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Anis Touri <anis.touri at rte-france.com>
  */
 @Service
 public class ReportService {
@@ -34,24 +34,21 @@ public class ReportService {
     private static final String DELIMITER = "/";
     private static final String QUERY_PARAM_REPORT_TYPE_FILTER = "reportTypeFilter";
     private static final String QUERY_PARAM_REPORT_THROW_ERROR = "errorOnReportNotFound";
+    @Setter
     private String reportServerBaseUri;
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
     public ReportService(ObjectMapper objectMapper,
-                         @Value("${gridsuite.services.report-server.base-uri:http://report-server/}") String reportServerBaseUri) {
+                         @Value("${gridsuite.services.report-server.base-uri:http://report-server/}") String reportServerBaseUri,
+                         RestTemplate restTemplate) {
         this.reportServerBaseUri = reportServerBaseUri;
         this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
         ReporterModelJsonModule reporterModelJsonModule = new ReporterModelJsonModule();
         objectMapper.registerModule(reporterModelJsonModule);
-    }
-
-    public void setReportServerBaseUri(String reportServerBaseUri) {
-        this.reportServerBaseUri = reportServerBaseUri;
     }
 
     private String getReportServerURI() {

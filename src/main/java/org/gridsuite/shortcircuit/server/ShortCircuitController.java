@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
-import static org.gridsuite.shortcircuit.server.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.*;
 
 /**
@@ -64,7 +64,8 @@ public class ShortCircuitController {
                                            @RequestBody(required = false) ShortCircuitParameters parameters,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        UUID resultUuid = shortCircuitService.runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, nonNullParameters, reportUuid, reporterId, reportType, userId, busId));
+        ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, variantId, receiver, nonNullParameters, reportUuid, reporterId, reportType, userId, busId);
+        UUID resultUuid = shortCircuitService.runAndSaveResult(runContext);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
 
@@ -144,7 +145,7 @@ public class ShortCircuitController {
     @Operation(summary = "Get the short circuit analysis status from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis status")})
     public ResponseEntity<String> getStatus(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
-        String result = shortCircuitService.getStatus(resultUuid);
+        String result = String.valueOf(shortCircuitService.getStatus(resultUuid));
         return ResponseEntity.ok().body(result);
     }
 
@@ -152,7 +153,7 @@ public class ShortCircuitController {
     @Operation(summary = "Invalidate the short circuit analysis status from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis status has been invalidated")})
     public ResponseEntity<Void> invalidateStatus(@Parameter(description = "Result uuids") @RequestParam(name = "resultUuid") List<UUID> resultUuids) {
-        shortCircuitService.setStatus(resultUuids, ShortCircuitAnalysisStatus.NOT_DONE.name());
+        shortCircuitService.setStatus(resultUuids, ShortCircuitAnalysisStatus.valueOf(ShortCircuitAnalysisStatus.NOT_DONE.name()));
         return ResponseEntity.ok().build();
     }
 

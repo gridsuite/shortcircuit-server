@@ -29,8 +29,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.TestUtils;
+import org.gridsuite.shortcircuit.server.computation.service.ExecutionService;
+import org.gridsuite.shortcircuit.server.computation.service.NotificationService;
+import org.gridsuite.shortcircuit.server.computation.service.ReportService;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
-import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,13 +72,13 @@ class ShortCircuitServiceTest implements WithAssertions {
     private ReportService reportService;
 
     @Mock
-    private ShortCircuitExecutionService shortCircuitExecutionService;
+    private ExecutionService shortCircuitExecutionService;
 
     @Mock
     private NotificationService notificationService;
 
     @Mock
-    private ShortCircuitAnalysisResultRepository resultRepository;
+    private ShortCircuitAnalysisResultService resultRepository;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -163,7 +165,7 @@ class ShortCircuitServiceTest implements WithAssertions {
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             workerService.consumeRun().accept(message);
-            verify(notificationService).publishFail(any(), any(), eq("Selected bus is out of voltage"), any(), eq(busId));
+            verify(notificationService).publishFail(any(), any(), eq("Selected bus is out of voltage"), any(), eq(busId), any());
         }
     }
 
