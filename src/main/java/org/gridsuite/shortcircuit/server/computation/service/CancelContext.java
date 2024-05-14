@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.computation.service;
 
-import lombok.Getter;
 import org.gridsuite.shortcircuit.server.computation.utils.MessageUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
@@ -22,12 +21,7 @@ import static org.gridsuite.shortcircuit.server.computation.service.Notification
 /**
  * @author Anis Touri <anis.touri at rte-france.com>
  */
-@Getter
-public class CancelContext {
-
-    private final UUID resultUuid;
-
-    private final String receiver;
+public record CancelContext(UUID resultUuid, String receiver) {
 
     public CancelContext(UUID resultUuid, String receiver) {
         this.resultUuid = Objects.requireNonNull(resultUuid);

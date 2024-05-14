@@ -43,11 +43,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
 
-    private final ObjectMapper objectMapper;
-
     public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultService resultService, ObjectMapper objectMapper) {
         super(notificationService, resultService, objectMapper, uuidGeneratorService, "");
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public UUID runAndSaveResult(ShortCircuitRunContext runContext) {

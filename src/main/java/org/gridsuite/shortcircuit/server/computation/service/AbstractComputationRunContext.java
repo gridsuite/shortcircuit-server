@@ -26,7 +26,6 @@ public abstract class AbstractComputationRunContext<P> {
     private final String receiver;
     private final ReportInfos reportInfos;
     private final String userId;
-    private final String busId;
     @Setter protected String provider;
     @Setter protected P parameters;
     @Setter Reporter reporter;

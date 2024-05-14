@@ -98,14 +98,14 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
     private void cancelAsync(CancelContext cancelContext) {
         lockRunAndCancel.lock();
         try {
-            cancelComputationRequests.put(cancelContext.getResultUuid(), cancelContext);
+            cancelComputationRequests.put(cancelContext.resultUuid(), cancelContext);
 
             // find the completableFuture associated with result uuid
-            CompletableFuture<S> future = futures.get(cancelContext.getResultUuid());
+            CompletableFuture<S> future = futures.get(cancelContext.resultUuid());
             if (future != null) {
                 future.cancel(true);  // cancel computation in progress
             }
-            cleanResultsAndPublishCancel(cancelContext.getResultUuid(), cancelContext.getReceiver());
+            cleanResultsAndPublishCancel(cancelContext.resultUuid(), cancelContext.receiver());
         } finally {
             lockRunAndCancel.unlock();
         }
@@ -137,7 +137,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
                     long finalNanoTime = System.nanoTime();
                     LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
-                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getBusId());
+                    sendResultMessage(resultContext, result);
                     LOGGER.info("{} complete (resultUuid='{}')", getComputationType(), resultContext.getResultUuid());
                 }
             } catch (InterruptedException e) {
@@ -145,9 +145,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
             } catch (Exception e) {
                 if (!(e instanceof CancellationException)) {
                     LOGGER.error(NotificationService.getFailedMessage(getComputationType()), e);
-                    notificationService.publishFail(
-                            resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                            e.getMessage(), resultContext.getRunContext().getUserId(), resultContext.getRunContext().getBusId(), getComputationType());
+                    publishFail(resultContext, NotificationService.getFailedMessage(getComputationType()));
                     resultService.delete(resultContext.getResultUuid());
                 }
             } finally {
@@ -162,6 +160,10 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
     }
 
     protected abstract void saveResult(Network network, AbstractResultContext<R> resultContext, S result);
+
+    protected abstract void sendResultMessage(AbstractResultContext<R> resultContext, S result);
+
+    protected abstract void publishFail(AbstractResultContext<R> resultContext, String message);
 
     /**
      * Do some extra task before running the computation, e.g. print log or init extra data for the run context

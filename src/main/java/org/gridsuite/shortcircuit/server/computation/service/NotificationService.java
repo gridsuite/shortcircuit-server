@@ -15,12 +15,13 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.gridsuite.shortcircuit.server.computation.utils.MessageUtils.shortenMessage;
 
 /**
- * @author Anis Touri <anis.touri at rte-france.com
+ * @author Etienne Homer <etienne.homer at rte-france.com
  */
 @Service
 public class NotificationService {
@@ -33,12 +34,12 @@ public class NotificationService {
     private static final Logger RUN_MESSAGE_LOGGER = LoggerFactory.getLogger(RUN_CATEGORY_BROKER_OUTPUT);
     private static final Logger CANCEL_MESSAGE_LOGGER = LoggerFactory.getLogger(CANCEL_CATEGORY_BROKER_OUTPUT);
     private static final Logger STOP_MESSAGE_LOGGER = LoggerFactory.getLogger(STOP_CATEGORY_BROKER_OUTPUT);
-    protected static final Logger RESULT_MESSAGE_LOGGER = LoggerFactory.getLogger(RESULT_CATEGORY_BROKER_OUTPUT);
+    private static final Logger RESULT_MESSAGE_LOGGER = LoggerFactory.getLogger(RESULT_CATEGORY_BROKER_OUTPUT);
     private static final Logger FAILED_MESSAGE_LOGGER = LoggerFactory.getLogger(FAILED_CATEGORY_BROKER_OUTPUT);
 
     public static final String HEADER_RESULT_UUID = "resultUuid";
     public static final String HEADER_RECEIVER = "receiver";
-    public static final String HEADER_BUS_ID = "busId";
+    public static final String HEADER_PROVIDER = "provider";
     public static final String HEADER_MESSAGE = "message";
     public static final String HEADER_USER_ID = "userId";
 
@@ -63,15 +64,17 @@ public class NotificationService {
     }
 
     @PostCompletion
-    public void sendResultMessage(UUID resultUuid, String receiver, String busId) {
-        Message<String> message = MessageBuilder
-            .withPayload("")
-            .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
-            .setHeader(HEADER_RECEIVER, receiver)
-            .setHeader(HEADER_BUS_ID, busId)
-            .build();
+    public void sendResultMessage(UUID resultUuid, String receiver, Map<String, Object> additionalHeaders) {
+        MessageBuilder<String> builder = MessageBuilder
+                .withPayload("")
+                .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
+                .setHeader(HEADER_RECEIVER, receiver);
+        if (additionalHeaders != null) {
+            additionalHeaders.forEach(builder::setHeader);
+        }
+        Message<String> message = builder.build();
         RESULT_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
-        publisher.send("publishResult-out-0", message);
+        publisher.send(publishPrefix + "Result-out-0", message);
     }
 
     @PostCompletion
@@ -87,16 +90,18 @@ public class NotificationService {
     }
 
     @PostCompletion
-    public void publishFail(UUID resultUuid, String receiver, String causeMessage, String userId, String busId, String computationLabel) {
-        Message<String> message = MessageBuilder
+    public void publishFail(UUID resultUuid, String receiver, String causeMessage, String userId, String computationLabel, Map<String, Object> additionalHeaders) {
+        MessageBuilder<String> builder = MessageBuilder
                 .withPayload("")
                 .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
                 .setHeader(HEADER_RECEIVER, receiver)
                 .setHeader(HEADER_MESSAGE, shortenMessage(
                         getFailedMessage(computationLabel) + " : " + causeMessage))
-                .setHeader(HEADER_USER_ID, userId)
-                .setHeader(HEADER_BUS_ID, busId)
-                .build();
+                .setHeader(HEADER_USER_ID, userId);
+        if (additionalHeaders != null) {
+            additionalHeaders.forEach(builder::setHeader);
+        }
+        Message<String> message = builder.build();
         FAILED_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send(publishPrefix + "Failed-out-0", message);
     }

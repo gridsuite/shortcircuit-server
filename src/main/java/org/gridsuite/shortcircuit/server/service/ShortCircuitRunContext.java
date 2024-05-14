@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
 import org.gridsuite.shortcircuit.server.computation.dto.ReportInfos;
@@ -22,14 +23,13 @@ import java.util.UUID;
 @Getter
 public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortCircuitParameters> {
 
-    private final ShortCircuitParameters parameters;
-
     private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+    private String busId;
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
                                   UUID reportUuid, String reporterId, String reportType, String userId, String busId) {
-        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, busId, "", parameters, null);
-        this.parameters = new ShortCircuitParameters();
+        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", parameters, Reporter.NO_OP);
+        this.busId = busId;
     }
 
     public void setShortCircuitLimits(Map<String, ShortCircuitLimits> shortCircuitLimits) {

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.micrometer.core.instrument.Counter;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ShortCircuitObserver extends AbstractComputationObserver<ShortCircuitAnalysisResult, ShortCircuitParameters> {
 
-    private static final String COMPUTATION_TYPE = "shortcircuit";
+    private static final String COMPUTATION_TYPE = "shortcircuitanalysis";
 
     public ShortCircuitObserver(@NonNull ObservationRegistry observationRegistry, @NonNull MeterRegistry meterRegistry) {
         super(observationRegistry, meterRegistry);
@@ -44,13 +45,13 @@ public class ShortCircuitObserver extends AbstractComputationObserver<ShortCircu
 
     private Observation createObservation(String name) {
         return Observation.createNotStarted(OBSERVATION_PREFIX + name, observationRegistry)
-                .lowCardinalityKeyValue(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
+                .lowCardinalityKeyValue(PROVIDER_TAG_NAME, ShortCircuitAnalysis.find().getName())
                 .lowCardinalityKeyValue(TYPE_TAG_NAME, COMPUTATION_TYPE);
     }
 
     private void incrementCount(ShortCircuitAnalysisResult result) {
         Counter.builder(COMPUTATION_COUNTER_NAME)
-                .tag(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
+                .tag(PROVIDER_TAG_NAME, ShortCircuitAnalysis.find().getName())
                 .tag(TYPE_TAG_NAME, COMPUTATION_TYPE)
                 .tag(STATUS_TAG_NAME, getResultStatus(result))
                 .register(meterRegistry)

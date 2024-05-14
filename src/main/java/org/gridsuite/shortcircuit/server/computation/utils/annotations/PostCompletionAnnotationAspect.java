@@ -22,7 +22,7 @@ public class PostCompletionAnnotationAspect {
 
     private final PostCompletionAdapter postCompletionAdapter;
 
-    @Around("@annotation(org.gridsuite.voltageinit.server.computation.utils.annotations.PostCompletion)")
+    @Around("@annotation(org.gridsuite.shortcircuit.server.computation.utils.annotations.PostCompletion)")
     public Object executePostCompletion(final ProceedingJoinPoint pjp) {
         postCompletionAdapter.execute(new PjpAfterCompletionRunnable(pjp));
         return null;

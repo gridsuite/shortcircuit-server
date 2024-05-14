@@ -34,9 +34,12 @@ public abstract class AbstractComputationObserver<R, P> {
     protected abstract String getComputationType();
 
     protected Observation createObservation(String name, AbstractComputationRunContext<P> runContext) {
-        return Observation.createNotStarted(OBSERVATION_PREFIX + name, observationRegistry)
-                .lowCardinalityKeyValue(PROVIDER_TAG_NAME, runContext.getProvider())
+        Observation observation = Observation.createNotStarted(OBSERVATION_PREFIX + name, observationRegistry)
                 .lowCardinalityKeyValue(TYPE_TAG_NAME, getComputationType());
+        if (runContext.getProvider() != null) {
+            observation.lowCardinalityKeyValue(PROVIDER_TAG_NAME, runContext.getProvider());
+        }
+        return observation;
     }
 
     public <E extends Throwable> void observe(String name, AbstractComputationRunContext<P> runContext, Observation.CheckedRunnable<E> callable) throws E {

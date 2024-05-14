@@ -17,12 +17,7 @@ import com.powsybl.iidm.network.Terminal.BusView;
 import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.shortcircuit.Fault;
-import com.powsybl.shortcircuit.FaultParameters;
-import com.powsybl.shortcircuit.ShortCircuitAnalysis;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;
@@ -49,17 +44,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith({ MockitoExtension.class })
 @Slf4j
@@ -103,7 +89,6 @@ class ShortCircuitServiceTest implements WithAssertions {
                 notificationService,
                 resultRepository,
                 objectMapper,
-                Collections.singletonList(reportMapper),
                 new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
         );
     }
@@ -117,8 +102,9 @@ class ShortCircuitServiceTest implements WithAssertions {
         final UUID reportUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
         final UUID resultUuid = UUID.fromString("33333333-3333-3333-3333-333333333333");
         final String reporterId = "44444444-4444-4444-4444-444444444444";
+        final String reporterType = "AllBusesShortCircuitAnalysis";
         final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
-                new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null, null);
+                new ShortCircuitParameters(), reportUuid, reporterId, reporterType, null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         final Reporter reporter = new ReporterModel("test", "test");
@@ -136,8 +122,9 @@ class ShortCircuitServiceTest implements WithAssertions {
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             when(reportMapper.processReporter(any(Reporter.class))).thenReturn(reporter);
             workerService.consumeRun().accept(message);
-            shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
-            verify(reportMapper, times(1)).processReporter(any(ReporterModel.class));
+            shortCircuitAnalysisMockedStatic.verify(() -> ShortCircuitAnalysis.runAsync(
+                    any(), anyList(), any(), any(), anyList(), any()), Mockito.atLeastOnce());
+            verify(reportService, times(1)).deleteReport(reportUuid, reporterType);
             verify(reportService, times(1)).sendReport(reportUuid, reporter);
         }
     }
@@ -165,7 +152,7 @@ class ShortCircuitServiceTest implements WithAssertions {
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             workerService.consumeRun().accept(message);
-            verify(notificationService).publishFail(any(), any(), eq("Selected bus is out of voltage"), any(), eq(busId), any());
+            verify(notificationService).publishFail(any(), any(), eq("Selected bus is out of voltage"), any(), any(), any());
         }
     }
 

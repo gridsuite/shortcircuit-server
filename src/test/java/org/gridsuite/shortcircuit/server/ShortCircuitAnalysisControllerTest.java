@@ -65,7 +65,6 @@ import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
 import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.*;
-import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -99,7 +98,9 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_3_ID = "variant_3";
     private static final String VARIANT_4_ID = "variant_4";
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
-
+    public static final String HEADER_BUS_ID = "busId";
+    public static final String CANCEL_MESSAGE = "Short circuit analysis was canceled";
+    public static final String FAIL_MESSAGE = "Short circuit analysis has failed";
     private static final List<String> CSV_HEADERS = List.of(
             "ID nœud",
             "Type",
@@ -715,7 +716,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertNotNull(message);
             assertEquals(RESULT_UUID_TO_STOP.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
-            assertEquals(getCancelMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
+            assertEquals(CANCEL_MESSAGE, message.getHeaders().get("message"));
         }
     }
 

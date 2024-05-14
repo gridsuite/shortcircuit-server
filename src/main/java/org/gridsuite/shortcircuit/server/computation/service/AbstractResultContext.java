@@ -61,6 +61,7 @@ public abstract class AbstractResultContext<R extends AbstractComputationRunCont
                 .setHeader(NETWORK_UUID_HEADER, runContext.getNetworkUuid().toString())
                 .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
                 .setHeader(HEADER_RECEIVER, runContext.getReceiver())
+                .setHeader(HEADER_PROVIDER, runContext.getProvider())
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportInfos().reportUuid() != null ? runContext.getReportInfos().reportUuid().toString() : null)
                 .setHeader(REPORTER_ID_HEADER, runContext.getReportInfos().reporterId())

@@ -27,6 +27,8 @@ import static org.gridsuite.shortcircuit.server.computation.utils.MessageUtils.g
 @Getter
 public class ShortCircuitResultContext extends AbstractResultContext<ShortCircuitRunContext> {
 
+    private static final String HEADER_BUS_ID = "busId";
+
     public ShortCircuitResultContext(UUID resultUuid, ShortCircuitRunContext runContext) {
         super(resultUuid, runContext);
     }
@@ -72,10 +74,10 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
                 .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
                 .setHeader(HEADER_RECEIVER, runContext.getReceiver())
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
+                .setHeader(HEADER_BUS_ID, runContext.getBusId())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportInfos().reportUuid() != null ? runContext.getReportInfos().reportUuid().toString() : null)
                 .setHeader(REPORTER_ID_HEADER, runContext.getReportInfos().reporterId())
                 .setHeader(REPORT_TYPE_HEADER, runContext.getReportInfos().computationType())
-                .setHeader(HEADER_BUS_ID, runContext.getBusId())
                 .build();
     }
 }
