@@ -741,6 +741,26 @@ public class ShortCircuitAnalysisControllerTest {
 
     @SneakyThrows
     @Test
+    public void testGetFaultTypes() {
+        MvcResult result = mockMvc.perform(get(
+                        "/" + VERSION + "/results/{resultUuid}/fault-types", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertEquals("[]", result.getResponse().getContentAsString());
+    }
+
+    @SneakyThrows
+    @Test
+    public void testGetLimitTypes() {
+        MvcResult result = mockMvc.perform(get(
+                        "/" + VERSION + "/results/{resultUuid}/limit-violation-types", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertEquals("[]", result.getResponse().getContentAsString());
+    }
+
+    @SneakyThrows
+    @Test
     public void runWithReportTest() {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(new ShortCircuitAnalysisProviderMock())) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(Reporter.class)))

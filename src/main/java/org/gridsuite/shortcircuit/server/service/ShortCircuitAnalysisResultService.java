@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import com.powsybl.shortcircuit.Fault;
 import com.powsybl.shortcircuit.FaultResult;
@@ -169,6 +170,18 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         Objects.requireNonNull(resultUuids);
         globalStatusRepository.saveAll(resultUuids.stream()
             .map(uuid -> toStatusEntity(uuid, status)).toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LimitViolationType> findLimitTypes(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return faultResultRepository.findLimitTypes(resultUuid);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Fault.FaultType> findFaultTypes(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return faultResultRepository.findFaultTypes(resultUuid);
     }
 
     @Transactional

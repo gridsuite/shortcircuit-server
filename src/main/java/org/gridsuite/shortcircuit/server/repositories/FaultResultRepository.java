@@ -6,6 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
+import com.powsybl.security.LimitViolationType;
+import com.powsybl.shortcircuit.Fault;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
@@ -55,4 +57,14 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
     interface EntityId {
         UUID getFaultResultUuid();
     }
+
+    @Query(value = " SELECT DISTINCT limit_Type FROM fault_result_entity " +
+            " where result_result_uuid = :resultUuid AND limit_Type not like ''" +
+            "order by limit_Type", nativeQuery = true)
+    List<LimitViolationType> findLimitTypes(UUID resultUuid);
+
+    @Query(value = " SELECT DISTINCT fault_Type FROM fault_result_entity " +
+            " where result_result_uuid = :resultUuid AND fault_Type not like ''" +
+            "order by fault_Type", nativeQuery = true)
+    List<Fault.FaultType> findFaultTypes(UUID resultUuid);
 }

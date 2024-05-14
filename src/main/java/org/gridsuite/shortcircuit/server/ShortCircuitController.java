@@ -166,18 +166,18 @@ public class ShortCircuitController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/fault-types", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/results/{resultUuid}/fault-types", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get list of fault types")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of fault types")})
-    public ResponseEntity<FaultType[]> getFaultTypes() {
-        return ResponseEntity.ok().body(FaultType.values());
+    public ResponseEntity<List<FaultType>> getFaultTypes(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(shortCircuitService.getFaultTypes(resultUuid));
     }
 
-    @GetMapping(value = "/limit-violation-types", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/results/{resultUuid}/limit-violation-types", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get list of limit violation types")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of limit violation types")})
-    public ResponseEntity<List<LimitViolationType>> getLimitTypes() {
-        return ResponseEntity.ok().body(List.of(LimitViolationType.LOW_SHORT_CIRCUIT_CURRENT, LimitViolationType.HIGH_SHORT_CIRCUIT_CURRENT));
+    @ApiResponses(@ApiResponse(responseCode = "200", description = "The list of limit violation types"))
+    public ResponseEntity<List<LimitViolationType>> getLimitTypes(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(shortCircuitService.getLimitTypes(resultUuid));
     }
 
 }
