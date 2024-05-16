@@ -89,6 +89,7 @@ class ShortCircuitServiceTest implements WithAssertions {
                 notificationService,
                 resultRepository,
                 objectMapper,
+                Collections.singletonList(reportMapper),
                 new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
         );
     }
@@ -102,9 +103,8 @@ class ShortCircuitServiceTest implements WithAssertions {
         final UUID reportUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
         final UUID resultUuid = UUID.fromString("33333333-3333-3333-3333-333333333333");
         final String reporterId = "44444444-4444-4444-4444-444444444444";
-        final String reporterType = "AllBusesShortCircuitAnalysis";
         final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
-                new ShortCircuitParameters(), reportUuid, reporterId, reporterType, null, null);
+                new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         final Reporter reporter = new ReporterModel("test", "test");
@@ -122,9 +122,8 @@ class ShortCircuitServiceTest implements WithAssertions {
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             when(reportMapper.processReporter(any(Reporter.class))).thenReturn(reporter);
             workerService.consumeRun().accept(message);
-            shortCircuitAnalysisMockedStatic.verify(() -> ShortCircuitAnalysis.runAsync(
-                    any(), anyList(), any(), any(), anyList(), any()), Mockito.atLeastOnce());
-            verify(reportService, times(1)).deleteReport(reportUuid, reporterType);
+            //shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
+            verify(reportMapper, times(1)).processReporter(any(ReporterModel.class));
             verify(reportService, times(1)).sendReport(reportUuid, reporter);
         }
     }

@@ -16,6 +16,7 @@ import org.gridsuite.shortcircuit.server.computation.service.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
+import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
@@ -41,8 +42,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Autowired
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ExecutionService executionService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultService resultService,
-                                     ObjectMapper objectMapper, ShortCircuitObserver shortCircuitObserver) {
-        super(networkStoreService, notificationService, reportService, resultService, executionService, shortCircuitObserver, objectMapper);
+                                     ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers, ShortCircuitObserver shortCircuitObserver) {
+        super(networkStoreService, notificationService, reportService, resultService, executionService, shortCircuitObserver, objectMapper, reportMappers);
     }
 
     @Override
@@ -79,7 +80,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
         notificationService.publishFail(resultContext.getResultUuid(), context.getReceiver(),
-                getFailedMessage(getComputationType()), context.getUserId(), getComputationType(), additionalHeaders);
+                message, context.getUserId(), getFailedMessage(getComputationType()), additionalHeaders);
     }
 
     @Override

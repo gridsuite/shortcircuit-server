@@ -15,12 +15,14 @@ import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -52,6 +54,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
     protected final Map<UUID, CompletableFuture<S>> futures = new ConcurrentHashMap<>();
     protected final Map<UUID, CancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
     protected final T resultService;
+    protected final Collection<AbstractReportMapper> reportMappers;
 
     protected AbstractWorkerService(NetworkStoreService networkStoreService,
                                     NotificationService notificationService,
@@ -59,7 +62,8 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
                                     T resultService,
                                     ExecutionService executionService,
                                     AbstractComputationObserver<S, P> observer,
-                                    ObjectMapper objectMapper) {
+                                    ObjectMapper objectMapper,
+                                    Collection<AbstractReportMapper> reportMappers) {
         this.networkStoreService = networkStoreService;
         this.notificationService = notificationService;
         this.reportService = reportService;
@@ -67,6 +71,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
         this.executionService = executionService;
         this.observer = observer;
         this.objectMapper = objectMapper;
+        this.reportMappers = reportMappers;
     }
 
     protected PreloadingStrategy getNetworkPreloadingStrategy() {
@@ -145,7 +150,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
             } catch (Exception e) {
                 if (!(e instanceof CancellationException)) {
                     LOGGER.error(NotificationService.getFailedMessage(getComputationType()), e);
-                    publishFail(resultContext, NotificationService.getFailedMessage(getComputationType()));
+                    publishFail(resultContext, e.getMessage());
                     resultService.delete(resultContext.getResultUuid());
                 }
             } finally {
@@ -178,7 +183,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
         AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
         Reporter reporter = Reporter.NO_OP;
 
-        if (runContext.getReportInfos().reportUuid() != null) {
+        if (runContext.getReportInfos() != null && runContext.getReportInfos().reportUuid() != null) {
             final String reportType = runContext.getReportInfos().computationType();
             String rootReporterId = runContext.getReportInfos().reporterId() == null ? reportType : runContext.getReportInfos().reporterId() + "@" + reportType;
             rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
@@ -195,6 +200,9 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
         postRun(runContext);
 
         if (runContext.getReportInfos().reportUuid() != null) {
+            for (final AbstractReportMapper reportMapper : reportMappers) {
+                rootReporter.set(reportMapper.processReporter(rootReporter.get()));
+            }
             observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReporter.get()));
         }
         return result;
