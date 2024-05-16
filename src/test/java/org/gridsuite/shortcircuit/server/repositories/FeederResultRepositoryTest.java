@@ -7,15 +7,7 @@
 
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.powsybl.shortcircuit.BusFault;
-import com.powsybl.shortcircuit.FaultResult;
-import com.powsybl.shortcircuit.FeederResult;
-import com.powsybl.shortcircuit.FortescueFaultResult;
-import com.powsybl.shortcircuit.FortescueFeederResult;
-import com.powsybl.shortcircuit.FortescueValue;
-import com.powsybl.shortcircuit.MagnitudeFaultResult;
-import com.powsybl.shortcircuit.MagnitudeFeederResult;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
+import com.powsybl.shortcircuit.*;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
@@ -29,13 +21,15 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,7 +76,7 @@ class FeederResultRepositoryTest {
     private ShortCircuitAnalysisResultEntity resultFortescueEntity;
 
     @Autowired
-    private ShortCircuitAnalysisResultService shortCircuitAnalysisResultRepository;
+    private ShortCircuitAnalysisResultService shortCircuitAnalysisResultService;
 
     @Autowired
     FeederResultRepository feederResultRepository;
@@ -90,8 +84,8 @@ class FeederResultRepositoryTest {
     @BeforeAll
     void setUp() {
         // Magnitude fault
-        shortCircuitAnalysisResultRepository.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, MOCK_RUN_CONTEXT, "");
-        resultMagnitudeEntity = shortCircuitAnalysisResultRepository.findFullResults(MAGNITUDE_RESULT_UUID).get();
+        shortCircuitAnalysisResultService.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, MOCK_RUN_CONTEXT, "");
+        resultMagnitudeEntity = shortCircuitAnalysisResultService.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FeederResultEntity> feederResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
             .sorted(Comparator.comparing(f1 -> f1.getFeederResultUuid().toString()))
@@ -104,8 +98,8 @@ class FeederResultRepositoryTest {
         feederResultEntityMagnitudeList.add(feederResultEntity3);
 
         // Fortescue fault
-        shortCircuitAnalysisResultRepository.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, MOCK_RUN_CONTEXT, "");
-        resultFortescueEntity = shortCircuitAnalysisResultRepository.findFullResults(FORTESCUE_RESULT_UUID).get();
+        shortCircuitAnalysisResultService.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, MOCK_RUN_CONTEXT, "");
+        resultFortescueEntity = shortCircuitAnalysisResultService.findFullResults(FORTESCUE_RESULT_UUID).get();
         feederResultEntities = resultFortescueEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
             .sorted(Comparator.comparing(f1 -> f1.getFeederResultUuid().toString()))
@@ -120,7 +114,7 @@ class FeederResultRepositoryTest {
 
     @AfterAll
     void tearDown() {
-        shortCircuitAnalysisResultRepository.deleteAll();
+        shortCircuitAnalysisResultService.deleteAll();
     }
 
     @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")
@@ -133,7 +127,7 @@ class FeederResultRepositoryTest {
         "provideGreaterThanOrEqualFilters"
     })
     void feederResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FeederResultEntity> feederList) {
-        Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged());
+        Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged());
         //since the request is unpaged we only care about the result and not the order
         assertThat(feederPage.getContent()).extracting("feederResultUuid").describedAs("Check if the IDs of the feeder page are correct")
             .containsExactlyInAnyOrderElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
@@ -145,7 +139,7 @@ class FeederResultRepositoryTest {
         "provideSortingPageable"
     })
     void feederResultPageableTest(ShortCircuitAnalysisResultEntity resultEntity, Pageable pageable, List<FeederResultEntity> feederList) {
-        Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultRepository.findFeederResultsPage(resultEntity, null, pageable);
+        Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, null, pageable);
         assertThat(feederPage.getContent()).extracting("feederResultUuid").describedAs("Check if the IDs of the feeder page are correct")
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
@@ -155,7 +149,7 @@ class FeederResultRepositoryTest {
         "provideBadFilter",
     })
     void feederResultFilterExceptionTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters) {
-        assertThrows(InvalidDataAccessApiUsageException.class, () -> shortCircuitAnalysisResultRepository.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged()));
+        assertThrows(IllegalArgumentException.class, () -> shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged()));
     }
 
     private Stream<Arguments> provideContainsFilters() {

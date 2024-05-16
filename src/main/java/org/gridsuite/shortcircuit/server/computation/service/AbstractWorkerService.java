@@ -197,22 +197,17 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
         preRun(runContext);
         CompletableFuture<S> future = runAsync(network, runContext, provider, resultUuid);
         S result = future == null ? null : observer.observeRun("run", runContext, future::get);
-        postRun(runContext);
-
-        if (runContext.getReportInfos().reportUuid() != null) {
-            for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReporter.set(reportMapper.processReporter(rootReporter.get()));
-            }
-            observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReporter.get()));
-        }
+        postRun(runContext, rootReporter);
         return result;
     }
 
     /**
      * Do some extra task after running the computation
+     *
      * @param ignoredRunContext This context may be used for extra task in overriding classes
+     * @param rootReporter
      */
-    protected void postRun(R ignoredRunContext) { }
+    protected void postRun(R ignoredRunContext, AtomicReference<Reporter> rootReporter) { }
 
     protected CompletableFuture<S> runAsync(
             Network network,

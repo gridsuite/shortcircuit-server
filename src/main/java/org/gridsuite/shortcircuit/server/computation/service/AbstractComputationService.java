@@ -8,8 +8,8 @@ package org.gridsuite.shortcircuit.server.computation.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -55,7 +55,7 @@ public abstract class AbstractComputationService<R extends AbstractComputationRu
     }
 
     public void deleteResults(List<UUID> resultUuids) {
-        if (!Objects.requireNonNullElse(resultUuids, Collections.emptyList()).isEmpty()) {
+        if (!CollectionUtils.isEmpty(resultUuids)) {
             resultUuids.forEach(resultService::delete);
         } else {
             deleteResults();

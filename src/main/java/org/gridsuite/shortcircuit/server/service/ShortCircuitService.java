@@ -283,14 +283,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return null;
     }
 
-    public void deleteResult(UUID resultUuid) {
-        super.deleteResult(resultUuid);
-    }
-
-    public void deleteResults() {
-        super.deleteResults();
-    }
-
     @Override
     public List<String> getProviders() {
         return List.of();

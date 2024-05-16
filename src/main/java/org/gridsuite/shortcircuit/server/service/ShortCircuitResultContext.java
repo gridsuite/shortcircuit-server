@@ -13,10 +13,11 @@ import lombok.Getter;
 import org.gridsuite.shortcircuit.server.computation.service.AbstractResultContext;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
 
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.*;
 import static org.gridsuite.shortcircuit.server.computation.utils.MessageUtils.getNonNullHeader;
@@ -27,7 +28,7 @@ import static org.gridsuite.shortcircuit.server.computation.utils.MessageUtils.g
 @Getter
 public class ShortCircuitResultContext extends AbstractResultContext<ShortCircuitRunContext> {
 
-    private static final String HEADER_BUS_ID = "busId";
+    public static final String HEADER_BUS_ID = "busId";
 
     public ShortCircuitResultContext(UUID resultUuid, ShortCircuitRunContext runContext) {
         super(resultUuid, runContext);
@@ -47,7 +48,7 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
         try {
             // can't use the following line because jackson doesn't play well with null..?
             // parameters = objectMapper.reader().withRootName(MESSAGE_ROOT_NAME).readValue(message.getPayload(), LoadFlowParametersInfos.class);
-            parameters = objectMapper.treeToValue(objectMapper.readTree(message.getPayload()).get(MESSAGE_ROOT_NAME), ShortCircuitParameters.class);
+            parameters = objectMapper.readValue(message.getPayload(), ShortCircuitParameters.class);
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
@@ -59,25 +60,12 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
-    public Message<String> toMessage(ObjectMapper objectMapper) {
-        String parametersJson;
-        try {
-            // can't use the following line because jackson doesn't play well with null..?
-            // parametersJson = objectMapper.writer().withRootName(MESSAGE_ROOT_NAME).writeValueAsString(runContext.getParameters());
-            parametersJson = objectMapper.writeValueAsString(objectMapper.createObjectNode().putPOJO(MESSAGE_ROOT_NAME, runContext.getParameters()));
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
+    @Override
+    protected Map<String, String> getSpecificMsgHeaders() {
+        if (runContext.getBusId() != null) {
+            return Map.of(HEADER_BUS_ID, runContext.getBusId());
+        } else {
+            return super.getSpecificMsgHeaders();
         }
-        return MessageBuilder.withPayload(parametersJson)
-                .setHeader("resultUuid", resultUuid.toString())
-                .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
-                .setHeader(HEADER_RECEIVER, runContext.getReceiver())
-                .setHeader(HEADER_USER_ID, runContext.getUserId())
-                .setHeader(HEADER_BUS_ID, runContext.getBusId())
-                .setHeader(REPORT_UUID_HEADER, runContext.getReportInfos().reportUuid() != null ? runContext.getReportInfos().reportUuid().toString() : null)
-                .setHeader(REPORTER_ID_HEADER, runContext.getReportInfos().reporterId())
-                .setHeader(REPORT_TYPE_HEADER, runContext.getReportInfos().computationType())
-                .build();
     }
 }

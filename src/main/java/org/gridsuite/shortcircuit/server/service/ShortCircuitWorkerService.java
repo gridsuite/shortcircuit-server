@@ -7,28 +7,30 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.computation.service.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
-import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
 import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.getFailedMessage;
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -37,9 +39,7 @@ import static org.gridsuite.shortcircuit.server.computation.service.Notification
 public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircuitAnalysisResult, ShortCircuitRunContext, ShortCircuitParameters, ShortCircuitAnalysisResultService> {
 
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
-    public static final String HEADER_BUS_ID = "busId";
 
-    @Autowired
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ExecutionService executionService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultService resultService,
                                      ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers, ShortCircuitObserver shortCircuitObserver) {
@@ -157,5 +157,15 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     public Consumer<Message<String>> consumeCancel() {
         return super.consumeCancel();
+    }
+
+    @Override
+    public void postRun(ShortCircuitRunContext runContext, AtomicReference<Reporter> rootReporter) {
+        if (runContext.getReportInfos().reportUuid() != null) {
+            for (final AbstractReportMapper reportMapper : reportMappers) {
+                rootReporter.set(reportMapper.processReporter(rootReporter.get()));
+            }
+            observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReporter.get()));
+        }
     }
 }

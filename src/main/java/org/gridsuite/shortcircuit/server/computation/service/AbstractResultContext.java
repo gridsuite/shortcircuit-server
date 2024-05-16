@@ -74,4 +74,3 @@ public abstract class AbstractResultContext<R extends AbstractComputationRunCont
         return Map.of();
     }
 }
-
