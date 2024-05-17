@@ -6,16 +6,13 @@
  */
 package org.gridsuite.shortcircuit.server.reports;
 
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.ReportNodeNoOp;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import java.util.Map;
 
 @Slf4j
 class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
@@ -25,42 +22,51 @@ class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
 
     private final AbstractReportMapper reportMapper = new AbstractReportMapper() {
         @Override
-        protected ReporterModel forShortCircuitAnalysis(@NonNull ReporterModel reporterModel) {
-            return reporterModel;
+        protected ReportNode forShortCircuitAnalysis(@NonNull ReportNode reportNode) {
+            return reportNode;
         }
     };
 
     @Test
     void testEmptyReporter() {
-        assertThat(reportMapper.processReporter(Reporter.NO_OP)).isInstanceOf(Reporter.NoOpImpl.class).isSameAs(Reporter.NO_OP);
+        assertThat(reportMapper.processReporter(ReportNode.NO_OP)).isInstanceOf(ReportNodeNoOp.class).isSameAs(ReportNode.NO_OP);
     }
 
     @Test
     void testIgnoreOthersReportModels() {
-        final Reporter reporter = new ReporterModel("test", "Test node");
-        assertThat(reportMapper.processReporter(reporter)).isSameAs(reporter);
+        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "Test node").build();
+        assertThat(reportMapper.processReporter(reportNode)).isSameAs(reportNode);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {ROOT_REPORTER_ID, ROOT_REPORTER_NO_ID})
     void testModifyRootNode(final String rootId) {
-        final Reporter targetReporter = new ReporterModel(rootId, rootId);
-        final Reporter reporter = targetReporter.createSubReporter(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", "Courcirc");
-        assertThat(reporter).isInstanceOf(ReporterModel.class);
-        reporter.createSubReporter("generatorConversion", "Conversion of generators")
-                .report("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.", "generator", "TestGenerator");
-        assertThat(reportMapper.processReporter(targetReporter))
-                .isNotSameAs(targetReporter)
+        final ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate(rootId, rootId).build();
+        final ReportNode subReportNode = reportNode.newReportNode()
+            .withMessageTemplate(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})")
+            .withUntypedValue("providerToUse", "Courcirc")
+            .add();
+        assertThat(subReportNode).isInstanceOf(ReportNode.class);
+
+        subReportNode.newReportNode()
+            .withMessageTemplate("generatorConversion", "Conversion of generators")
+            .add()
+            .newReportNode().withMessageTemplate("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.")
+                .withUntypedValue("generator", "TestGenerator")
+                .add();
+
+        assertThat(reportMapper.processReporter(reportNode))
+                .isNotSameAs(reportNode)
                 .usingRecursiveComparison(ASSERTJ_RECURSIVE_COMPARISON_CONFIGURATION)
-                .isEqualTo(targetReporter);
+                .isEqualTo(reportNode);
     }
 
     @Test
     void testCopyReportTraceNotAcceptNullArguments() {
-        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(null, new Report("", "", Map.of())))
+        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(null, ReportNode.newRootReportNode().withMessageTemplate("", "").build()))
                 .as("copyReportAsTrace(null, *)")
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(new ReporterModel("", ""), null))
+        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(ReportNode.newRootReportNode().withMessageTemplate("", "").build(), null))
                 .as("copyReportAsTrace(*, null)")
                 .isInstanceOf(NullPointerException.class);
     }

@@ -9,8 +9,8 @@ package org.gridsuite.shortcircuit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -102,8 +102,8 @@ public class ShortCircuitWorkerService {
         LOGGER.info("Run short circuit analysis...");
         Network network = shortCircuitObserver.observe("network.load", () -> getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
-        AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
-        Reporter reporter = Reporter.NO_OP;
+        AtomicReference<ReportNode> rootReportNode = new AtomicReference<>(ReportNode.NO_OP);
+        ReportNode reportNode = ReportNode.NO_OP;
         if (context.getReportUuid() != null) {
             AtomicReference<String> reportType = new AtomicReference<>();
             reportType.set(context.getReportType());
@@ -111,21 +111,24 @@ public class ShortCircuitWorkerService {
                 reportType.set(StringUtils.isEmpty(context.getBusId()) ? SHORTCIRCUIT_ALL_BUSES_DEFAULT_TYPE_REPORT : SHORTCIRCUIT_ONE_BUS_DEFAULT_TYPE_REPORT);
             }
             String rootReporterId = context.getReporterId() == null ? reportType.get() : context.getReporterId() + "@" + reportType.get();
-            rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
-            reporter = rootReporter.get().createSubReporter(reportType.get(), reportType + " (${providerToUse})", "providerToUse", ShortCircuitAnalysis.find().getName());
+            rootReportNode.set(ReportNode.newRootReportNode().withMessageTemplate(rootReporterId, rootReporterId).build());
+            reportNode = rootReportNode.get().newReportNode()
+                    .withMessageTemplate(reportType.get(), reportType + " (${providerToUse})")
+                    .withTypedValue("providerToUse", ShortCircuitAnalysis.find().getName(), TypedValue.UNTYPED)
+                    .add();
             // Delete any previous short-circuit computation logs
             shortCircuitObserver.observe("report.delete", () -> reportService.deleteReport(context.getReportUuid(), reportType.get()));
         }
 
-        CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reporter, resultUuid);
+        CompletableFuture<ShortCircuitAnalysisResult> future = runShortCircuitAnalysisAsync(context, network, reportNode, resultUuid);
 
         ShortCircuitAnalysisResult result = future == null ? null : shortCircuitObserver.observeRun("run", future::get);
 
         if (context.getReportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReporter.set(reportMapper.processReporter(rootReporter.get()));
+                rootReportNode.set(reportMapper.processReporter(rootReportNode.get()));
             }
-            shortCircuitObserver.observe("report.send", () -> reportService.sendReport(context.getReportUuid(), rootReporter.get()));
+            shortCircuitObserver.observe("report.send", () -> reportService.sendReport(context.getReportUuid(), rootReportNode.get()));
         }
         return result;
     }
@@ -177,7 +180,7 @@ public class ShortCircuitWorkerService {
 
     private CompletableFuture<ShortCircuitAnalysisResult> runShortCircuitAnalysisAsync(ShortCircuitRunContext context,
                                                                                        Network network,
-                                                                                       Reporter reporter,
+                                                                                       ReportNode reportNode,
                                                                                        UUID resultUuid) {
         lockRunAndCancelShortCircuitAnalysis.lock();
         try {
@@ -195,7 +198,7 @@ public class ShortCircuitWorkerService {
                 context.getParameters(),
                 shortCircuitExecutionService.getComputationManager(),
                 List.of(),
-                reporter);
+                reportNode);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }

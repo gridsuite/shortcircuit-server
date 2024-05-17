@@ -10,8 +10,8 @@ package org.gridsuite.shortcircuit.server;
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.powsybl.commons.reporter.ReporterModelDeserializer;
-import com.powsybl.commons.reporter.ReporterModelJsonModule;
+import com.powsybl.commons.report.ReportNodeDeserializer;
+import com.powsybl.commons.report.ReportNodeJsonModule;
 import com.powsybl.shortcircuit.json.ShortCircuitAnalysisJsonModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,8 +51,8 @@ public class RestTemplateConfig {
         var objectMapper = Jackson2ObjectMapperBuilder.json().build();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.registerModule(new ShortCircuitAnalysisJsonModule());
-        objectMapper.registerModule(new ReporterModelJsonModule());
-        objectMapper.setInjectableValues(new InjectableValues.Std().addValue(ReporterModelDeserializer.DICTIONARY_VALUE_ID, null));
+        objectMapper.registerModule(new ReportNodeJsonModule());
+        objectMapper.setInjectableValues(new InjectableValues.Std().addValue(ReportNodeDeserializer.DICTIONARY_VALUE_ID, null));
         return objectMapper;
     }
 

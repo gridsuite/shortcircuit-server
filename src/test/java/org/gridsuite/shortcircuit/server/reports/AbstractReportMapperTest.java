@@ -6,8 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.reports;
 
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.TypedValue;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -33,7 +33,7 @@ abstract class AbstractReportMapperTest implements WithAssertions {
     protected static final RecursiveComparisonConfiguration ASSERTJ_RECURSIVE_COMPARISON_CONFIGURATION = RecursiveComparisonConfiguration.builder()
             .withIgnoreCollectionOrder(false)
             .withComparatorForType((r1, r2) -> new RecursiveComparator(RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true).withIgnoreAllOverriddenEquals(true).build())
-                    .compare((r1 instanceof ReportWrapper rw1) ? rw1.getReport() : r1, (r2 instanceof ReportWrapper rw2) ? rw2.getReport() : r2), Report.class)
+                    .compare(r1, r2), ReportNode.class)
             .withIgnoreAllOverriddenEquals(true)
             .build();
 
@@ -57,11 +57,11 @@ abstract class AbstractReportMapperTest implements WithAssertions {
          */
         @Override
         public String toStringOf(Object object) {
-            if (object instanceof Report report) {
-                return "@" + StringUtils.rightPad(Integer.toHexString(System.identityHashCode(report)), 9)
-                        + (report.getValues().containsKey("reportSeverity") ? report.getValue("reportSeverity").getValue() : "UNKOWN")
-                        + " [" + report.getReportKey() + "] " + StringSubstitutor.replace(report.getDefaultMessage(), report.getValues())
-                        + "  #dict@" + hashCodeValues(report.getValues());
+            if (object instanceof ReportNode reportNode) {
+                return "@" + StringUtils.rightPad(Integer.toHexString(System.identityHashCode(reportNode)), 9)
+                        + (reportNode.getValues().containsKey("reportSeverity") ? reportNode.getValue("reportSeverity").get().getValue() : "UNKOWN")
+                        + " [" + reportNode.getMessageKey() + "] " + StringSubstitutor.replace(reportNode.getMessageTemplate(), reportNode.getValues())
+                        + "  #dict@" + hashCodeValues(reportNode.getValues());
             } else {
                 return super.toStringOf(object);
             }

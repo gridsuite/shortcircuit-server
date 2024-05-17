@@ -45,7 +45,9 @@ public class ShortCircuitController {
     }
 
     private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
-        return parameters != null ? parameters : new ShortCircuitParameters();
+        ShortCircuitParameters shortCircuitParameters = parameters != null ? parameters : new ShortCircuitParameters();
+        shortCircuitParameters.setDetailedReport(false);
+        return shortCircuitParameters;
     }
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
