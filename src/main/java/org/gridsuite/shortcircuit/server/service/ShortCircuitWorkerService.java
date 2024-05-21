@@ -86,16 +86,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(Network network, ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
         List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(network, runContext) : getBusFaultFromBusId(network, runContext);
-        CompletableFuture<ShortCircuitAnalysisResult> future = ShortCircuitAnalysis.runAsync(network,
-                faults,
-                runContext.getParameters(),
-                executionService.getComputationManager(),
-                List.of(),
-                runContext.getReporter());
-        if (resultUuid != null) {
-            futures.put(resultUuid, future);
-        }
-        return future;
+        return ShortCircuitAnalysis.runAsync(network, faults, runContext.getParameters(), executionService.getComputationManager(), List.of(), runContext.getReporter());
     }
 
     private List<Fault> getAllBusfaultFromNetwork(Network network, ShortCircuitRunContext context) {

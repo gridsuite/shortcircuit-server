@@ -23,7 +23,6 @@ import org.gridsuite.shortcircuit.server.repositories.specifications.FaultResult
 import org.gridsuite.shortcircuit.server.repositories.specifications.FeederResultSpecificationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -55,7 +54,6 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
     private static final Sort.Direction DEFAULT_SORT_DIRECTION = Sort.Direction.ASC;
 
-    @Autowired
     public ShortCircuitAnalysisResultService(GlobalStatusRepository globalStatusRepository,
                                              ResultRepository resultRepository,
                                              FaultResultRepository faultResultRepository,
