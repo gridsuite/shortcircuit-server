@@ -39,11 +39,13 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContex
 public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircuitAnalysisResult, ShortCircuitRunContext, ShortCircuitParameters, ShortCircuitAnalysisResultService> {
 
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
+    private final Collection<AbstractReportMapper> reportMappers;
 
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ExecutionService executionService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultService resultService,
                                      ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers, ShortCircuitObserver shortCircuitObserver) {
-        super(networkStoreService, notificationService, reportService, resultService, executionService, shortCircuitObserver, objectMapper, reportMappers);
+        super(networkStoreService, notificationService, reportService, resultService, executionService, shortCircuitObserver, objectMapper);
+        this.reportMappers = reportMappers;
     }
 
     @Override
