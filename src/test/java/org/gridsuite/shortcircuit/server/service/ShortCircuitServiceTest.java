@@ -112,8 +112,6 @@ class ShortCircuitServiceTest implements WithAssertions {
              final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
-                    .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             when(networkStoreService.getNetwork(eq(networkUuid), any(PreloadingStrategy.class))).thenReturn(network);
             when(network.getVariantManager()).thenReturn(variantManager);

@@ -46,8 +46,6 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
 
         ShortCircuitParameters parameters;
         try {
-            // can't use the following line because jackson doesn't play well with null..?
-            // parameters = objectMapper.reader().withRootName(MESSAGE_ROOT_NAME).readValue(message.getPayload(), LoadFlowParametersInfos.class);
             parameters = objectMapper.readValue(message.getPayload(), ShortCircuitParameters.class);
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);

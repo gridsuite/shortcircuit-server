@@ -21,6 +21,7 @@ import org.springframework.messaging.Message;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -160,6 +161,17 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
 
     protected abstract void saveResult(Network network, AbstractResultContext<R> resultContext, S result);
 
+    protected void sendResultMessage(AbstractResultContext<R> resultContext, Map<String, Object> additionalHeaders) {
+        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                resultContext.getRunContext().getUserId(), additionalHeaders);
+
+    }
+
+    protected void publishFail(AbstractResultContext<R> resultContext, String message, Map<String, Object> additionalHeaders) {
+        notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                message, resultContext.getRunContext().getUserId(), getComputationType(), additionalHeaders);
+    }
+
     protected abstract void sendResultMessage(AbstractResultContext<R> resultContext, S result);
 
     protected abstract void publishFail(AbstractResultContext<R> resultContext, String message);
@@ -173,7 +185,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
     }
 
     protected S run(Network network, R runContext, UUID resultUuid) throws Exception {
-        String provider = runContext.getProvider();
+        String provider = Objects.nonNull(runContext.getProvider()) ? runContext.getProvider() : StringUtils.EMPTY;
         AtomicReference<ReportNode> rootReporter = new AtomicReference<>(ReportNode.NO_OP);
         ReportNode reportNode = ReportNode.NO_OP;
 
@@ -198,10 +210,14 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
 
     /**
      * Do some extra task after running the computation
-     * @param ignoredRunContext This context may be used for extra task in overriding classes
+     * @param runContext This context may be used for extra task in overriding classes
      * @param rootReportNode
      */
-    protected void postRun(R ignoredRunContext, AtomicReference<ReportNode> rootReportNode) { }
+    protected void postRun(R runContext, AtomicReference<ReportNode> rootReportNode) {
+        if (runContext.getReportInfos().reportUuid() != null) {
+            observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReportNode.get()));
+        }
+    }
 
     protected CompletableFuture<S> runAsync(
             Network network,

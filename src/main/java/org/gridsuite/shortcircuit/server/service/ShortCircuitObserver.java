@@ -29,12 +29,12 @@ public class ShortCircuitObserver extends AbstractComputationObserver<ShortCircu
         super(observationRegistry, meterRegistry);
     }
 
-    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> runnable) throws E {
-        createObservation(name).observeChecked(runnable);
+    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> callable) throws E {
+        createObservation(name).observeChecked(callable);
     }
 
-    public <T, E extends Throwable> T observe(String name, Observation.CheckedCallable<T, E> runnable) throws E {
-        return createObservation(name).observeChecked(runnable);
+    public <T, E extends Throwable> T observe(String name, Observation.CheckedCallable<T, E> callable) throws E {
+        return createObservation(name).observeChecked(callable);
     }
 
     public <T extends ShortCircuitAnalysisResult, E extends Throwable> T observeRun(String name, Observation.CheckedCallable<T, E> callable) throws E {

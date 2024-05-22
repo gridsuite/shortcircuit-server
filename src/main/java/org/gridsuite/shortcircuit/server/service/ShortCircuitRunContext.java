@@ -28,7 +28,7 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
                                   UUID reportUuid, String reporterId, String reportType, String userId, String busId) {
-        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", parameters, ReportNode.NO_OP);
+        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, null, parameters, ReportNode.NO_OP);
         this.busId = busId;
     }
 

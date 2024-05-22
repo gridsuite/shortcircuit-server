@@ -29,7 +29,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
-import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.getFailedMessage;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
@@ -66,23 +65,20 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
                 ShortCircuitAnalysisStatus.COMPLETED.name());
     }
 
-    @Override
     protected void sendResultMessage(AbstractResultContext<ShortCircuitRunContext> resultContext, ShortCircuitAnalysisResult result) {
         ShortCircuitRunContext context = resultContext.getRunContext();
         String busId = context.getBusId();
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
-        notificationService.sendResultMessage(resultContext.getResultUuid(), context.getReceiver(), additionalHeaders);
+        super.sendResultMessage(resultContext, additionalHeaders);
     }
 
-    @Override
     protected void publishFail(AbstractResultContext<ShortCircuitRunContext> resultContext, String message) {
         ShortCircuitRunContext context = resultContext.getRunContext();
         String busId = context.getBusId();
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
-        notificationService.publishFail(resultContext.getResultUuid(), context.getReceiver(),
-                message, context.getUserId(), getFailedMessage(getComputationType()), additionalHeaders);
+        super.publishFail(resultContext, message, additionalHeaders);
     }
 
     @Override
