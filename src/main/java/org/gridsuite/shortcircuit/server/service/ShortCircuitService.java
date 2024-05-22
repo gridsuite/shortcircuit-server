@@ -130,7 +130,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             // Write data to the CSV file
             for (FaultResult faultResult : faultResults) {
                 String faultResultId = faultResult.getFault().getId();
-                double faultCurrentValue = faultResults.size() == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent();
+                double faultCurrentValue = (faultResults.size() == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent()) / 1000.0;
                 String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : Double.toString(faultCurrentValue);
 
                 // Process faultResult data
@@ -157,8 +157,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                         Double.toString(shortCircuitLimits.getIpMin() / 1000.0),
                         Double.toString(shortCircuitLimits.getIpMax() / 1000.0),
                         Double.toString(faultResult.getShortCircuitPower()),
-                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMin()),
-                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMax())
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMin() / 1000.0),
+                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMax() / 1000.0)
                 ));
 
                 csvWriter.writeRow(faultRowData);
@@ -167,7 +167,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 List<FeederResult> feederResults = faultResult.getFeederResults();
                 if (!feederResults.isEmpty()) {
                     for (FeederResult feederResult : feederResults) {
-                        double feederCurrentValue = faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent();
+                        double feederCurrentValue = (faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent()) / 1000.0;
                         String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
                         List<String> feederRowData = new ArrayList<>(List.of(
                                 faultResultId,

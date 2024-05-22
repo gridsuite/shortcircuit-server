@@ -6,15 +6,13 @@
  */
 package org.gridsuite.shortcircuit.server.reports;
 
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.report.ReportNode;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.json.JSONException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -24,18 +22,20 @@ import java.nio.file.Paths;
 @Slf4j
 class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     private final AbstractReportMapper reportMapper = new ReportMapperShortCircuit();
-    protected static ReporterModel rootReporter;
+    protected static ReportNode rootReportNode;
 
     @BeforeAll
     static void prepare() throws IOException {
-        rootReporter = RestTemplateConfig.objectMapper().readValue(AbstractReportMapperTest.class.getClassLoader().getResource("reporter_shortcircuit_test.json"), ReporterModel.class);
+        rootReportNode = RestTemplateConfig.objectMapper().readValue(AbstractReportMapperTest.class.getClassLoader().getResource("reporter_shortcircuit_test.json"), ReportNode.class);
     }
 
     @Test
     void testAggregatedLogs() throws IOException, URISyntaxException, JSONException {
-        final Reporter result = reportMapper.processReporter(rootReporter);
-        log.debug("Result = {}", Jackson2ObjectMapperBuilder.json().findModulesViaServiceLoader(true).build().writerWithDefaultPrettyPrinter().writeValueAsString(result));
-        JSONAssert.assertEquals("short-circuit logs aggregated", RestTemplateConfig.objectMapper().writeValueAsString(result),
-                Files.readString(Paths.get(this.getClass().getClassLoader().getResource("reporter_shortcircuit_modified.json").toURI())), false);
+        final ReportNode result = reportMapper.processReporter(rootReportNode);
+        log.debug("Result = {}", RestTemplateConfig.objectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result));
+        JSONAssert.assertEquals("short-circuit logs aggregated",
+                Files.readString(Paths.get(this.getClass().getClassLoader().getResource("reporter_shortcircuit_modified.json").toURI())),
+                RestTemplateConfig.objectMapper().writeValueAsString(result),
+                false);
     }
 }

@@ -6,7 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
 import org.gridsuite.shortcircuit.server.computation.dto.ReportInfos;
@@ -28,7 +28,7 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
                                   UUID reportUuid, String reporterId, String reportType, String userId, String busId) {
-        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", parameters, Reporter.NO_OP);
+        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", parameters, ReportNode.NO_OP);
         this.busId = busId;
     }
 

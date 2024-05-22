@@ -7,7 +7,7 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -88,7 +88,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(Network network, ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
         List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(network, runContext) : getBusFaultFromBusId(network, runContext);
-        return ShortCircuitAnalysis.runAsync(network, faults, runContext.getParameters(), executionService.getComputationManager(), List.of(), runContext.getReporter());
+        return ShortCircuitAnalysis.runAsync(network, faults, runContext.getParameters(), executionService.getComputationManager(), List.of(), runContext.getReportNode());
     }
 
     private List<Fault> getAllBusfaultFromNetwork(Network network, ShortCircuitRunContext context) {
@@ -153,12 +153,12 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
-    public void postRun(ShortCircuitRunContext runContext, AtomicReference<Reporter> rootReporter) {
+    public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode) {
         if (runContext.getReportInfos().reportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReporter.set(reportMapper.processReporter(rootReporter.get()));
+                rootReportNode.set(reportMapper.processReporter(rootReportNode.get()));
             }
-            observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReporter.get()));
+            observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReportNode.get()));
         }
     }
 }

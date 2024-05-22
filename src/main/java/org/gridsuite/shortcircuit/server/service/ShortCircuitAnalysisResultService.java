@@ -122,8 +122,8 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
                         ((MagnitudeFeederResult) feederResult).getCurrent(), null))
                 .toList());
         if (shortCircuitLimits != null) {
-            entity.setDeltaCurrentIpMin(current - entity.getIpMin() / 1000.0);
-            entity.setDeltaCurrentIpMax(current - entity.getIpMax() / 1000.0);
+            entity.setDeltaCurrentIpMin(current - entity.getIpMin());
+            entity.setDeltaCurrentIpMax(current - entity.getIpMax());
         }
         return entity;
     }
@@ -146,8 +146,8 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
         final FortescueValue current = faultResult.getCurrent();
         if (shortCircuitLimits != null) {
-            entity.setDeltaCurrentIpMin(current.getPositiveMagnitude() - entity.getIpMin() / 1000.0);
-            entity.setDeltaCurrentIpMax(current.getPositiveMagnitude() - entity.getIpMax() / 1000.0);
+            entity.setDeltaCurrentIpMin(current.getPositiveMagnitude() - entity.getIpMin());
+            entity.setDeltaCurrentIpMax(current.getPositiveMagnitude() - entity.getIpMax());
         }
 
         final FortescueValue.ThreePhaseValue currentThreePhaseValue = current.toThreePhaseValue();
