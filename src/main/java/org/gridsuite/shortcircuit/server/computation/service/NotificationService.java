@@ -69,10 +69,8 @@ public class NotificationService {
                 .withPayload("")
                 .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
                 .setHeader(HEADER_RECEIVER, receiver)
-                .setHeader(HEADER_USER_ID, userId);
-        if (additionalHeaders != null) {
-            additionalHeaders.forEach(builder::setHeader);
-        }
+                .setHeader(HEADER_USER_ID, userId)
+                .copyHeaders(additionalHeaders);
         Message<String> message = builder.build();
         RESULT_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send(publishPrefix + "Result-out-0", message);
@@ -98,10 +96,8 @@ public class NotificationService {
                 .setHeader(HEADER_RECEIVER, receiver)
                 .setHeader(HEADER_MESSAGE, shortenMessage(
                         getFailedMessage(computationLabel) + " : " + causeMessage))
-                .setHeader(HEADER_USER_ID, userId);
-        if (additionalHeaders != null) {
-            additionalHeaders.forEach(builder::setHeader);
-        }
+                .setHeader(HEADER_USER_ID, userId)
+                .copyHeaders(additionalHeaders);
         Message<String> message = builder.build();
         FAILED_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send(publishPrefix + "Failed-out-0", message);
