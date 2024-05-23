@@ -185,7 +185,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
     }
 
     protected S run(Network network, R runContext, UUID resultUuid) throws Exception {
-        String provider = Objects.nonNull(runContext.getProvider()) ? runContext.getProvider() : StringUtils.EMPTY;
+        String provider = runContext.getProvider();
         AtomicReference<ReportNode> rootReporter = new AtomicReference<>(ReportNode.NO_OP);
         ReportNode reportNode = ReportNode.NO_OP;
 
