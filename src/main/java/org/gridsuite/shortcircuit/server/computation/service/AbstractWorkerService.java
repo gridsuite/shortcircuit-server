@@ -171,9 +171,13 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
                 message, resultContext.getRunContext().getUserId(), getComputationType(), additionalHeaders);
     }
 
-    protected abstract void sendResultMessage(AbstractResultContext<R> resultContext, S result);
+    protected void sendResultMessage(AbstractResultContext<R> resultContext, S result) {
+        sendResultMessage(resultContext, Map.of());
+    }
 
-    protected abstract void publishFail(AbstractResultContext<R> resultContext, String message);
+    protected void publishFail(AbstractResultContext<R> resultContext, String message) {
+        publishFail(resultContext, message, Map.of());
+    }
 
     /**
      * Do some extra task before running the computation, e.g. print log or init extra data for the run context
