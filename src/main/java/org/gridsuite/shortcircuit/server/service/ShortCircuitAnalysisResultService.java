@@ -4,24 +4,28 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server.repositories;
+package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
+import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationResultService;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
+import org.gridsuite.shortcircuit.server.repositories.FeederResultRepository;
+import org.gridsuite.shortcircuit.server.repositories.GlobalStatusRepository;
+import org.gridsuite.shortcircuit.server.repositories.ResultRepository;
 import org.gridsuite.shortcircuit.server.repositories.specifications.FaultResultSpecificationBuilder;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.repositories.specifications.FeederResultSpecificationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
@@ -36,9 +40,9 @@ import java.util.stream.Collectors;
  * @author Etienne Homer <etienne.homer at rte-france.com
  */
 @Slf4j
-@Repository
-public class ShortCircuitAnalysisResultRepository {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitAnalysisResultRepository.class);
+@Service
+public class ShortCircuitAnalysisResultService extends AbstractComputationResultService<ShortCircuitAnalysisStatus> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitAnalysisResultService.class);
     private final GlobalStatusRepository globalStatusRepository;
     private final ResultRepository resultRepository;
     private final FaultResultRepository faultResultRepository;
@@ -50,11 +54,10 @@ public class ShortCircuitAnalysisResultRepository {
 
     private static final Sort.Direction DEFAULT_SORT_DIRECTION = Sort.Direction.ASC;
 
-    @Autowired
-    public ShortCircuitAnalysisResultRepository(GlobalStatusRepository globalStatusRepository,
-                                                ResultRepository resultRepository,
-                                                FaultResultRepository faultResultRepository,
-                                                FeederResultRepository feederResultRepository) {
+    public ShortCircuitAnalysisResultService(GlobalStatusRepository globalStatusRepository,
+                                             ResultRepository resultRepository,
+                                             FaultResultRepository faultResultRepository,
+                                             FeederResultRepository feederResultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
         this.faultResultRepository = faultResultRepository;
@@ -190,6 +193,14 @@ public class ShortCircuitAnalysisResultRepository {
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }
 
+    @Override
+    public void insertStatus(List<UUID> resultUuids, ShortCircuitAnalysisStatus status) {
+        Objects.requireNonNull(resultUuids);
+        globalStatusRepository.saveAll(resultUuids.stream()
+                .map(uuid -> toStatusEntity(uuid, status.name())).toList());
+    }
+
+    @Override
     @Transactional
     public void delete(UUID resultUuid) {
         AtomicReference<Long> startTime = new AtomicReference<>();
@@ -409,11 +420,12 @@ public class ShortCircuitAnalysisResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public String findStatus(UUID resultUuid) {
+    @Override
+    public ShortCircuitAnalysisStatus findStatus(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         GlobalStatusEntity globalEntity = globalStatusRepository.findByResultUuid(resultUuid);
         if (globalEntity != null) {
-            return globalEntity.getStatus();
+            return ShortCircuitAnalysisStatus.valueOf(globalEntity.getStatus());
         } else {
             return null;
         }

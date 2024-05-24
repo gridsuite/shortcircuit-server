@@ -1,11 +1,11 @@
 /**
- * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * Copyright (c) 2024, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package org.gridsuite.shortcircuit.server.service;
+package org.gridsuite.shortcircuit.server.computation.service;
 
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
@@ -18,12 +18,13 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
 /**
  * @author David Braquart <david.braquart at rte-france.com>
  */
 @Service
 @Getter
-public class ShortCircuitExecutionService {
+public class ExecutionService {
 
     private ExecutorService executorService;
 

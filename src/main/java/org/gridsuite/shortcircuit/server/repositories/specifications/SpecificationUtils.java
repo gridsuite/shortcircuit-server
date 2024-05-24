@@ -200,7 +200,6 @@ public final class SpecificationUtils {
         }
     }
 
-    // will be overloaded by Spring as InvalidDataAccessApiUsageException
     private static void throwBadFilterTypeException(ResourceFilter.Type filterType, ResourceFilter.DataType dataType) throws IllegalArgumentException {
         throw new IllegalArgumentException("The filter type " + filterType + " is not supported with the data type " + dataType);
     }
