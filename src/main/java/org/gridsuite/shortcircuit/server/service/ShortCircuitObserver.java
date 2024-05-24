@@ -6,12 +6,9 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.NonNull;
 import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationObserver;
@@ -27,35 +24,6 @@ public class ShortCircuitObserver extends AbstractComputationObserver<ShortCircu
 
     public ShortCircuitObserver(@NonNull ObservationRegistry observationRegistry, @NonNull MeterRegistry meterRegistry) {
         super(observationRegistry, meterRegistry);
-    }
-
-    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> callable) throws E {
-        createObservation(name).observeChecked(callable);
-    }
-
-    public <T, E extends Throwable> T observe(String name, Observation.CheckedCallable<T, E> callable) throws E {
-        return createObservation(name).observeChecked(callable);
-    }
-
-    public <T extends ShortCircuitAnalysisResult, E extends Throwable> T observeRun(String name, Observation.CheckedCallable<T, E> callable) throws E {
-        T result = createObservation(name).observeChecked(callable);
-        incrementCount(result);
-        return result;
-    }
-
-    private Observation createObservation(String name) {
-        return Observation.createNotStarted(OBSERVATION_PREFIX + name, observationRegistry)
-                .lowCardinalityKeyValue(PROVIDER_TAG_NAME, ShortCircuitAnalysis.find().getName())
-                .lowCardinalityKeyValue(TYPE_TAG_NAME, COMPUTATION_TYPE);
-    }
-
-    private void incrementCount(ShortCircuitAnalysisResult result) {
-        Counter.builder(COMPUTATION_COUNTER_NAME)
-                .tag(PROVIDER_TAG_NAME, ShortCircuitAnalysis.find().getName())
-                .tag(TYPE_TAG_NAME, COMPUTATION_TYPE)
-                .tag(STATUS_TAG_NAME, getResultStatus(result))
-                .register(meterRegistry)
-                .increment();
     }
 
     @Override

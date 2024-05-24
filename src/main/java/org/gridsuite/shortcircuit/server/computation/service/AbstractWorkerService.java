@@ -21,6 +21,7 @@ import org.springframework.messaging.Message;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -160,23 +161,14 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
 
     protected abstract void saveResult(Network network, AbstractResultContext<R> resultContext, S result);
 
-    protected void sendResultMessage(AbstractResultContext<R> resultContext, Map<String, Object> additionalHeaders) {
-        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                resultContext.getRunContext().getUserId(), additionalHeaders);
-
-    }
-
-    protected void publishFail(AbstractResultContext<R> resultContext, String message, Map<String, Object> additionalHeaders) {
-        notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                message, resultContext.getRunContext().getUserId(), getComputationType(), additionalHeaders);
-    }
-
     protected void sendResultMessage(AbstractResultContext<R> resultContext, S result) {
-        sendResultMessage(resultContext, Map.of());
+        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                resultContext.getRunContext().getUserId(), null);
     }
 
     protected void publishFail(AbstractResultContext<R> resultContext, String message) {
-        publishFail(resultContext, message, Map.of());
+        notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                message, resultContext.getRunContext().getUserId(), getComputationType(), null);
     }
 
     /**
@@ -196,8 +188,8 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
             final String reportType = runContext.getReportInfos().computationType();
             String rootReporterId = runContext.getReportInfos().reporterId() == null ? reportType : runContext.getReportInfos().reporterId() + "@" + reportType;
             rootReporter.set(ReportNode.newRootReportNode().withMessageTemplate(rootReporterId, rootReporterId).build());
-            reportNode = rootReporter.get().newReportNode().withMessageTemplate(reportType, String.format("%s (%s)", reportType, provider))
-                    .withUntypedValue("providerToUse", provider).add();
+            reportNode = rootReporter.get().newReportNode().withMessageTemplate(reportType, reportType + provider != null ? String.format(" (%s)", provider) : "")
+                    .withUntypedValue("providerToUse", Objects.requireNonNullElse(provider, "")).add();
             // Delete any previous computation logs
             observer.observe("report.delete",
                     runContext, () -> reportService.deleteReport(runContext.getReportInfos().reportUuid(), reportType));

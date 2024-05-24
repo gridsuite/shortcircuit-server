@@ -65,20 +65,26 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
                 ShortCircuitAnalysisStatus.COMPLETED.name());
     }
 
+    @Override
     protected void sendResultMessage(AbstractResultContext<ShortCircuitRunContext> resultContext, ShortCircuitAnalysisResult result) {
         ShortCircuitRunContext context = resultContext.getRunContext();
         String busId = context.getBusId();
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
-        super.sendResultMessage(resultContext, additionalHeaders);
+
+        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                resultContext.getRunContext().getUserId(), additionalHeaders);
     }
 
+    @Override
     protected void publishFail(AbstractResultContext<ShortCircuitRunContext> resultContext, String message) {
         ShortCircuitRunContext context = resultContext.getRunContext();
         String busId = context.getBusId();
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
-        super.publishFail(resultContext, message, additionalHeaders);
+
+        notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                message, resultContext.getRunContext().getUserId(), getComputationType(), additionalHeaders);
     }
 
     @Override
