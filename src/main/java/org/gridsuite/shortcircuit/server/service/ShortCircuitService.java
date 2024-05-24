@@ -42,6 +42,7 @@ import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 public class ShortCircuitService extends AbstractComputationService<ShortCircuitRunContext, ShortCircuitAnalysisResultService, ShortCircuitAnalysisStatus> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
+    public static final String GET_SHORT_CIRCUIT_RESULTS_MSG = "Get ShortCircuit Results {} in {}ms";
 
     public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultService resultService, ObjectMapper objectMapper) {
         super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
@@ -226,7 +227,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
             ShortCircuitAnalysisResult res = fromEntity(sortedResult, mode);
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
             }
             return res;
         }
@@ -258,7 +259,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             }
             Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
                 LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
             }
             return faultResultsPage;
@@ -275,7 +276,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(result.get(), resourceFilters, pageable);
             Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Get ShortCircuit Results {} in {}ms", resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
                 LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
             }
             return feederResultsPage;

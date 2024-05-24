@@ -149,7 +149,8 @@ class FeederResultRepositoryTest {
         "provideBadFilter",
     })
     void feederResultFilterExceptionTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters) {
-        assertThrows(IllegalArgumentException.class, () -> shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged()));
+        Pageable pageable = Pageable.unpaged();
+        assertThrows(IllegalArgumentException.class, () -> shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, pageable));
     }
 
     private Stream<Arguments> provideContainsFilters() {

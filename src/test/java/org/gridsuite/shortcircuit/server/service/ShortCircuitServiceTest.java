@@ -120,7 +120,6 @@ class ShortCircuitServiceTest implements WithAssertions {
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             when(reportMapper.processReporter(any(ReportNode.class))).thenReturn(reportNode);
             workerService.consumeRun().accept(message);
-            //shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             verify(reportMapper, times(1)).processReporter(any(ReportNode.class));
             verify(reportService, times(1)).sendReport(reportUuid, reportNode);
         }

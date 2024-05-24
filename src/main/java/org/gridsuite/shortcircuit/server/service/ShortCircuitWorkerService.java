@@ -126,9 +126,9 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             return List.of(new BusFault(bus.getId(), bus.getId()));
         }
 
-        if (identifiable instanceof Bus) {
-            String busIdFromBusView = ((Bus) identifiable).getVoltageLevel().getBusView().getMergedBus(busId).getId();
-            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((Bus) identifiable).getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+        if (identifiable instanceof Bus bus) {
+            String busIdFromBusView = bus.getVoltageLevel().getBusView().getMergedBus(busId).getId();
+            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }

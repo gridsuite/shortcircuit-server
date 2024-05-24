@@ -161,7 +161,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
 
     protected abstract void saveResult(Network network, AbstractResultContext<R> resultContext, S result);
 
-    protected void sendResultMessage(AbstractResultContext<R> resultContext, S result) {
+    protected void sendResultMessage(AbstractResultContext<R> resultContext, S ignoredResult) {
         notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
                 resultContext.getRunContext().getUserId(), null);
     }
@@ -188,7 +188,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
             final String reportType = runContext.getReportInfos().computationType();
             String rootReporterId = runContext.getReportInfos().reporterId() == null ? reportType : runContext.getReportInfos().reporterId() + "@" + reportType;
             rootReporter.set(ReportNode.newRootReportNode().withMessageTemplate(rootReporterId, rootReporterId).build());
-            reportNode = rootReporter.get().newReportNode().withMessageTemplate(reportType, reportType + provider != null ? String.format(" (%s)", provider) : "")
+            reportNode = rootReporter.get().newReportNode().withMessageTemplate(reportType, reportType + (provider != null ? " (" + provider + ")" : ""))
                     .withUntypedValue("providerToUse", Objects.requireNonNullElse(provider, "")).add();
             // Delete any previous computation logs
             observer.observe("report.delete",
