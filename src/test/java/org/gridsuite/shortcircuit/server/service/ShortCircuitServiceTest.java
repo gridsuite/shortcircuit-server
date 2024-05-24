@@ -104,7 +104,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         final String reporterId = "44444444-4444-4444-4444-444444444444";
         final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
                 new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null,
-                ShortCircuitAnalysis.find().getName(), null);
+                null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "test").build();
