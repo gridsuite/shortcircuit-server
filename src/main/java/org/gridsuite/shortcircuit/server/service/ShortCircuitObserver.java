@@ -11,7 +11,7 @@ import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.NonNull;
-import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationObserver;
+import com.powsybl.ws.commons.computation.service.AbstractComputationObserver;
 import org.springframework.stereotype.Service;
 
 /**

@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.network.store.client.NetworkStoreService;
+import com.powsybl.ws.commons.computation.service.NotificationService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 @SpringBootApplication
-@ComponentScan(basePackageClasses = {ShortCircuitApplication.class, NetworkStoreService.class})
+@ComponentScan(basePackageClasses = {ShortCircuitApplication.class, NetworkStoreService.class, NotificationService.class})
 public class ShortCircuitApplication {
 
     public static void main(String[] args) {

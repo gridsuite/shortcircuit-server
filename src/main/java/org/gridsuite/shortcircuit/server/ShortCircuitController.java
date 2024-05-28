@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
-import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.HEADER_USER_ID;
+import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.*;
 
 /**

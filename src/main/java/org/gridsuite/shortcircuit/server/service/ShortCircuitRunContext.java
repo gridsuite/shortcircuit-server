@@ -9,8 +9,8 @@ package org.gridsuite.shortcircuit.server.service;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
-import org.gridsuite.shortcircuit.server.computation.dto.ReportInfos;
-import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationRunContext;
+import com.powsybl.ws.commons.computation.dto.ReportInfos;
+import com.powsybl.ws.commons.computation.service.AbstractComputationRunContext;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 
 import java.util.HashMap;

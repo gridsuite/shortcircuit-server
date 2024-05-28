@@ -10,7 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
-import org.gridsuite.shortcircuit.server.computation.service.AbstractResultContext;
+import com.powsybl.ws.commons.computation.service.AbstractResultContext;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.*;
-import static org.gridsuite.shortcircuit.server.computation.utils.MessageUtils.getNonNullHeader;
+import static com.powsybl.ws.commons.computation.service.NotificationService.*;
+import static com.powsybl.ws.commons.computation.utils.MessageUtils.getNonNullHeader;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
