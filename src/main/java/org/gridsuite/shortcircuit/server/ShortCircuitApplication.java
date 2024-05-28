@@ -9,16 +9,13 @@ package org.gridsuite.shortcircuit.server;
 import com.powsybl.network.store.client.NetworkStoreService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
-@SpringBootApplication
-@ComponentScan(basePackageClasses = {ShortCircuitApplication.class, NetworkStoreService.class})
+@SpringBootApplication(scanBasePackageClasses = { ShortCircuitApplication.class, NetworkStoreService.class })
 public class ShortCircuitApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(ShortCircuitApplication.class, args);
     }
