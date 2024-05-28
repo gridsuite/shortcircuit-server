@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,7 +24,7 @@ public class ShortCircuitAnalysisResult {
 
     private UUID resultUuid;
 
-    private ZonedDateTime writeTimeStamp;
+    private OffsetDateTime writeTimeStamp;
 
     private List<FaultResult> faults;
 }
