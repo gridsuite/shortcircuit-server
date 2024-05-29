@@ -16,20 +16,17 @@ import com.powsybl.iidm.network.Terminal.BusView;
 import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.shortcircuit.Fault;
-import com.powsybl.shortcircuit.FaultParameters;
-import com.powsybl.shortcircuit.ShortCircuitAnalysis;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.TestUtils;
+import org.gridsuite.shortcircuit.server.computation.service.ExecutionService;
+import org.gridsuite.shortcircuit.server.computation.service.NotificationService;
+import org.gridsuite.shortcircuit.server.computation.service.ReportService;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
-import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,17 +43,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith({ MockitoExtension.class })
 @Slf4j
@@ -69,13 +57,13 @@ class ShortCircuitServiceTest implements WithAssertions {
     private ReportService reportService;
 
     @Mock
-    private ShortCircuitExecutionService shortCircuitExecutionService;
+    private ExecutionService shortCircuitExecutionService;
 
     @Mock
     private NotificationService notificationService;
 
     @Mock
-    private ShortCircuitAnalysisResultRepository resultRepository;
+    private ShortCircuitAnalysisResultService resultRepository;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -115,15 +103,14 @@ class ShortCircuitServiceTest implements WithAssertions {
         final UUID resultUuid = UUID.fromString("33333333-3333-3333-3333-333333333333");
         final String reporterId = "44444444-4444-4444-4444-444444444444";
         final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
-                new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null, null);
+                new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null,
+                null, null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "test").build();
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
              final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
-                    .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
@@ -133,7 +120,6 @@ class ShortCircuitServiceTest implements WithAssertions {
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             when(reportMapper.processReporter(any(ReportNode.class))).thenReturn(reportNode);
             workerService.consumeRun().accept(message);
-            shortCircuitAnalysisMockedStatic.verify(ShortCircuitAnalysis::find, atLeastOnce());
             verify(reportMapper, times(1)).processReporter(any(ReportNode.class));
             verify(reportService, times(1)).sendReport(reportUuid, reportNode);
         }
@@ -162,7 +148,7 @@ class ShortCircuitServiceTest implements WithAssertions {
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             workerService.consumeRun().accept(message);
-            verify(notificationService).publishFail(any(), any(), eq("Selected bus is out of voltage"), any(), eq(busId));
+            verify(notificationService).publishFail(any(), any(), eq("Selected bus is out of voltage"), any(), any(), any());
         }
     }
 

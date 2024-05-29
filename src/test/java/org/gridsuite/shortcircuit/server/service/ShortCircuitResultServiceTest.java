@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package org.gridsuite.shortcircuit.server.repositories;
+package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
@@ -34,7 +34,7 @@ import static org.gridsuite.shortcircuit.server.TestUtils.assertRequestsCount;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class ShortCircuitResultRepositoryTest {
+public class ShortCircuitResultServiceTest {
 
     static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("CONN_ID_1", 22.17);
     static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("CONN_ID_2", 18.57);
@@ -54,7 +54,7 @@ public class ShortCircuitResultRepositoryTest {
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
 
     @Autowired
-    private ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
+    private ShortCircuitAnalysisResultService shortCircuitAnalysisResultRepository;
 
     @Before
     public void setUp() {

@@ -24,14 +24,14 @@ import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.SneakyThrows;
+import org.gridsuite.shortcircuit.server.computation.service.ReportService;
+import org.gridsuite.shortcircuit.server.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
-import org.gridsuite.shortcircuit.server.repositories.ShortCircuitAnalysisResultRepository;
-import org.gridsuite.shortcircuit.server.service.ReportService;
-import org.gridsuite.shortcircuit.server.service.UuidGeneratorService;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,11 +61,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
-import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
-import static org.gridsuite.shortcircuit.server.service.NotificationService.*;
-import static org.junit.Assert.*;
+import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
+import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.shortcircuit.server.computation.service.NotificationService.getCancelMessage;
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
@@ -98,7 +102,6 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_3_ID = "variant_3";
     private static final String VARIANT_4_ID = "variant_4";
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
-
     private static final List<String> CSV_HEADERS = List.of(
             "ID nœud",
             "Type",
@@ -215,7 +218,7 @@ public class ShortCircuitAnalysisControllerTest {
     ShortCircuitAnalysis.Runner runner;
 
     @Autowired
-    ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
+    ShortCircuitAnalysisResultService shortCircuitAnalysisResultRepository;
 
     @Autowired
     FaultResultRepository faultResultRepository;
@@ -714,7 +717,7 @@ public class ShortCircuitAnalysisControllerTest {
             assertNotNull(message);
             assertEquals(RESULT_UUID_TO_STOP.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
-            assertEquals(CANCEL_MESSAGE, message.getHeaders().get("message"));
+            assertEquals(getCancelMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
         }
     }
 

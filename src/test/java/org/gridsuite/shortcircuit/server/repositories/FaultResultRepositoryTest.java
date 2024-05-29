@@ -22,6 +22,7 @@ import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -82,7 +83,7 @@ class FaultResultRepositoryTest {
     private ShortCircuitAnalysisResultEntity resultFortescueEntity;
 
     @Autowired
-    private ShortCircuitAnalysisResultRepository shortCircuitAnalysisResultRepository;
+    private ShortCircuitAnalysisResultService shortCircuitAnalysisResultRepository;
 
     @BeforeAll
     void setUp() {
