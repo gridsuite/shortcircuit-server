@@ -137,6 +137,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         var busId = "bus1";
 
         when(runContext.getBusId()).thenReturn(busId);
+        when(runContext.getNetwork()).thenReturn(network);
         when(networkStoreService.getNetwork(any(), any())).thenReturn(network);
         doReturn(busbarSection).when(network).getIdentifiable(busId);
         when(network.getVariantManager()).thenReturn(variantManager);

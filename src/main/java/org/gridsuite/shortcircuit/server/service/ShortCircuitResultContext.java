@@ -61,8 +61,8 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
 
     @Override
     protected Map<String, String> getSpecificMsgHeaders() {
-        if (runContext.getBusId() != null) {
-            return Map.of(HEADER_BUS_ID, runContext.getBusId());
+        if (getRunContext().getBusId() != null) {
+            return Map.of(HEADER_BUS_ID, getRunContext().getBusId());
         } else {
             return super.getSpecificMsgHeaders();
         }
