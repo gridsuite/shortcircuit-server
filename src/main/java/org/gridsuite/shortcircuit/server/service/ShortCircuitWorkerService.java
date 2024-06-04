@@ -155,7 +155,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
-    public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode) {
+    public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode, ShortCircuitAnalysisResult ignoredResult) {
         if (runContext.getReportInfos().reportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
                 rootReportNode.set(reportMapper.processReporter(rootReportNode.get()));
