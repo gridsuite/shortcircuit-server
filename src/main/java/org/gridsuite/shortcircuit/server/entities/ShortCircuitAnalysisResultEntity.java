@@ -13,7 +13,7 @@ import lombok.Setter;
 import jakarta.persistence.*;
 import lombok.experimental.FieldNameConstants;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,8 +30,8 @@ public class ShortCircuitAnalysisResultEntity {
     @Id
     private UUID resultUuid;
 
-    @Column
-    private ZonedDateTime writeTimeStamp;
+    @Column(columnDefinition = "timestamptz")
+    private Instant writeTimeStamp;
 
     /*
     Bidirectional relation is not needed here and is done for performance
@@ -43,7 +43,7 @@ public class ShortCircuitAnalysisResultEntity {
     @Setter
     private Set<FaultResultEntity> faultResults;
 
-    public ShortCircuitAnalysisResultEntity(UUID resultUuid, ZonedDateTime writeTimeStamp, Set<FaultResultEntity> faultResults) {
+    public ShortCircuitAnalysisResultEntity(UUID resultUuid, Instant writeTimeStamp, Set<FaultResultEntity> faultResults) {
         this.resultUuid = resultUuid;
         this.writeTimeStamp = writeTimeStamp;
         addFaultResults(faultResults);
