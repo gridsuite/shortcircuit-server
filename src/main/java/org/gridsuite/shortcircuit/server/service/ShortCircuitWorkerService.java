@@ -18,6 +18,8 @@ import org.gridsuite.shortcircuit.server.computation.service.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContex
 @Service
 public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircuitAnalysisResult, ShortCircuitRunContext, ShortCircuitParameters, ShortCircuitAnalysisResultService> {
 
+    protected static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
     private final Collection<AbstractReportMapper> reportMappers;
 
@@ -95,16 +98,21 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     private List<Fault> getAllBusfaultFromNetwork(Network network, ShortCircuitRunContext context) {
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
+        List<String> inconsistentVoltageLevels = new ArrayList<>();
         List<Fault> faults = network.getBusView().getBusStream()
                 .map(bus -> {
                     IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                     if (shortCircuitExtension != null) {
+                        if (shortCircuitExtension.getIpMin() > shortCircuitExtension.getIpMax()) {
+                            inconsistentVoltageLevels.add(bus.getVoltageLevel().getId());
+                        }
                         shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
                     }
                     return new BusFault(bus.getId(), bus.getId());
                 })
                 .collect(Collectors.toList());
         context.setShortCircuitLimits(shortCircuitLimits);
+        context.setInconsistentVoltageLevels(inconsistentVoltageLevels);
         return faults;
     }
 
@@ -120,6 +128,9 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             }
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
+                if (shortCircuitExtension.getIpMin() > shortCircuitExtension.getIpMax()) {
+                    context.setInconsistentVoltageLevels(Collections.singletonList(bus.getVoltageLevel().getId()));
+                }
                 shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
@@ -158,7 +169,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode) {
         if (runContext.getReportInfos().reportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReportNode.set(reportMapper.processReporter(rootReportNode.get()));
+                rootReportNode.set(reportMapper.processReporter(rootReportNode.get(), runContext));
             }
             observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReportNode.get()));
         }

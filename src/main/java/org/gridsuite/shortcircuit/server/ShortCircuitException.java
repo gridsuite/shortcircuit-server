@@ -34,8 +34,4 @@ public class ShortCircuitException extends RuntimeException {
         super(message);
         this.type = type;
     }
-
-    public Type getType() {
-        return type;
-    }
 }

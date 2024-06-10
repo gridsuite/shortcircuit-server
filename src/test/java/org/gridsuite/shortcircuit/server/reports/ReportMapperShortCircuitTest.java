@@ -7,8 +7,10 @@
 package org.gridsuite.shortcircuit.server.reports;
 
 import com.powsybl.commons.report.ReportNode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.json.JSONException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,8 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
 
     @Test
     void testAggregatedLogs() throws IOException, URISyntaxException, JSONException {
-        final ReportNode result = reportMapper.processReporter(rootReportNode);
+        final ReportNode result = reportMapper.processReporter(rootReportNode, new ShortCircuitRunContext(null, "", "",
+            new ShortCircuitParameters(), null, "", "", "", "", ""));
         log.debug("Result = {}", RestTemplateConfig.objectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result));
         JSONAssert.assertEquals("short-circuit logs aggregated",
                 Files.readString(Paths.get(this.getClass().getClassLoader().getResource("reporter_shortcircuit_modified.json").toURI())),
