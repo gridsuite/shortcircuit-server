@@ -57,13 +57,13 @@ class ShortCircuitServiceTest implements WithAssertions {
     private ReportService reportService;
 
     @Mock
-    private ExecutionService shortCircuitExecutionService;
+    private ExecutionService executionService;
 
     @Mock
     private NotificationService notificationService;
 
     @Mock
-    private ShortCircuitAnalysisResultService resultRepository;
+    private ShortCircuitAnalysisResultService resultService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -84,9 +84,9 @@ class ShortCircuitServiceTest implements WithAssertions {
         workerService = new ShortCircuitWorkerService(
                 networkStoreService,
                 reportService,
-                shortCircuitExecutionService,
+                executionService,
                 notificationService,
-                resultRepository,
+                resultService,
                 objectMapper,
                 Collections.singletonList(reportMapper),
                 new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
