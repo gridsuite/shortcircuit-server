@@ -8,23 +8,31 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.security.LimitViolationType;
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+import jakarta.persistence.EntityManager;
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationService;
 import org.gridsuite.shortcircuit.server.computation.service.NotificationService;
 import org.gridsuite.shortcircuit.server.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
+import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -40,17 +48,41 @@ import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
  */
 @Service
 public class ShortCircuitService extends AbstractComputationService<ShortCircuitRunContext, ShortCircuitAnalysisResultService, ShortCircuitAnalysisStatus> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
     public static final String GET_SHORT_CIRCUIT_RESULTS_MSG = "Get ShortCircuit Results {} in {}ms";
 
-    public ShortCircuitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, ShortCircuitAnalysisResultService resultService, ObjectMapper objectMapper) {
+    public static final List<VoltageRange> CEI909_VOLTAGE_PROFILE = List.of(
+        new VoltageRange(10.0, 199.99, 1.1),
+        new VoltageRange(200.0, 299.99, 1.09),
+        new VoltageRange(300.0, 500.0, 1.05)
+    );
+
+    private final ParametersRepository parametersRepository;
+    private final EntityManager entityManager;
+
+    public ShortCircuitService(final NotificationService notificationService, final UuidGeneratorService uuidGeneratorService,
+                               final ShortCircuitAnalysisResultService resultService, final ParametersRepository parametersRepository,
+                               final ObjectMapper objectMapper, final EntityManager entityManager) {
         super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
+        this.parametersRepository = parametersRepository;
+        this.entityManager = entityManager;
     }
 
+    public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
+                                 String userId, String busId, final Optional<UUID> parametersUuid, final Optional<ShortCircuitParametersInfos> givenParameters) {
+        ShortCircuitParameters parameters = givenParameters.or(() -> parametersUuid.flatMap(parametersRepository::findById)
+                                                                                   .map(ShortCircuitService::fromEntity))
+                                                           .map(ShortCircuitParametersInfos::parameters)
+                                                           .orElseGet(() -> getDefaultDtoParameters().parameters());
+        parameters.setWithFortescueResult(StringUtils.isBlank(busId));
+        parameters.setDetailedReport(false);
+        return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId, null, busId));
+    }
+
+    @Override
     public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
         Objects.requireNonNull(runContext);
-        var resultUuid = uuidGeneratorService.generate();
+        final UUID resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING);
@@ -101,6 +133,49 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
+    }
+
+    private static AnalysisParametersEntity toEntity(ShortCircuitParametersInfos parametersInfos) {
+        final ShortCircuitParameters parameters = parametersInfos.parameters();
+        return new AnalysisParametersEntity(
+            parameters.isWithLimitViolations(),
+            parameters.isWithVoltageResult(),
+            parameters.isWithFortescueResult(),
+            parameters.isWithFeederResult(),
+            parameters.getStudyType(),
+            parameters.getMinVoltageDropProportionalThreshold(),
+            parametersInfos.predefinedParameters(),
+            parameters.isWithLoads(),
+            parameters.isWithShuntCompensators(),
+            parameters.isWithVSCConverterStations(),
+            parameters.isWithNeutralPosition(),
+            parameters.getInitialVoltageProfileMode()
+        );
+    }
+
+    private static ShortCircuitParametersInfos fromEntity(AnalysisParametersEntity entity) {
+        Objects.requireNonNull(entity);
+        return new ShortCircuitParametersInfos(
+            entity.getPredefinedParameters(),
+            new ShortCircuitParameters()
+                .setStudyType(entity.getStudyType())
+                .setMinVoltageDropProportionalThreshold(entity.getMinVoltageDropProportionalThreshold())
+                .setWithFeederResult(entity.isWithFeederResult())
+                .setWithLimitViolations(entity.isWithLimitViolations())
+                .setWithVoltageResult(entity.isWithVoltageResult())
+                .setWithFortescueResult(entity.isWithFortescueResult())
+                .setWithLoads(entity.isWithLoads())
+                .setWithShuntCompensators(entity.isWithShuntCompensators())
+                .setWithVSCConverterStations(entity.isWithVscConverterStations())
+                .setWithNeutralPosition(entity.isWithNeutralPosition())
+                .setInitialVoltageProfileMode(entity.getInitialVoltageProfileMode())
+                // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
+                .setVoltageRanges(InitialVoltageProfileMode.CONFIGURED.equals(entity.getInitialVoltageProfileMode()) ? CEI909_VOLTAGE_PROFILE : null)
+        );
+    }
+
+    private static ShortCircuitParametersInfos getDefaultDtoParameters() {
+        return fromEntity(new AnalysisParametersEntity());
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
@@ -295,5 +370,46 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     public List<com.powsybl.shortcircuit.Fault.FaultType> getFaultTypes(UUID resultUuid) {
         return resultService.findFaultTypes(resultUuid);
+    }
+
+    public Optional<ShortCircuitParametersInfos> getParameters(final UUID parametersUuid) {
+        return parametersRepository.findById(parametersUuid).map(ShortCircuitService::fromEntity);
+    }
+
+    @Transactional
+    public boolean deleteParameters(final UUID parametersUuid) {
+        final boolean result = parametersRepository.existsById(parametersUuid);
+        if (result) {
+            parametersRepository.deleteById(parametersUuid);
+        }
+        return result;
+    }
+
+    @Transactional
+    public Optional<UUID> duplicateParameters(UUID sourceParametersUuid) {
+        return parametersRepository.findById(sourceParametersUuid)
+                                   .map(entity -> {
+                                       entityManager.detach(entity);
+                                       entity.setId(null);
+                                       return entity;
+                                   })
+                                   .map(parametersRepository::save)
+                                   .map(AnalysisParametersEntity::getId);
+    }
+
+    public UUID createParameters(@Nullable final ShortCircuitParametersInfos parameters) {
+        return parametersRepository.save(parameters != null ? toEntity(parameters) : new AnalysisParametersEntity()).getId();
+    }
+
+    @Transactional
+    public boolean updateOrResetParameters(final UUID parametersUuid, @Nullable final ShortCircuitParametersInfos givenParameters) {
+        AnalysisParametersEntity parameters = parametersRepository.findById(parametersUuid).orElse(null);
+        if (parameters == null) {
+            return false;
+        } else {
+            AnalysisParametersEntity newParameters = givenParameters != null ? toEntity(givenParameters) : new AnalysisParametersEntity();
+            entityManager.merge(newParameters.setId(parameters.getId()));
+            return true;
+        }
     }
 }
