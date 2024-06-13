@@ -14,7 +14,6 @@ import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
-import jakarta.persistence.EntityManager;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationService;
@@ -58,14 +57,12 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     );
 
     private final ParametersRepository parametersRepository;
-    private final EntityManager entityManager;
 
     public ShortCircuitService(final NotificationService notificationService, final UuidGeneratorService uuidGeneratorService,
                                final ShortCircuitAnalysisResultService resultService, final ParametersRepository parametersRepository,
-                               final ObjectMapper objectMapper, final EntityManager entityManager) {
+                               final ObjectMapper objectMapper) {
         super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
         this.parametersRepository = parametersRepository;
-        this.entityManager = entityManager;
     }
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
@@ -388,11 +385,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     @Transactional
     public Optional<UUID> duplicateParameters(UUID sourceParametersUuid) {
         return parametersRepository.findById(sourceParametersUuid)
-                                   .map(entity -> {
-                                       entityManager.detach(entity);
-                                       entity.setId(null);
-                                       return entity;
-                                   })
+                                   .map(AnalysisParametersEntity::new)
                                    .map(parametersRepository::save)
                                    .map(AnalysisParametersEntity::getId);
     }
@@ -403,13 +396,11 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     @Transactional
     public boolean updateOrResetParameters(final UUID parametersUuid, @Nullable final ShortCircuitParametersInfos givenParameters) {
-        AnalysisParametersEntity parameters = parametersRepository.findById(parametersUuid).orElse(null);
-        if (parameters == null) {
-            return false;
-        } else {
-            AnalysisParametersEntity newParameters = givenParameters != null ? toEntity(givenParameters) : new AnalysisParametersEntity();
-            entityManager.merge(newParameters.setId(parameters.getId()));
-            return true;
-        }
+        return parametersRepository.findById(parametersUuid)
+            .map(parameters -> {
+                parameters.updateWith(givenParameters != null ? toEntity(givenParameters) : new AnalysisParametersEntity());
+                return true;
+            })
+            .orElse(false);
     }
 }

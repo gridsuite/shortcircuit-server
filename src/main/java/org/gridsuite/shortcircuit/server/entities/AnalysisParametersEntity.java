@@ -12,8 +12,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * @since 1.7.0
@@ -34,6 +38,21 @@ public class AnalysisParametersEntity {
                                     InitialVoltageProfileMode initialVoltageProfileMode) {
         this(null, withLimitViolations, withVoltageResult, withFortescueResult, withFeederResult, studyType, minVoltageDropProportionalThreshold,
                 predefinedParameters, withLoads, withShuntCompensators, withVscConverterStations, withNeutralPosition, initialVoltageProfileMode);
+    }
+
+    public AnalysisParametersEntity(@NonNull final AnalysisParametersEntity sourceToClone) {
+        this(sourceToClone.isWithLimitViolations(),
+            sourceToClone.isWithVoltageResult(),
+            sourceToClone.isWithFortescueResult(),
+            sourceToClone.isWithFeederResult(),
+            sourceToClone.getStudyType(),
+            sourceToClone.getMinVoltageDropProportionalThreshold(),
+            sourceToClone.getPredefinedParameters(),
+            sourceToClone.isWithLoads(),
+            sourceToClone.isWithShuntCompensators(),
+            sourceToClone.isWithVscConverterStations(),
+            sourceToClone.isWithNeutralPosition(),
+            sourceToClone.getInitialVoltageProfileMode());
     }
 
     @Id
@@ -91,4 +110,28 @@ public class AnalysisParametersEntity {
     @Column(name = "initialVoltageProfileMode", columnDefinition = "varchar(255) default 'NOMINAL'")
     @Enumerated(EnumType.STRING)
     private InitialVoltageProfileMode initialVoltageProfileMode = InitialVoltageProfileMode.NOMINAL;
+
+    public AnalysisParametersEntity updateWith(final AnalysisParametersEntity source) {
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithLimitViolations, AnalysisParametersEntity::setWithLimitViolations);
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithVoltageResult, AnalysisParametersEntity::setWithVoltageResult);
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithFortescueResult, AnalysisParametersEntity::setWithFortescueResult);
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithFeederResult, AnalysisParametersEntity::setWithFeederResult);
+        setIfDifferent(this, source, AnalysisParametersEntity::getStudyType, AnalysisParametersEntity::setStudyType);
+        setIfDifferent(this, source, AnalysisParametersEntity::getMinVoltageDropProportionalThreshold, AnalysisParametersEntity::setMinVoltageDropProportionalThreshold);
+        setIfDifferent(this, source, AnalysisParametersEntity::getPredefinedParameters, AnalysisParametersEntity::setPredefinedParameters);
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithLoads, AnalysisParametersEntity::setWithLoads);
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithShuntCompensators, AnalysisParametersEntity::setWithShuntCompensators);
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithVscConverterStations, AnalysisParametersEntity::setWithVscConverterStations);
+        setIfDifferent(this, source, AnalysisParametersEntity::isWithNeutralPosition, AnalysisParametersEntity::setWithNeutralPosition);
+        setIfDifferent(this, source, AnalysisParametersEntity::getInitialVoltageProfileMode, AnalysisParametersEntity::setInitialVoltageProfileMode);
+        return this;
+    }
+
+    private static <T> void setIfDifferent(@NotNull final AnalysisParametersEntity dst, @NotNull final AnalysisParametersEntity src,
+                                           @NotNull final Function<AnalysisParametersEntity, T> getter, @NotNull final BiFunction<AnalysisParametersEntity, T, ?> setter) {
+        final T srcValue = getter.apply(src);
+        if (!Objects.equals(getter.apply(dst), srcValue)) {
+            setter.apply(dst, srcValue);
+        }
+    }
 }
