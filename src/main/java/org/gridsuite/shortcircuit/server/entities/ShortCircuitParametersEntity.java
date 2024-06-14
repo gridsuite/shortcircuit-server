@@ -12,12 +12,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.UUID;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * @since 1.7.0
@@ -112,26 +108,17 @@ public class ShortCircuitParametersEntity {
     private InitialVoltageProfileMode initialVoltageProfileMode = InitialVoltageProfileMode.NOMINAL;
 
     public ShortCircuitParametersEntity updateWith(final ShortCircuitParametersEntity source) {
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithLimitViolations, ShortCircuitParametersEntity::setWithLimitViolations);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithVoltageResult, ShortCircuitParametersEntity::setWithVoltageResult);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithFortescueResult, ShortCircuitParametersEntity::setWithFortescueResult);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithFeederResult, ShortCircuitParametersEntity::setWithFeederResult);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::getStudyType, ShortCircuitParametersEntity::setStudyType);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::getMinVoltageDropProportionalThreshold, ShortCircuitParametersEntity::setMinVoltageDropProportionalThreshold);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::getPredefinedParameters, ShortCircuitParametersEntity::setPredefinedParameters);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithLoads, ShortCircuitParametersEntity::setWithLoads);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithShuntCompensators, ShortCircuitParametersEntity::setWithShuntCompensators);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithVscConverterStations, ShortCircuitParametersEntity::setWithVscConverterStations);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithNeutralPosition, ShortCircuitParametersEntity::setWithNeutralPosition);
-        setIfDifferent(this, source, ShortCircuitParametersEntity::getInitialVoltageProfileMode, ShortCircuitParametersEntity::setInitialVoltageProfileMode);
-        return this;
-    }
-
-    private static <T> void setIfDifferent(@NotNull final ShortCircuitParametersEntity dst, @NotNull final ShortCircuitParametersEntity src,
-                                           @NotNull final Function<ShortCircuitParametersEntity, T> getter, @NotNull final BiFunction<ShortCircuitParametersEntity, T, ?> setter) {
-        final T srcValue = getter.apply(src);
-        if (!Objects.equals(getter.apply(dst), srcValue)) {
-            setter.apply(dst, srcValue);
-        }
+        return this.setWithLimitViolations(source.isWithLimitViolations())
+                   .setWithVoltageResult(source.isWithVoltageResult())
+                   .setWithFortescueResult(source.isWithFortescueResult())
+                   .setWithFeederResult(source.isWithFeederResult())
+                   .setStudyType(source.getStudyType())
+                   .setMinVoltageDropProportionalThreshold(source.getMinVoltageDropProportionalThreshold())
+                   .setPredefinedParameters(source.getPredefinedParameters())
+                   .setWithLoads(source.isWithLoads())
+                   .setWithShuntCompensators(source.isWithShuntCompensators())
+                   .setWithVscConverterStations(source.isWithVscConverterStations())
+                   .setWithNeutralPosition(source.isWithNeutralPosition())
+                   .setInitialVoltageProfileMode(source.getInitialVoltageProfileMode());
     }
 }

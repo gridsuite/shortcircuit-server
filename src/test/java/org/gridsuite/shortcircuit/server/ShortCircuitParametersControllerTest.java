@@ -26,6 +26,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -40,7 +44,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith({ MockitoExtension.class })
 @WebMvcTest(controllers = { ShortCircuitParametersController.class })
 class ShortCircuitParametersControllerTest implements WithAssertions {
-    private static final String DEFAULT_PARAMETERS_JSON = "{\"predefinedParameters\":null,\"parameters\":null,\"cei909VoltageRanges\":[{\"range\":{\"comparator\":\"INSTANCE\",\"maximum\":199.99,\"minimum\":10.0,\"naturalOrdering\":true},\"rangeCoefficient\":1.1,\"voltage\":\"NaN\",\"minimumNominalVoltage\":10.0,\"maximumNominalVoltage\":199.99},{\"range\":{\"comparator\":\"INSTANCE\",\"maximum\":299.99,\"minimum\":200.0,\"naturalOrdering\":true},\"rangeCoefficient\":1.09,\"voltage\":\"NaN\",\"minimumNominalVoltage\":200.0,\"maximumNominalVoltage\":299.99},{\"range\":{\"comparator\":\"INSTANCE\",\"maximum\":500.0,\"minimum\":300.0,\"naturalOrdering\":true},\"rangeCoefficient\":1.05,\"voltage\":\"NaN\",\"minimumNominalVoltage\":300.0,\"maximumNominalVoltage\":500.0}]}";
+    private final String defaultParametersJson;
+
+    public ShortCircuitParametersControllerTest() throws URISyntaxException, IOException {
+        this.defaultParametersJson = Files.readString(Paths.get(this.getClass().getResource(this.getClass().getName()).toURI()));
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -59,7 +67,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
         final Optional<ShortCircuitParametersInfos> returned = Optional.of(new ShortCircuitParametersInfos(null, null));
         when(shortCircuitService.getParameters(any(UUID.class))).thenReturn(returned);
         mockMvc.perform(get("/v1/parameters/{pUuid}", arg.toString()))
-               .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().string(DEFAULT_PARAMETERS_JSON));
+               .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().string(defaultParametersJson));
         final ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
         verify(shortCircuitService).getParameters(uuidCaptor.capture());
         assertThat(uuidCaptor.getValue()).isEqualTo(arg);
@@ -80,7 +88,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
     void testCreateParameters() throws Exception {
         final UUID returned = UUID.randomUUID();
         when(shortCircuitService.createParameters(any(ShortCircuitParametersInfos.class))).thenReturn(returned);
-        mockMvc.perform(post("/v1/parameters").content(DEFAULT_PARAMETERS_JSON).contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post("/v1/parameters").content(defaultParametersJson).contentType(MediaType.APPLICATION_JSON))
                .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().string("\"" + returned + "\""));
         final ArgumentCaptor<ShortCircuitParametersInfos> dtoCaptor = ArgumentCaptor.forClass(ShortCircuitParametersInfos.class);
         verify(shortCircuitService).createParameters(dtoCaptor.capture());
@@ -143,7 +151,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
     void testUpdateParameters(final boolean existing, @NonNull final ResultMatcher statusMatcher) throws Exception {
         final UUID arg1 = UUID.randomUUID();
         when(shortCircuitService.updateOrResetParameters(any(UUID.class), any(ShortCircuitParametersInfos.class))).thenReturn(existing);
-        mockMvc.perform(put("/v1/parameters/{pUuid}", arg1.toString()).content(DEFAULT_PARAMETERS_JSON).contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(put("/v1/parameters/{pUuid}", arg1.toString()).content(defaultParametersJson).contentType(MediaType.APPLICATION_JSON))
                .andExpectAll(statusMatcher);
         final ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
         final ArgumentCaptor<ShortCircuitParametersInfos> dtoCaptor = ArgumentCaptor.forClass(ShortCircuitParametersInfos.class);
