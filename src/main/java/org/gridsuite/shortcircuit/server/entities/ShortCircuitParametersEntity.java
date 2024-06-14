@@ -30,17 +30,17 @@ import java.util.function.Function;
 @Setter
 @Entity
 @Table(name = "shortcircuit_parameters")
-public class AnalysisParametersEntity {
+public class ShortCircuitParametersEntity {
 
-    public AnalysisParametersEntity(boolean withLimitViolations, boolean withVoltageResult, boolean withFortescueResult, boolean withFeederResult,
-                                    StudyType studyType, double minVoltageDropProportionalThreshold, ShortCircuitPredefinedConfiguration predefinedParameters,
-                                    boolean withLoads, boolean withShuntCompensators, boolean withVscConverterStations, boolean withNeutralPosition,
-                                    InitialVoltageProfileMode initialVoltageProfileMode) {
+    public ShortCircuitParametersEntity(boolean withLimitViolations, boolean withVoltageResult, boolean withFortescueResult, boolean withFeederResult,
+                                        StudyType studyType, double minVoltageDropProportionalThreshold, ShortCircuitPredefinedConfiguration predefinedParameters,
+                                        boolean withLoads, boolean withShuntCompensators, boolean withVscConverterStations, boolean withNeutralPosition,
+                                        InitialVoltageProfileMode initialVoltageProfileMode) {
         this(null, withLimitViolations, withVoltageResult, withFortescueResult, withFeederResult, studyType, minVoltageDropProportionalThreshold,
                 predefinedParameters, withLoads, withShuntCompensators, withVscConverterStations, withNeutralPosition, initialVoltageProfileMode);
     }
 
-    public AnalysisParametersEntity(@NonNull final AnalysisParametersEntity sourceToClone) {
+    public ShortCircuitParametersEntity(@NonNull final ShortCircuitParametersEntity sourceToClone) {
         this(sourceToClone.isWithLimitViolations(),
             sourceToClone.isWithVoltageResult(),
             sourceToClone.isWithFortescueResult(),
@@ -111,24 +111,24 @@ public class AnalysisParametersEntity {
     @Enumerated(EnumType.STRING)
     private InitialVoltageProfileMode initialVoltageProfileMode = InitialVoltageProfileMode.NOMINAL;
 
-    public AnalysisParametersEntity updateWith(final AnalysisParametersEntity source) {
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithLimitViolations, AnalysisParametersEntity::setWithLimitViolations);
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithVoltageResult, AnalysisParametersEntity::setWithVoltageResult);
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithFortescueResult, AnalysisParametersEntity::setWithFortescueResult);
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithFeederResult, AnalysisParametersEntity::setWithFeederResult);
-        setIfDifferent(this, source, AnalysisParametersEntity::getStudyType, AnalysisParametersEntity::setStudyType);
-        setIfDifferent(this, source, AnalysisParametersEntity::getMinVoltageDropProportionalThreshold, AnalysisParametersEntity::setMinVoltageDropProportionalThreshold);
-        setIfDifferent(this, source, AnalysisParametersEntity::getPredefinedParameters, AnalysisParametersEntity::setPredefinedParameters);
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithLoads, AnalysisParametersEntity::setWithLoads);
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithShuntCompensators, AnalysisParametersEntity::setWithShuntCompensators);
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithVscConverterStations, AnalysisParametersEntity::setWithVscConverterStations);
-        setIfDifferent(this, source, AnalysisParametersEntity::isWithNeutralPosition, AnalysisParametersEntity::setWithNeutralPosition);
-        setIfDifferent(this, source, AnalysisParametersEntity::getInitialVoltageProfileMode, AnalysisParametersEntity::setInitialVoltageProfileMode);
+    public ShortCircuitParametersEntity updateWith(final ShortCircuitParametersEntity source) {
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithLimitViolations, ShortCircuitParametersEntity::setWithLimitViolations);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithVoltageResult, ShortCircuitParametersEntity::setWithVoltageResult);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithFortescueResult, ShortCircuitParametersEntity::setWithFortescueResult);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithFeederResult, ShortCircuitParametersEntity::setWithFeederResult);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::getStudyType, ShortCircuitParametersEntity::setStudyType);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::getMinVoltageDropProportionalThreshold, ShortCircuitParametersEntity::setMinVoltageDropProportionalThreshold);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::getPredefinedParameters, ShortCircuitParametersEntity::setPredefinedParameters);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithLoads, ShortCircuitParametersEntity::setWithLoads);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithShuntCompensators, ShortCircuitParametersEntity::setWithShuntCompensators);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithVscConverterStations, ShortCircuitParametersEntity::setWithVscConverterStations);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::isWithNeutralPosition, ShortCircuitParametersEntity::setWithNeutralPosition);
+        setIfDifferent(this, source, ShortCircuitParametersEntity::getInitialVoltageProfileMode, ShortCircuitParametersEntity::setInitialVoltageProfileMode);
         return this;
     }
 
-    private static <T> void setIfDifferent(@NotNull final AnalysisParametersEntity dst, @NotNull final AnalysisParametersEntity src,
-                                           @NotNull final Function<AnalysisParametersEntity, T> getter, @NotNull final BiFunction<AnalysisParametersEntity, T, ?> setter) {
+    private static <T> void setIfDifferent(@NotNull final ShortCircuitParametersEntity dst, @NotNull final ShortCircuitParametersEntity src,
+                                           @NotNull final Function<ShortCircuitParametersEntity, T> getter, @NotNull final BiFunction<ShortCircuitParametersEntity, T, ?> setter) {
         final T srcValue = getter.apply(src);
         if (!Objects.equals(getter.apply(dst), srcValue)) {
             setter.apply(dst, srcValue);

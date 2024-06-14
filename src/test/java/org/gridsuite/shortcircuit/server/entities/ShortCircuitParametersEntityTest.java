@@ -11,11 +11,11 @@ import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.junit.jupiter.api.Test;
 
-class AnalysisParametersEntityTest implements WithAssertions {
+class ShortCircuitParametersEntityTest implements WithAssertions {
     @Test
     void testUpdateSimple() {
-        AnalysisParametersEntity entity1 = new AnalysisParametersEntity();
-        AnalysisParametersEntity entity2 = new AnalysisParametersEntity().setMinVoltageDropProportionalThreshold(Double.MAX_VALUE);
+        ShortCircuitParametersEntity entity1 = new ShortCircuitParametersEntity();
+        ShortCircuitParametersEntity entity2 = new ShortCircuitParametersEntity().setMinVoltageDropProportionalThreshold(Double.MAX_VALUE);
         assertThat(entity1).as("verification").usingRecursiveComparison().isNotEqualTo(entity2);
         entity1.updateWith(entity2);
         assertThat(entity1).as("check").usingRecursiveComparison().isEqualTo(entity2);
@@ -23,8 +23,8 @@ class AnalysisParametersEntityTest implements WithAssertions {
 
     @Test
     void testUpdate2() {
-        AnalysisParametersEntity entity1 = new AnalysisParametersEntity();
-        AnalysisParametersEntity entity2 = new AnalysisParametersEntity(
+        ShortCircuitParametersEntity entity1 = new ShortCircuitParametersEntity();
+        ShortCircuitParametersEntity entity2 = new ShortCircuitParametersEntity(
                 ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
                 ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
                 ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,

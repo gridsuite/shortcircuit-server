@@ -6,12 +6,12 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import org.gridsuite.shortcircuit.server.entities.AnalysisParametersEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
 @Repository
-public interface ParametersRepository extends JpaRepository<AnalysisParametersEntity, UUID> {
+public interface ParametersRepository extends JpaRepository<ShortCircuitParametersEntity, UUID> {
 }

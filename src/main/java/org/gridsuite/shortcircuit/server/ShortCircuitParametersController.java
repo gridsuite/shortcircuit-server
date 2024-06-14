@@ -43,7 +43,7 @@ public class ShortCircuitParametersController {
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a new set of parameters for an analysis using given parameters")
     @ApiResponse(responseCode = "200", description = "The new parameters entity ID")
-    public ResponseEntity<UUID> createParameters(@Parameter(description = "Parameters to save") @RequestBody(required = false) ShortCircuitParametersInfos parameters) {
+    public ResponseEntity<UUID> createParameters(@Parameter(description = "Parameters to save") @RequestBody ShortCircuitParametersInfos parameters) {
         return ResponseEntity.ok(shortCircuitService.createParameters(parameters));
     }
 
@@ -71,7 +71,7 @@ public class ShortCircuitParametersController {
     }
 
     @PutMapping(path = "/{parametersUuid}", consumes = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Update a set of parameters for an analysis or reset them to default ones")
+    @Operation(summary = "Update parameters for an analysis or reset them to default ones")
     @ApiResponse(responseCode = "204", description = "The parameters are successfully updated")
     @ApiResponse(responseCode = "404", description = "The parameters don't exists")
     public ResponseEntity<Void> updateOrResetParameters(@Parameter(description = "UUID of parameters") @PathVariable("parametersUuid") UUID parametersUuid,

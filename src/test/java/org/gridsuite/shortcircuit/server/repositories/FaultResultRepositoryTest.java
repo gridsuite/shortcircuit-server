@@ -149,9 +149,9 @@ class FaultResultRepositoryTest {
         "provideFeederFieldsUnfilteredSortedAscAndDesc"
     })
     void feedersFilterAndSortTest(ShortCircuitAnalysisResultEntity resultEntity,
-                           List<ResourceFilter> resourceFilters,
-                           Sort sort,
-                           List<List<FeederResult>> expectedFeedersLists) {
+                                  List<ResourceFilter> resourceFilters,
+                                  Sort sort,
+                                  List<List<FeederResult>> expectedFeedersLists) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
                 resultEntity,
                 resourceFilters,

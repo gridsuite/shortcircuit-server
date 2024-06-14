@@ -91,7 +91,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
     void testCreateDefaultParameters() throws Exception {
         final UUID returned = UUID.randomUUID();
         when(shortCircuitService.createParameters(nullable(ShortCircuitParametersInfos.class))).thenReturn(returned);
-        mockMvc.perform(post("/v1/parameters"))
+        mockMvc.perform(post("/v1/parameters/default"))
                .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().string("\"" + returned + "\""));
         verify(shortCircuitService).createParameters(null);
     }

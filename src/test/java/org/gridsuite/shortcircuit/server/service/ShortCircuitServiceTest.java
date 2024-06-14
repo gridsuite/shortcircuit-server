@@ -16,7 +16,7 @@ import org.gridsuite.shortcircuit.server.computation.service.NotificationService
 import org.gridsuite.shortcircuit.server.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
-import org.gridsuite.shortcircuit.server.entities.AnalysisParametersEntity;
+import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -78,6 +78,22 @@ class ShortCircuitServiceTest implements WithAssertions {
         }
     }
 
+    private void checkParametersEntityHasBeenRead(final ShortCircuitParametersEntity pEntity) {
+        verify(pEntity).isWithLimitViolations();
+        verify(pEntity).isWithVoltageResult();
+        verify(pEntity).isWithFortescueResult();
+        verify(pEntity).isWithFeederResult();
+        verify(pEntity).getStudyType();
+        verify(pEntity).getMinVoltageDropProportionalThreshold();
+        verify(pEntity).getPredefinedParameters();
+        verify(pEntity).isWithLoads();
+        verify(pEntity).isWithShuntCompensators();
+        verify(pEntity).isWithVscConverterStations();
+        verify(pEntity).isWithNeutralPosition();
+        verify(pEntity, atLeastOnce()).getInitialVoltageProfileMode();
+        verify(pEntity, atMost(2)).getInitialVoltageProfileMode(); // for fromEntity() case
+    }
+
     @Test
     void testGetNonExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
@@ -90,7 +106,7 @@ class ShortCircuitServiceTest implements WithAssertions {
     void testGetExistingParametersAndConversionToDto() {
         final UUID pUuid = UUID.randomUUID();
         final double minVoltDrop = new Random().nextDouble();
-        final AnalysisParametersEntity pEntity = spy(new AnalysisParametersEntity(pUuid, false, false, false, false, StudyType.STEADY_STATE, minVoltDrop,
+        final ShortCircuitParametersEntity pEntity = spy(new ShortCircuitParametersEntity(pUuid, false, false, false, false, StudyType.STEADY_STATE, minVoltDrop,
                 ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, false, false, false, false, InitialVoltageProfileMode.NOMINAL));
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         //can't spy call to fromEntity()
@@ -108,18 +124,7 @@ class ShortCircuitServiceTest implements WithAssertions {
                         .setWithVSCConverterStations(false)
                         .setWithNeutralPosition(false)
                         .setInitialVoltageProfileMode(InitialVoltageProfileMode.NOMINAL)));
-        verify(pEntity).getPredefinedParameters();
-        verify(pEntity).isWithLimitViolations();
-        verify(pEntity).isWithVoltageResult();
-        verify(pEntity).isWithFortescueResult();
-        verify(pEntity).isWithFeederResult();
-        verify(pEntity).getStudyType();
-        verify(pEntity).getMinVoltageDropProportionalThreshold();
-        verify(pEntity).isWithLoads();
-        verify(pEntity).isWithShuntCompensators();
-        verify(pEntity).isWithVscConverterStations();
-        verify(pEntity).isWithNeutralPosition();
-        verify(pEntity, atLeastOnce()).getInitialVoltageProfileMode();
+        checkParametersEntityHasBeenRead(pEntity);
         verifyNoMoreInteractions(pEntity);
         verify(parametersRepository).findById(pUuid);
     }
@@ -152,27 +157,16 @@ class ShortCircuitServiceTest implements WithAssertions {
     @Test
     void testDuplicateExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
-        final AnalysisParametersEntity pEntityRaw = AnalysisParametersEntity.builder().id(UUID.randomUUID()).build();
-        final AnalysisParametersEntity pEntity = spy(pEntityRaw);
+        final ShortCircuitParametersEntity pEntityRaw = ShortCircuitParametersEntity.builder().id(UUID.randomUUID()).build();
+        final ShortCircuitParametersEntity pEntity = spy(pEntityRaw);
         final UUID pSavedUuid = UUID.randomUUID();
-        final AnalysisParametersEntity pSavedEntity = spy(AnalysisParametersEntity.builder().id(pSavedUuid).build());
+        final ShortCircuitParametersEntity pSavedEntity = spy(ShortCircuitParametersEntity.builder().id(pSavedUuid).build());
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
-        when(parametersRepository.save(any(AnalysisParametersEntity.class))).thenReturn(pSavedEntity);
+        when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pSavedEntity);
         assertThat(shortCircuitService.duplicateParameters(pUuid)).as("service call result").get().isEqualTo(pSavedUuid);
         verify(parametersRepository).findById(pUuid);
-        verify(pEntity).isWithLimitViolations();
-        verify(pEntity).isWithVoltageResult();
-        verify(pEntity).isWithFortescueResult();
-        verify(pEntity).isWithFeederResult();
-        verify(pEntity).getStudyType();
-        verify(pEntity).getMinVoltageDropProportionalThreshold();
-        verify(pEntity).getPredefinedParameters();
-        verify(pEntity).isWithLoads();
-        verify(pEntity).isWithShuntCompensators();
-        verify(pEntity).isWithVscConverterStations();
-        verify(pEntity).isWithNeutralPosition();
-        verify(pEntity).getInitialVoltageProfileMode();
-        final ArgumentCaptor<AnalysisParametersEntity> entityCaptor = ArgumentCaptor.forClass(AnalysisParametersEntity.class);
+        checkParametersEntityHasBeenRead(pEntity);
+        final ArgumentCaptor<ShortCircuitParametersEntity> entityCaptor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
         verify(parametersRepository).save(entityCaptor.capture());
         assertThat(entityCaptor.getValue()).as("saved entity").isNotSameAs(pEntity)
                 .usingRecursiveComparison().ignoringFields("id").isEqualTo(pEntityRaw);
@@ -184,14 +178,14 @@ class ShortCircuitServiceTest implements WithAssertions {
     @Test
     void testCreateParameters() {
         final UUID pUuid = UUID.randomUUID();
-        final AnalysisParametersEntity pEntity = spy(AnalysisParametersEntity.builder().id(pUuid).build());
-        when(parametersRepository.save(any(AnalysisParametersEntity.class))).thenReturn(pEntity);
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
+        when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pEntity);
         assertThat(shortCircuitService.createParameters(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters())))
                 .as("service call result").isEqualTo(pUuid);
         verify(pEntity).getId();
-        final ArgumentCaptor<AnalysisParametersEntity> captor = ArgumentCaptor.forClass(AnalysisParametersEntity.class);
+        final ArgumentCaptor<ShortCircuitParametersEntity> captor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
         verify(parametersRepository).save(captor.capture());
-        assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(new AnalysisParametersEntity(
+        assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(new ShortCircuitParametersEntity(
                 ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
                 ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
                 ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
@@ -212,13 +206,13 @@ class ShortCircuitServiceTest implements WithAssertions {
     @Test
     void testCreateDefaultParameters() {
         final UUID pUuid = UUID.randomUUID();
-        final AnalysisParametersEntity pEntity = spy(AnalysisParametersEntity.builder().id(pUuid).build());
-        when(parametersRepository.save(any(AnalysisParametersEntity.class))).thenReturn(pEntity);
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
+        when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pEntity);
         assertThat(shortCircuitService.createParameters(null)).as("service call result").isEqualTo(pUuid);
         verify(pEntity).getId();
-        final ArgumentCaptor<AnalysisParametersEntity> captor = ArgumentCaptor.forClass(AnalysisParametersEntity.class);
+        final ArgumentCaptor<ShortCircuitParametersEntity> captor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
         verify(parametersRepository).save(captor.capture());
-        assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(new AnalysisParametersEntity());
+        assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(new ShortCircuitParametersEntity());
     }
 
     @Test
@@ -232,10 +226,10 @@ class ShortCircuitServiceTest implements WithAssertions {
     @Test
     void testUpdateExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
-        final AnalysisParametersEntity pEntity = spy(AnalysisParametersEntity.builder().id(pUuid).build());
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
         final ShortCircuitParameters pDtoUpdateParams = spy(new ShortCircuitParameters());
         final ShortCircuitParametersInfos pDtoUpdate = spy(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, pDtoUpdateParams));
-        final AnalysisParametersEntity pEntityUpdate = new AnalysisParametersEntity(pUuid,
+        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid,
             ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
             ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
             ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
@@ -253,7 +247,9 @@ class ShortCircuitServiceTest implements WithAssertions {
         );
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         assertThat(shortCircuitService.updateOrResetParameters(pUuid, pDtoUpdate)).as("service call result").isTrue();
+        // verify we search the correct uid
         verify(parametersRepository).findById(pUuid);
+        // verify DTO has been read
         verify(pDtoUpdate).parameters();
         verify(pDtoUpdate).predefinedParameters();
         verify(pDtoUpdateParams).isWithLimitViolations();
@@ -267,60 +263,39 @@ class ShortCircuitServiceTest implements WithAssertions {
         verify(pDtoUpdateParams).isWithVSCConverterStations();
         verify(pDtoUpdateParams).isWithNeutralPosition();
         verify(pDtoUpdateParams).getInitialVoltageProfileMode();
-        final ArgumentCaptor<AnalysisParametersEntity> entityCaptor = ArgumentCaptor.forClass(AnalysisParametersEntity.class);
-        verify(pEntity).updateWith(entityCaptor.capture());
-        assertThat(entityCaptor.getValue()).as("entity from dto").usingRecursiveComparison().ignoringFields("id").isEqualTo(pEntityUpdate);
-        verify(pEntity).isWithLimitViolations();
-        verify(pEntity).isWithVoltageResult();
-        verify(pEntity).isWithFortescueResult();
-        verify(pEntity).isWithFeederResult();
-        verify(pEntity).getStudyType();
-        verify(pEntity).getMinVoltageDropProportionalThreshold();
-        verify(pEntity).getPredefinedParameters();
-        verify(pEntity).isWithLoads();
-        verify(pEntity).isWithShuntCompensators();
-        verify(pEntity).isWithVscConverterStations();
-        verify(pEntity).isWithNeutralPosition();
-        verify(pEntity).getInitialVoltageProfileMode();
-        verify(pEntity, atMostOnce()).setWithLimitViolations(pEntityUpdate.isWithLimitViolations());
-        verify(pEntity, atMostOnce()).setWithVoltageResult(pEntityUpdate.isWithVoltageResult());
-        verify(pEntity, atMostOnce()).setWithFortescueResult(pEntityUpdate.isWithFortescueResult());
-        verify(pEntity, atMostOnce()).setWithFeederResult(pEntityUpdate.isWithFeederResult());
-        verify(pEntity, atMostOnce()).setStudyType(pEntityUpdate.getStudyType());
-        verify(pEntity, atMostOnce()).setMinVoltageDropProportionalThreshold(pEntityUpdate.getMinVoltageDropProportionalThreshold());
-        verify(pEntity, atMostOnce()).setPredefinedParameters(pEntityUpdate.getPredefinedParameters());
-        verify(pEntity, atMostOnce()).setWithLoads(pEntityUpdate.isWithLoads());
-        verify(pEntity, atMostOnce()).setWithShuntCompensators(pEntityUpdate.isWithShuntCompensators());
-        verify(pEntity, atMostOnce()).setWithVscConverterStations(pEntityUpdate.isWithVscConverterStations());
-        verify(pEntity, atMostOnce()).setWithNeutralPosition(pEntityUpdate.isWithNeutralPosition());
-        verify(pEntity, atMostOnce()).setInitialVoltageProfileMode(pEntityUpdate.getInitialVoltageProfileMode());
+        // verify the parameters has been update
+        checkParametersEntityHasBeenUpdate(pEntity, pEntityUpdate, "entity from dto");
+        // verify no unwanted actions have been done
         verifyNoMoreInteractions(pEntity, pDtoUpdate, pDtoUpdateParams);
     }
 
     @Test
     void testResetExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
-        final AnalysisParametersEntity pEntity = spy(AnalysisParametersEntity.builder().id(pUuid).build());
-        final AnalysisParametersEntity pEntityUpdate = new AnalysisParametersEntity(pUuid, true, false, false, true, StudyType.TRANSIENT, 20.0,
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
+        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid, true, false, false, true, StudyType.TRANSIENT, 20.0,
                 ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, false, false, true, true, InitialVoltageProfileMode.NOMINAL);
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         assertThat(shortCircuitService.updateOrResetParameters(pUuid, null)).as("service call result").isTrue();
+        // verify we search the correct uid
         verify(parametersRepository).findById(pUuid);
-        final ArgumentCaptor<AnalysisParametersEntity> entityCaptor = ArgumentCaptor.forClass(AnalysisParametersEntity.class);
+        // verify the parameters has been update
+        checkParametersEntityHasBeenUpdate(pEntity, pEntityUpdate, "default entity");
+        // verify no unwanted actions have been done
+        verifyNoMoreInteractions(pEntity);
+    }
+
+    private void checkParametersEntityHasBeenUpdate(final ShortCircuitParametersEntity pEntity,
+                                                    final ShortCircuitParametersEntity pEntityUpdate, final String pEntityUpdateDesc) {
+        final ArgumentCaptor<ShortCircuitParametersEntity> entityCaptor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
         verify(pEntity).updateWith(entityCaptor.capture());
-        assertThat(entityCaptor.getValue()).as("default entity").usingRecursiveComparison().ignoringFields("id").isEqualTo(pEntityUpdate);
-        verify(pEntity).isWithLimitViolations();
-        verify(pEntity).isWithVoltageResult();
-        verify(pEntity).isWithFortescueResult();
-        verify(pEntity).isWithFeederResult();
-        verify(pEntity).getStudyType();
-        verify(pEntity).getMinVoltageDropProportionalThreshold();
-        verify(pEntity).getPredefinedParameters();
-        verify(pEntity).isWithLoads();
-        verify(pEntity).isWithShuntCompensators();
-        verify(pEntity).isWithVscConverterStations();
-        verify(pEntity).isWithNeutralPosition();
-        verify(pEntity).getInitialVoltageProfileMode();
+        assertThat(entityCaptor.getValue()).as(pEntityUpdateDesc)
+            .usingRecursiveComparison().ignoringFields("id").isEqualTo(pEntityUpdate);
+
+        // verify the entity has been at least compared with candidate update entity
+        checkParametersEntityHasBeenRead(pEntity);
+
+        // verify possible updates (to pass verifyNoMoreInteractions)
         verify(pEntity, atMostOnce()).setWithLimitViolations(pEntityUpdate.isWithLimitViolations());
         verify(pEntity, atMostOnce()).setWithVoltageResult(pEntityUpdate.isWithVoltageResult());
         verify(pEntity, atMostOnce()).setWithFortescueResult(pEntityUpdate.isWithFortescueResult());
@@ -333,6 +308,5 @@ class ShortCircuitServiceTest implements WithAssertions {
         verify(pEntity, atMostOnce()).setWithVscConverterStations(pEntityUpdate.isWithVscConverterStations());
         verify(pEntity, atMostOnce()).setWithNeutralPosition(pEntityUpdate.isWithNeutralPosition());
         verify(pEntity, atMostOnce()).setInitialVoltageProfileMode(pEntityUpdate.getInitialVoltageProfileMode());
-        verifyNoMoreInteractions(pEntity);
     }
 }

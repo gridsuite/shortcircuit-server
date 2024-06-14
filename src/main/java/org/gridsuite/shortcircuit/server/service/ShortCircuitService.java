@@ -132,9 +132,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
     }
 
-    private static AnalysisParametersEntity toEntity(ShortCircuitParametersInfos parametersInfos) {
+    private static ShortCircuitParametersEntity toEntity(ShortCircuitParametersInfos parametersInfos) {
         final ShortCircuitParameters parameters = parametersInfos.parameters();
-        return new AnalysisParametersEntity(
+        return new ShortCircuitParametersEntity(
             parameters.isWithLimitViolations(),
             parameters.isWithVoltageResult(),
             parameters.isWithFortescueResult(),
@@ -150,7 +150,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         );
     }
 
-    private static ShortCircuitParametersInfos fromEntity(AnalysisParametersEntity entity) {
+    private static ShortCircuitParametersInfos fromEntity(ShortCircuitParametersEntity entity) {
         Objects.requireNonNull(entity);
         return new ShortCircuitParametersInfos(
             entity.getPredefinedParameters(),
@@ -172,7 +172,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static ShortCircuitParametersInfos getDefaultDtoParameters() {
-        return fromEntity(new AnalysisParametersEntity());
+        return fromEntity(new ShortCircuitParametersEntity());
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
@@ -385,20 +385,20 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     @Transactional
     public Optional<UUID> duplicateParameters(UUID sourceParametersUuid) {
         return parametersRepository.findById(sourceParametersUuid)
-                                   .map(AnalysisParametersEntity::new)
+                                   .map(ShortCircuitParametersEntity::new)
                                    .map(parametersRepository::save)
-                                   .map(AnalysisParametersEntity::getId);
+                                   .map(ShortCircuitParametersEntity::getId);
     }
 
     public UUID createParameters(@Nullable final ShortCircuitParametersInfos parameters) {
-        return parametersRepository.save(parameters != null ? toEntity(parameters) : new AnalysisParametersEntity()).getId();
+        return parametersRepository.save(parameters != null ? toEntity(parameters) : new ShortCircuitParametersEntity()).getId();
     }
 
     @Transactional
     public boolean updateOrResetParameters(final UUID parametersUuid, @Nullable final ShortCircuitParametersInfos givenParameters) {
         return parametersRepository.findById(parametersUuid)
             .map(parameters -> {
-                parameters.updateWith(givenParameters != null ? toEntity(givenParameters) : new AnalysisParametersEntity());
+                parameters.updateWith(givenParameters != null ? toEntity(givenParameters) : new ShortCircuitParametersEntity());
                 return true;
             })
             .orElse(false);

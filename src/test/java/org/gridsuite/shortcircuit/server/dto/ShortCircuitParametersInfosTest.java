@@ -15,23 +15,20 @@ import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.test.context.ContextConfiguration;
 
-import java.util.Collection;
-import java.util.List;
-
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.CEI909_VOLTAGE_PROFILE;
 
 @ContextConfiguration(classes = { RestTemplateConfig.class })
 @JsonTest
 class ShortCircuitParametersInfosTest implements WithAssertions {
+    private static final String DUMB_JSON = "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.3\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
+
     @Autowired
     ObjectMapper objectMapper;
 
@@ -68,14 +65,15 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
         );
     }
 
-    @TestFactory
-    Collection<DynamicTest> shouldIgnoreCei909VoltageRangesWhenDeserialize() {
-        final String dumbJson = "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.3\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
-        return List.of(
-            DynamicTest.dynamicTest("JSON with VoltageRange", () -> assertThatNoException().as("DTO with CEI909 field")
-                    .isThrownBy(() -> objectMapper.readValue("{" + dumbJson + ", \"cei909VoltageRanges\":[null,null]}", ShortCircuitParametersInfos.class))),
-            DynamicTest.dynamicTest("JSON without VoltageRange", () -> assertThatNoException().as("DTO without CEI909 field")
-                    .isThrownBy(() -> objectMapper.readValue("{" + dumbJson + "}", ShortCircuitParametersInfos.class)))
-        );
+    @Test
+    void shouldIgnoreCei909VoltageRangesWhenDeserializeJsonWithVoltageRange() {
+        assertThatNoException().as("DTO with CEI909 field")
+            .isThrownBy(() -> objectMapper.readValue("{" + DUMB_JSON + ", \"cei909VoltageRanges\":[null,null]}", ShortCircuitParametersInfos.class));
+    }
+
+    @Test
+    void shouldIgnoreCei909VoltageRangesWhenDeserializeJsonWithoutVoltageRange() {
+        assertThatNoException().as("DTO without CEI909 field")
+            .isThrownBy(() -> objectMapper.readValue("{" + DUMB_JSON + "}", ShortCircuitParametersInfos.class));
     }
 }
