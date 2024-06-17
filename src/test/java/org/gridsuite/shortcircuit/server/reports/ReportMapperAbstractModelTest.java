@@ -10,6 +10,7 @@ import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.ReportNodeNoOp;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -22,20 +23,20 @@ class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
 
     private final AbstractReportMapper reportMapper = new AbstractReportMapper() {
         @Override
-        protected ReportNode forShortCircuitAnalysis(@NonNull ReportNode reportNode) {
+        protected ReportNode forShortCircuitAnalysis(@NonNull ReportNode reportNode, ShortCircuitRunContext runContext) {
             return reportNode;
         }
     };
 
     @Test
     void testEmptyReporter() {
-        assertThat(reportMapper.processReporter(ReportNode.NO_OP)).isInstanceOf(ReportNodeNoOp.class).isSameAs(ReportNode.NO_OP);
+        assertThat(reportMapper.processReporter(ReportNode.NO_OP, null)).isInstanceOf(ReportNodeNoOp.class).isSameAs(ReportNode.NO_OP);
     }
 
     @Test
     void testIgnoreOthersReportModels() {
         ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "Test node").build();
-        assertThat(reportMapper.processReporter(reportNode)).isSameAs(reportNode);
+        assertThat(reportMapper.processReporter(reportNode, null)).isSameAs(reportNode);
     }
 
     @ParameterizedTest
@@ -55,7 +56,7 @@ class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
                 .withUntypedValue("generator", "TestGenerator")
                 .add();
 
-        assertThat(reportMapper.processReporter(reportNode))
+        assertThat(reportMapper.processReporter(reportNode, null))
                 .isNotSameAs(reportNode)
                 .usingRecursiveComparison(ASSERTJ_RECURSIVE_COMPARISON_CONFIGURATION)
                 .isEqualTo(reportNode);
