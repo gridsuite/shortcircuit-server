@@ -137,7 +137,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return new ShortCircuitParametersEntity(
             parameters.isWithLimitViolations(),
             parameters.isWithVoltageResult(),
-            parameters.isWithFortescueResult(),
             parameters.isWithFeederResult(),
             parameters.getStudyType(),
             parameters.getMinVoltageDropProportionalThreshold(),
@@ -160,7 +159,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 .setWithFeederResult(entity.isWithFeederResult())
                 .setWithLimitViolations(entity.isWithLimitViolations())
                 .setWithVoltageResult(entity.isWithVoltageResult())
-                .setWithFortescueResult(entity.isWithFortescueResult())
                 .setWithLoads(entity.isWithLoads())
                 .setWithShuntCompensators(entity.isWithShuntCompensators())
                 .setWithVSCConverterStations(entity.isWithVscConverterStations())

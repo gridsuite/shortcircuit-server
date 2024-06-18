@@ -50,7 +50,7 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
                                                                .put("withFeederResult", true)
                                                                .put("studyType", "TRANSIENT")
                                                                .put("minVoltageDropProportionalThreshold", 0.0)
-                                                               .put("withFortescueResult", true)
+                                                               //.put("withFortescueResult", true)
                                                                .put("withLoads", true)
                                                                .put("withShuntCompensators", true)
                                                                .put("withVSCConverterStations", true)

@@ -81,7 +81,6 @@ class ShortCircuitServiceTest implements WithAssertions {
     private void checkParametersEntityHasBeenRead(final ShortCircuitParametersEntity pEntity) {
         verify(pEntity).isWithLimitViolations();
         verify(pEntity).isWithVoltageResult();
-        verify(pEntity).isWithFortescueResult();
         verify(pEntity).isWithFeederResult();
         verify(pEntity).getStudyType();
         verify(pEntity).getMinVoltageDropProportionalThreshold();
@@ -106,7 +105,7 @@ class ShortCircuitServiceTest implements WithAssertions {
     void testGetExistingParametersAndConversionToDto() {
         final UUID pUuid = UUID.randomUUID();
         final double minVoltDrop = new Random().nextDouble();
-        final ShortCircuitParametersEntity pEntity = spy(new ShortCircuitParametersEntity(pUuid, false, false, false, false, StudyType.STEADY_STATE, minVoltDrop,
+        final ShortCircuitParametersEntity pEntity = spy(new ShortCircuitParametersEntity(pUuid, false, false, false, StudyType.STEADY_STATE, minVoltDrop,
                 ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, false, false, false, false, InitialVoltageProfileMode.NOMINAL));
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         //can't spy call to fromEntity()
@@ -115,7 +114,6 @@ class ShortCircuitServiceTest implements WithAssertions {
                         ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters()
                         .setWithLimitViolations(false)
                         .setWithVoltageResult(false)
-                        .setWithFortescueResult(false)
                         .setWithFeederResult(false)
                         .setStudyType(StudyType.STEADY_STATE)
                         .setMinVoltageDropProportionalThreshold(minVoltDrop)
@@ -188,7 +186,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(new ShortCircuitParametersEntity(
                 ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
                 ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
-                ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
+                //ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
                 ShortCircuitConstants.DEFAULT_WITH_FEEDER_RESULT,
                 ShortCircuitConstants.DEFAULT_STUDY_TYPE,
                 ShortCircuitConstants.DEFAULT_MIN_VOLTAGE_DROP_PROPORTIONAL_THRESHOLD,
@@ -232,7 +230,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid,
             ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
             ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
-            ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
+            //ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
             ShortCircuitConstants.DEFAULT_WITH_FEEDER_RESULT,
             ShortCircuitConstants.DEFAULT_STUDY_TYPE,
             ShortCircuitConstants.DEFAULT_MIN_VOLTAGE_DROP_PROPORTIONAL_THRESHOLD,
@@ -254,7 +252,6 @@ class ShortCircuitServiceTest implements WithAssertions {
         verify(pDtoUpdate).predefinedParameters();
         verify(pDtoUpdateParams).isWithLimitViolations();
         verify(pDtoUpdateParams).isWithVoltageResult();
-        verify(pDtoUpdateParams).isWithFortescueResult();
         verify(pDtoUpdateParams).isWithFeederResult();
         verify(pDtoUpdateParams).getStudyType();
         verify(pDtoUpdateParams).getMinVoltageDropProportionalThreshold();
@@ -273,7 +270,7 @@ class ShortCircuitServiceTest implements WithAssertions {
     void testResetExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
-        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid, true, false, false, true, StudyType.TRANSIENT, 20.0,
+        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid, true, false, true, StudyType.TRANSIENT, 20.0,
                 ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, false, false, true, true, InitialVoltageProfileMode.NOMINAL);
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         assertThat(shortCircuitService.updateOrResetParameters(pUuid, null)).as("service call result").isTrue();

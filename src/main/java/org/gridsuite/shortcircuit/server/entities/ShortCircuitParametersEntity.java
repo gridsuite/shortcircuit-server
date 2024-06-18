@@ -28,18 +28,17 @@ import java.util.UUID;
 @Table(name = "shortcircuit_parameters")
 public class ShortCircuitParametersEntity {
 
-    public ShortCircuitParametersEntity(boolean withLimitViolations, boolean withVoltageResult, boolean withFortescueResult, boolean withFeederResult,
-                                        StudyType studyType, double minVoltageDropProportionalThreshold, ShortCircuitPredefinedConfiguration predefinedParameters,
+    public ShortCircuitParametersEntity(boolean withLimitViolations, boolean withVoltageResult, boolean withFeederResult, StudyType studyType,
+                                        double minVoltageDropProportionalThreshold, ShortCircuitPredefinedConfiguration predefinedParameters,
                                         boolean withLoads, boolean withShuntCompensators, boolean withVscConverterStations, boolean withNeutralPosition,
                                         InitialVoltageProfileMode initialVoltageProfileMode) {
-        this(null, withLimitViolations, withVoltageResult, withFortescueResult, withFeederResult, studyType, minVoltageDropProportionalThreshold,
+        this(null, withLimitViolations, withVoltageResult, withFeederResult, studyType, minVoltageDropProportionalThreshold,
                 predefinedParameters, withLoads, withShuntCompensators, withVscConverterStations, withNeutralPosition, initialVoltageProfileMode);
     }
 
     public ShortCircuitParametersEntity(@NonNull final ShortCircuitParametersEntity sourceToClone) {
         this(sourceToClone.isWithLimitViolations(),
             sourceToClone.isWithVoltageResult(),
-            sourceToClone.isWithFortescueResult(),
             sourceToClone.isWithFeederResult(),
             sourceToClone.getStudyType(),
             sourceToClone.getMinVoltageDropProportionalThreshold(),
@@ -63,10 +62,6 @@ public class ShortCircuitParametersEntity {
     @Builder.Default
     @Column(name = "withVoltageResult", columnDefinition = "boolean default false")
     private boolean withVoltageResult = false;
-
-    @Builder.Default
-    @Column(name = "withFortescueResult", columnDefinition = "boolean default false")
-    private boolean withFortescueResult = false;
 
     @Builder.Default
     @Column(name = "withFeederResult", columnDefinition = "boolean default true")
@@ -110,7 +105,6 @@ public class ShortCircuitParametersEntity {
     public ShortCircuitParametersEntity updateWith(final ShortCircuitParametersEntity source) {
         return this.setWithLimitViolations(source.isWithLimitViolations())
                    .setWithVoltageResult(source.isWithVoltageResult())
-                   .setWithFortescueResult(source.isWithFortescueResult())
                    .setWithFeederResult(source.isWithFeederResult())
                    .setStudyType(source.getStudyType())
                    .setMinVoltageDropProportionalThreshold(source.getMinVoltageDropProportionalThreshold())

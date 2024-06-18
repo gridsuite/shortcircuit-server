@@ -12,12 +12,11 @@
             <column name="predefined_parameters" type="VARCHAR(255)"/>
             <column name="study_type" type="VARCHAR(255)"/>
             <column defaultValueBoolean="true" name="with_feeder_result" type="BOOLEAN"/>
-            <column defaultValueBoolean="true" name="with_fortescue_result" type="BOOLEAN"/>
             <column defaultValueBoolean="true" name="with_limit_violations" type="BOOLEAN"/>
             <column defaultValueBoolean="false" name="with_loads" type="BOOLEAN"/>
             <column defaultValueBoolean="true" name="with_neutral_position" type="BOOLEAN"/>
             <column defaultValueBoolean="false" name="with_shunt_compensators" type="BOOLEAN"/>
-            <column defaultValueBoolean="true" name="with_voltage_result" type="BOOLEAN"/>
+            <column defaultValueBoolean="false" name="with_voltage_result" type="BOOLEAN"/>
             <column defaultValueBoolean="true" name="with_vsc_converter_stations" type="BOOLEAN"/>
         </createTable>
     </changeSet>

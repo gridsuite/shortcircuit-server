@@ -27,7 +27,7 @@ class ShortCircuitParametersEntityTest implements WithAssertions {
         ShortCircuitParametersEntity entity2 = new ShortCircuitParametersEntity(
                 ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
                 ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
-                ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
+                //ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
                 ShortCircuitConstants.DEFAULT_WITH_FEEDER_RESULT,
                 ShortCircuitConstants.DEFAULT_STUDY_TYPE,
                 ShortCircuitConstants.DEFAULT_MIN_VOLTAGE_DROP_PROPORTIONAL_THRESHOLD,
