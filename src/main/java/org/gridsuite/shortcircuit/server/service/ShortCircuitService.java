@@ -67,10 +67,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
                                  String userId, String busId, final Optional<UUID> parametersUuid) {
-        ShortCircuitParameters parameters = parametersUuid.flatMap(parametersRepository::findById)
-                                                          .map(ShortCircuitService::fromEntity)
-                                                          .map(ShortCircuitParametersInfos::parameters)
-                                                          .orElseGet(() -> getDefaultDtoParameters().parameters());
+        ShortCircuitParameters parameters = fromEntity(parametersUuid.flatMap(parametersRepository::findById).orElseGet(ShortCircuitParametersEntity::new)).parameters();
         parameters.setWithFortescueResult(StringUtils.isBlank(busId));
         parameters.setDetailedReport(false);
         return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId, null, busId));
@@ -167,10 +164,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
                 .setVoltageRanges(InitialVoltageProfileMode.CONFIGURED.equals(entity.getInitialVoltageProfileMode()) ? CEI909_VOLTAGE_PROFILE : null)
         );
-    }
-
-    private static ShortCircuitParametersInfos getDefaultDtoParameters() {
-        return fromEntity(new ShortCircuitParametersEntity());
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
