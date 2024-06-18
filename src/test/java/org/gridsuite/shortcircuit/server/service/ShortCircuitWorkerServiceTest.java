@@ -48,7 +48,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith({ MockitoExtension.class })
 @Slf4j
-class ShortCircuitServiceTest implements WithAssertions {
+class ShortCircuitWorkerServiceTest implements WithAssertions {
 
     @Mock
     private NetworkStoreService networkStoreService;
