@@ -47,7 +47,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
     private final String defaultParametersJson;
 
     public ShortCircuitParametersControllerTest() throws URISyntaxException, IOException {
-        this.defaultParametersJson = Files.readString(Paths.get(this.getClass().getResource(this.getClass().getName()).toURI()));
+        this.defaultParametersJson = Files.readString(Paths.get(this.getClass().getResource(this.getClass().getSimpleName() + ".json").toURI())).replaceAll("\\s+", "");
     }
 
     @Autowired

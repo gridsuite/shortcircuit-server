@@ -42,7 +42,7 @@ public class ShortCircuitController {
         this.shortCircuitService = shortCircuitService;
     }
 
-    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a short circuit analysis on a network")
     @ApiResponse(responseCode = "200", description = "The short circuit analysis has been performed")
     public ResponseEntity<UUID> runAndSave(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,

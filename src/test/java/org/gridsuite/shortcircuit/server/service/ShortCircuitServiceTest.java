@@ -292,21 +292,17 @@ class ShortCircuitServiceTest implements WithAssertions {
         assertThat(entityCaptor.getValue()).as(pEntityUpdateDesc)
             .usingRecursiveComparison().ignoringFields("id").isEqualTo(pEntityUpdate);
 
-        // verify the entity has been at least compared with candidate update entity
-        checkParametersEntityHasBeenRead(pEntity);
-
         // verify possible updates (to pass verifyNoMoreInteractions)
-        verify(pEntity, atMostOnce()).setWithLimitViolations(pEntityUpdate.isWithLimitViolations());
-        verify(pEntity, atMostOnce()).setWithVoltageResult(pEntityUpdate.isWithVoltageResult());
-        verify(pEntity, atMostOnce()).setWithFortescueResult(pEntityUpdate.isWithFortescueResult());
-        verify(pEntity, atMostOnce()).setWithFeederResult(pEntityUpdate.isWithFeederResult());
-        verify(pEntity, atMostOnce()).setStudyType(pEntityUpdate.getStudyType());
-        verify(pEntity, atMostOnce()).setMinVoltageDropProportionalThreshold(pEntityUpdate.getMinVoltageDropProportionalThreshold());
-        verify(pEntity, atMostOnce()).setPredefinedParameters(pEntityUpdate.getPredefinedParameters());
-        verify(pEntity, atMostOnce()).setWithLoads(pEntityUpdate.isWithLoads());
-        verify(pEntity, atMostOnce()).setWithShuntCompensators(pEntityUpdate.isWithShuntCompensators());
-        verify(pEntity, atMostOnce()).setWithVscConverterStations(pEntityUpdate.isWithVscConverterStations());
-        verify(pEntity, atMostOnce()).setWithNeutralPosition(pEntityUpdate.isWithNeutralPosition());
-        verify(pEntity, atMostOnce()).setInitialVoltageProfileMode(pEntityUpdate.getInitialVoltageProfileMode());
+        verify(pEntity).setWithLimitViolations(pEntityUpdate.isWithLimitViolations());
+        verify(pEntity).setWithVoltageResult(pEntityUpdate.isWithVoltageResult());
+        verify(pEntity).setWithFeederResult(pEntityUpdate.isWithFeederResult());
+        verify(pEntity).setStudyType(pEntityUpdate.getStudyType());
+        verify(pEntity).setMinVoltageDropProportionalThreshold(pEntityUpdate.getMinVoltageDropProportionalThreshold());
+        verify(pEntity).setPredefinedParameters(pEntityUpdate.getPredefinedParameters());
+        verify(pEntity).setWithLoads(pEntityUpdate.isWithLoads());
+        verify(pEntity).setWithShuntCompensators(pEntityUpdate.isWithShuntCompensators());
+        verify(pEntity).setWithVscConverterStations(pEntityUpdate.isWithVscConverterStations());
+        verify(pEntity).setWithNeutralPosition(pEntityUpdate.isWithNeutralPosition());
+        verify(pEntity).setInitialVoltageProfileMode(pEntityUpdate.getInitialVoltageProfileMode());
     }
 }
