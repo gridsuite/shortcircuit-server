@@ -68,7 +68,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
                                  String userId, String busId, final Optional<UUID> parametersUuid) {
         ShortCircuitParameters parameters = fromEntity(parametersUuid.flatMap(parametersRepository::findById).orElseGet(ShortCircuitParametersEntity::new)).parameters();
-        parameters.setWithFortescueResult(StringUtils.isBlank(busId));
+        parameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
         parameters.setDetailedReport(false);
         return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId, null, busId));
     }
