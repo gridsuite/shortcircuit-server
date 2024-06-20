@@ -8,7 +8,6 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
-import com.powsybl.shortcircuit.ShortCircuitConstants;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
 import org.assertj.core.api.WithAssertions;
@@ -178,27 +177,15 @@ class ShortCircuitServiceTest implements WithAssertions {
         final UUID pUuid = UUID.randomUUID();
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
         when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pEntity);
+        //dto that must have differences with defaults
         assertThat(shortCircuitService.createParameters(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters())))
                 .as("service call result").isEqualTo(pUuid);
         verify(pEntity).getId();
         final ArgumentCaptor<ShortCircuitParametersEntity> captor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
         verify(parametersRepository).save(captor.capture());
         assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(new ShortCircuitParametersEntity(
-                ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
-                ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
-                //ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
-                ShortCircuitConstants.DEFAULT_WITH_FEEDER_RESULT,
-                ShortCircuitConstants.DEFAULT_STUDY_TYPE,
-                ShortCircuitConstants.DEFAULT_MIN_VOLTAGE_DROP_PROPORTIONAL_THRESHOLD,
-                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909,
-                ShortCircuitConstants.DEFAULT_WITH_LOADS,
-                ShortCircuitConstants.DEFAULT_WITH_SHUNT_COMPENSATORS,
-                ShortCircuitConstants.DEFAULT_WITH_VSC_CONVERTER_STATIONS,
-                ShortCircuitConstants.DEFAULT_WITH_NEUTRAL_POSITION,
-                ShortCircuitConstants.DEFAULT_INITIAL_VOLTAGE_PROFILE_MODE
-                //ShortCircuitConstants.DEFAULT_SUB_TRANSIENT_COEFFICIENT
-                //ShortCircuitConstants.DEFAULT_DETAILED_REPORT
-        ));
+            true, true, true, StudyType.TRANSIENT, 0.0, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909,
+            true, true, true, false, InitialVoltageProfileMode.NOMINAL));
     }
 
     @Test
@@ -227,22 +214,9 @@ class ShortCircuitServiceTest implements WithAssertions {
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
         final ShortCircuitParameters pDtoUpdateParams = spy(new ShortCircuitParameters());
         final ShortCircuitParametersInfos pDtoUpdate = spy(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, pDtoUpdateParams));
-        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid,
-            ShortCircuitConstants.DEFAULT_WITH_LIMIT_VIOLATIONS,
-            ShortCircuitConstants.DEFAULT_WITH_VOLTAGE_RESULT,
-            //ShortCircuitConstants.DEFAULT_WITH_FORTESCUE_RESULT,
-            ShortCircuitConstants.DEFAULT_WITH_FEEDER_RESULT,
-            ShortCircuitConstants.DEFAULT_STUDY_TYPE,
-            ShortCircuitConstants.DEFAULT_MIN_VOLTAGE_DROP_PROPORTIONAL_THRESHOLD,
-            ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909,
-            ShortCircuitConstants.DEFAULT_WITH_LOADS,
-            ShortCircuitConstants.DEFAULT_WITH_SHUNT_COMPENSATORS,
-            ShortCircuitConstants.DEFAULT_WITH_VSC_CONVERTER_STATIONS,
-            ShortCircuitConstants.DEFAULT_WITH_NEUTRAL_POSITION,
-            ShortCircuitConstants.DEFAULT_INITIAL_VOLTAGE_PROFILE_MODE
-            //ShortCircuitConstants.DEFAULT_SUB_TRANSIENT_COEFFICIENT
-            //ShortCircuitConstants.DEFAULT_DETAILED_REPORT
-        );
+        //dto that must have differences with defaults
+        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid, true, true, true, StudyType.TRANSIENT, 0.0,
+            ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, true, true, true, false, InitialVoltageProfileMode.NOMINAL);
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         assertThat(shortCircuitService.updateOrResetParameters(pUuid, pDtoUpdate)).as("service call result").isTrue();
         // verify we search the correct uid
@@ -270,6 +244,7 @@ class ShortCircuitServiceTest implements WithAssertions {
     void testResetExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
+        //entity that must have differences with defaults
         final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid, true, false, true, StudyType.TRANSIENT, 20.0,
                 ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, false, false, true, true, InitialVoltageProfileMode.NOMINAL);
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
