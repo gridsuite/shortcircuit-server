@@ -276,11 +276,9 @@ class ShortCircuitParametersITest implements WithAssertions {
             Arguments.of(post("/v1/parameters"), status().isBadRequest()),
             Arguments.of(post("/v1/parameters").content("{}"), status().isBadRequest()),
             Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isBadRequest()),
-            //Arguments.of(post("/v1/parameters").contentType(MediaType.APPLICATION_JSON).content("{\"not\": \"valid\"}"), status().isBadRequest()),
             Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, ""), status().isBadRequest()),
             Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, UUID.randomUUID().toString()), status().isNotFound()),
             Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound())
-            //Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()).contentType(MediaType.APPLICATION_JSON).content("{\"not\": \"valid\"}"), status().isBadRequest())
         );
     }
 }
