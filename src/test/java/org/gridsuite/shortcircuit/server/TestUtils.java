@@ -21,10 +21,10 @@ import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
 
 import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
-import static com.vladmihalcea.sql.SQLStatementCountValidator.assertDeleteCount;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -32,6 +32,13 @@ import static org.junit.Assert.assertNull;
  */
 public final class TestUtils {
     private static final long TIMEOUT = 100;
+
+    /**
+     * Matcher for {@link java.util.UUID UUID v4}.
+     * @apiNote JRE UUID is v4 from Java 5 to 20, and v5 since JRE 21
+     */
+    public static final Pattern UUID_V4 = Pattern.compile("[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}", Pattern.CASE_INSENSITIVE);
+    public static final Pattern UUID_IN_JSON = Pattern.compile("^\"" + UUID_V4.pattern() + "\"$", Pattern.CASE_INSENSITIVE);
 
     private TestUtils() {
         throw new IllegalStateException("Not implemented exception");

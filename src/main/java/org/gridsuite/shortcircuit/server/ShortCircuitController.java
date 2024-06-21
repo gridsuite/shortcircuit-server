@@ -52,7 +52,7 @@ public class ShortCircuitController {
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false) String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
-                                           @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid") Optional<UUID> parametersUuid,
+                                           @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid", required = false) Optional<UUID> parametersUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         return ResponseEntity.ok().contentType(APPLICATION_JSON).body(shortCircuitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, busId, parametersUuid));
     }
