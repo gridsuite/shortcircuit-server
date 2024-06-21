@@ -1,0 +1,42 @@
+{
+  "predefinedParameters": null,
+  "parameters": null,
+  "cei909VoltageRanges": [
+    {
+      "range": {
+        "comparator": "INSTANCE",
+        "maximum": 199.99,
+        "minimum": 10.0,
+        "naturalOrdering": true
+      },
+      "rangeCoefficient": 1.1,
+      "voltage": "NaN",
+      "minimumNominalVoltage": 10.0,
+      "maximumNominalVoltage": 199.99
+    },
+    {
+      "range": {
+        "comparator": "INSTANCE",
+        "maximum": 299.99,
+        "minimum": 200.0,
+        "naturalOrdering": true
+      },
+      "rangeCoefficient": 1.09,
+      "voltage": "NaN",
+      "minimumNominalVoltage": 200.0,
+      "maximumNominalVoltage": 299.99
+    },
+    {
+      "range": {
+        "comparator": "INSTANCE",
+        "maximum": 500.0,
+        "minimum": 300.0,
+        "naturalOrdering": true
+      },
+      "rangeCoefficient": 1.05,
+      "voltage": "NaN",
+      "minimumNominalVoltage": 300.0,
+      "maximumNominalVoltage": 500.0
+    }
+  ]
+}
