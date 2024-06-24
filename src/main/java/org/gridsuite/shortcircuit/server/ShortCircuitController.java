@@ -8,16 +8,12 @@ package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.powsybl.security.LimitViolationType;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.shortcircuit.server.dto.*;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +21,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
 import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
@@ -44,18 +42,9 @@ public class ShortCircuitController {
         this.shortCircuitService = shortCircuitService;
     }
 
-    private static ShortCircuitParameters getNonNullParameters(ShortCircuitParameters parameters) {
-        ShortCircuitParameters shortCircuitParameters = parameters != null ? parameters : new ShortCircuitParameters();
-        shortCircuitParameters.setDetailedReport(false);
-        return shortCircuitParameters;
-    }
-
-    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a short circuit analysis on a network")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200",
-                                        description = "The short circuit analysis has been performed",
-                                        content = {@Content(mediaType = APPLICATION_JSON_VALUE,
-                                                            schema = @Schema(implementation = ShortCircuitParameters.class))})})
+    @ApiResponse(responseCode = "200", description = "The short circuit analysis has been performed")
     public ResponseEntity<UUID> runAndSave(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
                                            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
@@ -63,12 +52,9 @@ public class ShortCircuitController {
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false) String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
-                                           @RequestBody(required = false) ShortCircuitParameters parameters,
+                                           @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid") Optional<UUID> parametersUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        ShortCircuitParameters nonNullParameters = getNonNullParameters(parameters);
-        ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, variantId, receiver, nonNullParameters, reportUuid, reporterId, reportType, userId, null, busId);
-        UUID resultUuid = shortCircuitService.runAndSaveResult(runContext);
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
+        return ResponseEntity.ok().contentType(APPLICATION_JSON).body(shortCircuitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, busId, parametersUuid));
     }
 
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
@@ -181,5 +167,4 @@ public class ShortCircuitController {
     public ResponseEntity<List<LimitViolationType>> getLimitTypes(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(shortCircuitService.getLimitTypes(resultUuid));
     }
-
 }
