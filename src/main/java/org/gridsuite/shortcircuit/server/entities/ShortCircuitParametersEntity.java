@@ -56,15 +56,15 @@ public class ShortCircuitParametersEntity {
     private UUID id;
 
     @Builder.Default
-    @Column(name = "withLimitViolations", columnDefinition = "boolean default true")
+    @Column(name = "withLimitViolations", nullable = false, columnDefinition = "boolean default true")
     private boolean withLimitViolations = true;
 
     @Builder.Default
-    @Column(name = "withVoltageResult", columnDefinition = "boolean default false")
+    @Column(name = "withVoltageResult", nullable = false, columnDefinition = "boolean default false")
     private boolean withVoltageResult = false;
 
     @Builder.Default
-    @Column(name = "withFeederResult", columnDefinition = "boolean default true")
+    @Column(name = "withFeederResult", nullable = false, columnDefinition = "boolean default true")
     private boolean withFeederResult = true;
 
     @Builder.Default
@@ -73,7 +73,7 @@ public class ShortCircuitParametersEntity {
     private StudyType studyType = StudyType.TRANSIENT;
 
     @Builder.Default
-    @Column(name = "minVoltageDropProportionalThreshold", columnDefinition = "double precision default 20.0")
+    @Column(name = "minVoltageDropProportionalThreshold", nullable = false, columnDefinition = "double precision default 20.0")
     private double minVoltageDropProportionalThreshold = 20.0;
 
     @Builder.Default
@@ -82,19 +82,19 @@ public class ShortCircuitParametersEntity {
     private ShortCircuitPredefinedConfiguration predefinedParameters = ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP;
 
     @Builder.Default
-    @Column(name = "withLoads", columnDefinition = "boolean default false")
+    @Column(name = "withLoads", nullable = false, columnDefinition = "boolean default false")
     private boolean withLoads = false;
 
     @Builder.Default
-    @Column(name = "withShuntCompensators", columnDefinition = "boolean default false")
+    @Column(name = "withShuntCompensators", nullable = false, columnDefinition = "boolean default false")
     private boolean withShuntCompensators = false;
 
     @Builder.Default
-    @Column(name = "withVscConverterStations", columnDefinition = "boolean default true")
+    @Column(name = "withVscConverterStations", nullable = false, columnDefinition = "boolean default true")
     private boolean withVscConverterStations = true;
 
     @Builder.Default
-    @Column(name = "withNeutralPosition", columnDefinition = "boolean default true")
+    @Column(name = "withNeutralPosition", nullable = false, columnDefinition = "boolean default true")
     private boolean withNeutralPosition = true;
 
     @Builder.Default
