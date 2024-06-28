@@ -9,7 +9,7 @@ package org.gridsuite.shortcircuit.server.service;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
-import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationResultService;
+import com.powsybl.ws.commons.computation.service.AbstractComputationResultService;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;

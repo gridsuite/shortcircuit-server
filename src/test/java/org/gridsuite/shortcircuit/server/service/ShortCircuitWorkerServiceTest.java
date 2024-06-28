@@ -23,9 +23,9 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.TestUtils;
-import org.gridsuite.shortcircuit.server.computation.service.ExecutionService;
-import org.gridsuite.shortcircuit.server.computation.service.NotificationService;
-import org.gridsuite.shortcircuit.server.computation.service.ReportService;
+import com.powsybl.ws.commons.computation.service.ExecutionService;
+import com.powsybl.ws.commons.computation.service.NotificationService;
+import com.powsybl.ws.commons.computation.service.ReportService;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,13 +57,13 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
     private ReportService reportService;
 
     @Mock
-    private ExecutionService shortCircuitExecutionService;
+    private ExecutionService executionService;
 
     @Mock
     private NotificationService notificationService;
 
     @Mock
-    private ShortCircuitAnalysisResultService resultRepository;
+    private ShortCircuitAnalysisResultService resultService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -84,9 +84,9 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         workerService = new ShortCircuitWorkerService(
                 networkStoreService,
                 reportService,
-                shortCircuitExecutionService,
+                executionService,
                 notificationService,
-                resultRepository,
+                resultService,
                 objectMapper,
                 Collections.singletonList(reportMapper),
                 new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
@@ -137,6 +137,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         var busId = "bus1";
 
         when(runContext.getBusId()).thenReturn(busId);
+        when(runContext.getNetwork()).thenReturn(network);
         when(networkStoreService.getNetwork(any(), any())).thenReturn(network);
         doReturn(busbarSection).when(network).getIdentifiable(busId);
         when(network.getVariantManager()).thenReturn(variantManager);

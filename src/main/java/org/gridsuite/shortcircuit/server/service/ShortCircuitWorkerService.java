@@ -14,7 +14,7 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
-import org.gridsuite.shortcircuit.server.computation.service.*;
+import com.powsybl.ws.commons.computation.service.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
@@ -88,14 +88,14 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
-    protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(Network network, ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
-        List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(network, runContext) : getBusFaultFromBusId(network, runContext);
-        return ShortCircuitAnalysis.runAsync(network, faults, runContext.getParameters(), executionService.getComputationManager(), List.of(), runContext.getReportNode());
+    protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
+        List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(runContext) : getBusFaultFromBusId(runContext);
+        return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, runContext.getParameters(), executionService.getComputationManager(), List.of(), runContext.getReportNode());
     }
 
-    private List<Fault> getAllBusfaultFromNetwork(Network network, ShortCircuitRunContext context) {
+    private List<Fault> getAllBusfaultFromNetwork(ShortCircuitRunContext context) {
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
-        List<Fault> faults = network.getBusView().getBusStream()
+        List<Fault> faults = context.getNetwork().getBusView().getBusStream()
                 .map(bus -> {
                     IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                     if (shortCircuitExtension != null) {
@@ -108,9 +108,9 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         return faults;
     }
 
-    private List<Fault> getBusFaultFromBusId(Network network, ShortCircuitRunContext context) {
+    private List<Fault> getBusFaultFromBusId(ShortCircuitRunContext context) {
         String busId = context.getBusId();
-        Identifiable<?> identifiable = network.getIdentifiable(busId);
+        Identifiable<?> identifiable = context.getNetwork().getIdentifiable(busId);
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
         if (identifiable instanceof BusbarSection busbarSection) {
@@ -155,7 +155,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
-    public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode) {
+    public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode, ShortCircuitAnalysisResult ignoredResult) {
         if (runContext.getReportInfos().reportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
                 rootReportNode.set(reportMapper.processReporter(rootReportNode.get()));
