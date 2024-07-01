@@ -9,13 +9,12 @@ package org.gridsuite.shortcircuit.server.service;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
+import lombok.Setter;
 import org.gridsuite.shortcircuit.server.computation.dto.ReportInfos;
 import org.gridsuite.shortcircuit.server.computation.service.AbstractComputationRunContext;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -23,16 +22,15 @@ import java.util.UUID;
 @Getter
 public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortCircuitParameters> {
 
+    @Setter
     private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
     private String busId;
+    @Setter
+    private List<String> inconsistentVoltageLevels = new ArrayList<>();
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
                                   UUID reportUuid, String reporterId, String reportType, String userId, String provider, String busId) {
         super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, provider, parameters, ReportNode.NO_OP);
         this.busId = busId;
-    }
-
-    public void setShortCircuitLimits(Map<String, ShortCircuitLimits> shortCircuitLimits) {
-        this.shortCircuitLimits = shortCircuitLimits;
     }
 }

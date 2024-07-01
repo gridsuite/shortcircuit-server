@@ -21,6 +21,7 @@ public class ShortCircuitException extends RuntimeException {
         RESULT_NOT_FOUND,
         INVALID_EXPORT_PARAMS,
         FILE_EXPORT_ERROR,
+        INCONSISTENT_VOLTAGE_LEVELS
     }
 
     private final Type type;
@@ -33,9 +34,5 @@ public class ShortCircuitException extends RuntimeException {
     public ShortCircuitException(Type type, String message) {
         super(message);
         this.type = type;
-    }
-
-    public Type getType() {
-        return type;
     }
 }

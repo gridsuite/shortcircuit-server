@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.INCONSISTENT_VOLTAGE_LEVELS;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
@@ -55,6 +56,11 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     protected ShortCircuitResultContext fromMessage(Message<String> message) {
         return ShortCircuitResultContext.fromMessage(message, objectMapper);
+    }
+
+    @Override
+    protected void postFailedResult(UUID resultId) {
+        resultService.insertStatus(Collections.singletonList(resultId), ShortCircuitAnalysisStatus.FAILED);
     }
 
     @Override
@@ -155,10 +161,29 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
+    public void preRun(Network network, ShortCircuitRunContext resultContext) {
+        checkInconsistentVoltageLevels(network, resultContext);
+    }
+
+    private void checkInconsistentVoltageLevels(Network network, ShortCircuitRunContext resultContext) {
+        List<String> inconsistentVoltageLevels = new ArrayList<>();
+        network.getBusView().getBusStream().forEach(bus -> {
+            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+            if (shortCircuitExtension != null && shortCircuitExtension.getIpMin() > shortCircuitExtension.getIpMax()) {
+                    inconsistentVoltageLevels.add(bus.getVoltageLevel().getId());
+                }
+        });
+        if (!inconsistentVoltageLevels.isEmpty()) {
+            resultContext.setInconsistentVoltageLevels(inconsistentVoltageLevels);
+            throw new ShortCircuitException(INCONSISTENT_VOLTAGE_LEVELS, "Some voltage levels have wrong ip values check logs to find which");
+        }
+    }
+
+    @Override
     public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode) {
         if (runContext.getReportInfos().reportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReportNode.set(reportMapper.processReporter(rootReportNode.get()));
+                rootReportNode.set(reportMapper.processReporter(rootReportNode.get(), runContext));
             }
             observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReportNode.get()));
         }

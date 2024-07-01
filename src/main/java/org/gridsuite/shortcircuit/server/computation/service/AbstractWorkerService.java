@@ -14,6 +14,7 @@ import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.INCONSISTENT_VOLTAGE_LEVELS;
 
 /**
  * @author Mathieu Deharbe <mathieu.deharbe at rte-france.com>
@@ -117,16 +120,19 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
         return result != null;
     }
 
+    protected abstract void postFailedResult(UUID resultId);
+
     public Consumer<Message<String>> consumeRun() {
         return message -> {
             AbstractResultContext<R> resultContext = fromMessage(message);
+            AtomicReference<ReportNode> rootReporter = new AtomicReference<>(ReportNode.NO_OP);
             try {
                 AtomicReference<Long> startTime = new AtomicReference<>();
                 startTime.set(System.nanoTime());
 
                 Network network = getNetwork(resultContext.getRunContext().getNetworkUuid(),
                         resultContext.getRunContext().getVariantId());
-                S result = run(network, resultContext.getRunContext(), resultContext.getResultUuid());
+                S result = run(network, resultContext.getRunContext(), resultContext.getResultUuid(), rootReporter);
 
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
@@ -143,11 +149,16 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
-                if (!(e instanceof CancellationException)) {
+                if (e instanceof ShortCircuitException shortCircuitException && shortCircuitException.getType().equals(INCONSISTENT_VOLTAGE_LEVELS)) {
+                    postRun(resultContext.getRunContext(), rootReporter);
+                    publishFail(resultContext, e.getMessage());
+                } else if (!(e instanceof CancellationException)) {
                     LOGGER.error(NotificationService.getFailedMessage(getComputationType()), e);
                     publishFail(resultContext, e.getMessage());
                     resultService.delete(resultContext.getResultUuid());
                 }
+                postFailedResult(resultContext.resultUuid);
+                sendResultMessage(resultContext, null);
             } finally {
                 futures.remove(resultContext.getResultUuid());
                 cancelComputationRequests.remove(resultContext.getResultUuid());
@@ -175,13 +186,12 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
      * Do some extra task before running the computation, e.g. print log or init extra data for the run context
      * @param ignoredRunContext This context may be used for further computation in overriding classes
      */
-    protected void preRun(R ignoredRunContext) {
+    protected void preRun(Network network, R ignoredRunContext) {
         LOGGER.info("Run {} computation ...", getComputationType());
     }
 
-    protected S run(Network network, R runContext, UUID resultUuid) throws Exception {
+    protected S run(Network network, R runContext, UUID resultUuid,  AtomicReference<ReportNode> rootReporter) throws Exception {
         String provider = runContext.getProvider();
-        AtomicReference<ReportNode> rootReporter = new AtomicReference<>(ReportNode.NO_OP);
         ReportNode reportNode = ReportNode.NO_OP;
 
         if (runContext.getReportInfos() != null && runContext.getReportInfos().reportUuid() != null) {
@@ -196,7 +206,7 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
         }
         runContext.setReportNode(reportNode);
 
-        preRun(runContext);
+        preRun(network, runContext);
         CompletableFuture<S> future = runAsync(network, runContext, provider, resultUuid);
         S result = future == null ? null : observer.observeRun("run", runContext, future::get);
         postRun(runContext, rootReporter);

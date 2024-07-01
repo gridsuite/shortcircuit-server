@@ -10,6 +10,7 @@ import com.powsybl.commons.report.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,11 +45,14 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
      * @implNote we assume there will always be at least one modification
      */
     @Override
-    protected ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode) {
+    protected ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
         reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
         final ReportNode newReporter = builder.build();
+        if (!runContext.getInconsistentVoltageLevels().isEmpty()) {
+            forVoltageLevelsWithWrongIpValues(reportNode, runContext);
+        }
         reportNode.getChildren().forEach(child -> {
             if (child.getMessageKey().equals("generatorConversion")) {
                 insertReportNode(newReporter, forGeneratorConversion(child));
@@ -57,6 +61,24 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             }
         });
         return newReporter;
+    }
+
+    protected void forVoltageLevelsWithWrongIpValues(ReportNode reportNode, ShortCircuitRunContext runContext) {
+        ReportNode newReportNode = reportNode.newReportNode()
+            .withMessageTemplate("VoltageLevelsWithWrongIpValues", "Voltage levels having wrong ip values")
+            .add();
+        newReportNode.newReportNode().withMessageTemplate("message", "There are ${nb} voltage levels with wrong ip values : ")
+            .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
+            .withUntypedValue("nb", runContext.getInconsistentVoltageLevels().size())
+            .add();
+        int i = 0;
+        for (String voltageLevelId : runContext.getInconsistentVoltageLevels()) {
+            newReportNode.newReportNode()
+                .withMessageTemplate("voltageLevelId_" + i, voltageLevelId)
+                .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
+                .add();
+            i++;
+        }
     }
 
     /**
@@ -88,7 +110,6 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                 insertReportNode(newReporter, child);
             }
         }
-
         /* finalize computation of summaries */
         log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected generator MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalCount);
         if (logsRegulatingTerminalSummaryAdder != null) {
@@ -98,7 +119,6 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                 .withTypedValue("nb", logsRegulatingTerminalCount, TypedValue.UNTYPED)
                 .add();
         }
-
         return newReporter;
     }
 }
