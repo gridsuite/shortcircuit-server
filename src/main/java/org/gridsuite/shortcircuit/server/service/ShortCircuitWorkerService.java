@@ -18,6 +18,8 @@ import com.powsybl.ws.commons.computation.service.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContex
  */
 @Service
 public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircuitAnalysisResult, ShortCircuitRunContext, ShortCircuitParameters, ShortCircuitAnalysisResultService> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitWorkerService.class);
 
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
     private final Collection<AbstractReportMapper> reportMappers;
@@ -72,8 +75,19 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
 
-        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                resultContext.getRunContext().getUserId(), additionalHeaders);
+        if (!result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
+                result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
+            LOGGER.error("Short circuit analysis failed (resultUuid='{}')", resultContext.getResultUuid());
+            notificationService.publishFail(resultContext.getResultUuid(),
+                    resultContext.getRunContext().getReceiver(),
+                    "Missing short-circuit extension data",
+                    resultContext.getRunContext().getUserId(),
+                    getComputationType(),
+                    additionalHeaders);
+        } else {
+            notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                    resultContext.getRunContext().getUserId(), additionalHeaders);
+        }
     }
 
     @Override
