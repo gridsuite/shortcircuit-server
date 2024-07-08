@@ -51,7 +51,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
         final ReportNode newReporter = builder.build();
         if (!runContext.getInconsistentVoltageLevels().isEmpty()) {
-            forVoltageLevelsWithWrongIpValues(reportNode, runContext);
+            logVoltageLevelsWithWrongIpValues(reportNode, runContext);
         }
         reportNode.getChildren().forEach(child -> {
             if (child.getMessageKey().equals("generatorConversion")) {
@@ -63,11 +63,11 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         return newReporter;
     }
 
-    protected void forVoltageLevelsWithWrongIpValues(ReportNode reportNode, ShortCircuitRunContext runContext) {
+    protected void logVoltageLevelsWithWrongIpValues(ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNode newReportNode = reportNode.newReportNode()
-            .withMessageTemplate("VoltageLevelsWithWrongIpValues", "Voltage levels having wrong ip values")
+            .withMessageTemplate("VoltageLevelsWithWrongIpValues", "Voltage levels having wrong isc values")
             .add();
-        newReportNode.newReportNode().withMessageTemplate("message", "There are ${nb} voltage levels with wrong ip values : ")
+        newReportNode.newReportNode().withMessageTemplate("message", "There are ${nb} voltage levels with wrong isc values : ")
             .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
             .withUntypedValue("nb", runContext.getInconsistentVoltageLevels().size())
             .add();
