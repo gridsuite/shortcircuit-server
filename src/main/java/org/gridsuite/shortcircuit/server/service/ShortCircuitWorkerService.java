@@ -73,18 +73,15 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     private void checkInconsistentVoltageLevels(ShortCircuitRunContext resultContext) {
         List<String> inconsistentVoltageLevels = new ArrayList<>();
-        Network network = resultContext.getNetwork();
-        if (network.getBusView() != null) {
-            network.getBusView().getBusStream().forEach(bus -> {
-                IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
-                if (shortCircuitExtension != null && shortCircuitExtension.getIpMin() > shortCircuitExtension.getIpMax()) {
-                    inconsistentVoltageLevels.add(bus.getVoltageLevel().getId());
-                }
-            });
-            if (!inconsistentVoltageLevels.isEmpty()) {
-                resultContext.setInconsistentVoltageLevels(inconsistentVoltageLevels);
-                throw new ShortCircuitException(INCONSISTENT_VOLTAGE_LEVELS, "Some voltage levels have wrong isc values. Check out the logs to find which ones");
+        resultContext.getNetwork().getVoltageLevelStream().forEach(vl -> {
+            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = vl.getExtension(IdentifiableShortCircuit.class);
+            if (shortCircuitExtension != null && shortCircuitExtension.getIpMin() > shortCircuitExtension.getIpMax()) {
+                inconsistentVoltageLevels.add(vl.getId());
             }
+        });
+        if (!inconsistentVoltageLevels.isEmpty()) {
+            resultContext.setInconsistentVoltageLevels(inconsistentVoltageLevels);
+            throw new ShortCircuitException(INCONSISTENT_VOLTAGE_LEVELS, "Some voltage levels have wrong isc values. Check out the logs to find which ones");
         }
     }
 
