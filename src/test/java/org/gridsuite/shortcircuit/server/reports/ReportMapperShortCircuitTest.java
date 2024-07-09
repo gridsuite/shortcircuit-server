@@ -36,7 +36,7 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     void testAggregatedLogs() throws IOException, URISyntaxException, JSONException {
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParameters(),
             null, "reporterId", "reportType", "userId", "provider", "busId");
-        runContext.setInconsistentVoltageLevels(Collections.singletonList("VL1"));
+        runContext.setVoltageLevelsWithWrongIsc(Collections.singletonList("VL1"));
         final ReportNode result = reportMapper.processReporter(rootReportNode, runContext);
         log.debug("Result = {}", RestTemplateConfig.objectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result));
         JSONAssert.assertEquals("short-circuit logs aggregated",

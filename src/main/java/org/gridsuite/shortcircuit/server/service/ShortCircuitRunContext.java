@@ -25,7 +25,7 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
     private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
     private final String busId;
     @Setter
-    private List<String> inconsistentVoltageLevels = new ArrayList<>();
+    private List<String> voltageLevelsWithWrongIsc = new ArrayList<>();
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
                                   UUID reportUuid, String reporterId, String reportType, String userId, String provider, String busId) {

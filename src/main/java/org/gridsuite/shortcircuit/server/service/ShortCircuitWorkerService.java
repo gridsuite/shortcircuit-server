@@ -80,7 +80,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             }
         });
         if (!inconsistentVoltageLevels.isEmpty()) {
-            resultContext.setInconsistentVoltageLevels(inconsistentVoltageLevels);
+            resultContext.setVoltageLevelsWithWrongIsc(inconsistentVoltageLevels);
             throw new ShortCircuitException(INCONSISTENT_VOLTAGE_LEVELS, "Some voltage levels have wrong isc values. Check out the logs to find which ones");
         }
     }

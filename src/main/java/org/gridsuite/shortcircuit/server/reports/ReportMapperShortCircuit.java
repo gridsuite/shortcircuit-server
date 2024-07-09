@@ -10,6 +10,7 @@ import com.powsybl.commons.report.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.springframework.stereotype.Component;
 
@@ -50,7 +51,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
         reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
         final ReportNode newReporter = builder.build();
-        if (!runContext.getInconsistentVoltageLevels().isEmpty()) {
+        if (!runContext.getVoltageLevelsWithWrongIsc().isEmpty()) {
             logVoltageLevelsWithWrongIpValues(reportNode, runContext);
         }
         reportNode.getChildren().forEach(child -> {
@@ -65,20 +66,13 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
 
     protected void logVoltageLevelsWithWrongIpValues(ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNode newReportNode = reportNode.newReportNode()
-            .withMessageTemplate("VoltageLevelsWithWrongIpValues", "Voltage levels having wrong isc values")
+            .withMessageTemplate("VoltageLevelsWithWrongIpValuesRoot", "Voltage levels having wrong isc values")
             .add();
-        newReportNode.newReportNode().withMessageTemplate("message", "There are ${nb} voltage levels with isc min > isc max : ")
+        newReportNode.newReportNode().withMessageTemplate("VoltageLevelsWithWrongIpValues",
+            "Some voltage levels have wrong isc values, isc min must be <= isc max : "
+                + StringUtils.join(runContext.getVoltageLevelsWithWrongIsc(), ","))
             .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
-            .withUntypedValue("nb", runContext.getInconsistentVoltageLevels().size())
             .add();
-        int i = 0;
-        for (String voltageLevelId : runContext.getInconsistentVoltageLevels()) {
-            newReportNode.newReportNode()
-                .withMessageTemplate("voltageLevelId_" + i, voltageLevelId)
-                .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
-                .add();
-            i++;
-        }
     }
 
     /**
