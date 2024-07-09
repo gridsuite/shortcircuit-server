@@ -108,20 +108,9 @@
           {
             "messageKey": "danglinglinesConversion"
           }, {
-            "messageKey" : "VoltageLevelsWithWrongIpValues",
+            "messageKey" : "VoltageLevelsWithWrongIpValuesRoot",
             "children" : [ {
-              "messageKey" : "message",
-              "values" : {
-                "reportSeverity" : {
-                  "value" : "ERROR",
-                  "type" : "SEVERITY"
-                },
-                "nb" : {
-                  "value" : "1"
-                }
-              }
-            }, {
-              "messageKey" : "voltageLevelId_0",
+              "messageKey" : "VoltageLevelsWithWrongIpValues",
               "values" : {
                 "reportSeverity" : {
                   "value" : "ERROR",
@@ -145,8 +134,7 @@
         "tieLineConversion": "Conversion of tie lines",
         "twoWindingsTransformerConversion": "Conversion of two windings transformers",
         "threeWindingsTransformerConversion": "Conversion of three windings transformers",
-        "danglinglinesConversion": "Conversion of the dangling lines",
-        "voltageLevelId_0" : "VL1"
+        "danglinglinesConversion": "Conversion of the dangling lines"
       }
     }
   }
