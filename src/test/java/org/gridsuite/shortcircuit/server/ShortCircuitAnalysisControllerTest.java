@@ -87,6 +87,7 @@ public class ShortCircuitAnalysisControllerTest {
 
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID NETWORK1_UUID = UUID.fromString("faa0f351-f664-4771-951b-fa3b565c4d37");
+    private static final UUID NETWORK_WITHOUT_SHORTCIRCUIT_DATA_UUID = UUID.fromString("faa0f351-f664-4771-e51b-fa3b565c4d37");
     private static final UUID NODE_BREAKER_NETWORK_UUID = UUID.fromString("060d9225-1b88-4e52-885f-0f6297f5fa35");
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
     private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
@@ -99,6 +100,7 @@ public class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_3_ID = "variant_3";
     private static final String VARIANT_4_ID = "variant_4";
+    private static final String VARIANT_5_ID = "variant_5";
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
     private static final List<String> CSV_HEADERS = List.of(
             "ID nœud",
@@ -229,8 +231,8 @@ public class ShortCircuitAnalysisControllerTest {
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
     private Network network;
+    private Network network1;
     private Network networkWithoutShortcircuitData;
-
     private Network nodeBreakerNetwork;
 
     private static void assertResultsEquals(ShortCircuitAnalysisResult result, org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto) {
@@ -303,10 +305,15 @@ public class ShortCircuitAnalysisControllerTest {
 
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
 
+        network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
+        network1.getVoltageLevelStream().findFirst().get().newExtension(IdentifiableShortCircuitAdder.class).withIpMin(5.0).withIpMax(100.5).add();
+        network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_4_ID);
+        given(networkStoreService.getNetwork(NETWORK1_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network1);
+
         networkWithoutShortcircuitData = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
-        networkWithoutShortcircuitData.getVoltageLevelStream().findFirst().get().newExtension(IdentifiableShortCircuitAdder.class).withIpMin(5.0).withIpMax(100.5).add();
-        networkWithoutShortcircuitData.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_4_ID);
-        given(networkStoreService.getNetwork(NETWORK1_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(networkWithoutShortcircuitData);
+        networkWithoutShortcircuitData.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_5_ID);
+        given(networkStoreService.getNetwork(NETWORK_WITHOUT_SHORTCIRCUIT_DATA_UUID,
+                PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(networkWithoutShortcircuitData);
 
         // Network for nodeBreakerView tests
         nodeBreakerNetwork = FourSubstationsNodeBreakerFactory.create(new NetworkFactoryImpl());
@@ -783,15 +790,24 @@ public class ShortCircuitAnalysisControllerTest {
     @Test
     public void runWithNoShortcircuitDataTest() {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(new ShortCircuitAnalysisProviderMock())) {
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(networkWithoutShortcircuitData), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
-                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_NO_SHORT_CIRCUIT_DATA));
+            shortCircuitAnalysisMockedStatic.when(() ->
+                ShortCircuitAnalysis.runAsync(
+                    eq(networkWithoutShortcircuitData),
+                    anyList(),
+                    any(ShortCircuitParameters.class),
+                    any(ComputationManager.class),
+                    anyList(),
+                    any(ReportNode.class)))
+                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_NO_SHORT_CIRCUIT_DATA));
 
-            mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportType=AllBusesShortCircuitAnalysis&reportUuid="
-                                + REPORT_UUID
-                                + "&variantId=" + VARIANT_4_ID,
-                            NETWORK1_UUID)
-                    .header(HEADER_USER_ID, "user"))
+            mockMvc.perform(
+                post(
+                    "/" + VERSION
+                        + "/networks/{networkUuid}/run-and-save?reporterId=myReporter&receiver=me&reportType=AllBusesShortCircuitAnalysis&reportUuid=" + REPORT_UUID
+                        + "&variantId=" + VARIANT_5_ID,
+                    NETWORK_WITHOUT_SHORTCIRCUIT_DATA_UUID
+                    ).header(HEADER_USER_ID, "user")
+                )
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -802,6 +818,7 @@ public class ShortCircuitAnalysisControllerTest {
 
             //networkWithoutExtension has no shortcircuit data so the computation should fail
             Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
+            assertEquals("Short circuit analysis has failed : Missing short-circuit extension data", resultMessage.getHeaders().get("message"));
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
         }
@@ -812,7 +829,7 @@ public class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
-            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(networkWithoutShortcircuitData), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network1), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
             shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
             when(runner.getName()).thenReturn("providerTest");
