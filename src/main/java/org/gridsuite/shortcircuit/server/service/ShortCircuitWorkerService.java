@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.MISSING_EXTENSION_DATA;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
@@ -36,7 +37,6 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContex
  */
 @Service
 public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircuitAnalysisResult, ShortCircuitRunContext, ShortCircuitParameters, ShortCircuitAnalysisResultService> {
-
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
     private final Collection<AbstractReportMapper> reportMappers;
 
@@ -71,6 +71,11 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         String busId = context.getBusId();
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
+
+        if (!result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
+                result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
+            throw new ShortCircuitException(MISSING_EXTENSION_DATA, "Missing short-circuit extension data");
+        }
 
         notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
                 resultContext.getRunContext().getUserId(), additionalHeaders);

@@ -21,6 +21,7 @@ public class ShortCircuitException extends RuntimeException {
         RESULT_NOT_FOUND,
         INVALID_EXPORT_PARAMS,
         FILE_EXPORT_ERROR,
+        MISSING_EXTENSION_DATA,
     }
 
     private final Type type;
