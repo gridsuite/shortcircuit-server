@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.MISSING_EXTENSION_DATA;
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.INCONSISTENT_VOLTAGE_LEVELS;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
@@ -63,6 +64,25 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
                 result,
                 resultContext.getRunContext(),
                 ShortCircuitAnalysisStatus.COMPLETED.name());
+    }
+
+    @Override
+    public void preRun(ShortCircuitRunContext resultContext) {
+        checkInconsistentVoltageLevels(resultContext);
+    }
+
+    private void checkInconsistentVoltageLevels(ShortCircuitRunContext resultContext) {
+        List<String> inconsistentVoltageLevels = new ArrayList<>();
+        resultContext.getNetwork().getVoltageLevelStream().forEach(vl -> {
+            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = vl.getExtension(IdentifiableShortCircuit.class);
+            if (shortCircuitExtension != null && shortCircuitExtension.getIpMin() > shortCircuitExtension.getIpMax()) {
+                inconsistentVoltageLevels.add(vl.getId());
+            }
+        });
+        if (!inconsistentVoltageLevels.isEmpty()) {
+            resultContext.setVoltageLevelsWithWrongIsc(inconsistentVoltageLevels);
+            throw new ShortCircuitException(INCONSISTENT_VOLTAGE_LEVELS, "Some voltage levels have wrong isc values. Check out the logs to find which ones");
+        }
     }
 
     @Override
@@ -163,9 +183,18 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode, ShortCircuitAnalysisResult ignoredResult) {
         if (runContext.getReportInfos().reportUuid() != null) {
             for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReportNode.set(reportMapper.processReporter(rootReportNode.get()));
+                rootReportNode.set(reportMapper.processReporter(rootReportNode.get(), runContext));
             }
             observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReportNode.get()));
         }
+    }
+
+    @Override
+    protected void handleNonCancellationException(AbstractResultContext<ShortCircuitRunContext> resultContext, Exception exception, AtomicReference<ReportNode> rootReporter) {
+        if (exception instanceof ShortCircuitException shortCircuitException && shortCircuitException.getType() == INCONSISTENT_VOLTAGE_LEVELS) {
+            postRun(resultContext.getRunContext(), rootReporter, null);
+            sendResultMessage(resultContext, null);
+        }
+        resultService.insertStatus(Collections.singletonList(resultContext.getResultUuid()), ShortCircuitAnalysisStatus.FAILED);
     }
 }

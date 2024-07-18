@@ -46,7 +46,7 @@
         <liquibase-hibernate-package>org.gridsuite.shortcircuit.server</liquibase-hibernate-package>
         <mockito-inline.version>3.11.1</mockito-inline.version>
         <db-util.version>1.0.5</db-util.version>
-        <powsybl-ws-commons.version>1.11.0</powsybl-ws-commons.version><!-- should be removed once gridsuite-dependencies is upgraded-->
+        <powsybl-ws-commons.version>1.11.1</powsybl-ws-commons.version><!-- should be removed once gridsuite-dependencies is upgraded-->
     </properties>
 
     <build>

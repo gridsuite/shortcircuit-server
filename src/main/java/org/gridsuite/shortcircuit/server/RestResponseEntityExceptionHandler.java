@@ -22,7 +22,7 @@ public class RestResponseEntityExceptionHandler {
         return switch (exception.getType()) {
             case RESULT_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
             case INVALID_EXPORT_PARAMS -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
-            case BUS_OUT_OF_VOLTAGE, FILE_EXPORT_ERROR, MISSING_EXTENSION_DATA ->
+            case BUS_OUT_OF_VOLTAGE, FILE_EXPORT_ERROR, MISSING_EXTENSION_DATA, INCONSISTENT_VOLTAGE_LEVELS ->
                     ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
         };
     }

@@ -107,10 +107,19 @@
           },
           {
             "messageKey": "danglinglinesConversion"
-          }
-        ]
-      }
-    ],
+          }, {
+            "messageKey" : "VoltageLevelsWithWrongIpValuesRoot",
+            "children" : [ {
+              "messageKey" : "VoltageLevelsWithWrongIpValues",
+              "values" : {
+                "reportSeverity" : {
+                  "value" : "ERROR",
+                  "type" : "SEVERITY"
+                }
+              }
+            } ]
+          } ]
+      } ],
     "dictionaries": {
       "default": {
         "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
