@@ -1,5 +1,21 @@
 {
-  "version": "2.0",
+  "version": "2.1",
+  "dictionaries": {
+    "default": {
+      "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
+      "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
+      "TestReporter": "Test Reporter",
+      "testReportLine": "Test log line",
+      "generatorConversion": "Conversion of generators",
+      "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
+      "batteryConversion": "Conversion of the batteries",
+      "lineConversion": "Conversion of lines",
+      "tieLineConversion": "Conversion of tie lines",
+      "twoWindingsTransformerConversion": "Conversion of two windings transformers",
+      "threeWindingsTransformerConversion": "Conversion of three windings transformers",
+      "danglinglinesConversion": "Conversion of the dangling lines"
+    }
+  },
   "reportRoot": {
     "messageKey": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
     "children": [
@@ -99,22 +115,6 @@
           }
         ]
       }
-    ],
-    "dictionaries": {
-      "default": {
-        "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
-        "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
-        "TestReporter": "Test Reporter",
-        "testReportLine": "Test log line",
-        "generatorConversion": "Conversion of generators",
-        "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
-        "batteryConversion": "Conversion of the batteries",
-        "lineConversion": "Conversion of lines",
-        "tieLineConversion": "Conversion of tie lines",
-        "twoWindingsTransformerConversion": "Conversion of two windings transformers",
-        "threeWindingsTransformerConversion": "Conversion of three windings transformers",
-        "danglinglinesConversion": "Conversion of the dangling lines"
-      }
-    }
+    ]
   }
 }
