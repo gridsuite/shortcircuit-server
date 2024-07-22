@@ -71,7 +71,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         newReportNode.newReportNode().withMessageTemplate("VoltageLevelsWithWrongIpValues",
             "Some voltage levels have wrong isc values, isc min must be <= isc max : "
                 + StringUtils.join(runContext.getVoltageLevelsWithWrongIsc(), ", "))
-            .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
+            .withTypedValue(ReportConstants.SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
             .add();
     }
 

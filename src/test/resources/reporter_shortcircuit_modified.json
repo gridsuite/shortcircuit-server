@@ -124,6 +124,20 @@
           },
           {
             "messageKey": "danglinglinesConversion"
+          },
+          {
+            "messageKey": "VoltageLevelsWithWrongIpValuesRoot",
+            "children": [
+              {
+                "messageKey": "VoltageLevelsWithWrongIpValues",
+                "values": {
+                  "reportSeverity": {
+                    "value": "ERROR",
+                    "type": "SEVERITY"
+                  }
+                }
+              }
+            ]
           }
         ]
       }

@@ -7,6 +7,8 @@
 package org.gridsuite.shortcircuit.server.reports;
 
 import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.ReportNodeImpl;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
