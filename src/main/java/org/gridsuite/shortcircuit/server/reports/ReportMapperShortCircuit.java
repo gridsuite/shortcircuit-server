@@ -10,6 +10,8 @@ import com.powsybl.commons.report.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,11 +46,14 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
      * @implNote we assume there will always be at least one modification
      */
     @Override
-    protected ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode) {
+    protected ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
         reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
         final ReportNode newReporter = builder.build();
+        if (!runContext.getVoltageLevelsWithWrongIsc().isEmpty()) {
+            logVoltageLevelsWithWrongIpValues(reportNode, runContext);
+        }
         reportNode.getChildren().forEach(child -> {
             if (child.getMessageKey().equals("generatorConversion")) {
                 insertReportNode(newReporter, forGeneratorConversion(child));
@@ -57,6 +62,17 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             }
         });
         return newReporter;
+    }
+
+    protected void logVoltageLevelsWithWrongIpValues(ReportNode reportNode, ShortCircuitRunContext runContext) {
+        ReportNode newReportNode = reportNode.newReportNode()
+            .withMessageTemplate("VoltageLevelsWithWrongIpValuesRoot", "Voltage levels having wrong isc values")
+            .add();
+        newReportNode.newReportNode().withMessageTemplate("VoltageLevelsWithWrongIpValues",
+            "Some voltage levels have wrong isc values, isc min must be <= isc max : "
+                + StringUtils.join(runContext.getVoltageLevelsWithWrongIsc(), ", "))
+            .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
+            .add();
     }
 
     /**

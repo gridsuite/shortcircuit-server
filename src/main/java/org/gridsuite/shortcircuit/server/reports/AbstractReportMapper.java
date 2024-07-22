@@ -41,11 +41,11 @@ public abstract class AbstractReportMapper {
      *
      * @implNote currently support only some implementations of {@link Reporter}
      */
-    public ReportNode processReporter(@NonNull final ReportNode reportNode) {
+    public ReportNode processReporter(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         if (reportNode.getMessageKey() != null && reportNode.getMessageKey()
                 .matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@)?.*ShortCircuitAnalysis$")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
-            return forUuidAtShortCircuitAnalysis(reportNode);
+            return forUuidAtShortCircuitAnalysis(reportNode, runContext);
         } else {
             log.trace("Unrecognized ReportNode: {}", reportNode);
             return reportNode;
@@ -72,7 +72,7 @@ public abstract class AbstractReportMapper {
      *
      * @implNote we assume there will always be at least one modification
      */
-    protected ReportNode forUuidAtShortCircuitAnalysis(@NonNull final ReportNode reportNode) {
+    protected ReportNode forUuidAtShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
         reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
@@ -80,7 +80,7 @@ public abstract class AbstractReportMapper {
 
         reportNode.getChildren().forEach(child -> {
             if (child.getMessageKey() != null && child.getMessageKey().endsWith("ShortCircuitAnalysis")) {
-                insertReportNode(newReportNode, forShortCircuitAnalysis(child));
+                insertReportNode(newReportNode, forShortCircuitAnalysis(child, runContext));
             } else {
                 insertReportNode(newReportNode, child);
             }
@@ -91,7 +91,7 @@ public abstract class AbstractReportMapper {
     /**
      * Modify node with key {@code ShortCircuitAnalysis}
      */
-    protected abstract ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode);
+    protected abstract ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext);
 
     /**
      * Copy the reportNode, but with {@link TypedValue#TRACE_SEVERITY} severity
