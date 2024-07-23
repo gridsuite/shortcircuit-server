@@ -193,7 +193,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     protected void handleNonCancellationException(AbstractResultContext<ShortCircuitRunContext> resultContext, Exception exception, AtomicReference<ReportNode> rootReporter) {
         if (exception instanceof ShortCircuitException shortCircuitException && shortCircuitException.getType() == INCONSISTENT_VOLTAGE_LEVELS) {
             postRun(resultContext.getRunContext(), rootReporter, null);
-            sendResultMessage(resultContext, null);
+            notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
+                resultContext.getRunContext().getUserId(), null);
         }
         resultService.insertStatus(Collections.singletonList(resultContext.getResultUuid()), ShortCircuitAnalysisStatus.FAILED);
     }
