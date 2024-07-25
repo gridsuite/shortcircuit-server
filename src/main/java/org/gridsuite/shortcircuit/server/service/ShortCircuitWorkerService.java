@@ -92,7 +92,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
 
-        if (!result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
+        if (result != null && !result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
                 result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
             throw new ShortCircuitException(MISSING_EXTENSION_DATA, "Missing short-circuit extension data");
         }
