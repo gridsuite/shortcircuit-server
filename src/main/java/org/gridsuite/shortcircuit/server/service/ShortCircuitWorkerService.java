@@ -92,7 +92,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_BUS_ID, busId);
 
-        if (!result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
+        if (result != null && !result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
                 result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
             throw new ShortCircuitException(MISSING_EXTENSION_DATA, "Missing short-circuit extension data");
         }
@@ -193,8 +193,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     protected void handleNonCancellationException(AbstractResultContext<ShortCircuitRunContext> resultContext, Exception exception, AtomicReference<ReportNode> rootReporter) {
         if (exception instanceof ShortCircuitException shortCircuitException && shortCircuitException.getType() == INCONSISTENT_VOLTAGE_LEVELS) {
             postRun(resultContext.getRunContext(), rootReporter, null);
-            notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                resultContext.getRunContext().getUserId(), null);
+            sendResultMessage(resultContext, null);
         }
         resultService.insertStatus(Collections.singletonList(resultContext.getResultUuid()), ShortCircuitAnalysisStatus.FAILED);
     }
