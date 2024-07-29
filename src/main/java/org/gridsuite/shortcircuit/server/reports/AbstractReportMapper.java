@@ -57,7 +57,7 @@ public abstract class AbstractReportMapper {
         for (Map.Entry<String, TypedValue> valueEntry : child.getValues().entrySet()) {
             adder.withUntypedValue(valueEntry.getKey(), valueEntry.getValue().toString());
         }
-        TypedValue severity = child.getValue(ReportConstants.REPORT_SEVERITY_KEY).orElse(null);
+        TypedValue severity = child.getValue(ReportConstants.SEVERITY_KEY).orElse(null);
         if (severity != null) {
             adder.withSeverity(severity);
         }
@@ -100,7 +100,7 @@ public abstract class AbstractReportMapper {
      */
     static void copyReportAsTrace(@NonNull final ReportNode reportNode, @NonNull final ReportNode child) {
         final Map<String, TypedValue> values = new HashMap<>(child.getValues());
-        values.put(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
+        values.put(ReportConstants.SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
         ReportNodeAdder adder = reportNode.newReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
         values.entrySet().forEach(entry -> adder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
         adder.add();

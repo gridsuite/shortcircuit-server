@@ -71,7 +71,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         newReportNode.newReportNode().withMessageTemplate("VoltageLevelsWithWrongIpValues",
             "Some voltage levels have wrong isc values, isc min must be <= isc max : "
                 + StringUtils.join(runContext.getVoltageLevelsWithWrongIsc(), ", "))
-            .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
+            .withTypedValue(ReportConstants.SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
             .add();
     }
 
@@ -96,7 +96,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                 //we match line "Regulating terminal of connected generator MY-NODE is disconnected. Regulation is disabled."
                 if (logsRegulatingTerminalSummaryAdder == null) {
                     logsRegulatingTerminalSummaryAdder = newReporter.newReportNode();
-                    logsRegulatingTerminalSeverity = child.getValue(ReportConstants.REPORT_SEVERITY_KEY).get();
+                    logsRegulatingTerminalSeverity = child.getValue(ReportConstants.SEVERITY_KEY).get();
                 }
                 copyReportAsTrace(newReporter, child);
                 logsRegulatingTerminalCount++;
@@ -110,7 +110,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         if (logsRegulatingTerminalSummaryAdder != null) {
             logsRegulatingTerminalSummaryAdder
                 .withMessageTemplate("disconnectedTerminalGeneratorSummary", "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.")
-                .withTypedValue(ReportConstants.REPORT_SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
+                .withTypedValue(ReportConstants.SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
                 .withTypedValue("nb", logsRegulatingTerminalCount, TypedValue.UNTYPED)
                 .add();
         }
