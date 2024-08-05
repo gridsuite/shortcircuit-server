@@ -40,6 +40,23 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class ReportMapperShortCircuit extends AbstractReportMapper {
+    private enum ConversionEquipmentType {
+        GENERATOR("generators", "generatorConversion", "disconnectedTerminalGenerator", "disconnectedTerminalGeneratorSummary"),
+        BATTERY("batteries", "batteryConversion", "disconnectedTerminalGenerator", "disconnectedTerminalBatterySummary");
+
+        public final String equipmentsLabel;
+        public final String conversionMessageKey;
+        public final String disconnectedTerminalMessageKey;
+        public final String summaryMessageKey;
+
+        ConversionEquipmentType(String equipmentsLabel, String conversionMessageKey, String disconnectedTerminalMessageKey, String summaryMessageKey) {
+            this.equipmentsLabel = equipmentsLabel;
+            this.conversionMessageKey = conversionMessageKey;
+            this.disconnectedTerminalMessageKey = disconnectedTerminalMessageKey;
+            this.summaryMessageKey = summaryMessageKey;
+        }
+    }
+
     /**
      * Modify node with key {@code ShortCircuitAnalysis}
      *
@@ -55,8 +72,10 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             logVoltageLevelsWithWrongIpValues(reportNode, runContext);
         }
         reportNode.getChildren().forEach(child -> {
-            if (child.getMessageKey().equals("generatorConversion")) {
-                insertReportNode(newReporter, forGeneratorConversion(child));
+            if (child.getMessageKey().equals(ConversionEquipmentType.GENERATOR.conversionMessageKey)) {
+                insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.GENERATOR));
+            } else if (child.getMessageKey().equals(ConversionEquipmentType.BATTERY.conversionMessageKey)) {
+                insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.BATTERY));
             } else {
                 insertReportNode(newReporter, child);
             }
@@ -76,11 +95,11 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
     }
 
     /**
-     * Modify node with key {@code generatorConversion}
+     * Modify node with key equals to {@code ConversionEquipmentType.conversionMessageKey}
      * @implNote we use {@link ReportNode} to insert a {@link ReportNode} without knowing the exact content at that time, and
      *           filling it later
      */
-    protected ReportNode forGeneratorConversion(@NonNull final ReportNode reportNode) {
+    protected ReportNode forEquipmentConversion(@NonNull final ReportNode reportNode, ConversionEquipmentType conversionEquipmentType) {
         log.trace("short-circuit logs detected, will analyse them...");
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
@@ -92,8 +111,8 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         ReportNodeAdder logsRegulatingTerminalSummaryAdder = null;
         TypedValue logsRegulatingTerminalSeverity = null;
         for (final ReportNode child : reportNode.getChildren()) {
-            if (child.getMessageKey().equals("disconnectedTerminalGenerator")) {
-                //we match line "Regulating terminal of connected generator MY-NODE is disconnected. Regulation is disabled."
+            if (child.getMessageKey().equals(conversionEquipmentType.disconnectedTerminalMessageKey)) {
+                //we match line "Regulating terminal of connected ... MY-NODE is disconnected. Regulation is disabled."
                 if (logsRegulatingTerminalSummaryAdder == null) {
                     logsRegulatingTerminalSummaryAdder = newReporter.newReportNode();
                     logsRegulatingTerminalSeverity = child.getValue(ReportConstants.SEVERITY_KEY).get();
@@ -106,12 +125,13 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         }
 
         /* finalize computation of summaries */
-        log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected generator MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalCount);
+        log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected {} MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalCount, conversionEquipmentType.equipmentsLabel);
         if (logsRegulatingTerminalSummaryAdder != null) {
             logsRegulatingTerminalSummaryAdder
-                .withMessageTemplate("disconnectedTerminalGeneratorSummary", "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.")
+                .withMessageTemplate(conversionEquipmentType.summaryMessageKey, "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.")
                 .withTypedValue(ReportConstants.SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
                 .withTypedValue("nb", logsRegulatingTerminalCount, TypedValue.UNTYPED)
+                .withTypedValue("equipmentsLabel", conversionEquipmentType.equipmentsLabel, TypedValue.UNTYPED)
                 .add();
         }
 
