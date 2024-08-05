@@ -7,7 +7,7 @@
       "TestReporter": "Test Reporter",
       "testReportLine": "Test log line",
       "generatorConversion": "Conversion of generators",
-      "disconnectedTerminalGeneratorSummary": "Regulating terminal of ${nb} connected generators is disconnected. Regulation is disabled.",
+      "disconnectedTerminalGeneratorSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
       "batteryConversion": "Conversion of the batteries",
       "lineConversion": "Conversion of lines",
@@ -109,6 +109,51 @@
             "messageKey": "batteryConversion",
             "children": [
               {
+                "messageKey": "testReportLine",
+                "values": {
+                  "reportSeverity": {
+                    "value": "DEBUG",
+                    "type": "SEVERITY"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "MNOPQ.XY1"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "R.STUV.XYZ"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "TUV.XYZ.123"
+                  }
+                }
+              },
+              {
                 "messageKey": "lineConversion"
               },
               {
@@ -119,6 +164,18 @@
               },
               {
                 "messageKey": "threeWindingsTransformerConversion"
+              },
+              {
+                "messageKey": "disconnectedTerminalGeneratorSummary",
+                "values": {
+                  "reportSeverity": {
+                    "value": "WARN",
+                    "type": "SEVERITY"
+                  },
+                  "nb": {
+                    "value": "3"
+                  }
+                }
               }
             ]
           },
