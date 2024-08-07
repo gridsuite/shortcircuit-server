@@ -7,9 +7,10 @@
       "TestReporter": "Test Reporter",
       "testReportLine": "Test log line",
       "testLine1": "Test log line",
+      "test2WT1": "Test log 2WT",
       "testTieLine1": "Test log tie line",
       "testDangling1": "Test log dangling line",
-      "test2WT1": "Test log 2WT",
+      "test3WT1": "Test log 3WT",
       "generatorConversion": "Conversion of generators",
       "disconnectedTerminalGeneratorSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
@@ -162,7 +163,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGeneratorSummary",
+                "messageKey": "disconnectedTerminalBatterySummary",
                 "values": {
                   "reportSeverity": {
                     "value": "WARN",
@@ -210,7 +211,7 @@
                 "messageKey": "twoWindingsTransformerConversion",
                 "children": [
                   {
-                    "messageKey": "testReportLine",
+                    "messageKey": "test2WT1",
                     "values": {
                       "reportSeverity": {
                         "value": "DEBUG",
@@ -284,7 +285,7 @@
                 "messageKey": "threeWindingsTransformerConversion",
                 "children": [
                   {
-                    "messageKey": "test2WT1",
+                    "messageKey": "test3WT1",
                     "values": {
                       "reportSeverity": {
                         "value": "FATAL",
