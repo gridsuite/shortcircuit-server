@@ -14,6 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * This class manages how to postprocess reports of the short-circuit server to reduce the number of reports
  * by aggregating them.
@@ -41,19 +44,66 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReportMapperShortCircuit extends AbstractReportMapper {
     private enum ConversionEquipmentType {
-        GENERATOR("generators", "generatorConversion", "disconnectedTerminalGenerator", "disconnectedTerminalGeneratorSummary"),
-        BATTERY("generators", "batteryConversion", "disconnectedTerminalGenerator", "disconnectedTerminalGeneratorSummary");
+        GENERATOR("generators",
+            "generatorConversion",
+            "generatorConversion",
+            "disconnectedTerminalGenerator",
+            "disconnectedTerminalGeneratorSummary",
+            "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled."),
+        BATTERY("generators",
+            "batteryConversion",
+            "batteryConversion",
+            "disconnectedTerminalGenerator",
+            "disconnectedTerminalGeneratorSummary",
+            "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled."),
+        TWO_WINDINGS_TRANSFORMER("two windings transformers",
+            "branchConversion",
+            "twoWindingsTransformerConversion",
+            "addConstantRatio",
+            "addConstantRatioSummary",
+            "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage"
+            ),
+        LINE("lines",
+            "branchConversion",
+            "lineConversion",
+            null,
+            null,
+            null
+            ),
+        THREE_WINDINGS_TRANSFORMER("three windings transformers",
+            "branchConversion",
+            "threeWindingsTransformerConversion",
+            null,
+            null,
+            null
+            ),
+        TIE_LINE("tie lines",
+            "branchConversion",
+            "tieLineConversion",
+            null,
+            null,
+            null
+            );
 
         public final String equipmentsLabel;
+        public final String parentConversionMessageKey;
         public final String conversionMessageKey;
-        public final String disconnectedTerminalMessageKey;
+        public final String toSummarizeMessageKey;
         public final String summaryMessageKey;
+        public final String summaryMessageTemplate;
 
-        ConversionEquipmentType(String equipmentsLabel, String conversionMessageKey, String disconnectedTerminalMessageKey, String summaryMessageKey) {
+        ConversionEquipmentType(String equipmentsLabel,
+                                String parentConversionMessageKey,
+                                String conversionMessageKey,
+                                String toSummarizeMessageKey,
+                                String summaryMessageKey,
+                                String summaryMessageTemplate) {
             this.equipmentsLabel = equipmentsLabel;
+            this.parentConversionMessageKey = parentConversionMessageKey;
             this.conversionMessageKey = conversionMessageKey;
-            this.disconnectedTerminalMessageKey = disconnectedTerminalMessageKey;
+            this.toSummarizeMessageKey = toSummarizeMessageKey;
             this.summaryMessageKey = summaryMessageKey;
+            this.summaryMessageTemplate = summaryMessageTemplate;
         }
     }
 
@@ -66,16 +116,18 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
     protected ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
-        reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        reportNode.getValues().forEach((key, value) -> builder.withTypedValue(key, value.getValue().toString(), value.getType()));
         final ReportNode newReporter = builder.build();
         if (!runContext.getVoltageLevelsWithWrongIsc().isEmpty()) {
             logVoltageLevelsWithWrongIpValues(reportNode, runContext);
         }
         reportNode.getChildren().forEach(child -> {
-            if (child.getMessageKey().equals(ConversionEquipmentType.GENERATOR.conversionMessageKey)) {
+            if (child.getMessageKey().equals(ConversionEquipmentType.GENERATOR.parentConversionMessageKey)) {
                 insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.GENERATOR));
-            } else if (child.getMessageKey().equals(ConversionEquipmentType.BATTERY.conversionMessageKey)) {
+            } else if (child.getMessageKey().equals(ConversionEquipmentType.BATTERY.parentConversionMessageKey)) {
                 insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.BATTERY));
+            } else if (child.getMessageKey().equals(ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER.parentConversionMessageKey)) {
+                insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER));
             } else {
                 insertReportNode(newReporter, child);
             }
@@ -94,43 +146,62 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             .add();
     }
 
+    private void insertAndCount(ReportNode child, ReportNode parent, AtomicReference<ReportNodeAdder> logsToSummarizeAdder,
+                                AtomicLong logsToSummarizeCount, AtomicReference<TypedValue> logsToSummarizeSeverity, ConversionEquipmentType conversionEquipmentType) {
+        if (child.getMessageKey().equals(conversionEquipmentType.toSummarizeMessageKey)) {
+            if (logsToSummarizeAdder.get() == null) {
+                logsToSummarizeAdder.set(parent.newReportNode());
+                logsToSummarizeSeverity.set(child.getValue(ReportConstants.SEVERITY_KEY).orElse(TypedValue.WARN_SEVERITY));
+            }
+            copyReportAsTrace(parent, child);
+            logsToSummarizeCount.incrementAndGet();
+        } else {
+            insertReportNode(parent, child);
+        }
+    }
+
     /**
-     * Modify node with key equals to {@code ConversionEquipmentType.conversionMessageKey}
+     * Modify node with key equals to {@code ConversionEquipmentType.toSummarizeMessageKey}
      * @implNote we use {@link ReportNode} to insert a {@link ReportNode} without knowing the exact content at that time, and
      *           filling it later
      */
+    @SuppressWarnings("checkstyle:UnnecessaryParentheses")
     protected ReportNode forEquipmentConversion(@NonNull final ReportNode reportNode, ConversionEquipmentType conversionEquipmentType) {
         log.trace("short-circuit logs detected, will analyse them...");
+
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
-        reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        reportNode.getValues().forEach((key, value) -> builder.withTypedValue(key, value.getValue().toString(), value.getType()));
         final ReportNode newReporter = builder.build();
 
         /* preparing */
-        long logsRegulatingTerminalCount = 0L;
-        ReportNodeAdder logsRegulatingTerminalSummaryAdder = null;
-        TypedValue logsRegulatingTerminalSeverity = null;
+        AtomicLong logsToSummarizeCount = new AtomicLong(0L);
+        AtomicReference<ReportNodeAdder> logsToSummarizeAdder = new AtomicReference<>();
+        AtomicReference<TypedValue> logsToSummarizeSeverity = new AtomicReference<>();
         for (final ReportNode child : reportNode.getChildren()) {
-            if (child.getMessageKey().equals(conversionEquipmentType.disconnectedTerminalMessageKey)) {
-                //we match line "Regulating terminal of connected ... MY-NODE is disconnected. Regulation is disabled."
-                if (logsRegulatingTerminalSummaryAdder == null) {
-                    logsRegulatingTerminalSummaryAdder = newReporter.newReportNode();
-                    logsRegulatingTerminalSeverity = child.getValue(ReportConstants.SEVERITY_KEY).get();
+            if (conversionEquipmentType == ConversionEquipmentType.GENERATOR ||
+                conversionEquipmentType == ConversionEquipmentType.BATTERY) {
+                insertAndCount(child, newReporter, logsToSummarizeAdder, logsToSummarizeCount, logsToSummarizeSeverity, conversionEquipmentType);
+            } else if (conversionEquipmentType == ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER) {
+                // to keep the reports hierarchy : reports for two windings transformers are inside the branches report hierarchy
+                ReportNodeBuilder builder2 = ReportNode.newRootReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
+                child.getValues().forEach((key, value) -> builder2.withTypedValue(key, value.getValue().toString(), value.getType()));
+                final ReportNode insertedReport = builder2.build();
+                ReportNode newReporter2 = insertReportNode(newReporter, insertedReport);
+
+                for (final ReportNode child2 : child.getChildren()) {
+                    insertAndCount(child2, newReporter2, logsToSummarizeAdder, logsToSummarizeCount, logsToSummarizeSeverity, conversionEquipmentType);
                 }
-                copyReportAsTrace(newReporter, child);
-                logsRegulatingTerminalCount++;
-            } else {
-                insertReportNode(newReporter, child);
             }
         }
 
         /* finalize computation of summaries */
-        log.debug("Found {} lines in shortcircuit logs matching \"Regulating terminal of connected {} MYNODE is disconnected. Regulation is disabled.\"", logsRegulatingTerminalCount, conversionEquipmentType.equipmentsLabel);
-        if (logsRegulatingTerminalSummaryAdder != null) {
-            logsRegulatingTerminalSummaryAdder
-                .withMessageTemplate(conversionEquipmentType.summaryMessageKey, "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.")
-                .withTypedValue(ReportConstants.SEVERITY_KEY, ObjectUtils.defaultIfNull(logsRegulatingTerminalSeverity, TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
-                .withTypedValue("nb", logsRegulatingTerminalCount, TypedValue.UNTYPED)
+        log.debug("Found {} lines in shortcircuit logs matching {}", logsToSummarizeCount.get(), conversionEquipmentType.toSummarizeMessageKey);
+        if (logsToSummarizeAdder.get() != null) {
+            logsToSummarizeAdder.get()
+                .withMessageTemplate(conversionEquipmentType.summaryMessageKey, conversionEquipmentType.summaryMessageTemplate)
+                .withTypedValue(ReportConstants.SEVERITY_KEY, ObjectUtils.defaultIfNull(logsToSummarizeSeverity.get(), TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
+                .withTypedValue("nb", logsToSummarizeCount.get(), TypedValue.UNTYPED)
                 .withTypedValue("equipmentsLabel", conversionEquipmentType.equipmentsLabel, TypedValue.UNTYPED)
                 .add();
         }

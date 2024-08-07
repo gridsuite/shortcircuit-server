@@ -52,19 +52,17 @@ public abstract class AbstractReportMapper {
         }
     }
 
-    public static void insertReportNode(ReportNode parent, ReportNode child) {
+    public static ReportNode insertReportNode(ReportNode parent, ReportNode child) {
         ReportNodeAdder adder = parent.newReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
         for (Map.Entry<String, TypedValue> valueEntry : child.getValues().entrySet()) {
             adder.withUntypedValue(valueEntry.getKey(), valueEntry.getValue().toString());
         }
-        TypedValue severity = child.getValue(ReportConstants.SEVERITY_KEY).orElse(null);
-        if (severity != null) {
-            adder.withSeverity(severity);
-        }
+        child.getValue(ReportConstants.SEVERITY_KEY).ifPresent(adder::withSeverity);
         ReportNode insertedChild = adder.add();
         if (child.getChildren() != null) {
             child.getChildren().forEach(grandChild -> insertReportNode(insertedChild, grandChild));
         }
+        return insertedChild;
     }
 
     /**
@@ -75,7 +73,7 @@ public abstract class AbstractReportMapper {
     protected ReportNode forUuidAtShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
-        reportNode.getValues().entrySet().forEach(entry -> builder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        reportNode.getValues().forEach((key, value) -> builder.withTypedValue(key, value.getValue().toString(), value.getType()));
         final ReportNode newReportNode = builder.build();
 
         reportNode.getChildren().forEach(child -> {
@@ -102,7 +100,7 @@ public abstract class AbstractReportMapper {
         final Map<String, TypedValue> values = new HashMap<>(child.getValues());
         values.put(ReportConstants.SEVERITY_KEY, TypedValue.TRACE_SEVERITY);
         ReportNodeAdder adder = reportNode.newReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
-        values.entrySet().forEach(entry -> adder.withTypedValue(entry.getKey(), entry.getValue().getValue().toString(), entry.getValue().getType()));
+        values.forEach((key, value) -> adder.withTypedValue(key, value.getValue().toString(), value.getType()));
         adder.add();
     }
 }

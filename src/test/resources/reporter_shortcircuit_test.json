@@ -6,12 +6,18 @@
       "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
       "TestReporter": "Test Reporter",
       "testReportLine": "Test log line",
+      "testLine1": "Test log line",
+      "testTieLine1": "Test log tie line",
+      "testDangling1": "Test log dangling line",
+      "test2WT1": "Test log 2WT",
       "generatorConversion": "Conversion of generators",
       "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
       "batteryConversion": "Conversion of the batteries",
+      "branchConversion": "Conversion of branches",
       "lineConversion": "Conversion of lines",
       "tieLineConversion": "Conversion of tie lines",
       "twoWindingsTransformerConversion": "Conversion of two windings transformers",
+      "addConstantRatio": "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})",
       "threeWindingsTransformerConversion": "Conversion of three windings transformers",
       "danglinglinesConversion": "Conversion of the dangling lines"
     }
@@ -140,23 +146,131 @@
                     "value": "TUV.XYZ.123"
                   }
                 }
-              },
-              {
-                "messageKey": "lineConversion"
-              },
-              {
-                "messageKey": "tieLineConversion"
-              },
-              {
-                "messageKey": "twoWindingsTransformerConversion"
-              },
-              {
-                "messageKey": "threeWindingsTransformerConversion"
               }
             ]
           },
           {
-            "messageKey": "danglinglinesConversion"
+            "messageKey": "branchConversion",
+            "children": [
+              {
+                "messageKey": "lineConversion",
+                "children": [
+                  {
+                    "messageKey": "testLine1",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "DEBUG",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "messageKey": "tieLineConversion",
+                "children": [
+                  {
+                    "messageKey": "testTieLine1",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "INFO",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "messageKey": "twoWindingsTransformerConversion",
+                "children": [
+                  {
+                    "messageKey": "testReportLine",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "DEBUG",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "WARN",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "TITI.TUTU"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "WARN",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "TOTO.TATA"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "WARN",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "BY.GR.HY"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "WARN",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "DF.MNO.PQ"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "messageKey": "threeWindingsTransformerConversion",
+                "children": [
+                  {
+                    "messageKey": "test2WT1",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "FATAL",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "messageKey": "danglinglinesConversion",
+            "children": [
+              {
+                "messageKey": "testDangling1",
+                "values": {
+                  "reportSeverity": {
+                    "value": "DEBUG",
+                    "type": "SEVERITY"
+                  }
+                }
+              }
+            ]
           }
         ]
       }
