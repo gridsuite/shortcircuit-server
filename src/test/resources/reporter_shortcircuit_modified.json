@@ -14,6 +14,7 @@
       "disconnectedTerminalGeneratorSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
       "batteryConversion": "Conversion of the batteries",
+      "disconnectedTerminalBatterySummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "branchConversion": "Conversion of branches",
       "lineConversion": "Conversion of lines",
       "tieLineConversion": "Conversion of tie lines",
