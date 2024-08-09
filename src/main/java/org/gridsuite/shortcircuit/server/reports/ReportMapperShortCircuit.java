@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.reports;
 
 import com.powsybl.commons.report.*;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class ReportMapperShortCircuit extends AbstractReportMapper {
+    @AllArgsConstructor
     private enum ConversionEquipmentType {
         GENERATOR("generators", "generatorConversion", "disconnectedTerminalGenerator", "disconnectedTerminalGeneratorSummary"),
         BATTERY("batteries", "batteryConversion", "disconnectedTerminalGenerator", "disconnectedTerminalBatterySummary");
@@ -48,13 +50,6 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         public final String conversionMessageKey;
         public final String disconnectedTerminalMessageKey;
         public final String summaryMessageKey;
-
-        ConversionEquipmentType(String equipmentsLabel, String conversionMessageKey, String disconnectedTerminalMessageKey, String summaryMessageKey) {
-            this.equipmentsLabel = equipmentsLabel;
-            this.conversionMessageKey = conversionMessageKey;
-            this.disconnectedTerminalMessageKey = disconnectedTerminalMessageKey;
-            this.summaryMessageKey = summaryMessageKey;
-        }
     }
 
     /**
@@ -72,9 +67,9 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             logVoltageLevelsWithWrongIpValues(reportNode, runContext);
         }
         reportNode.getChildren().forEach(child -> {
-            if (child.getMessageKey().equals(ConversionEquipmentType.GENERATOR.conversionMessageKey)) {
+            if (ConversionEquipmentType.GENERATOR.conversionMessageKey.equals(child.getMessageKey())) {
                 insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.GENERATOR));
-            } else if (child.getMessageKey().equals(ConversionEquipmentType.BATTERY.conversionMessageKey)) {
+            } else if (ConversionEquipmentType.BATTERY.conversionMessageKey.equals(child.getMessageKey())) {
                 insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.BATTERY));
             } else {
                 insertReportNode(newReporter, child);
@@ -95,7 +90,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
     }
 
     /**
-     * Modify node with key equals to {@code ConversionEquipmentType.conversionMessageKey}
+     * Modify node with key equals to {@link ConversionEquipmentType#disconnectedTerminalMessageKey}
      * @implNote we use {@link ReportNode} to insert a {@link ReportNode} without knowing the exact content at that time, and
      *           filling it later
      */
@@ -111,7 +106,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         ReportNodeAdder logsRegulatingTerminalSummaryAdder = null;
         TypedValue logsRegulatingTerminalSeverity = null;
         for (final ReportNode child : reportNode.getChildren()) {
-            if (child.getMessageKey().equals(conversionEquipmentType.disconnectedTerminalMessageKey)) {
+            if (conversionEquipmentType.disconnectedTerminalMessageKey.equals(child.getMessageKey())) {
                 //we match line "Regulating terminal of connected ... MY-NODE is disconnected. Regulation is disabled."
                 if (logsRegulatingTerminalSummaryAdder == null) {
                     logsRegulatingTerminalSummaryAdder = newReporter.newReportNode();
