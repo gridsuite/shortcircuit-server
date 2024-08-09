@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.reports;
 
 import com.powsybl.commons.report.*;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -43,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 @Component
 public class ReportMapperShortCircuit extends AbstractReportMapper {
+    @AllArgsConstructor
     private enum ConversionEquipmentType {
         GENERATOR("generators",
             "generatorConversion",
@@ -91,20 +93,6 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         public final String toSummarizeMessageKey;
         public final String summaryMessageKey;
         public final String summaryMessageTemplate;
-
-        ConversionEquipmentType(String equipmentsLabel,
-                                String parentConversionMessageKey,
-                                String conversionMessageKey,
-                                String toSummarizeMessageKey,
-                                String summaryMessageKey,
-                                String summaryMessageTemplate) {
-            this.equipmentsLabel = equipmentsLabel;
-            this.parentConversionMessageKey = parentConversionMessageKey;
-            this.conversionMessageKey = conversionMessageKey;
-            this.toSummarizeMessageKey = toSummarizeMessageKey;
-            this.summaryMessageKey = summaryMessageKey;
-            this.summaryMessageTemplate = summaryMessageTemplate;
-        }
     }
 
     /**
@@ -122,11 +110,11 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             logVoltageLevelsWithWrongIpValues(reportNode, runContext);
         }
         reportNode.getChildren().forEach(child -> {
-            if (child.getMessageKey().equals(ConversionEquipmentType.GENERATOR.parentConversionMessageKey)) {
+            if (ConversionEquipmentType.GENERATOR.parentConversionMessageKey.equals(child.getMessageKey())) {
                 insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.GENERATOR));
-            } else if (child.getMessageKey().equals(ConversionEquipmentType.BATTERY.parentConversionMessageKey)) {
+            } else if (ConversionEquipmentType.BATTERY.parentConversionMessageKey.equals(child.getMessageKey())) {
                 insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.BATTERY));
-            } else if (child.getMessageKey().equals(ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER.parentConversionMessageKey)) {
+            } else if (ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER.parentConversionMessageKey.equals(child.getMessageKey())) {
                 insertReportNode(newReporter, forEquipmentConversion(child, ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER));
             } else {
                 insertReportNode(newReporter, child);
@@ -161,7 +149,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
     }
 
     /**
-     * Modify node with key equals to {@code ConversionEquipmentType.toSummarizeMessageKey}
+     * Modify node with key equals to {@link ConversionEquipmentType#toSummarizeMessageKey}
      * @implNote we use {@link ReportNode} to insert a {@link ReportNode} without knowing the exact content at that time, and
      *           filling it later
      */
