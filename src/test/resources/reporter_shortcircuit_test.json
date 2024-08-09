@@ -97,6 +97,51 @@
             "messageKey": "batteryConversion",
             "children": [
               {
+                "messageKey": "testReportLine",
+                "values": {
+                  "reportSeverity": {
+                    "value": "DEBUG",
+                    "type": "SEVERITY"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "WARN",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "MNOPQ.XY1"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "WARN",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "R.STUV.XYZ"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "WARN",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "TUV.XYZ.123"
+                  }
+                }
+              },
+              {
                 "messageKey": "lineConversion"
               },
               {
