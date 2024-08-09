@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 @Component
 public class ReportMapperShortCircuit extends AbstractReportMapper {
+    private static final String BRANCH_CONVERSION = "branchConversion";
+
     @AllArgsConstructor
     private enum ConversionEquipmentType {
         GENERATOR("generators",
@@ -59,28 +61,28 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             "disconnectedTerminalBatterySummary",
             "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled."),
         TWO_WINDINGS_TRANSFORMER("two windings transformers",
-            "branchConversion",
+            BRANCH_CONVERSION,
             "twoWindingsTransformerConversion",
             "addConstantRatio",
             "addConstantRatioSummary",
             "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage"
             ),
         LINE("lines",
-            "branchConversion",
+            BRANCH_CONVERSION,
             "lineConversion",
             null,
             null,
             null
             ),
         THREE_WINDINGS_TRANSFORMER("three windings transformers",
-            "branchConversion",
+            BRANCH_CONVERSION,
             "threeWindingsTransformerConversion",
             null,
             null,
             null
             ),
         TIE_LINE("tie lines",
-            "branchConversion",
+            BRANCH_CONVERSION,
             "tieLineConversion",
             null,
             null,
