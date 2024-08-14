@@ -5,25 +5,73 @@
     {
       "range": {
         "comparator": "INSTANCE",
-        "maximum": 199.99,
+        "maximum": 29.99,
         "minimum": 10.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.1,
-      "voltage": "NaN",
+      "voltage": 20.0,
       "minimumNominalVoltage": 10.0,
-      "maximumNominalVoltage": 199.99
+      "maximumNominalVoltage": 29.99
+    },
+    {
+      "range": {
+        "comparator": "INSTANCE",
+        "maximum": 53.99,
+        "minimum": 30.0,
+        "naturalOrdering": true
+      },
+      "rangeCoefficient": 1.1,
+      "voltage": 45.0,
+      "minimumNominalVoltage": 30.0,
+      "maximumNominalVoltage": 53.99
+    },
+    {
+      "range": {
+        "comparator": "INSTANCE",
+        "maximum": 76.99,
+        "minimum": 54.0,
+        "naturalOrdering": true
+      },
+      "rangeCoefficient": 1.1,
+      "voltage": 63.0,
+      "minimumNominalVoltage": 54.0,
+      "maximumNominalVoltage": 76.99
+    },
+    {
+      "range": {
+        "comparator": "INSTANCE",
+        "maximum": 119.99,
+        "minimum": 77.0,
+        "naturalOrdering": true
+      },
+      "rangeCoefficient": 1.1,
+      "voltage": 90.0,
+      "minimumNominalVoltage": 77.0,
+      "maximumNominalVoltage": 119.99
+    },
+    {
+      "range": {
+        "comparator": "INSTANCE",
+        "maximum": 179.99,
+        "minimum": 120.0,
+        "naturalOrdering": true
+      },
+      "rangeCoefficient": 1.1,
+      "voltage": 150.0,
+      "minimumNominalVoltage": 120.0,
+      "maximumNominalVoltage": 179.99
     },
     {
       "range": {
         "comparator": "INSTANCE",
         "maximum": 299.99,
-        "minimum": 200.0,
+        "minimum": 180.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.09,
-      "voltage": "NaN",
-      "minimumNominalVoltage": 200.0,
+      "voltage": 225.0,
+      "minimumNominalVoltage": 180.0,
       "maximumNominalVoltage": 299.99
     },
     {
@@ -33,8 +81,8 @@
         "minimum": 300.0,
         "naturalOrdering": true
       },
-      "rangeCoefficient": 1.05,
-      "voltage": "NaN",
+      "rangeCoefficient": 1.105,
+      "voltage": 380.0,
       "minimumNominalVoltage": 300.0,
       "maximumNominalVoltage": 500.0
     }
