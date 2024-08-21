@@ -5,74 +5,74 @@
     {
       "range": {
         "comparator": "INSTANCE",
-        "maximum": 29.99,
+        "maximum": 29.999,
         "minimum": 10.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.1,
       "voltage": 20.0,
       "minimumNominalVoltage": 10.0,
-      "maximumNominalVoltage": 29.99
+      "maximumNominalVoltage": 29.999
     },
     {
       "range": {
         "comparator": "INSTANCE",
-        "maximum": 53.99,
+        "maximum": 53.999,
         "minimum": 30.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.1,
       "voltage": 45.0,
       "minimumNominalVoltage": 30.0,
-      "maximumNominalVoltage": 53.99
+      "maximumNominalVoltage": 53.999
     },
     {
       "range": {
         "comparator": "INSTANCE",
-        "maximum": 76.99,
+        "maximum": 76.999,
         "minimum": 54.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.1,
       "voltage": 63.0,
       "minimumNominalVoltage": 54.0,
-      "maximumNominalVoltage": 76.99
+      "maximumNominalVoltage": 76.999
     },
     {
       "range": {
         "comparator": "INSTANCE",
-        "maximum": 119.99,
+        "maximum": 119.999,
         "minimum": 77.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.1,
       "voltage": 90.0,
       "minimumNominalVoltage": 77.0,
-      "maximumNominalVoltage": 119.99
+      "maximumNominalVoltage": 119.999
     },
     {
       "range": {
         "comparator": "INSTANCE",
-        "maximum": 179.99,
+        "maximum": 179.999,
         "minimum": 120.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.1,
       "voltage": 150.0,
       "minimumNominalVoltage": 120.0,
-      "maximumNominalVoltage": 179.99
+      "maximumNominalVoltage": 179.999
     },
     {
       "range": {
         "comparator": "INSTANCE",
-        "maximum": 299.99,
+        "maximum": 299.999,
         "minimum": 180.0,
         "naturalOrdering": true
       },
       "rangeCoefficient": 1.09,
       "voltage": 225.0,
       "minimumNominalVoltage": 180.0,
-      "maximumNominalVoltage": 299.99
+      "maximumNominalVoltage": 299.999
     },
     {
       "range": {
