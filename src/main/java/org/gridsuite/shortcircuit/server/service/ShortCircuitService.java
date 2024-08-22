@@ -50,10 +50,16 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
     public static final String GET_SHORT_CIRCUIT_RESULTS_MSG = "Get ShortCircuit Results {} in {}ms";
 
+    // This voltage intervals' definition is not clean and we could potentially lose some buses.
+    // To be cleaned when VoltageRange uses intervals that are open on the right.
     public static final List<VoltageRange> CEI909_VOLTAGE_PROFILE = List.of(
-        new VoltageRange(10.0, 199.99, 1.1),
-        new VoltageRange(200.0, 299.99, 1.09),
-        new VoltageRange(300.0, 500.0, 1.05)
+            new VoltageRange(10.0, 29.999, 1.1, 20),
+            new VoltageRange(30.0, 53.999, 1.1, 45),
+            new VoltageRange(54.0, 76.999, 1.1, 63),
+            new VoltageRange(77.0, 119.999, 1.1, 90),
+            new VoltageRange(120.0, 179.999, 1.1, 150),
+            new VoltageRange(180.0, 299.999, 1.09, 225),
+            new VoltageRange(300.0, 500.0, 1.105, 380)
     );
 
     private final ParametersRepository parametersRepository;

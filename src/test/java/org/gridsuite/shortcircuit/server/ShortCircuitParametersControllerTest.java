@@ -67,7 +67,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
         final Optional<ShortCircuitParametersInfos> returned = Optional.of(new ShortCircuitParametersInfos(null, null));
         when(shortCircuitService.getParameters(any(UUID.class))).thenReturn(returned);
         mockMvc.perform(get("/v1/parameters/{pUuid}", arg.toString()))
-               .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().string(defaultParametersJson));
+               .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().json(defaultParametersJson));
         final ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
         verify(shortCircuitService).getParameters(uuidCaptor.capture());
         assertThat(uuidCaptor.getValue()).isEqualTo(arg);
