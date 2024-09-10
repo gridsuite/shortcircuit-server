@@ -149,8 +149,9 @@ public class ShortCircuitController {
     @Operation(summary = "Stop a short circuit analysis computation")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis has been stopped")})
     public ResponseEntity<Void> stop(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                     @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver) {
-        shortCircuitService.stop(resultUuid, receiver);
+                                     @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
+                                     @RequestHeader(HEADER_USER_ID) String userId) {
+        shortCircuitService.stop(resultUuid, receiver, userId);
         return ResponseEntity.ok().build();
     }
 
