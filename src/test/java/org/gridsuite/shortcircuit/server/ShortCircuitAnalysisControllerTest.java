@@ -63,7 +63,7 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
-import static com.powsybl.ws.commons.computation.service.NotificationService.getCancelMessage;
+import static com.powsybl.ws.commons.computation.service.NotificationService.getCancelFailedMessage;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
 import static org.junit.Assert.assertEquals;
@@ -202,6 +202,7 @@ public class ShortCircuitAnalysisControllerTest {
     private final String shortCircuitAnalysisCancelDestination = "shortcircuitanalysis.cancel";
     private final String shortCircuitAnalysisStoppedDestination = "shortcircuitanalysis.stopped";
     private final String shortCircuitAnalysisFailedDestination = "shortcircuitanalysis.failed";
+    private final String shortCircuitAnalysisCancelFailedDestination = "shortcircuitanalysis.cancelfailed";
 
     @Autowired
     private OutputDestination output;
@@ -336,7 +337,7 @@ public class ShortCircuitAnalysisControllerTest {
 
         TestUtils.assertQueuesEmptyThenClear(List.of(shortCircuitAnalysisResultDestination, shortCircuitAnalysisRunDestination,
             shortCircuitAnalysisCancelDestination, shortCircuitAnalysisStoppedDestination,
-            shortCircuitAnalysisFailedDestination), output);
+            shortCircuitAnalysisFailedDestination, shortCircuitAnalysisCancelFailedDestination), output);
     }
 
     @SneakyThrows
@@ -708,17 +709,20 @@ public class ShortCircuitAnalysisControllerTest {
 
             // stop shortcircuit analysis
             assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisRunDestination));
-            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID_TO_STOP))
+            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID_TO_STOP)
+                            .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk());
 
             assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisResultDestination));
             assertNotNull(output.receive(TIMEOUT, shortCircuitAnalysisCancelDestination));
 
-            Message<byte[]> message = output.receive(TIMEOUT, shortCircuitAnalysisStoppedDestination);
+            Message<byte[]> message = output.receive(TIMEOUT, shortCircuitAnalysisCancelFailedDestination);
             assertNotNull(message);
             assertEquals(RESULT_UUID_TO_STOP.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
-            assertEquals(getCancelMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
+            assertEquals(getCancelFailedMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
+
+            // FIXME how to test the case when the computation is still in progress and we send a cancel request
         }
     }
 
