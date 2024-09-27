@@ -43,7 +43,7 @@ public abstract class AbstractReportMapper {
      */
     public ReportNode processReporter(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         if (reportNode.getMessageKey() != null && reportNode.getMessageKey()
-                .matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@)?.*ShortCircuitAnalysis$")) {
+                .matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
             return forUuidAtShortCircuitAnalysis(reportNode, runContext);
         } else {
