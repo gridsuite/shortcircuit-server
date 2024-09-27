@@ -22,7 +22,7 @@ import java.util.UUID;
  * <br/>
  * The start tree structure returned by short-circuit is:
  * <pre>
- * 00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis  or  ShortCircuitAnalysis
+ * 00000000-0000-0000-0000-000000000000
  * \-- ShortCircuitAnalysis -> "ShortCircuitAnalysis (${providerToUse})"
  *     +-- [...]
  *     \-- [...]
@@ -43,9 +43,9 @@ public abstract class AbstractReportMapper {
      */
     public ReportNode processReporter(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         if (reportNode.getMessageKey() != null && reportNode.getMessageKey()
-                .matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}@)?.*ShortCircuitAnalysis$")) {
+                .matches("^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})")) {
             log.debug("ShortCircuitAnalysis root node found, will modify it!");
-            return forUuidAtShortCircuitAnalysis(reportNode, runContext);
+            return forRootReport(reportNode, runContext);
         } else {
             log.trace("Unrecognized ReportNode: {}", reportNode);
             return reportNode;
@@ -66,11 +66,11 @@ public abstract class AbstractReportMapper {
     }
 
     /**
-     * Modify node with key {@code ********-****-****-****-************@ShortCircuitAnalysis} or {@code ShortCircuitAnalysis}
+     * Modify node with key {@code ********-****-****-****-************}
      *
      * @implNote we assume there will always be at least one modification
      */
-    protected ReportNode forUuidAtShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
+    protected ReportNode forRootReport(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
                 .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
         reportNode.getValues().forEach((key, value) -> builder.withTypedValue(key, value.getValue().toString(), value.getType()));
