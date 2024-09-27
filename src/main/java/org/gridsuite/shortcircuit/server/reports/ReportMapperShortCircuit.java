@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <br/>
  * The tree structure returned by short-circuit is:
  * <pre>
- * 00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis  or  ShortCircuitAnalysis
+ * 00000000-0000-0000-0000-000000000000
  * \-- ShortCircuitAnalysis -> "ShortCircuitAnalysis (${providerToUse})"
  *     +-- generatorConversion -> "Conversion of generators"
  *     +-- batteryConversion -> "Conversion of the batteries"
