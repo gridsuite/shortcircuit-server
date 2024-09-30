@@ -2,7 +2,7 @@
   "version": "2.1",
   "dictionaries": {
     "default": {
-      "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
+      "00000000-0000-0000-0000-000000000000": "00000000-0000-0000-0000-000000000000",
       "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
       "TestReporter": "Test Reporter",
       "testReportLine": "Test log line",
@@ -27,7 +27,7 @@
     }
   },
   "reportRoot": {
-    "messageKey": "00000000-0000-0000-0000-000000000000@ShortCircuitAnalysis",
+    "messageKey": "00000000-0000-0000-0000-000000000000",
     "children": [
       {
         "messageKey": "TestReporter"
