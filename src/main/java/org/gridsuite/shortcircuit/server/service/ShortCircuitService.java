@@ -132,7 +132,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
-        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
+        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(), feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
     }
 
     private static ShortCircuitParametersEntity toEntity(ShortCircuitParametersInfos parametersInfos) {
@@ -208,7 +208,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                         faultResultId,
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        faultCurrentValueStr
+                        faultCurrentValueStr,
+                        ""
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
@@ -239,16 +240,18 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                     for (FeederResult feederResult : feederResults) {
                         double feederCurrentValue = (faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent()) / 1000.0;
                         String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
+                        String feederSide = feederResult.getSide() != null ? enumValueTranslations.getOrDefault(feederResult.getSide(), "") : ""; // Assuming FeederResult also has a side
                         List<String> feederRowData = new ArrayList<>(List.of(
                                 faultResultId,
                                 "",
                                 feederResult.getConnectableId(),
-                                feederCurrentValueStr
+                                feederCurrentValueStr,
+                                feederSide
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
                 } else {
-                    csvWriter.writeRow(List.of("", "", "", ""));
+                    csvWriter.writeRow(List.of("", "", "", "", ""));
                 }
             }
 

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
+import com.powsybl.iidm.network.ThreeSides;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -40,6 +41,10 @@ public class FeederResultEntity {
     @Column
     private double current;
 
+    @Column
+    @Enumerated(EnumType.STRING)
+    private ThreeSides side;
+
     @Embedded
     @AttributeOverride(name = "positiveMagnitude", column = @Column(name = "fortescue_current_positive_magnitude"))
     @AttributeOverride(name = "zeroMagnitude", column = @Column(name = "fortescue_current_zero_magnitude"))
@@ -63,9 +68,10 @@ public class FeederResultEntity {
         this.faultResult = faultResult;
     }
 
-    public FeederResultEntity(String connectableId, double current, FortescueResultEmbeddable fortescueCurrent) {
+    public FeederResultEntity(String connectableId, double current, FortescueResultEmbeddable fortescueCurrent, ThreeSides side) {
         this.connectableId = connectableId;
         this.current = current;
         this.fortescueCurrent = fortescueCurrent;
+        this.side = side;
     }
 }

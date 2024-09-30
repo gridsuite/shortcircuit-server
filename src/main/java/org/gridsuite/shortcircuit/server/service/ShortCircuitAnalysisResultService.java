@@ -118,7 +118,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         entity.setCurrent(current);
         entity.setFeederResults(faultResult.getFeederResults().stream()
                 .map(feederResult -> new FeederResultEntity(feederResult.getConnectableId(),
-                        ((MagnitudeFeederResult) feederResult).getCurrent(), null))
+                        ((MagnitudeFeederResult) feederResult).getCurrent(), null, feederResult.getSide()))
                 .toList());
         if (shortCircuitLimits != null) {
             entity.setDeltaCurrentIpMin(current - entity.getIpMin());
@@ -139,7 +139,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
                             feederFortescueCurrent.getZeroAngle(), feederFortescueCurrent.getNegativeAngle(),
                             feederFortescueThreePhaseValue.getMagnitudeA(), feederFortescueThreePhaseValue.getMagnitudeB(),
                             feederFortescueThreePhaseValue.getMagnitudeC(), feederFortescueThreePhaseValue.getAngleA(),
-                            feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()));
+                            feederFortescueThreePhaseValue.getAngleB(), feederFortescueThreePhaseValue.getAngleC()), feederResult.getSide());
                 })
                 .toList());
 
