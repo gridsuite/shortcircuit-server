@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -153,6 +154,13 @@ public class ShortCircuitController {
                                      @RequestHeader(HEADER_USER_ID) String userId) {
         shortCircuitService.stop(resultUuid, receiver, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/results/{resultUuid}/branch-sides", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get list of branch sides")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of fault types")})
+    public ResponseEntity<List<ThreeSides>> getBranchSides(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(shortCircuitService.getBranchSides(resultUuid));
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault-types", produces = APPLICATION_JSON_VALUE)

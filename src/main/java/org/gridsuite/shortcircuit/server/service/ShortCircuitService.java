@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
@@ -132,7 +133,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
-        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude());
+        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(), feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
     }
 
     private static ShortCircuitParametersEntity toEntity(ShortCircuitParametersInfos parametersInfos) {
@@ -208,7 +209,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                         faultResultId,
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
-                        faultCurrentValueStr
+                        faultCurrentValueStr,
+                        ""
                 ));
 
                 List<LimitViolation> limitViolations = faultResult.getLimitViolations();
@@ -239,16 +241,18 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                     for (FeederResult feederResult : feederResults) {
                         double feederCurrentValue = (faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent()) / 1000.0;
                         String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
+                        String feederSide = feederResult.getSide() != null ? enumValueTranslations.getOrDefault(feederResult.getSide(), "") : ""; // Assuming FeederResult also has a side
                         List<String> feederRowData = new ArrayList<>(List.of(
                                 faultResultId,
                                 "",
                                 feederResult.getConnectableId(),
-                                feederCurrentValueStr
+                                feederCurrentValueStr,
+                                feederSide
                         ));
                         csvWriter.writeRow(feederRowData);
                     }
                 } else {
-                    csvWriter.writeRow(List.of("", "", "", ""));
+                    csvWriter.writeRow(List.of("", "", "", "", ""));
                 }
             }
 
@@ -360,6 +364,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     public List<LimitViolationType> getLimitTypes(UUID resultUuid) {
         return resultService.findLimitTypes(resultUuid);
+    }
+
+    public List<ThreeSides> getBranchSides(UUID resultUuid) {
+        return resultService.findBranchSides(resultUuid);
     }
 
     public List<com.powsybl.shortcircuit.Fault.FaultType> getFaultTypes(UUID resultUuid) {
