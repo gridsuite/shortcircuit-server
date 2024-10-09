@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.extern.slf4j.Slf4j;
@@ -340,6 +341,12 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         Objects.requireNonNull(result);
         Specification<FeederResultEntity> specification = FeederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         return feederResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ThreeSides> findBranchSides(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return feederResultRepository.findBranchSides(resultUuid);
     }
 
     @Transactional(readOnly = true)

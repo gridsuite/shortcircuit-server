@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
@@ -363,6 +364,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     public List<LimitViolationType> getLimitTypes(UUID resultUuid) {
         return resultService.findLimitTypes(resultUuid);
+    }
+
+    public List<ThreeSides> getBranchSides(UUID resultUuid) {
+        return resultService.findBranchSides(resultUuid);
     }
 
     public List<com.powsybl.shortcircuit.Fault.FaultType> getFaultTypes(UUID resultUuid) {
