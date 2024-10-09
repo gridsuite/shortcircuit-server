@@ -66,8 +66,7 @@ import static com.powsybl.ws.commons.computation.service.NotificationService.HEA
 import static com.powsybl.ws.commons.computation.service.NotificationService.getCancelFailedMessage;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
@@ -754,6 +753,17 @@ public class ShortCircuitAnalysisControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         assertEquals("[]", result.getResponse().getContentAsString());
+    }
+
+    @SneakyThrows
+    @Test
+    public void testGetBranchSides() {
+        MvcResult mvcResult = mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}/branch-sides", RESULT_UUID))
+                .andExpectAll(
+                        status().isOk(),
+                        content().contentType(MediaType.APPLICATION_JSON)
+                ).andReturn();
+        assertEquals("[]", mvcResult.getResponse().getContentAsString());
     }
 
     @SneakyThrows
