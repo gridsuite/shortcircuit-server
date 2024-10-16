@@ -22,4 +22,6 @@ public class FeederResult {
     private double current;
 
     private double positiveMagnitude;
+
+    private String side;
 }
