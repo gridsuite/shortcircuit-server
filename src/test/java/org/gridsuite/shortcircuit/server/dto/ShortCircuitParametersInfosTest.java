@@ -14,6 +14,7 @@ import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -30,9 +31,9 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
     private static final String DUMB_JSON = "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.3\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
-    @SneakyThrows
+    @SneakyThrows(JSONException.class)
     private static JSONObject toJson(@NonNull final VoltageRange voltageRange) {
         return new JSONObject().put("minimumNominalVoltage", voltageRange.getMinimumNominalVoltage())
                                .put("maximumNominalVoltage", voltageRange.getMaximumNominalVoltage())

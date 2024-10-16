@@ -76,16 +76,16 @@ class ShortCircuitParametersITest implements WithAssertions {
     }
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @Autowired
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
 
     @Autowired
-    ParametersRepository parametersRepository;
+    private ParametersRepository parametersRepository;
 
     @MockBean
-    NotificationService notificationService; //to keep; for not testing notification part, it's tested in another class test
+    private NotificationService notificationService; //to keep; for not testing notification part, it's tested in another class test
 
     @BeforeAll
     void checkDatabaseClean() {

@@ -12,13 +12,11 @@ import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
-import org.json.JSONException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -26,7 +24,7 @@ import java.util.Collections;
 @Slf4j
 class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     private final AbstractReportMapper reportMapper = new ReportMapperShortCircuit();
-    protected static ReportNode rootReportNode;
+    private static ReportNode rootReportNode;
 
     @BeforeAll
     static void prepare() throws IOException {
@@ -34,7 +32,7 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     }
 
     @Test
-    void testAggregatedLogs() throws IOException, URISyntaxException, JSONException {
+    void testAggregatedLogs() throws Exception {
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParameters(),
             null, "reporterId", "reportType", "userId", "provider", "busId");
         runContext.setVoltageLevelsWithWrongIsc(Collections.singletonList("VL1"));

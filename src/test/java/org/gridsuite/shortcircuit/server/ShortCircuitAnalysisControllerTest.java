@@ -23,7 +23,6 @@ import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
-import lombok.SneakyThrows;
 import com.powsybl.ws.commons.computation.service.ReportService;
 import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
@@ -31,11 +30,9 @@ import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -49,7 +46,6 @@ import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -59,15 +55,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
+import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
+import static com.powsybl.ws.commons.computation.service.NotificationService.getCancelFailedMessage;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
-import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
-import static com.powsybl.ws.commons.computation.service.NotificationService.getCancelFailedMessage;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
@@ -79,11 +75,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@RunWith(SpringRunner.class)
 @AutoConfigureMockMvc
 @SpringBootTest
 @ContextHierarchy({@ContextConfiguration(classes = {ShortCircuitApplication.class, TestChannelBinderConfiguration.class})})
-public class ShortCircuitAnalysisControllerTest {
+class ShortCircuitAnalysisControllerTest {
 
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID NETWORK1_UUID = UUID.fromString("faa0f351-f664-4771-951b-fa3b565c4d37");
@@ -220,13 +215,10 @@ public class ShortCircuitAnalysisControllerTest {
     private UuidGeneratorService uuidGeneratorService;
 
     @MockBean
-    ShortCircuitAnalysis.Runner runner;
+    private ShortCircuitAnalysis.Runner runner;
 
     @Autowired
-    ShortCircuitAnalysisResultService shortCircuitAnalysisResultRepository;
-
-    @Autowired
-    FaultResultRepository faultResultRepository;
+    private FaultResultRepository faultResultRepository;
 
     private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
@@ -293,8 +285,8 @@ public class ShortCircuitAnalysisControllerTest {
         }
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
         // network store service mocking
@@ -330,23 +322,17 @@ public class ShortCircuitAnalysisControllerTest {
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
     }
 
-    @SneakyThrows
-    @After
-    public void tearDown() {
-        cleanDB();
+    @AfterEach
+    void tearDown() throws Exception {
+        mockMvc.perform(delete("/" + VERSION + "/results")).andExpect(status().isOk());
 
         TestUtils.assertQueuesEmptyThenClear(List.of(shortCircuitAnalysisResultDestination, shortCircuitAnalysisRunDestination,
             shortCircuitAnalysisCancelDestination, shortCircuitAnalysisStoppedDestination,
             shortCircuitAnalysisFailedDestination, shortCircuitAnalysisCancelFailedDestination), output);
     }
 
-    @SneakyThrows
-    private void cleanDB() {
-        mockMvc.perform(delete("/" + VERSION + "/results")).andExpect(status().isOk());
-    }
-
     @Test
-    public void runTest() throws Exception {
+    void runTest() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
 
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
@@ -503,7 +489,7 @@ public class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
-    public void testDeterministicResults() throws Exception {
+    void testDeterministicResults() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
 
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
@@ -556,7 +542,7 @@ public class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
-    public void runWithBusIdTest() throws Exception {
+    void runWithBusIdTest() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
@@ -617,7 +603,7 @@ public class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
-    public void runWithBusBarSectionIdTest() throws Exception {
+    void runWithBusBarSectionIdTest() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(nodeBreakerNetwork), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_FORTESCUE_FULL));
@@ -659,7 +645,7 @@ public class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
-    public void runWithBusBarSectionIdAndErrorTest() throws Exception {
+    void runWithBusBarSectionIdAndErrorTest() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(nodeBreakerNetwork), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
                 .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
@@ -690,7 +676,7 @@ public class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
-    public void stopTest() throws Exception {
+    void stopTest() throws Exception {
         // this test breaks following tests executing shortcircuit analysis if they run with the same resultUUID by adding it to cancelComputationRequests
         // for now, we need to run it with a different resultUuid
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID_TO_STOP);
@@ -726,9 +712,8 @@ public class ShortCircuitAnalysisControllerTest {
         }
     }
 
-    @SneakyThrows
     @Test
-    public void testStatus() {
+    void testStatus() throws Exception {
         MvcResult result = mockMvc.perform(get(
                         "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -746,9 +731,8 @@ public class ShortCircuitAnalysisControllerTest {
         assertEquals(ShortCircuitAnalysisStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
     }
 
-    @SneakyThrows
     @Test
-    public void testGetFaultTypes() {
+    void testGetFaultTypes() throws Exception {
         MvcResult result = mockMvc.perform(get(
                         "/" + VERSION + "/results/{resultUuid}/fault-types", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -756,9 +740,8 @@ public class ShortCircuitAnalysisControllerTest {
         assertEquals("[]", result.getResponse().getContentAsString());
     }
 
-    @SneakyThrows
     @Test
-    public void testGetLimitTypes() {
+    void testGetLimitTypes() throws Exception {
         MvcResult result = mockMvc.perform(get(
                         "/" + VERSION + "/results/{resultUuid}/limit-violation-types", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -766,9 +749,8 @@ public class ShortCircuitAnalysisControllerTest {
         assertEquals("[]", result.getResponse().getContentAsString());
     }
 
-    @SneakyThrows
     @Test
-    public void runWithReportTest() {
+    void runWithReportTest() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(new ShortCircuitAnalysisProviderMock())) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
                     .thenReturn(CompletableFuture.completedFuture(RESULT));
@@ -790,9 +772,8 @@ public class ShortCircuitAnalysisControllerTest {
         }
     }
 
-    @SneakyThrows
     @Test
-    public void runWithNoShortcircuitDataTest() {
+    void runWithNoShortCircuitDataTest() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(new ShortCircuitAnalysisProviderMock())) {
             shortCircuitAnalysisMockedStatic.when(() ->
                 ShortCircuitAnalysis.runAsync(
@@ -829,7 +810,7 @@ public class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
-    public void checkShortCircuitLimitsTest() throws Exception {
+    void checkShortCircuitLimitsTest() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
                     .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
