@@ -77,7 +77,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         }
     }
 
-    private void checkParametersEntityHasBeenRead(final ShortCircuitParametersEntity pEntity) {
+    private static void checkParametersEntityHasBeenRead(final ShortCircuitParametersEntity pEntity) {
         verify(pEntity).isWithLimitViolations();
         verify(pEntity).isWithVoltageResult();
         verify(pEntity).isWithFeederResult();

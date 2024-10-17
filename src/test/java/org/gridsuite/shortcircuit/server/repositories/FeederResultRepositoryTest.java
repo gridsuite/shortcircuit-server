@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
@@ -43,24 +42,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // improve tests speed as we only read DB
 class FeederResultRepositoryTest {
 
-    static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("A_CONN_ID_1", 22.179775880774197);
-    static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("A_CONN_ID_2", 18.57);
-    static final FeederResult FEEDER_RESULT_3 = new MagnitudeFeederResult("B_CONN_ID_3", 53.94);
-    static final FeederResult FEEDER_RESULT_4 = new FortescueFeederResult("A_CONN_ID_4", new FortescueValue(45.328664779663086, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
-    static final FeederResult FEEDER_RESULT_5 = new FortescueFeederResult("B_CONN_ID_5", new FortescueValue(52.568678656325887, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
-    static final FeederResult FEEDER_RESULT_6 = new FortescueFeederResult("B_CONN_ID_6", new FortescueValue(18.170874567665456, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
+    private static final FeederResult FEEDER_RESULT_1 = new MagnitudeFeederResult("A_CONN_ID_1", 22.179775880774197);
+    private static final FeederResult FEEDER_RESULT_2 = new MagnitudeFeederResult("A_CONN_ID_2", 18.57);
+    private static final FeederResult FEEDER_RESULT_3 = new MagnitudeFeederResult("B_CONN_ID_3", 53.94);
+    private static final FeederResult FEEDER_RESULT_4 = new FortescueFeederResult("A_CONN_ID_4", new FortescueValue(45.328664779663086, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
+    private static final FeederResult FEEDER_RESULT_5 = new FortescueFeederResult("B_CONN_ID_5", new FortescueValue(52.568678656325887, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
+    private static final FeederResult FEEDER_RESULT_6 = new FortescueFeederResult("B_CONN_ID_6", new FortescueValue(18.170874567665456, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
 
-    static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("", ""), Double.NaN,
+    private static final FaultResult FAULT_RESULT_1 = new MagnitudeFaultResult(new BusFault("", ""), Double.NaN,
         List.of(FEEDER_RESULT_1, FEEDER_RESULT_2, FEEDER_RESULT_3), List.of(),
         Double.NaN, FaultResult.Status.SUCCESS);
-    static final FaultResult FAULT_RESULT_2 = new FortescueFaultResult(new BusFault("", ""), Double.NaN,
+    private static final FaultResult FAULT_RESULT_2 = new FortescueFaultResult(new BusFault("", ""), Double.NaN,
         List.of(FEEDER_RESULT_4, FEEDER_RESULT_5, FEEDER_RESULT_6), List.of(),
         new FortescueValue(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN), List.of(), null, FaultResult.Status.SUCCESS);
 
-    static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1));
-    static final ShortCircuitAnalysisResult RESULT_FORTESCUE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_2));
-    static final UUID MAGNITUDE_RESULT_UUID = UUID.randomUUID();
-    static final UUID FORTESCUE_RESULT_UUID = UUID.randomUUID();
+    private static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1));
+    private static final ShortCircuitAnalysisResult RESULT_FORTESCUE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_2));
+    private static final UUID MAGNITUDE_RESULT_UUID = UUID.randomUUID();
+    private static final UUID FORTESCUE_RESULT_UUID = UUID.randomUUID();
 
     private FeederResultEntity feederResultEntity1;
     private FeederResultEntity feederResultEntity2;
@@ -77,9 +76,6 @@ class FeederResultRepositoryTest {
 
     @Autowired
     private ShortCircuitAnalysisResultService shortCircuitAnalysisResultService;
-
-    @Autowired
-    FeederResultRepository feederResultRepository;
 
     @BeforeAll
     void setUp() {
@@ -298,12 +294,12 @@ class FeederResultRepositoryTest {
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
-                Arguments.of(
-                        resultMagnitudeEntity,
-                        List.of(
-                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22., "current"),
-                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53, "current")),
-                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22) <= 0).toList())
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22., "current"),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53, "current")),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22) <= 0).toList())
         );
     }
 
@@ -330,12 +326,12 @@ class FeederResultRepositoryTest {
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) >= 0).toList()),
-                Arguments.of(
-                        resultMagnitudeEntity,
-                        List.of(
-                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22, "current"),
-                                new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53, "current")),
-                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53) >= 0).toList())
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22, "current"),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53, "current")),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53) >= 0).toList())
         );
     }
 
@@ -374,11 +370,7 @@ class FeederResultRepositoryTest {
     }
 
     private Stream<Arguments> provideSortingPageable() {
-        ArrayList<FeederResultEntity> feederResultList = new ArrayList<>() {{
-                add(feederResultEntity1);
-                add(feederResultEntity2);
-                add(feederResultEntity3);
-            }};
+        final List<FeederResultEntity> feederResultList = List.of(feederResultEntity1, feederResultEntity2, feederResultEntity3);
         List<FeederResultEntity> feederResultListByConnectableId = feederResultList.stream().sorted(Comparator.comparing(FeederResultEntity::getConnectableId)).toList();
         List<FeederResultEntity> feederResultListByConnectableIdDesc = feederResultList.stream().sorted(Comparator.comparing(FeederResultEntity::getConnectableId).reversed()).toList();
         List<FeederResultEntity> feederResultListByCurrent = feederResultList.stream().sorted(Comparator.comparing(FeederResultEntity::getCurrent)).toList();
@@ -402,5 +394,4 @@ class FeederResultRepositoryTest {
                 feederResultListByCurrentDesc)
         );
     }
-
 }
