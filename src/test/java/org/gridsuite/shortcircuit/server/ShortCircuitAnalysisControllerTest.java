@@ -287,7 +287,7 @@ class ShortCircuitAnalysisControllerTest {
     }
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         MockitoAnnotations.initMocks(this);
 
         // network store service mocking
