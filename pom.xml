@@ -232,13 +232,5 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Needed to mock ShortCircuitAnalysis.Runner (which happens to be a final class) in ShortCircuitAnalysisControllerTest -->
-        <!-- see https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing.spring-boot-applications.mocking-beans -->
-        <!-- otherwise we get the following exception:
-            Cannot mock/spy class com.powsybl.shortcircuit.ShortCircuitAnalysis.Runner
-             Mockito cannot mock/spy because :
-              - final class
-        -->
     </dependencies>
-
 </project>
