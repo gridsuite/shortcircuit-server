@@ -26,8 +26,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -46,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ShortCircuitParametersControllerTest implements WithAssertions {
     private final String defaultParametersJson;
 
-    public ShortCircuitParametersControllerTest() throws URISyntaxException, IOException {
+    public ShortCircuitParametersControllerTest() throws Exception {
         this.defaultParametersJson = Files.readString(Paths.get(this.getClass().getResource(this.getClass().getSimpleName() + ".json").toURI())).replaceAll("\\s+", "");
     }
 
@@ -127,10 +125,10 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
         assertThat(uuidCaptor.getValue()).isEqualTo(arg);
     }
 
-    static Stream<Arguments> testParametersArgs() {
+    private static Stream<Arguments> testParametersArgs() {
         return Stream.of(
-                Arguments.arguments(true, status().isNoContent()),
-                Arguments.arguments(false, status().isNotFound())
+            Arguments.arguments(true, status().isNoContent()),
+            Arguments.arguments(false, status().isNotFound())
         );
     }
 

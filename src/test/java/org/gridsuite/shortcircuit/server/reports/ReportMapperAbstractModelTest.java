@@ -17,8 +17,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @Slf4j
 class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
-    static final String ROOT_REPORTER_ID = "00000000-0000-0000-0000-000000000000";
-    static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
+    private static final String ROOT_REPORTER_ID = "00000000-0000-0000-0000-000000000000";
+    private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
 
     private final AbstractReportMapper reportMapper = new AbstractReportMapper() {
         @Override
