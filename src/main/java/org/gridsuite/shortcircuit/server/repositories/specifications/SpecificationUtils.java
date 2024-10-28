@@ -60,7 +60,7 @@ public final class SpecificationUtils {
             Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
             return cb.or(
                     cb.greaterThan(doubleExpression, value + tolerance),
-                    cb.lessThan(doubleExpression, value - tolerance)
+                    cb.lessThanOrEqualTo(doubleExpression, value)
             );
         };
     }
@@ -156,13 +156,18 @@ public final class SpecificationUtils {
 
     @NotNull
     private static <X> Specification<X> appendNumberFilterToSpecification(Specification<X> specification, ResourceFilter resourceFilter) {
-        final double tolerence = 0.00001; // tolerance for comparison
         String value = resourceFilter.value().toString();
-        return createNumberPredicate(specification, resourceFilter, value, tolerence);
+        return createNumberPredicate(specification, resourceFilter, value);
     }
 
-    private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value, double tolerance) {
+    private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value) {
         Specification<X> completedSpecification = specification;
+        String[] splitValue = value.split("\\.");
+        int numberOfDecimalAfterDot = 0;
+        if (splitValue.length > 1) {
+            numberOfDecimalAfterDot = splitValue[1].length();
+        }
+        final double tolerance = Math.pow(10, -numberOfDecimalAfterDot); // tolerance for comparison
         Double valueDouble = Double.valueOf(value);
         switch (resourceFilter.type()) {
             case NOT_EQUAL ->
