@@ -7,7 +7,6 @@
 package org.gridsuite.shortcircuit.server.reports;
 
 import com.powsybl.commons.report.ReportNode;
-import com.powsybl.commons.report.ReportNodeImpl;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
@@ -28,7 +27,7 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
 
     @BeforeAll
     static void prepare() throws IOException {
-        rootReportNode = RestTemplateConfig.objectMapper().readValue(AbstractReportMapperTest.class.getClassLoader().getResource("reporter_shortcircuit_test.json"), ReportNodeImpl.class);
+        rootReportNode = RestTemplateConfig.objectMapper().readValue(AbstractReportMapperTest.class.getClassLoader().getResource("reporter_shortcircuit_test.json"), ReportNode.class);
     }
 
     @Test
