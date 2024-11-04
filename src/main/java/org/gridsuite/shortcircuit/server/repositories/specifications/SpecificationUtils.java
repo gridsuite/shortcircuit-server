@@ -48,6 +48,9 @@ public final class SpecificationUtils {
 
     /**
      * Returns a specification where the field value is not equal within the given tolerance.
+     * in order to be equal to doubleExpression, truncated value has to fit :
+     * value <= doubleExpression < value + tolerance
+     * therefore in order to be different at least one of the opposite comparison needs to be true :
      *
      * @param <X> Entity type.
      * @param field Field name.
@@ -59,8 +62,8 @@ public final class SpecificationUtils {
         return (root, cq, cb) -> {
             Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
             return cb.or(
-                    cb.greaterThan(doubleExpression, value + tolerance),
-                    cb.lessThanOrEqualTo(doubleExpression, value)
+                    cb.greaterThanOrEqualTo(doubleExpression, value + tolerance),
+                    cb.lessThan(doubleExpression, value)
             );
         };
     }
@@ -161,6 +164,9 @@ public final class SpecificationUtils {
     }
 
     private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value) {
+        // the reference for the comparison is the number of digits after the decimal point in filterValue
+        // filterValue is truncated, not rounded
+        // extra digits are ignored, but the user may add '0's ater the decimal point in order to get a better precision
         Specification<X> completedSpecification = specification;
         String[] splitValue = value.split("\\.");
         int numberOfDecimalAfterDot = 0;
@@ -175,7 +181,7 @@ public final class SpecificationUtils {
             case LESS_THAN_OR_EQUAL ->
                     completedSpecification = specification.and(lessThanOrEqual(resourceFilter.column(), valueDouble, tolerance));
             case GREATER_THAN_OR_EQUAL ->
-                    completedSpecification = specification.and(greaterThanOrEqual(resourceFilter.column(), valueDouble, tolerance));
+                    completedSpecification = specification.and(greaterThanOrEqual(resourceFilter.column(), valueDouble, 0.0));
             default -> throwBadFilterTypeException(resourceFilter.type(), resourceFilter.dataType());
         }
         return completedSpecification;
