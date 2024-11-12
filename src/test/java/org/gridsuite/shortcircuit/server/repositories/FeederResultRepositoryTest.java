@@ -253,7 +253,7 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.32867, "fortescueCurrent.positiveMagnitude")),
+                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.3287, "fortescueCurrent.positiveMagnitude")),
                 feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(45.328664779663086)).toList()),
             Arguments.of(
                 resultFortescueEntity,

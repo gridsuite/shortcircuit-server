@@ -338,7 +338,7 @@ class FaultResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 47, "current")),
-                List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3)),
+                List.of(faultResultEntity1, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
