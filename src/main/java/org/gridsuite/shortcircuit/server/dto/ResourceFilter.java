@@ -20,9 +20,13 @@ import java.util.List;
  * @param type the type of filter (contains, startsWith...)
  * @param value the value of the filter
  * @param column the column on which the filter will be applied
+ * @param tolerance precision/tolerance used for the comparisons (simulates the rounding of the database values) Only useful for numbers.
  * @author Florent MILLOT <florent.millot@rte-france.com>
  */
-public record ResourceFilter(DataType dataType, Type type, Object value, String column) {
+public record ResourceFilter(DataType dataType, Type type, Object value, String column, Double tolerance) {
+    public ResourceFilter(DataType dataType, Type type, Object value, String column) {
+        this(dataType, type, value, column, null);
+    }
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 

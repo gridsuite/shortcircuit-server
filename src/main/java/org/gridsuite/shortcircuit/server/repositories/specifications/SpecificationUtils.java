@@ -169,17 +169,22 @@ public final class SpecificationUtils {
     }
 
     private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value) {
-        // the reference for the comparison is the number of digits after the decimal point in filterValue
-        // extra digits are ignored, but the user may add '0's after the decimal point in order to get a better precision
         Specification<X> completedSpecification = specification;
-        String[] splitValue = value.split("\\.");
-        int numberOfDecimalAfterDot = 0;
-        if (splitValue.length > 1) {
-            numberOfDecimalAfterDot = splitValue[1].length();
+        double tolerance;
+        if (resourceFilter.tolerance() != null) {
+            tolerance = resourceFilter.tolerance();
+        } else {
+            // the reference for the comparison is the number of digits after the decimal point in filterValue
+            // extra digits are ignored, but the user may add '0's after the decimal point in order to get a better precision
+            String[] splitValue = value.split("\\.");
+            int numberOfDecimalAfterDot = 0;
+            if (splitValue.length > 1) {
+                numberOfDecimalAfterDot = splitValue[1].length();
+            }
+            // tolerance is multiplied by 0.5 to simulate the fact that the database value is rounded (in the front, from the user viewpoint)
+            // more than 13 decimal after dot will likely cause rounding errors due to double precision
+            tolerance = Math.pow(10, -numberOfDecimalAfterDot) * 0.5;
         }
-        // tolerance is multiplied by 0.5 to simulate the fact that the database value is rounded (in the front, from the user viewpoint)
-        // more than 13 decimal after dot will likely cause rounding errors due to double precision
-        final double tolerance = Math.pow(10, -numberOfDecimalAfterDot) * 0.5;
         Double valueDouble = Double.valueOf(value);
         switch (resourceFilter.type()) {
             case NOT_EQUAL ->
