@@ -48,6 +48,9 @@ public final class SpecificationUtils {
 
     /**
      * Returns a specification where the field value is not equal within the given tolerance.
+     * in order to be equal to doubleExpression, truncated value has to fit :
+     * value <= doubleExpression < value + tolerance
+     * therefore in order to be different at least one of the opposite comparison needs to be true :
      *
      * @param <X> Entity type.
      * @param field Field name.
@@ -58,6 +61,11 @@ public final class SpecificationUtils {
     public static <X> Specification<X> notEqual(String field, Double value, Double tolerance) {
         return (root, cq, cb) -> {
             Expression<Double> doubleExpression = getColumnPath(root, field).as(Double.class);
+            /**
+             * in order to be equal to doubleExpression, value has to fit :
+             * value - tolerance <= doubleExpression <= value + tolerance
+             * therefore in order to be different at least one of the opposite comparison needs to be true :
+             */
             return cb.or(
                     cb.greaterThan(doubleExpression, value + tolerance),
                     cb.lessThan(doubleExpression, value - tolerance)
@@ -156,13 +164,27 @@ public final class SpecificationUtils {
 
     @NotNull
     private static <X> Specification<X> appendNumberFilterToSpecification(Specification<X> specification, ResourceFilter resourceFilter) {
-        final double tolerence = 0.00001; // tolerance for comparison
         String value = resourceFilter.value().toString();
-        return createNumberPredicate(specification, resourceFilter, value, tolerence);
+        return createNumberPredicate(specification, resourceFilter, value);
     }
 
-    private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value, double tolerance) {
+    private static <X> Specification<X> createNumberPredicate(Specification<X> specification, ResourceFilter resourceFilter, String value) {
         Specification<X> completedSpecification = specification;
+        double tolerance;
+        if (resourceFilter.tolerance() != null) {
+            tolerance = resourceFilter.tolerance();
+        } else {
+            // the reference for the comparison is the number of digits after the decimal point in filterValue
+            // extra digits are ignored, but the user may add '0's after the decimal point in order to get a better precision
+            String[] splitValue = value.split("\\.");
+            int numberOfDecimalAfterDot = 0;
+            if (splitValue.length > 1) {
+                numberOfDecimalAfterDot = splitValue[1].length();
+            }
+            // tolerance is multiplied by 0.5 to simulate the fact that the database value is rounded (in the front, from the user viewpoint)
+            // more than 13 decimal after dot will likely cause rounding errors due to double precision
+            tolerance = Math.pow(10, -numberOfDecimalAfterDot) * 0.5;
+        }
         Double valueDouble = Double.valueOf(value);
         switch (resourceFilter.type()) {
             case NOT_EQUAL ->
