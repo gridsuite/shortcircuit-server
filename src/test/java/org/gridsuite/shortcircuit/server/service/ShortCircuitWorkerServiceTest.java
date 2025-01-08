@@ -17,6 +17,7 @@ import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
+import com.powsybl.ws.commons.computation.ComputationException;
 import com.powsybl.ws.commons.computation.service.ExecutionService;
 import com.powsybl.ws.commons.computation.service.NotificationService;
 import com.powsybl.ws.commons.computation.service.ReportService;
@@ -43,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -148,8 +150,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
-            workerService.consumeRun().accept(message);
-            verify(notificationService).publishFail(any(), any(), eq("Selected bus is out of voltage"), any(), any(), any());
+            assertThrows(ComputationException.class, () -> workerService.consumeRun().accept(message));
         }
     }
 
