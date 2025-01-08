@@ -63,8 +63,7 @@ import static java.util.Comparator.comparingDouble;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
@@ -197,7 +196,7 @@ class ShortCircuitAnalysisControllerTest {
     private final String shortCircuitAnalysisRunDestination = "shortcircuitanalysis.run";
     private final String shortCircuitAnalysisCancelDestination = "shortcircuitanalysis.cancel";
     private final String shortCircuitAnalysisStoppedDestination = "shortcircuitanalysis.stopped";
-    private final String shortCircuitAnalysisFailedDestination = "shortcircuitanalysis.failed";
+    private final String shortCircuitAnalysisFailedDestination = "shortcircuitanalysis.run.dlx.dlq";
     private final String shortCircuitAnalysisCancelFailedDestination = "shortcircuitanalysis.cancelfailed";
 
     @Autowired
@@ -665,11 +664,7 @@ class ShortCircuitAnalysisControllerTest {
             assertEquals("me", runMessage.getHeaders().get("receiver"));
             assertEquals("BUSBARSECTION_ID_NOT_EXISTING", runMessage.getHeaders().get(HEADER_BUS_ID));
 
-            Message<byte[]> failedMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
-            assertEquals(RESULT_UUID.toString(), failedMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", failedMessage.getHeaders().get("receiver"));
-            assertEquals("BUSBARSECTION_ID_NOT_EXISTING", failedMessage.getHeaders().get(HEADER_BUS_ID));
-
+            assertNull(output.receive(TIMEOUT, shortCircuitAnalysisResultDestination));
             mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isNotFound());
@@ -851,11 +846,10 @@ class ShortCircuitAnalysisControllerTest {
             assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
             assertEquals("me", runMessage.getHeaders().get("receiver"));
 
-            //networkWithoutExtension has no shortcircuit data so the computation should fail
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisFailedDestination);
-            assertEquals("Short circuit analysis has failed : Missing short-circuit extension data", resultMessage.getHeaders().get("message"));
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+            assertNull(output.receive(TIMEOUT, shortCircuitAnalysisResultDestination));
+            mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                .andExpect(status().isNotFound());
         }
     }
 

@@ -102,17 +102,6 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
-    protected void publishFail(AbstractResultContext<ShortCircuitRunContext> resultContext, String message) {
-        ShortCircuitRunContext context = resultContext.getRunContext();
-        String busId = context.getBusId();
-        Map<String, Object> additionalHeaders = new HashMap<>();
-        additionalHeaders.put(HEADER_BUS_ID, busId);
-
-        notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                message, resultContext.getRunContext().getUserId(), getComputationType(), additionalHeaders);
-    }
-
-    @Override
     protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
         List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(runContext) : getBusFaultFromBusId(runContext);
         return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, runContext.getParameters(), executionService.getComputationManager(), List.of(), runContext.getReportNode());
