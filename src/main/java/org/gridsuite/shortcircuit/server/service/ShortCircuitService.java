@@ -73,7 +73,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         ShortCircuitParameters parameters = fromEntity(parametersUuid.flatMap(parametersRepository::findById).orElseGet(ShortCircuitParametersEntity::new)).parameters();
         parameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
         parameters.setDetailedReport(false);
-        return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId, null, busId));
+        return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId,
+            "default-provider", // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+            busId));
     }
 
     @Override
