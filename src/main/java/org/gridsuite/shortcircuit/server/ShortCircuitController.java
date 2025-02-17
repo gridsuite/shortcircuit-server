@@ -81,7 +81,7 @@ public class ShortCircuitController {
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvTranslation csvTranslation) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
-                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, csvTranslation));
+                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, shortCircuitService.getResult(resultUuid, FaultResultsMode.FULL), csvTranslation));
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)
