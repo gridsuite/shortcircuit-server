@@ -70,6 +70,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         this.parametersRepository = parametersRepository;
     }
 
+    @Transactional
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
                                  String userId, String busId, final Optional<UUID> parametersUuid) {
         ShortCircuitParameters parameters = fromEntity(parametersUuid.flatMap(parametersRepository::findById).orElseGet(ShortCircuitParametersEntity::new)).parameters();
@@ -263,8 +264,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] getZippedCsvExportResult(UUID resultUuid, CsvTranslation csvTranslation) {
-        ShortCircuitAnalysisResult result = getResult(resultUuid, FaultResultsMode.FULL);
+    public byte[] getZippedCsvExportResult(UUID resultUuid, ShortCircuitAnalysisResult result, CsvTranslation csvTranslation) {
         if (result == null) {
             throw new ShortCircuitException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
@@ -276,6 +276,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return exportToCsv(result, headersList, enumValueTranslations);
     }
 
+    @Transactional(readOnly = true)
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
