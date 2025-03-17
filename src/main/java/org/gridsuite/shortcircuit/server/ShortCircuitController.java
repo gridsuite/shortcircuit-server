@@ -114,19 +114,12 @@ public class ShortCircuitController {
             : ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Delete a short circuit analysis result from the database")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis result has been deleted")})
-    public ResponseEntity<Void> deleteResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
-        shortCircuitService.deleteResult(resultUuid);
-        return ResponseEntity.ok().build();
-    }
 
     @DeleteMapping(value = "/results", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Delete all short circuit analysis results from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All short circuit analysis results have been deleted")})
-    public ResponseEntity<Void> deleteResults() {
-        shortCircuitService.deleteResults();
+    public ResponseEntity<Void> deleteResults(@Parameter(description = "Results UUID") @RequestParam(value = "resultsUuids", required = false) List<UUID> resultsUuids) {
+        shortCircuitService.deleteResults(resultsUuids);
         return ResponseEntity.ok().build();
     }
 
