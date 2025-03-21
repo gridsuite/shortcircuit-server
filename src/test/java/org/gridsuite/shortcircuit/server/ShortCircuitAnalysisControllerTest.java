@@ -480,7 +480,7 @@ class ShortCircuitAnalysisControllerTest {
                     .andExpect(status().isNotFound());
 
             // test one result deletion
-            mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))
                     .andExpect(status().isOk());
 
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
@@ -886,7 +886,7 @@ class ShortCircuitAnalysisControllerTest {
             assertEquals(200.0, resultDto.getFaults().get(0).getShortCircuitLimits().getIpMax(), 0.1);
             assertEquals(10.5, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMin(), 0.1);
             assertEquals(200.0, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMax(), 0.1);
-            mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))
                     .andExpect(status().isOk());
 
             mockMvc.perform(post(
