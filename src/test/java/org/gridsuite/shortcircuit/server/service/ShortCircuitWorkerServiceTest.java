@@ -110,7 +110,9 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
                 null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
-        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "test").build();
+        ReportNode reportNode = ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("test").build();
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
              final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
