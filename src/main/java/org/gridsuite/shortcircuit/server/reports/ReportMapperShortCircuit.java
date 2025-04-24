@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Component
 public class ReportMapperShortCircuit extends AbstractReportMapper {
     private static final String BRANCH_CONVERSION = "branchConversion";
+    private static final String MESSAGE_KEY = "messageKey";
+    private static final String MESSAGE_TEMPLATE = "messageTemplate";
 
     @AllArgsConstructor
     private enum ConversionEquipmentType {
@@ -52,25 +54,20 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             "generatorConversion",
             "generatorConversion",
             "disconnectedTerminalGenerator",
-            "disconnectedTerminalGeneratorSummary",
-            "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled."),
+            "disconnectedTerminalGeneratorSummary"),
         BATTERY("batteries",
             "batteryConversion",
             "batteryConversion",
             "disconnectedTerminalGenerator",
-            "disconnectedTerminalBatterySummary",
-            "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled."),
+            "disconnectedTerminalBatterySummary"),
         TWO_WINDINGS_TRANSFORMER("two windings transformers",
             BRANCH_CONVERSION,
             "twoWindingsTransformerConversion",
             "addConstantRatio",
-            "addConstantRatioSummary",
-            "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage"
-            ),
+            "addConstantRatioSummary"),
         LINE("lines",
             BRANCH_CONVERSION,
             "lineConversion",
-            null,
             null,
             null
             ),
@@ -78,13 +75,11 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             BRANCH_CONVERSION,
             "threeWindingsTransformerConversion",
             null,
-            null,
             null
             ),
         TIE_LINE("tie lines",
             BRANCH_CONVERSION,
             "tieLineConversion",
-            null,
             null,
             null
             );
@@ -94,7 +89,6 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         public final String conversionMessageKey;
         public final String toSummarizeMessageKey;
         public final String summaryMessageKey;
-        public final String summaryMessageTemplate;
     }
 
     /**
@@ -105,7 +99,9 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
     @Override
     protected ReportNode forShortCircuitAnalysis(@NonNull final ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
-                .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
+                .withAllResourceBundlesFromClasspath()
+                .withMessageTemplate(MESSAGE_KEY)
+                .withUntypedValue(MESSAGE_TEMPLATE, reportNode.getMessageTemplate());
         reportNode.getValues().forEach((key, value) -> builder.withTypedValue(key, value.getValue().toString(), value.getType()));
         final ReportNode newReporter = builder.build();
         if (!runContext.getVoltageLevelsWithWrongIsc().isEmpty()) {
@@ -127,11 +123,10 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
 
     protected void logVoltageLevelsWithWrongIpValues(ReportNode reportNode, ShortCircuitRunContext runContext) {
         ReportNode newReportNode = reportNode.newReportNode()
-            .withMessageTemplate("VoltageLevelsWithWrongIpValuesRoot", "Voltage levels having wrong isc values")
+            .withMessageTemplate("VoltageLevelsWithWrongIpValuesRoot")
             .add();
-        newReportNode.newReportNode().withMessageTemplate("VoltageLevelsWithWrongIpValues",
-            "Some voltage levels have wrong isc values, isc min must be <= isc max : "
-                + StringUtils.join(runContext.getVoltageLevelsWithWrongIsc(), ", "))
+        newReportNode.newReportNode().withMessageTemplate("VoltageLevelsWithWrongIpValues")
+            .withUntypedValue("content", StringUtils.join(runContext.getVoltageLevelsWithWrongIsc(), ", "))
             .withTypedValue(ReportConstants.SEVERITY_KEY, TypedValue.ERROR_SEVERITY.toString(), TypedValue.SEVERITY)
             .add();
     }
@@ -160,7 +155,9 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         log.trace("short-circuit logs detected, will analyse them...");
 
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
-                .withMessageTemplate(reportNode.getMessageKey(), reportNode.getMessageTemplate());
+                .withAllResourceBundlesFromClasspath()
+                .withMessageTemplate(MESSAGE_KEY)
+                .withUntypedValue(MESSAGE_TEMPLATE, reportNode.getMessageTemplate());
         reportNode.getValues().forEach((key, value) -> builder.withTypedValue(key, value.getValue().toString(), value.getType()));
         final ReportNode newReporter = builder.build();
 
@@ -174,7 +171,10 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                 insertAndCount(child, newReporter, logsToSummarizeAdder, logsToSummarizeCount, logsToSummarizeSeverity, conversionEquipmentType);
             } else if (conversionEquipmentType == ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER) {
                 // to keep the reports hierarchy : reports for two windings transformers are inside the branches report hierarchy
-                ReportNodeBuilder builder2 = ReportNode.newRootReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
+                ReportNodeBuilder builder2 = ReportNode.newRootReportNode()
+                        .withAllResourceBundlesFromClasspath()
+                        .withMessageTemplate(MESSAGE_KEY)
+                        .withUntypedValue(MESSAGE_TEMPLATE, child.getMessageTemplate());
                 child.getValues().forEach((key, value) -> builder2.withTypedValue(key, value.getValue().toString(), value.getType()));
                 final ReportNode insertedReport = builder2.build();
                 ReportNode newReporter2 = insertReportNode(newReporter, insertedReport);
@@ -189,7 +189,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
         log.debug("Found {} lines in shortcircuit logs matching {}", logsToSummarizeCount.get(), conversionEquipmentType.toSummarizeMessageKey);
         if (logsToSummarizeAdder.get() != null) {
             logsToSummarizeAdder.get()
-                .withMessageTemplate(conversionEquipmentType.summaryMessageKey, conversionEquipmentType.summaryMessageTemplate)
+                .withMessageTemplate(conversionEquipmentType.summaryMessageKey)
                 .withTypedValue(ReportConstants.SEVERITY_KEY, ObjectUtils.defaultIfNull(logsToSummarizeSeverity.get(), TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
                 .withTypedValue("nb", logsToSummarizeCount.get(), TypedValue.UNTYPED_TYPE)
                 .withTypedValue("equipmentsLabel", conversionEquipmentType.equipmentsLabel, TypedValue.UNTYPED_TYPE)
