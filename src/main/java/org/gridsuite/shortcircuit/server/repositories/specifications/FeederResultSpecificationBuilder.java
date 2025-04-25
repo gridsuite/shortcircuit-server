@@ -7,7 +7,8 @@
 
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
-import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
+import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
+import com.powsybl.ws.commons.computation.utils.specification.SpecificationUtils;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -27,7 +28,7 @@ public final class FeederResultSpecificationBuilder {
         return (feederResult, cq, cb) -> cb.equal(feederResult.get("faultResult").get("result").get("resultUuid"), value);
     }
 
-    public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
+    public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilterDTO> resourceFilters) {
         Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultUuid));
         return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
     }

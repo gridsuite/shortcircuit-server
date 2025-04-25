@@ -7,9 +7,10 @@
 
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
+import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
+import com.powsybl.ws.commons.computation.utils.specification.SpecificationUtils;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
-import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
@@ -26,7 +27,7 @@ public final class FaultResultSpecificationBuilder {
     // Utility class, so no constructor
     private FaultResultSpecificationBuilder() { }
 
-    public static boolean isNotParentFilter(ResourceFilter filter) {
+    public static boolean isNotParentFilter(ResourceFilterDTO filter) {
         return filter.column().contains(FeederResultEntity.Fields.connectableId);
     }
 
@@ -50,7 +51,7 @@ public final class FaultResultSpecificationBuilder {
         return specification.and(SpecificationUtils.isNotEmpty(FaultResultEntity.Fields.limitViolations));
     }
 
-    public static Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
+    public static Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilterDTO> resourceFilters) {
         // since sql joins generates duplicate results, we need to use distinct here
         Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
         // filter by resultUuid
@@ -59,8 +60,8 @@ public final class FaultResultSpecificationBuilder {
         return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
     }
 
-    public static Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilter> resourceFilters) {
-        List<ResourceFilter> childrenResourceFilter = resourceFilters.stream().filter(FaultResultSpecificationBuilder::isNotParentFilter)
+    public static Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilterDTO> resourceFilters) {
+        List<ResourceFilterDTO> childrenResourceFilter = resourceFilters.stream().filter(FaultResultSpecificationBuilder::isNotParentFilter)
                 .toList();
         Specification<FaultResultEntity> specification = Specification.where(uuidIn(uuids));
 

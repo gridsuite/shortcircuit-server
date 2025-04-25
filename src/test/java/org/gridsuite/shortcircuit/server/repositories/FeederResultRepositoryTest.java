@@ -7,8 +7,8 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
+import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
@@ -122,7 +122,7 @@ class FeederResultRepositoryTest {
         "provideLessThanOrEqualFilters",
         "provideGreaterThanOrEqualFilters"
     })
-    void feederResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FeederResultEntity> feederList) {
+    void feederResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters, List<FeederResultEntity> feederList) {
         Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged());
         //since the request is unpaged we only care about the result and not the order
         assertThat(feederPage.getContent()).extracting("feederResultUuid").describedAs("Check if the IDs of the feeder page are correct")
@@ -144,7 +144,7 @@ class FeederResultRepositoryTest {
     @MethodSource({
         "provideBadFilter",
     })
-    void feederResultFilterExceptionTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters) {
+    void feederResultFilterExceptionTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters) {
         Pageable pageable = Pageable.unpaged();
         assertThrows(IllegalArgumentException.class, () -> shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, pageable));
     }
@@ -154,43 +154,43 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_2", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "ID_2", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_2")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_4", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "ID_4", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_4")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_1", "connectableId"),
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID_3", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "ID_1", "connectableId"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "ID_3", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("ID_1")
                 && feederResultEntity.getConnectableId().contains("ID_3")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "CONN", "connectableId"),
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "ID", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "CONN", "connectableId"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "ID", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("CONN")
                 && feederResultEntity.getConnectableId().contains("ID")).toList()),
             // we test escaping of wildcard chars also
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "%", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "%", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("%")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "_D_1", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "_D_1", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> feederResultEntity.getConnectableId().contains("_D_1")).toList()),
             // case insensitive
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "id_2", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "id_2", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.containsIgnoreCase(feederResultEntity.getConnectableId(), "id_2")).toList())
         );
     }
@@ -200,29 +200,29 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "A_CONN", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "A_CONN")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "B_CONN", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "B_CONN")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "CONN", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "CONN", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "CONN")).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "A_CONN", "connectableId"),
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "B_CONN", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "A_CONN", "connectableId"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "B_CONN", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "A_CONN") && StringUtils.startsWith(feederResultEntity.getConnectableId(), "B_CONN")).toList()),
             // case insensitive
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "a_conn", "connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "a_conn", "connectableId")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWithIgnoreCase(feederResultEntity.getConnectableId(), "a_conn")).toList())
         );
     }
@@ -232,18 +232,18 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 22.17, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 22.17, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(22.17)).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 18.56, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 18.56, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(18.56)).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 22.17, "current"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 53.94, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 22.17, "current"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 53.94, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(22.17) && !((Double) feederResultEntity.getCurrent()).equals(53.94)).toList())
         );
     }
@@ -253,18 +253,18 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.3287, "fortescueCurrent.positiveMagnitude")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 45.3287, "fortescueCurrent.positiveMagnitude")),
                 feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(45.328664779663086)).toList()),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 42, "fortescueCurrent.positiveMagnitude")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 42, "fortescueCurrent.positiveMagnitude")),
                 feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(42d)).toList()),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.328664779663086, "fortescueCurrent.positiveMagnitude"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 18.170874567665456, "fortescueCurrent.positiveMagnitude")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 45.328664779663086, "fortescueCurrent.positiveMagnitude"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 18.170874567665456, "fortescueCurrent.positiveMagnitude")),
                 feederResultEntityFortescueList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(45.328664779663086)
                 && !((Double) feederResultEntity.getFortescueCurrent().getPositiveMagnitude()).equals(18.170874567665456)).toList())
 
@@ -276,29 +276,29 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17978, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.LESS_THAN_OR_EQUAL, 22.17978, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.179775880774197) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 18.56, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.LESS_THAN_OR_EQUAL, 18.56, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 18.56) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22.17, "current"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.LESS_THAN_OR_EQUAL, 22.17, "current"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.LESS_THAN_OR_EQUAL, 53.94, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.17) <= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 22., "current"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.LESS_THAN_OR_EQUAL, 53, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.LESS_THAN_OR_EQUAL, 22., "current"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.LESS_THAN_OR_EQUAL, 53, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22) <= 0).toList())
         );
     }
@@ -308,29 +308,29 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17976, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 22.17976, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.179775880774197) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 18.56, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 18.56, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 18.56) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.95, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 53.95, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.95) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 22.17, "current"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 53.94, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53.94) >= 0).toList()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 22, "current"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.GREATER_THAN_OR_EQUAL, 53, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 22, "current"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 53, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53) >= 0).toList())
         );
     }
@@ -340,11 +340,11 @@ class FeederResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.NOT_EQUAL, "A_CONN", "connectableId"))),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.NOT_EQUAL, "A_CONN", "connectableId"))),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.STARTS_WITH, 22.17, "current")))
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.STARTS_WITH, 22.17, "current")))
         );
     }
 

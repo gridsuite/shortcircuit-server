@@ -9,10 +9,10 @@ package org.gridsuite.shortcircuit.server.service;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
+import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import lombok.extern.slf4j.Slf4j;
 import com.powsybl.ws.commons.computation.service.AbstractComputationResultService;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
-import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.entities.*;
@@ -274,7 +274,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
     @Transactional(readOnly = true)
     public Page<FaultResultEntity> findFaultResultsPage(ShortCircuitAnalysisResultEntity result,
-                                                        List<ResourceFilter> resourceFilters,
+                                                        List<ResourceFilterDTO> resourceFilters,
                                                         Pageable pageable,
                                                         FaultResultsMode mode) {
         Objects.requireNonNull(result);
@@ -338,7 +338,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     }
 
     @Transactional(readOnly = true)
-    public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilter> resourceFilters, Pageable pageable) {
+    public Page<FeederResultEntity> findFeederResultsPage(ShortCircuitAnalysisResultEntity result, List<ResourceFilterDTO> resourceFilters, Pageable pageable) {
         Objects.requireNonNull(result);
         Specification<FeederResultEntity> specification = FeederResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         return feederResultRepository.findAll(specification, addDefaultSort(pageable, DEFAULT_FEEDER_RESULT_SORT_COLUMN));
@@ -352,7 +352,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
     @Transactional(readOnly = true)
     public Page<FaultResultEntity> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result,
-                                                                           List<ResourceFilter> resourceFilters,
+                                                                           List<ResourceFilterDTO> resourceFilters,
                                                                            Pageable pageable) {
         Objects.requireNonNull(result);
 
@@ -394,7 +394,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
     private void appendLimitViolationsAndFeederResults(Page<FaultResultEntity> pagedFaultResults,
                                                        Optional<Sort.Order> childrenSort,
-                                                       List<ResourceFilter> resourceFilters) {
+                                                       List<ResourceFilterDTO> resourceFilters) {
         // using the Hibernate First-Level Cache or Persistence Context
         // cf.https://vladmihalcea.com/spring-data-jpa-multiplebagfetchexception/
         if (!pagedFaultResults.isEmpty()) {

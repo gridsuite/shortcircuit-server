@@ -95,8 +95,7 @@ public class ShortCircuitController {
                                                                       "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
                                                                   Pageable pageable) throws JsonProcessingException {
-        List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
-        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, resourceFilters, pageable);
+        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, stringFilters, pageable);
         return faultResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage)
             : ResponseEntity.notFound().build();
     }
@@ -108,8 +107,7 @@ public class ShortCircuitController {
     public ResponseEntity<Page<FeederResult>> getPagedFeederResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                     @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
                                                                     Pageable pageable) throws JsonProcessingException {
-        List<ResourceFilter> resourceFilters = ResourceFilter.fromStringToList(stringFilters);
-        Page<FeederResult> feederResultsPage = shortCircuitService.getFeederResultsPage(resultUuid, resourceFilters, pageable);
+        Page<FeederResult> feederResultsPage = shortCircuitService.getFeederResultsPage(resultUuid, stringFilters, pageable);
         return feederResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(feederResultsPage)
             : ResponseEntity.notFound().build();
     }
