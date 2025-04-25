@@ -10,6 +10,7 @@ import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.powsybl.ws.commons.computation.service.AbstractComputationResultService;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
  * @author Etienne Homer <etienne.homer at rte-france.com
  */
 @Slf4j
+@AllArgsConstructor
 @Service
 public class ShortCircuitAnalysisResultService extends AbstractComputationResultService<ShortCircuitAnalysisStatus> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitAnalysisResultService.class);
@@ -54,15 +56,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
     private static final Sort.Direction DEFAULT_SORT_DIRECTION = Sort.Direction.ASC;
 
-    public ShortCircuitAnalysisResultService(GlobalStatusRepository globalStatusRepository,
-                                             ResultRepository resultRepository,
-                                             FaultResultRepository faultResultRepository,
-                                             FeederResultRepository feederResultRepository) {
-        this.globalStatusRepository = globalStatusRepository;
-        this.resultRepository = resultRepository;
-        this.faultResultRepository = faultResultRepository;
-        this.feederResultRepository = feederResultRepository;
-    }
+    private final FaultResultSpecificationBuilder faultResultSpecificationBuilder;
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
         return faultResult.getLimitViolations().stream()
@@ -283,7 +277,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
         Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
-        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
@@ -360,8 +354,8 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
 
         Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
-        Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
-        specification = FaultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
+        Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        specification = faultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
@@ -402,7 +396,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
                     .map(FaultResultEntity::getFaultResultUuid)
                     .toList();
 
-            Specification<FaultResultEntity> specification = FaultResultSpecificationBuilder.buildFeedersSpecification(faultResultsUuids, resourceFilters);
+            Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildFeedersSpecification(faultResultsUuids, resourceFilters);
             faultResultRepository.findAll(specification);
 
             faultResultRepository.findAllWithLimitViolationsByFaultResultUuidIn(faultResultsUuids);
