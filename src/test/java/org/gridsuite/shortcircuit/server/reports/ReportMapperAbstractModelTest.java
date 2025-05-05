@@ -34,24 +34,29 @@ class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
 
     @Test
     void testIgnoreOthersReportModels() {
-        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "Test node").build();
+        ReportNode reportNode = ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("testNode").build();
         assertThat(reportMapper.processReporter(reportNode, null)).isSameAs(reportNode);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {ROOT_REPORTER_ID})
     void testModifyRootNode(final String rootId) {
-        final ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate(rootId, rootId).build();
+        final ReportNode reportNode = ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("rootId")
+                .withUntypedValue("rootId", rootId).build();
         final ReportNode subReportNode = reportNode.newReportNode()
-            .withMessageTemplate(SHORTCIRCUIT_TYPE_REPORT, SHORTCIRCUIT_TYPE_REPORT + " (${providerToUse})")
+            .withMessageTemplate(SHORTCIRCUIT_TYPE_REPORT)
             .withUntypedValue("providerToUse", "Courcirc")
             .add();
         assertThat(subReportNode).isInstanceOf(ReportNode.class);
 
         subReportNode.newReportNode()
-            .withMessageTemplate("generatorConversion", "Conversion of generators")
+            .withMessageTemplate("generatorConversion")
             .add()
-            .newReportNode().withMessageTemplate("disconnectedTerminalGenerator", "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.")
+            .newReportNode().withMessageTemplate("disconnectedTerminalGenerator")
                 .withUntypedValue("generator", "TestGenerator")
                 .add();
 
@@ -63,10 +68,14 @@ class ReportMapperAbstractModelTest extends AbstractReportMapperTest {
 
     @Test
     void testCopyReportTraceNotAcceptNullArguments() {
-        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(null, ReportNode.newRootReportNode().withMessageTemplate("", "").build()))
+        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(null, ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("empty").build()))
                 .as("copyReportAsTrace(null, *)")
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(ReportNode.newRootReportNode().withMessageTemplate("", "").build(), null))
+        assertThatThrownBy(() -> AbstractReportMapper.copyReportAsTrace(ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("empty").build(), null))
                 .as("copyReportAsTrace(*, null)")
                 .isInstanceOf(NullPointerException.class);
     }
