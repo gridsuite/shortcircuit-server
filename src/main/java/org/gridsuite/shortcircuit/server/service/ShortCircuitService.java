@@ -13,6 +13,7 @@ import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
+import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.powsybl.ws.commons.computation.utils.FilterUtils.fromStringFiltersToDTO;
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 
 /**
@@ -311,8 +313,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     @Transactional(readOnly = true)
     public Page<FaultResult> getFaultResultsPage(UUID resultUuid,
                                                  FaultResultsMode mode,
-                                                 List<ResourceFilter> resourceFilters,
+                                                 String stringFilters,
                                                  Pageable pageable) {
+        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
@@ -342,7 +345,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     @Transactional(readOnly = true)
-    public Page<FeederResult> getFeederResultsPage(UUID resultUuid, List<ResourceFilter> resourceFilters, Pageable pageable) {
+    public Page<FeederResult> getFeederResultsPage(UUID resultUuid, String stringFilters, Pageable pageable) {
+        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultService.find(resultUuid);
