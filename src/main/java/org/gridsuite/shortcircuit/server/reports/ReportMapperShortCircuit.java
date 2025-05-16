@@ -191,8 +191,8 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
             logsToSummarizeAdder.get()
                 .withMessageTemplate(conversionEquipmentType.summaryMessageKey, conversionEquipmentType.summaryMessageTemplate)
                 .withTypedValue(ReportConstants.SEVERITY_KEY, ObjectUtils.defaultIfNull(logsToSummarizeSeverity.get(), TypedValue.WARN_SEVERITY).toString(), TypedValue.SEVERITY)
-                .withTypedValue("nb", logsToSummarizeCount.get(), TypedValue.UNTYPED)
-                .withTypedValue("equipmentsLabel", conversionEquipmentType.equipmentsLabel, TypedValue.UNTYPED)
+                .withTypedValue("nb", logsToSummarizeCount.get(), TypedValue.UNTYPED_TYPE)
+                .withTypedValue("equipmentsLabel", conversionEquipmentType.equipmentsLabel, TypedValue.UNTYPED_TYPE)
                 .add();
         }
 
