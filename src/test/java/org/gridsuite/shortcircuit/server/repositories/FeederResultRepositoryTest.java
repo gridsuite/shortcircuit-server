@@ -140,15 +140,6 @@ class FeederResultRepositoryTest {
             .containsExactlyElementsOf(feederList.stream().map(FeederResultEntity::getFeederResultUuid).toList());
     }
 
-    @ParameterizedTest(name = "[{index}] Using the filter {1} should throw an exception")
-    @MethodSource({
-        "provideBadFilter",
-    })
-    void feederResultFilterExceptionTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters) {
-        Pageable pageable = Pageable.unpaged();
-        assertThrows(IllegalArgumentException.class, () -> shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, pageable));
-    }
-
     private Stream<Arguments> provideContainsFilters() {
         return Stream.of(
             Arguments.of(

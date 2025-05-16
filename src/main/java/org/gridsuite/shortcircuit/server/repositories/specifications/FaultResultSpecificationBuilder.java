@@ -8,8 +8,8 @@
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
-import com.powsybl.ws.commons.computation.utils.specification.AbstractCommonSpecificationBuilder;
-import com.powsybl.ws.commons.computation.utils.specification.SpecificationUtils;
+import com.powsybl.ws.commons.computation.specification.AbstractCommonSpecificationBuilder;
+import com.powsybl.ws.commons.computation.utils.SpecificationUtils;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;

@@ -8,7 +8,7 @@
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
-import com.powsybl.ws.commons.computation.utils.specification.SpecificationUtils;
+import com.powsybl.ws.commons.computation.utils.SpecificationUtils;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.springframework.data.jpa.domain.Specification;
 
