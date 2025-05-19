@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>
