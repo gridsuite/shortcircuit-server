@@ -45,48 +45,39 @@ import java.util.concurrent.atomic.AtomicReference;
 @Component
 public class ReportMapperShortCircuit extends AbstractReportMapper {
     private static final String BRANCH_CONVERSION = "branchConversion";
-    private static final String MESSAGE_KEY = "shortcircuit.server.messageKey";
-    private static final String MESSAGE_TEMPLATE = "messageTemplate";
 
     @AllArgsConstructor
     private enum ConversionEquipmentType {
         GENERATOR("generators",
             "generatorConversion",
-            "generatorConversion",
             "disconnectedTerminalGenerator",
             "shortcircuit.server.disconnectedTerminalGeneratorSummary"),
         BATTERY("batteries",
-            "batteryConversion",
             "batteryConversion",
             "disconnectedTerminalGenerator",
             "shortcircuit.server.disconnectedTerminalBatterySummary"),
         TWO_WINDINGS_TRANSFORMER("two windings transformers",
             BRANCH_CONVERSION,
-            "twoWindingsTransformerConversion",
             "addConstantRatio",
             "shortcircuit.server.addConstantRatioSummary"),
         LINE("lines",
             BRANCH_CONVERSION,
-            "lineConversion",
             null,
             null
             ),
         THREE_WINDINGS_TRANSFORMER("three windings transformers",
             BRANCH_CONVERSION,
-            "threeWindingsTransformerConversion",
             null,
             null
             ),
         TIE_LINE("tie lines",
             BRANCH_CONVERSION,
-            "tieLineConversion",
             null,
             null
             );
 
         public final String equipmentsLabel;
         public final String parentConversionMessageKey;
-        public final String conversionMessageKey;
         public final String toSummarizeMessageKey;
         public final String summaryMessageKey;
     }
@@ -155,7 +146,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
      *           filling it later
      */
     @SuppressWarnings("checkstyle:UnnecessaryParentheses")
-    protected ReportNode forEquipmentConversion(@NonNull final ReportNode reportNode, ConversionEquipmentType conversionEquipmentType) {
+    private ReportNode forEquipmentConversion(@NonNull final ReportNode reportNode, ConversionEquipmentType conversionEquipmentType) {
         log.trace("short-circuit logs detected, will analyse them...");
 
         ReportNodeBuilder builder = ReportNode.newRootReportNode()
@@ -174,7 +165,7 @@ public class ReportMapperShortCircuit extends AbstractReportMapper {
                 conversionEquipmentType == ConversionEquipmentType.BATTERY) {
                 insertAndCount(child, newReporter, logsToSummarizeAdder, logsToSummarizeCount, logsToSummarizeSeverity, conversionEquipmentType);
             } else if (conversionEquipmentType == ConversionEquipmentType.TWO_WINDINGS_TRANSFORMER) {
-                // to keep the reports hierarchy : reports for two windings transformers are inside the branches report hierarchy
+                // to keep the reports hierarchy: reports for two windings transformers are inside the branches report hierarchy
                 ReportNodeBuilder builder2 = ReportNode.newRootReportNode()
                         .withAllResourceBundlesFromClasspath()
                         .withMessageTemplate(MESSAGE_KEY)

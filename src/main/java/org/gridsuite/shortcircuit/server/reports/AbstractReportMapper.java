@@ -34,8 +34,8 @@ import java.util.UUID;
  */
 @Slf4j
 public abstract class AbstractReportMapper {
-    private static final String MESSAGE_KEY = "shortcircuit.server.messageKey";
-    private static final String MESSAGE_TEMPLATE = "messageTemplate";
+    protected static final String MESSAGE_KEY = "shortcircuit.server.messageKey";
+    protected static final String MESSAGE_TEMPLATE = "messageTemplate";
 
     /**
      * Will try to modify the reporter
