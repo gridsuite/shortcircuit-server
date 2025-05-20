@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -60,6 +62,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
 
     @Mock
     private ExecutionService executionService;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Mock
     private NotificationService notificationService;
@@ -119,6 +122,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             when(networkStoreService.getNetwork(eq(networkUuid), any(PreloadingStrategy.class))).thenReturn(network);
             when(network.getVariantManager()).thenReturn(variantManager);
+            when(executionService.getExecutorService()).thenReturn(executorService);
             when(network.getBusView()).thenReturn(busViewMocked);
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
             when(reportMapper.processReporter(any(ReportNode.class), any(ShortCircuitRunContext.class))).thenReturn(reportNode);
@@ -144,6 +148,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         when(networkStoreService.getNetwork(any(), any())).thenReturn(network);
         doReturn(busbarSection).when(network).getIdentifiable(busId);
         when(network.getVariantManager()).thenReturn(variantManager);
+        when(executionService.getExecutorService()).thenReturn(executorService);
         when(busbarSection.getTerminal()).thenReturn(terminal);
         when(terminal.getBusView()).thenReturn(busView);
         when(busView.getBus()).thenReturn(null);
