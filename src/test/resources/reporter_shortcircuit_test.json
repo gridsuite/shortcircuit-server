@@ -2,8 +2,8 @@
   "version": "3.0",
   "dictionaries": {
     "default": {
-      "00000000-0000-0000-0000-000000000000": "00000000-0000-0000-0000-000000000000",
-      "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
+      "ws.commons.rootReporterId": "${rootReporterId}",
+      "ws.commons.reportType": "${reportType}${optionalProvider}",
       "TestReporter": "Test Reporter",
       "testReportLine": "Test log line",
       "testLine1": "Test log line",
@@ -24,15 +24,23 @@
     }
   },
   "reportRoot": {
-    "messageKey": "00000000-0000-0000-0000-000000000000",
+    "messageKey": "ws.commons.rootReporterId",
+    "values": {
+      "rootReporterId": {
+        "value": "00000000-0000-0000-0000-000000000000"
+      }
+    },
     "children": [
       {
         "messageKey": "TestReporter"
       },
       {
-        "messageKey": "ShortCircuitAnalysis",
+        "messageKey": "ws.commons.reportType",
         "values": {
-          "providerToUse": {
+          "reportType": {
+            "value": "ShortCircuitAnalysis"
+          },
+          "optionalProvider": {
             "value": "Unknown",
             "type": "UNTYPED"
           }

@@ -2,9 +2,11 @@
   "version": "3.0",
   "dictionaries": {
     "default": {
-      "00000000-0000-0000-0000-000000000000": "00000000-0000-0000-0000-000000000000",
-      "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
+      "ws.commons.reportType": "${reportType}${optionalProvider}",
+      "ws.commons.rootReporterId": "${rootReporterId}",
       "TestReporter": "Test Reporter",
+      "shortcircuit.server.VoltageLevelsWithWrongIscValues" : "Voltage levels having wrong isc values",
+      "shortcircuit.server.VoltageLevelsWithWrongIscValuesSummarize" : "Some voltage levels have wrong isc values, isc min must be <= isc max: ${voltageLevels}",
       "testReportLine": "Test log line",
       "testLine1": "Test log line",
       "test2WT1": "Test log 2WT",
@@ -12,413 +14,340 @@
       "testDangling1": "Test log dangling line",
       "test3WT1": "Test log 3WT",
       "generatorConversion": "Conversion of generators",
-      "disconnectedTerminalGeneratorSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
+      "shortcircuit.server.disconnectedTerminalEquipmentSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
       "batteryConversion": "Conversion of the batteries",
-      "disconnectedTerminalBatterySummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "branchConversion": "Conversion of branches",
       "lineConversion": "Conversion of lines",
       "tieLineConversion": "Conversion of tie lines",
       "twoWindingsTransformerConversion": "Conversion of two windings transformers",
-      "addConstantRatioSummary": "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage",
+      "shortcircuit.server.addConstantRatioSummary": "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage",
       "addConstantRatio": "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})",
       "threeWindingsTransformerConversion": "Conversion of three windings transformers",
       "danglinglinesConversion": "Conversion of the dangling lines"
     }
   },
-  "reportRoot" : {
-    "messageKey" : "shortcircuit.server.messageKey",
-    "values" : {
-      "messageTemplate" : {
-        "value" : "00000000-0000-0000-0000-000000000000"
+  "reportRoot": {
+    "messageKey": "ws.commons.rootReporterId",
+    "values": {
+      "rootReporterId": {
+        "value": "00000000-0000-0000-0000-000000000000"
       }
     },
-    "children" : [ {
-      "messageKey" : "shortcircuit.server.messageKey",
-      "values" : {
-        "messageTemplate" : {
-          "value" : "Test Reporter"
-        }
-      }
-    }, {
-      "messageKey" : "shortcircuit.server.messageKey",
-      "values" : {
-        "messageTemplate" : {
-          "value" : "ShortCircuitAnalysis (${providerToUse})"
-        },
-        "providerToUse" : {
-          "value" : "Unknown"
-        }
+    "children": [
+      {
+        "messageKey": "TestReporter"
       },
-      "children" : [ {
-        "messageKey" : "shortcircuit.server.messageKey",
-        "values" : {
-          "messageTemplate" : {
-            "value" : "Conversion of generators"
-          }
-        },
-        "children" : [ {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Test log line"
-            },
-            "reportSeverity" : {
-              "value" : "DEBUG",
-              "type" : "SEVERITY"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "TRACE",
-              "type" : "SEVERITY"
-            },
-            "generator" : {
-              "value" : "ABCDEFG.XY1"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "TRACE",
-              "type" : "SEVERITY"
-            },
-            "generator" : {
-              "value" : "T.ABC.XYZ"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "TRACE",
-              "type" : "SEVERITY"
-            },
-            "generator" : {
-              "value" : "T.ABC.123"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "TRACE",
-              "type" : "SEVERITY"
-            },
-            "generator" : {
-              "value" : "T.ABCDEF1"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "WARN",
-              "type" : "SEVERITY"
-            },
-            "nb" : {
-              "value" : "4"
-            },
-            "equipmentsLabel" : {
-              "value" : "generators"
-            }
-          }
-        } ]
-      }, {
-        "messageKey" : "shortcircuit.server.messageKey",
-        "values" : {
-          "messageTemplate" : {
-            "value" : "Conversion of the batteries"
-          }
-        },
-        "children" : [ {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Test log line"
-            },
-            "reportSeverity" : {
-              "value" : "DEBUG",
-              "type" : "SEVERITY"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "TRACE",
-              "type" : "SEVERITY"
-            },
-            "generator" : {
-              "value" : "MNOPQ.XY1"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "TRACE",
-              "type" : "SEVERITY"
-            },
-            "generator" : {
-              "value" : "R.STUV.XYZ"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "TRACE",
-              "type" : "SEVERITY"
-            },
-            "generator" : {
-              "value" : "TUV.XYZ.123"
-            }
-          }
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled."
-            },
-            "reportSeverity" : {
-              "value" : "WARN",
-              "type" : "SEVERITY"
-            },
-            "nb" : {
-              "value" : "3"
-            },
-            "equipmentsLabel" : {
-              "value" : "batteries"
-            }
-          }
-        } ]
-      }, {
-        "messageKey" : "shortcircuit.server.messageKey",
-        "values" : {
-          "messageTemplate" : {
-            "value" : "Conversion of branches"
-          }
-        },
-        "children" : [ {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Conversion of lines"
-            }
+      {
+        "messageKey": "ws.commons.reportType",
+        "values": {
+          "reportType": {
+            "value": "ShortCircuitAnalysis"
           },
-          "children" : [ {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Test log line"
-              },
-              "reportSeverity" : {
-                "value" : "DEBUG",
-                "type" : "SEVERITY"
-              }
-            }
-          } ]
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Conversion of tie lines"
-            }
-          },
-          "children" : [ {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Test log tie line"
-              },
-              "reportSeverity" : {
-                "value" : "INFO",
-                "type" : "SEVERITY"
-              }
-            }
-          } ]
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Conversion of two windings transformers"
-            }
-          },
-          "children" : [ {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Test log 2WT"
-              },
-              "reportSeverity" : {
-                "value" : "DEBUG",
-                "type" : "SEVERITY"
-              }
-            }
-          }, {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})"
-              },
-              "reportSeverity" : {
-                "value" : "TRACE",
-                "type" : "SEVERITY"
-              },
-              "branch" : {
-                "value" : "TITI.TUTU"
-              }
-            }
-          }, {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})"
-              },
-              "reportSeverity" : {
-                "value" : "TRACE",
-                "type" : "SEVERITY"
-              },
-              "branch" : {
-                "value" : "TOTO.TATA"
-              }
-            }
-          }, {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})"
-              },
-              "reportSeverity" : {
-                "value" : "TRACE",
-                "type" : "SEVERITY"
-              },
-              "branch" : {
-                "value" : "BY.GR.HY"
-              }
-            }
-          }, {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})"
-              },
-              "reportSeverity" : {
-                "value" : "TRACE",
-                "type" : "SEVERITY"
-              },
-              "branch" : {
-                "value" : "DF.MNO.PQ"
-              }
-            }
-          }, {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage"
-              },
-              "reportSeverity" : {
-                "value" : "WARN",
-                "type" : "SEVERITY"
-              },
-              "nb" : {
-                "value" : "4"
-              },
-              "equipmentsLabel" : {
-                "value" : "two windings transformers"
-              }
-            }
-          } ]
-        }, {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Conversion of three windings transformers"
-            }
-          },
-          "children" : [ {
-            "messageKey" : "shortcircuit.server.messageKey",
-            "values" : {
-              "messageTemplate" : {
-                "value" : "Test log 3WT"
-              },
-              "reportSeverity" : {
-                "value" : "FATAL",
-                "type" : "SEVERITY"
-              }
-            }
-          } ]
-        } ]
-      }, {
-        "messageKey" : "shortcircuit.server.messageKey",
-        "values" : {
-          "messageTemplate" : {
-            "value" : "Conversion of the dangling lines"
+          "optionalProvider": {
+            "value": "Unknown"
           }
         },
-        "children" : [ {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Test log dangling line"
-            },
-            "reportSeverity" : {
-              "value" : "DEBUG",
-              "type" : "SEVERITY"
-            }
+        "children": [
+          {
+            "messageKey": "generatorConversion",
+            "children": [
+              {
+                "messageKey": "testReportLine",
+                "values": {
+                  "reportSeverity": {
+                    "value": "DEBUG",
+                    "type": "SEVERITY"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "ABCDEFG.XY1"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "T.ABC.XYZ"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "T.ABC.123"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "T.ABCDEF1"
+                  }
+                }
+              },
+              {
+                "messageKey": "shortcircuit.server.disconnectedTerminalEquipmentSummary",
+                "values": {
+                  "reportSeverity": {
+                    "value": "WARN",
+                    "type": "SEVERITY"
+                  },
+                  "equipmentsLabel": {
+                    "value": "generators"
+                  },
+                  "nb": {
+                    "value": 4
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "messageKey": "batteryConversion",
+            "children": [
+              {
+                "messageKey": "testReportLine",
+                "values": {
+                  "reportSeverity": {
+                    "value": "DEBUG",
+                    "type": "SEVERITY"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "MNOPQ.XY1"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "R.STUV.XYZ"
+                  }
+                }
+              },
+              {
+                "messageKey": "disconnectedTerminalGenerator",
+                "values": {
+                  "reportSeverity": {
+                    "value": "TRACE",
+                    "type": "SEVERITY"
+                  },
+                  "generator": {
+                    "value": "TUV.XYZ.123"
+                  }
+                }
+              },
+              {
+                "messageKey": "shortcircuit.server.disconnectedTerminalEquipmentSummary",
+                "values": {
+                  "reportSeverity": {
+                    "value": "WARN",
+                    "type": "SEVERITY"
+                  },
+                  "equipmentsLabel": {
+                    "value": "batteries"
+                  },
+                  "nb": {
+                    "value": 3
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "messageKey": "branchConversion",
+            "children": [
+              {
+                "messageKey": "lineConversion",
+                "children": [
+                  {
+                    "messageKey": "testLine1",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "DEBUG",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "messageKey": "tieLineConversion",
+                "children": [
+                  {
+                    "messageKey": "testTieLine1",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "INFO",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "messageKey": "twoWindingsTransformerConversion",
+                "children": [
+                  {
+                    "messageKey": "test2WT1",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "DEBUG",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "TRACE",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "TITI.TUTU"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "TRACE",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "TOTO.TATA"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "TRACE",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "BY.GR.HY"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "addConstantRatio",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "TRACE",
+                        "type": "SEVERITY"
+                      },
+                      "branch": {
+                        "value": "DF.MNO.PQ"
+                      }
+                    }
+                  },
+                  {
+                    "messageKey": "shortcircuit.server.addConstantRatioSummary",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "WARN",
+                        "type": "SEVERITY"
+                      },
+                      "equipmentsLabel": {
+                        "value": "two windings transformers"
+                      },
+                      "nb": {
+                        "value": 4
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "messageKey": "threeWindingsTransformerConversion",
+                "children": [
+                  {
+                    "messageKey": "test3WT1",
+                    "values": {
+                      "reportSeverity": {
+                        "value": "FATAL",
+                        "type": "SEVERITY"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "messageKey": "danglinglinesConversion",
+            "children": [
+              {
+                "messageKey": "testDangling1",
+                "values": {
+                  "reportSeverity": {
+                    "value": "DEBUG",
+                    "type": "SEVERITY"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "messageKey": "shortcircuit.server.VoltageLevelsWithWrongIscValues",
+            "children": [
+              {
+                "messageKey": "shortcircuit.server.VoltageLevelsWithWrongIscValuesSummarize",
+                "values": {
+                  "voltageLevels": {
+                    "value": "VL1"
+                  },
+                  "reportSeverity": {
+                    "value": "ERROR",
+                    "type": "SEVERITY"
+                  }
+                }
+              }
+            ]
           }
-        } ]
-      }, {
-        "messageKey" : "shortcircuit.server.messageKey",
-        "values" : {
-          "messageTemplate" : {
-            "value" : "Voltage levels having wrong isc values"
-          }
-        },
-        "children" : [ {
-          "messageKey" : "shortcircuit.server.messageKey",
-          "values" : {
-            "messageTemplate" : {
-              "value" : "Some voltage levels have wrong isc values, isc min must be <= isc max : VL1"
-            },
-            "content" : {
-              "value" : "VL1"
-            },
-            "reportSeverity" : {
-              "value" : "ERROR",
-              "type" : "SEVERITY"
-            }
-          }
-        } ]
-      } ]
-    } ]
+        ]
+      }
+    ]
   }
 }

@@ -47,17 +47,13 @@ public class RestTemplateConfig {
         return converter;
     }
 
-    private static ObjectMapper createObjectMapper() {
+    @Bean
+    public static ObjectMapper objectMapper() {
         var objectMapper = Jackson2ObjectMapperBuilder.json().build();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.registerModule(new ShortCircuitAnalysisJsonModule());
         objectMapper.registerModule(new ReportNodeJsonModule());
         objectMapper.setInjectableValues(new InjectableValues.Std().addValue(ReportNodeDeserializer.DICTIONARY_VALUE_ID, null));
         return objectMapper;
-    }
-
-    @Bean
-    public static ObjectMapper objectMapper() {
-        return createObjectMapper();
     }
 }
