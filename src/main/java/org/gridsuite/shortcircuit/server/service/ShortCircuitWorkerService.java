@@ -17,7 +17,7 @@ import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import com.powsybl.ws.commons.computation.service.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
-import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
+import org.gridsuite.shortcircuit.server.report.ReportMapperService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -39,13 +39,13 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContex
 @Service
 public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircuitAnalysisResult, ShortCircuitRunContext, ShortCircuitParameters, ShortCircuitAnalysisResultService> {
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
-    private final Collection<AbstractReportMapper> reportMappers;
+    private final ReportMapperService reportMapper;
 
     public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ExecutionService executionService,
                                      NotificationService notificationService, ShortCircuitAnalysisResultService resultService,
-                                     ObjectMapper objectMapper, Collection<AbstractReportMapper> reportMappers, ShortCircuitObserver shortCircuitObserver) {
+                                     ObjectMapper objectMapper, ReportMapperService reportMapper, ShortCircuitObserver shortCircuitObserver) {
         super(networkStoreService, notificationService, reportService, resultService, executionService, shortCircuitObserver, objectMapper);
-        this.reportMappers = reportMappers;
+        this.reportMapper = reportMapper;
     }
 
     @Override
@@ -171,10 +171,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     public void postRun(ShortCircuitRunContext runContext, AtomicReference<ReportNode> rootReportNode, ShortCircuitAnalysisResult ignoredResult) {
         if (runContext.getReportInfos().reportUuid() != null) {
-            for (final AbstractReportMapper reportMapper : reportMappers) {
-                rootReportNode.set(reportMapper.processReporter(rootReportNode.get(), runContext));
-            }
-            observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReportNode.get()));
+            final ReportNode report = this.reportMapper.map(rootReportNode.get(), runContext);
+            observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), report));
         }
     }
 
