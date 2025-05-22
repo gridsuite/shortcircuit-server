@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Pass some of the verbose ADN logs to {@link TypedValue#TRACE_SEVERITY TRACE} severity and insert a summarized log line.
+ * Pass some of the verbose ADN logs to {@link TypedValue#DETAIL_SEVERITY DETAIL} severity and insert a summarized log line.
  *
  * @see com.rte_france.powsybl.iidm.export.adn.ADNHelper
  * @see com.rte_france.powsybl.iidm.export.adn.BranchHelper
@@ -37,7 +37,7 @@ public class AdnTraceLevelAndSummarizeMapper implements ReportMapper {
             for (final ReportNode child : node.getChildren()) {
                 if (this.toSummarizeMessageKey.equals(child.getMessageKey())) {
                     child.getValue(ReportConstants.SEVERITY_KEY).ifPresent(severity -> logsToSummarizeSeverity = severity);
-                    child.addSeverity(TypedValue.TRACE_SEVERITY);
+                    child.addSeverity(TypedValue.DETAIL_SEVERITY);
                     this.logsToSummarizeCount++;
                 }
             }
