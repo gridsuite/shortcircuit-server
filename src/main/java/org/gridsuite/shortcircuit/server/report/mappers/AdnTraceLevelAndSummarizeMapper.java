@@ -87,9 +87,11 @@ public class AdnTraceLevelAndSummarizeMapper implements ReportMapper {
                 "shortcircuit.server.addConstantRatioSummary");
         }
 
-        //TODO branchConversion.threeWindingsTransformerConversion
-        //TODO branchConversion.lineConversion
-        //TODO branchConversion.tieLineConversion
-        //TODO danglinglinesConversion
+        /* There is also possibly nodes:
+         * branchConversion.threeWindingsTransformerConversion
+         * branchConversion.lineConversion
+         * branchConversion.tieLineConversion
+         * danglinglinesConversion
+         */
     }
 }
