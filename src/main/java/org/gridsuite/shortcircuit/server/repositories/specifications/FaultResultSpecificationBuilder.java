@@ -32,16 +32,6 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
         return filter.column().contains(FeederResultEntity.Fields.connectableId);
     }
 
-    @Override
-    public Specification<FaultResultEntity> uuidIn(List<UUID> uuids) {
-        return (root, cq, cb) -> root.get(getIdFieldName()).in(uuids);
-    }
-
-    @Override
-    public Specification<FaultResultEntity> resultUuidEquals(UUID value) {
-        return (root, cq, cb) -> cb.equal(getResultIdPath(root), value);
-    }
-
     public String getIdFieldName() {
         return FaultResultEntity.Fields.faultResultUuid;
     }
