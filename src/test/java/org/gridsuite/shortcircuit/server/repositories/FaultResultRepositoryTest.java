@@ -9,8 +9,8 @@ package org.gridsuite.shortcircuit.server.repositories;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
+import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
-import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
@@ -110,7 +110,7 @@ class FaultResultRepositoryTest {
         "provideNotEqualFilters",
         "provideNotEqualNestedFieldsFilters"
     })
-    void faultResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters, List<FaultResultEntity> faultList) {
+    void faultResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters, List<FaultResultEntity> faultList) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.unpaged(), FaultResultsMode.BASIC);
         assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
             .containsExactlyInAnyOrderElementsOf(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
@@ -123,7 +123,7 @@ class FaultResultRepositoryTest {
         "provideNotEqualFilters",
         "provideNotEqualNestedFieldsFilters"
     })
-    void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters) {
+    void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters) {
         //Test with unsorted request and expect the result to be sorted by uuid anyway
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(o -> o.getFaultResultUuid().toString()));
@@ -144,7 +144,7 @@ class FaultResultRepositoryTest {
         "provideFeederFieldsContainFiltersAndSorted",
         "provideFeederFieldsUnfilteredSortedAscAndDesc"
     })
-    void feedersFilterAndSortTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilter> resourceFilters,
+    void feedersFilterAndSortTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters,
                                   Sort sort, List<List<FeederResult>> expectedFeedersLists) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
                 resultEntity,
@@ -175,32 +175,32 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, "THREE_PHASE", "fault.faultType")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, "THREE_PHASE", "fault.faultType")),
                 List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, "HIGH_SHORT_CIRCUIT_CURRENT", "limitViolations.limitType")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, "HIGH_SHORT_CIRCUIT_CURRENT", "limitViolations.limitType")),
                 List.of(faultResultEntity1, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, "HIGH_SHORT_CIRCUIT", "limitViolations.limitType")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, "HIGH_SHORT_CIRCUIT", "limitViolations.limitType")),
                 List.of()),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, List.of("HIGH_SHORT_CIRCUIT_CURRENT", "HIGH_SHORT_CIRCUIT"), "limitViolations.limitType")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, List.of("HIGH_SHORT_CIRCUIT_CURRENT", "HIGH_SHORT_CIRCUIT"), "limitViolations.limitType")),
                 List.of(faultResultEntity1, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, "LOW_SHORT_CIRCUIT_CURRENT", "limitViolations.limitType")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, "LOW_SHORT_CIRCUIT_CURRENT", "limitViolations.limitType")),
                 List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.EQUALS, null, "limitViolations.limitType")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, null, "limitViolations.limitType")),
                 List.of()));
     }
 
@@ -209,13 +209,13 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "C", "feederResults.connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "C", "feederResults.connectableId")),
                 Sort.by(new Order(Sort.Direction.ASC, "current")),
                 List.of(List.of(FEEDER_RESULT_3, FEEDER_RESULT_1), List.of(FEEDER_RESULT_3, FEEDER_RESULT_1, FEEDER_RESULT_2))),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.STARTS_WITH, "RAR", "feederResults.connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "RAR", "feederResults.connectableId")),
                 Sort.by(new Order(Sort.Direction.ASC, "current")),
                 List.of(List.of(FEEDER_RESULT_4))
             )
@@ -251,7 +251,7 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "1", "feederResults.connectableId")),
                 Sort.by(
                     new Order(Sort.Direction.ASC, "current"),
                     new Order(Sort.Direction.DESC, "feederResults.connectableId")),
@@ -259,8 +259,8 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "NN_I", "feederResults.connectableId"),
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "1", "feederResults.connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "NN_I", "feederResults.connectableId"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "1", "feederResults.connectableId")),
                 Sort.by(
                     new Order(Sort.Direction.ASC, "current"),
                     new Order(Sort.Direction.DESC, "feederResults.connectableId")),
@@ -270,7 +270,7 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "OUPS", "feederResults.connectableId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "OUPS", "feederResults.connectableId")),
                 Sort.by(
                     new Order(Sort.Direction.ASC, "current"),
                     new Order(Sort.Direction.DESC, "feederResults.connectableId")),
@@ -312,17 +312,17 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "A_VLHV1_0", "fault.id")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "A_VLHV1_0", "fault.id")),
                 List.of(faultResultEntity1)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "SUBJECT_1", "limitViolations.subjectId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "SUBJECT_1", "limitViolations.subjectId")),
                 List.of(faultResultEntity1)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.TEXT, ResourceFilter.Type.CONTAINS, "SUBJECT_2", "limitViolations.subjectId")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, "SUBJECT_2", "limitViolations.subjectId")),
                 List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3))
         );
     }
@@ -332,18 +332,18 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 45.3, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 45.3, "current")),
                 List.of(faultResultEntity2, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 47, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 47, "current")),
                 List.of(faultResultEntity1, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 47.3, "current"),
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 49.3, "current")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 47.3, "current"),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 49.3, "current")),
                 List.of(faultResultEntity1))
         );
     }
@@ -370,12 +370,12 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 42, "fortescueCurrent.positiveMagnitude")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 42, "fortescueCurrent.positiveMagnitude")),
                 List.of(faultResultEntity4)),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(
-                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 21.328664779663086, "fortescueVoltage.positiveMagnitude")),
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 21.328664779663086, "fortescueVoltage.positiveMagnitude")),
                 List.of())
         );
     }
