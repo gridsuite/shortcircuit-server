@@ -2,9 +2,11 @@
   "version": "3.0",
   "dictionaries": {
     "default": {
-      "00000000-0000-0000-0000-000000000000": "00000000-0000-0000-0000-000000000000",
-      "ShortCircuitAnalysis": "ShortCircuitAnalysis (${providerToUse})",
+      "ws.commons.reportType": "${reportType}${optionalProvider}",
+      "ws.commons.rootReporterId": "${rootReporterId}",
       "TestReporter": "Test Reporter",
+      "shortcircuit.server.VoltageLevelsWithWrongIscValues" : "Voltage levels having wrong isc values",
+      "shortcircuit.server.VoltageLevelsWithWrongIscValuesSummarize" : "Some voltage levels have wrong isc values, isc min must be <= isc max: ${voltageLevels}",
       "testReportLine": "Test log line",
       "testLine1": "Test log line",
       "test2WT1": "Test log 2WT",
@@ -12,30 +14,37 @@
       "testDangling1": "Test log dangling line",
       "test3WT1": "Test log 3WT",
       "generatorConversion": "Conversion of generators",
-      "disconnectedTerminalGeneratorSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
+      "shortcircuit.server.disconnectedTerminalEquipmentSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
       "batteryConversion": "Conversion of the batteries",
-      "disconnectedTerminalBatterySummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "branchConversion": "Conversion of branches",
       "lineConversion": "Conversion of lines",
       "tieLineConversion": "Conversion of tie lines",
       "twoWindingsTransformerConversion": "Conversion of two windings transformers",
-      "addConstantRatioSummary": "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage",
+      "shortcircuit.server.addConstantRatioSummary": "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage",
       "addConstantRatio": "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})",
       "threeWindingsTransformerConversion": "Conversion of three windings transformers",
       "danglinglinesConversion": "Conversion of the dangling lines"
     }
   },
   "reportRoot": {
-    "messageKey": "00000000-0000-0000-0000-000000000000",
+    "messageKey": "ws.commons.rootReporterId",
+    "values": {
+      "rootReporterId": {
+        "value": "00000000-0000-0000-0000-000000000000"
+      }
+    },
     "children": [
       {
         "messageKey": "TestReporter"
       },
       {
-        "messageKey": "ShortCircuitAnalysis",
+        "messageKey": "ws.commons.reportType",
         "values": {
-          "providerToUse": {
+          "reportType": {
+            "value": "ShortCircuitAnalysis"
+          },
+          "optionalProvider": {
             "value": "Unknown"
           }
         },
@@ -101,14 +110,17 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGeneratorSummary",
+                "messageKey": "shortcircuit.server.disconnectedTerminalEquipmentSummary",
                 "values": {
                   "reportSeverity": {
                     "value": "WARN",
                     "type": "SEVERITY"
                   },
+                  "equipmentsLabel": {
+                    "value": "generators"
+                  },
                   "nb": {
-                    "value": "4"
+                    "value": 4
                   }
                 }
               }
@@ -163,14 +175,17 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalBatterySummary",
+                "messageKey": "shortcircuit.server.disconnectedTerminalEquipmentSummary",
                 "values": {
                   "reportSeverity": {
                     "value": "WARN",
                     "type": "SEVERITY"
                   },
+                  "equipmentsLabel": {
+                    "value": "batteries"
+                  },
                   "nb": {
-                    "value": "3"
+                    "value": 3
                   }
                 }
               }
@@ -268,14 +283,17 @@
                     }
                   },
                   {
-                    "messageKey": "addConstantRatioSummary",
+                    "messageKey": "shortcircuit.server.addConstantRatioSummary",
                     "values": {
                       "reportSeverity": {
                         "value": "WARN",
                         "type": "SEVERITY"
                       },
+                      "equipmentsLabel": {
+                        "value": "two windings transformers"
+                      },
                       "nb": {
-                        "value": "4"
+                        "value": 4
                       }
                     }
                   }
@@ -312,11 +330,14 @@
             ]
           },
           {
-            "messageKey": "VoltageLevelsWithWrongIpValuesRoot",
+            "messageKey": "shortcircuit.server.VoltageLevelsWithWrongIscValues",
             "children": [
               {
-                "messageKey": "VoltageLevelsWithWrongIpValues",
+                "messageKey": "shortcircuit.server.VoltageLevelsWithWrongIscValuesSummarize",
                 "values": {
+                  "voltageLevels": {
+                    "value": "VL1"
+                  },
                   "reportSeverity": {
                     "value": "ERROR",
                     "type": "SEVERITY"
