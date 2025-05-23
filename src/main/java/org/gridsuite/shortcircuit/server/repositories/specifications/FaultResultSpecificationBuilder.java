@@ -32,10 +32,12 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
         return filter.column().contains(FeederResultEntity.Fields.connectableId);
     }
 
+    @Override
     public Specification<FaultResultEntity> uuidIn(List<UUID> uuids) {
         return (root, cq, cb) -> root.get(getIdFieldName()).in(uuids);
     }
 
+    @Override
     public Specification<FaultResultEntity> resultUuidEquals(UUID value) {
         return (root, cq, cb) -> cb.equal(getResultIdPath(root), value);
     }
@@ -48,15 +50,11 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
         return root.get(FaultResultEntity.Fields.result).get(ShortCircuitAnalysisResultEntity.Fields.resultUuid);
     }
 
-    @Override
-    public Specification<FaultResultEntity> addSpecificFilterWhenNoChildrenFilter() {
-        return null;
-    }
-
     public Specification<FaultResultEntity> appendWithLimitViolationsToSpecification(Specification<FaultResultEntity> specification) {
         return specification.and(SpecificationUtils.isNotEmpty(FaultResultEntity.Fields.limitViolations));
     }
 
+    @Override
     public Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilterDTO> resourceFilters) {
         // since sql joins generates duplicate results, we need to use distinct here
         Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
@@ -64,11 +62,6 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
         specification = specification.and(Specification.where(resultUuidEquals(resultUuid)));
 
         return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
-    }
-
-    @Override
-    public Specification<FaultResultEntity> addSpecificFilterWhenChildrenFilters() {
-        return null;
     }
 
     public Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilterDTO> resourceFilters) {
