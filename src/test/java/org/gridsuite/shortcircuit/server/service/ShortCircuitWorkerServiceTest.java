@@ -27,7 +27,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.TestUtils;
-import org.gridsuite.shortcircuit.server.reports.AbstractReportMapper;
+import org.gridsuite.shortcircuit.server.report.ReportMapperService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,33 +51,15 @@ import static org.mockito.Mockito.*;
 @ExtendWith({ MockitoExtension.class })
 @Slf4j
 class ShortCircuitWorkerServiceTest implements WithAssertions {
-
-    @Mock
-    private NetworkStoreService networkStoreService;
-
-    @Mock
-    private ReportService reportService;
-
-    @Mock
-    private ExecutionService executionService;
-
-    @Mock
-    private NotificationService notificationService;
-
-    @Mock
-    private ShortCircuitAnalysisResultService resultService;
-
-    @Mock
-    private ObjectMapper objectMapper;
-
-    @Mock
-    private AbstractReportMapper reportMapper;
-
-    @Mock
-    private Network network;
-
-    @Mock
-    private VariantManager variantManager;
+    @Mock NetworkStoreService networkStoreService;
+    @Mock ReportService reportService;
+    @Mock ExecutionService executionService;
+    @Mock NotificationService notificationService;
+    @Mock ShortCircuitAnalysisResultService resultService;
+    @Mock ObjectMapper objectMapper;
+    @Mock ReportMapperService reportMapperService;
+    @Mock Network network;
+    @Mock VariantManager variantManager;
 
     private ShortCircuitWorkerService workerService;
 
@@ -90,7 +72,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
                 notificationService,
                 resultService,
                 objectMapper,
-                Collections.singletonList(reportMapper),
+                reportMapperService,
                 new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
         );
     }
@@ -110,7 +92,9 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
                 null);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
-        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("test", "test").build();
+        ReportNode reportNode = ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("test").build();
 
         try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
              final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
@@ -121,9 +105,9 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
             when(network.getVariantManager()).thenReturn(variantManager);
             when(network.getBusView()).thenReturn(busViewMocked);
             when(busViewMocked.getBusStream()).thenAnswer(invocation -> Stream.empty());
-            when(reportMapper.processReporter(any(ReportNode.class), any(ShortCircuitRunContext.class))).thenReturn(reportNode);
+            when(reportMapperService.map(any(ReportNode.class), any(ShortCircuitRunContext.class))).thenReturn(reportNode);
             workerService.consumeRun().accept(message);
-            verify(reportMapper, times(1)).processReporter(any(ReportNode.class), any(ShortCircuitRunContext.class));
+            verify(reportMapperService, times(1)).map(any(ReportNode.class), any(ShortCircuitRunContext.class));
             verify(reportService, times(1)).sendReport(reportUuid, reportNode);
         }
     }
@@ -151,7 +135,8 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
-            assertThrows(ComputationException.class, () -> workerService.consumeRun().accept(message));
+            final var run = workerService.consumeRun();
+            assertThrows(ComputationException.class, () -> run.accept(message));
         }
     }
 

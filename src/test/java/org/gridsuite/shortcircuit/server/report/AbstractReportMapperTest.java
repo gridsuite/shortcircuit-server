@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server.reports;
+package org.gridsuite.shortcircuit.server.report;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
@@ -52,9 +52,7 @@ abstract class AbstractReportMapperTest implements WithAssertions {
      * output by the content of the report in assertion messages.
      */
     public static class ReportRepresentation extends StandardRepresentation {
-        /**
-         * {@inheritDoc}
-         */
+        /** {@inheritDoc} */
         @Override
         public String toStringOf(Object object) {
             if (object instanceof ReportNode reportNode) {
