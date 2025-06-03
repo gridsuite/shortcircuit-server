@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -94,7 +93,7 @@ public class ShortCircuitController {
                                                                       "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
                                                                       "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
-                                                                  Pageable pageable) throws JsonProcessingException {
+                                                                  Pageable pageable) {
         Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, stringFilters, pageable);
         return faultResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage)
             : ResponseEntity.notFound().build();
@@ -106,7 +105,7 @@ public class ShortCircuitController {
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<Page<FeederResult>> getPagedFeederResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                     @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
-                                                                    Pageable pageable) throws JsonProcessingException {
+                                                                    Pageable pageable) {
         Page<FeederResult> feederResultsPage = shortCircuitService.getFeederResultsPage(resultUuid, stringFilters, pageable);
         return feederResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(feederResultsPage)
             : ResponseEntity.notFound().build();
