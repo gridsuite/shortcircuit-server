@@ -20,7 +20,7 @@ public class MapperBeans {
     @Bean
     public SeverityMapper powsyblAdnTwoWindingsTransformersSeverity() {
         // in branchConversion.twoWindingsTransformerConversion
-        return new SeverityMapper("addConstantRatio", TypedValue.TRACE_SEVERITY);
+        return new SeverityMapper("twoWindingsTransformerConversion", "addConstantRatio", TypedValue.TRACE_SEVERITY);
     }
 
     @Bean
