@@ -15,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 @Slf4j
 @Data
 public class SeverityMapper implements ReportMapper {
-    @NonNull public final String messageKey;
-    @NonNull public final TypedValue severity;
+    @NonNull private final String messageKey;
+    @NonNull private final TypedValue severity;
 
     /** {@inheritDoc}  */
     @Override

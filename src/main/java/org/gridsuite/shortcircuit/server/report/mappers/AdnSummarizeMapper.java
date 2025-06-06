@@ -19,10 +19,10 @@ import org.jetbrains.annotations.Nullable;
 @Slf4j
 @Data
 public class AdnSummarizeMapper implements ReportMapper {
-    @NonNull public final String equipmentsLabel;
-    @NonNull public final String parentMessageKey; //"Conversion of ..."
-    @NonNull public final String toSummarizeMessageKey;
-    @NonNull public final String summaryMessageKey;
+    @NonNull private final String equipmentsLabel;
+    @NonNull private final String parentMessageKey; //"Conversion of ..."
+    @NonNull private final String toSummarizeMessageKey;
+    @NonNull private final String summaryMessageKey;
     private long logsToSummarizeCount; // =0L
 
     /** {@inheritDoc}  */
