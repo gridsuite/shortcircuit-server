@@ -25,3 +25,4 @@ logging:
     org.gridsuite.shortcircuit.server.report: DEBUG
     # helpers logs the same content as the ReportNode tree being constructed: that is noise for us
     com.rte_france.powsybl.iidm.export.adn: ERROR
+    com.rte_france.powsybl.courcirc.Courcirc: WARN
