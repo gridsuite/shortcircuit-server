@@ -29,6 +29,7 @@ import java.util.List;
 class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     private static final ObjectMapper OBJECT_MAPPER = RestTemplateConfig.objectMapper();
     private ReportMapperService reportMapperService;
+    private ShortCircuitRunContext runContext;
 
     @BeforeEach
     void prepare() {
@@ -41,6 +42,8 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
                 beansInit.powsyblAdnTwoWindingsTransformersSummary(),
                 new VoltageLevelsWithWrongIpValuesMapper()
         ));
+        this.runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParameters(),
+                null, "reporterId", "reportType", "userId", "default-provider", "busId");
     }
 
     @ParameterizedTest(name = "reporter_{0}.json")
@@ -54,10 +57,8 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
         //   we get in dictionary values "Cannot find message template with key: 'theMessageKey'".
         // The only solution found is to manually do `withResourceBundles(ShortcircuitServerReportResourceBundle.BASE_NAME)` when creating a new node.
 
-        ShortCircuitRunContext runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParameters(),
-            null, "reporterId", "reportType", "userId", "default-provider", "busId");
-        runContext.setVoltageLevelsWithWrongIsc(Collections.singletonList("VL1"));
-        final ReportNode result = reportMapperService.map(rootReportNode, runContext);
+        this.runContext.setVoltageLevelsWithWrongIsc(Collections.singletonList("VL1"));
+        final ReportNode result = reportMapperService.map(rootReportNode, this.runContext);
 
         log.debug("Result = {}", OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(result));
         // strict=false -> no-order & extensible => reportTimestamp not in json/expected will not fail

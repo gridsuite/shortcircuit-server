@@ -3,6 +3,7 @@ package org.gridsuite.shortcircuit.server.report;
 import com.powsybl.commons.report.TypedValue;
 import org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper;
 import org.gridsuite.shortcircuit.server.report.mappers.SeverityMapper;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,7 +29,8 @@ public class MapperBeans {
         return new AdnSummarizeMapper("generators",
                 "generatorConversion",
                 "disconnectedTerminalGenerator",
-                "shortcircuit.server.disconnectedTerminalEquipmentSummary");
+                "shortcircuit.server.disconnectedTerminalEquipmentSummary",
+                ShortCircuitRunContext::getAdnSummarizeCounterGenerator);
     }
 
     @Bean
@@ -36,7 +38,8 @@ public class MapperBeans {
         return new AdnSummarizeMapper("batteries",
                 "batteryConversion",
                 "disconnectedTerminalGenerator",
-                "shortcircuit.server.disconnectedTerminalEquipmentSummary");
+                "shortcircuit.server.disconnectedTerminalEquipmentSummary",
+                ShortCircuitRunContext::getAdnSummarizeCounterBattery);
     }
 
     @Bean
@@ -45,7 +48,8 @@ public class MapperBeans {
         return new AdnSummarizeMapper("two windings transformers",
                 "twoWindingsTransformerConversion",
                 "addConstantRatio",
-                "shortcircuit.server.addConstantRatioSummary");
+                "shortcircuit.server.addConstantRatioSummary",
+                ShortCircuitRunContext::getAdnSummarizeCounterT2W);
     }
 
     /* There is also possibly adn nodes:
