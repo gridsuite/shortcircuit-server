@@ -21,7 +21,7 @@
       "lineConversion": "Conversion of lines",
       "tieLineConversion": "Conversion of tie lines",
       "twoWindingsTransformerConversion": "Conversion of two windings transformers",
-      "shortcircuit.server.addConstantRatioSummary": "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because both voltage levels have different nominal voltage",
+      "shortcircuit.server.addConstantRatioSummary": "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because extremities voltage levels have different nominal voltage",
       "addConstantRatio": "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})",
       "threeWindingsTransformerConversion": "Conversion of three windings transformers",
       "danglinglinesConversion": "Conversion of the dangling lines"
