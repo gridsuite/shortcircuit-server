@@ -36,9 +36,11 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
         final MapperBeans beansInit = new MapperBeans();
         this.reportMapperService = new ReportMapperService(List.of(
                 beansInit.powsyblAdnGeneratorsAndBatteriesSeverity(),
+                beansInit.powsyblAdnLinesSeverity(),
                 beansInit.powsyblAdnTwoWindingsTransformersSeverity(),
                 beansInit.powsyblAdnGeneratorsSummary(),
                 beansInit.powsyblAdnBatteriesSummary(),
+                beansInit.powsyblAdnLinesSummary(),
                 beansInit.powsyblAdnTwoWindingsTransformersSummary(),
                 new VoltageLevelsWithWrongIpValuesMapper()
         ));

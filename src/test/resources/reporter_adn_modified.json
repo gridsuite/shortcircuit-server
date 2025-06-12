@@ -12,6 +12,7 @@
       "lineConversion" : "Conversion of lines",
       "shortcircuit.server.VoltageLevelsWithWrongIscValues" : "Voltage levels having wrong isc values",
       "shortcircuit.server.VoltageLevelsWithWrongIscValuesSummarize" : "Some voltage levels have wrong isc values, isc min must be <= isc max: ${voltageLevels}",
+      "shortcircuit.server.addConstantRatioSummary" : "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because extremities voltage levels have different nominal voltage",
       "shortcircuit.server.disconnectedTerminalEquipmentSummary" : "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
       "threeWindingsTransformerConversion" : "Conversion of three windings transformers",
       "tieLineConversion" : "Conversion of tie lines",
@@ -133,7 +134,7 @@
               "vlId2" : { "value" : "MABCDP7" },
               "vlId1" : { "value" : "AABCDP7" },
               "nominalVoltage2" : { "value" : 300.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "WARN", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
               "rfix" : { "value" : 1.1234567 },
               "nominalVoltage1" : { "value" : 400.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "ABCDEFGHIJKLM" }
@@ -144,7 +145,7 @@
               "vlId2" : { "value" : "P.ABCP7" },
               "vlId1" : { "value" : "HABCDP7" },
               "nominalVoltage2" : { "value" : 400.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "WARN", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
               "rfix" : { "value" : 0.95 },
               "nominalVoltage1" : { "value" : 300.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "ABDCEFGHI.ABC" }
@@ -155,7 +156,7 @@
               "vlId2" : { "value" : "ABCDEP7" },
               "vlId1" : { "value" : "FGHIJP7" },
               "nominalVoltage2" : { "value" : 400.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "WARN", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
               "rfix" : { "value" : 0.95 },
               "nominalVoltage1" : { "value" : 300.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "ABCDEFGHIJKLM" }
@@ -166,10 +167,17 @@
               "vlId2" : { "value" : "QSDFGHJ" },
               "vlId1" : { "value" : "WXCVBN7" },
               "nominalVoltage2" : { "value" : 400.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "WARN", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
               "rfix" : { "value" : 0.95 },
               "nominalVoltage1" : { "value" : 300.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "AZERTYUIOPKLM" }
+            }
+          }, {
+            "messageKey" : "shortcircuit.server.addConstantRatioSummary",
+            "values" : {
+              "reportSeverity" : { "value" : "WARN", "type" : "SEVERITY" },
+              "equipmentsLabel" : { "value" : "lines" },
+              "nb" : { "value" : 4 }
             }
           } ]
         }, {

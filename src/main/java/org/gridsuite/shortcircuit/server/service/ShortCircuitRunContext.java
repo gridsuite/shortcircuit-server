@@ -32,6 +32,8 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
     private final MutableLong adnSummarizeCounterBattery =  new MutableLong();
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
+    private final MutableLong adnSummarizeCounterLines =  new MutableLong();
+    /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
     private final MutableLong adnSummarizeCounterT2W =  new MutableLong();
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,

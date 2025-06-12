@@ -19,6 +19,12 @@ public class MapperBeans {
     }
 
     @Bean
+    public SeverityMapper powsyblAdnLinesSeverity() {
+        // in branchConversion.twoWindingsTransformerConversion
+        return new SeverityMapper("lineConversion", "addConstantRatio", TypedValue.TRACE_SEVERITY);
+    }
+
+    @Bean
     public SeverityMapper powsyblAdnTwoWindingsTransformersSeverity() {
         // in branchConversion.twoWindingsTransformerConversion
         return new SeverityMapper("twoWindingsTransformerConversion", "addConstantRatio", TypedValue.TRACE_SEVERITY);
@@ -40,6 +46,16 @@ public class MapperBeans {
                 "disconnectedTerminalGenerator",
                 "shortcircuit.server.disconnectedTerminalEquipmentSummary",
                 ShortCircuitRunContext::getAdnSummarizeCounterBattery);
+    }
+
+    @Bean
+    public AdnSummarizeMapper powsyblAdnLinesSummary() {
+        // in branchConversion.twoWindingsTransformerConversion
+        return new AdnSummarizeMapper("lines",
+                "lineConversion",
+                "addConstantRatio",
+                "shortcircuit.server.addConstantRatioSummary",
+                ShortCircuitRunContext::getAdnSummarizeCounterLines);
     }
 
     @Bean
