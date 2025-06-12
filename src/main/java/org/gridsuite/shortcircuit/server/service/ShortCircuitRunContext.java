@@ -28,13 +28,13 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
     private List<String> voltageLevelsWithWrongIsc = new ArrayList<>();
 
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
-    private final MutableLong adnSummarizeCounterGenerator =  new MutableLong();
+    private final MutableLong adnSummarizeCounterGenerator = new MutableLong();
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
-    private final MutableLong adnSummarizeCounterBattery =  new MutableLong();
+    private final MutableLong adnSummarizeCounterBattery = new MutableLong();
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
-    private final MutableLong adnSummarizeCounterLines =  new MutableLong();
+    private final MutableLong adnSummarizeCounterLines = new MutableLong();
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
-    private final MutableLong adnSummarizeCounterT2W =  new MutableLong();
+    private final MutableLong adnSummarizeCounterT2W = new MutableLong();
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
                                   UUID reportUuid, String reporterId, String reportType, String userId, String provider, String busId) {
