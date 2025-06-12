@@ -65,7 +65,7 @@
                 "messageKey": "disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
-                    "value": "TRACE",
+                    "value": "DETAIL",
                     "type": "SEVERITY"
                   },
                   "generator": {
@@ -77,7 +77,7 @@
                 "messageKey": "disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
-                    "value": "TRACE",
+                    "value": "DETAIL",
                     "type": "SEVERITY"
                   },
                   "generator": {
@@ -89,7 +89,7 @@
                 "messageKey": "disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
-                    "value": "TRACE",
+                    "value": "DETAIL",
                     "type": "SEVERITY"
                   },
                   "generator": {
@@ -101,7 +101,7 @@
                 "messageKey": "disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
-                    "value": "TRACE",
+                    "value": "DETAIL",
                     "type": "SEVERITY"
                   },
                   "generator": {
@@ -142,7 +142,7 @@
                 "messageKey": "disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
-                    "value": "TRACE",
+                    "value": "DETAIL",
                     "type": "SEVERITY"
                   },
                   "generator": {
@@ -154,7 +154,7 @@
                 "messageKey": "disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
-                    "value": "TRACE",
+                    "value": "DETAIL",
                     "type": "SEVERITY"
                   },
                   "generator": {
@@ -166,7 +166,7 @@
                 "messageKey": "disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
-                    "value": "TRACE",
+                    "value": "DETAIL",
                     "type": "SEVERITY"
                   },
                   "generator": {
@@ -238,7 +238,7 @@
                     "messageKey": "addConstantRatio",
                     "values": {
                       "reportSeverity": {
-                        "value": "TRACE",
+                        "value": "DETAIL",
                         "type": "SEVERITY"
                       },
                       "branch": {
@@ -250,7 +250,7 @@
                     "messageKey": "addConstantRatio",
                     "values": {
                       "reportSeverity": {
-                        "value": "TRACE",
+                        "value": "DETAIL",
                         "type": "SEVERITY"
                       },
                       "branch": {
@@ -262,7 +262,7 @@
                     "messageKey": "addConstantRatio",
                     "values": {
                       "reportSeverity": {
-                        "value": "TRACE",
+                        "value": "DETAIL",
                         "type": "SEVERITY"
                       },
                       "branch": {
@@ -274,7 +274,7 @@
                     "messageKey": "addConstantRatio",
                     "values": {
                       "reportSeverity": {
-                        "value": "TRACE",
+                        "value": "DETAIL",
                         "type": "SEVERITY"
                       },
                       "branch": {
