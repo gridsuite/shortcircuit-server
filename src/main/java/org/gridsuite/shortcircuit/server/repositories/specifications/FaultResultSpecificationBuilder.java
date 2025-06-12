@@ -7,13 +7,16 @@
 
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
+import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
+import com.powsybl.ws.commons.computation.specification.AbstractCommonSpecificationBuilder;
+import com.powsybl.ws.commons.computation.utils.SpecificationUtils;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
-import org.gridsuite.shortcircuit.server.dto.ResourceFilter;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,36 +24,28 @@ import java.util.UUID;
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>
  */
-public final class FaultResultSpecificationBuilder {
+@Service
+public final class FaultResultSpecificationBuilder extends AbstractCommonSpecificationBuilder<FaultResultEntity> {
 
-    // Utility class, so no constructor
-    private FaultResultSpecificationBuilder() { }
-
-    public static boolean isNotParentFilter(ResourceFilter filter) {
+    @Override
+    public boolean isNotParentFilter(ResourceFilterDTO filter) {
         return filter.column().contains(FeederResultEntity.Fields.connectableId);
     }
 
-    public static Specification<FaultResultEntity> uuidIn(List<UUID> uuids) {
-        return (root, cq, cb) -> root.get(getIdFieldName()).in(uuids);
-    }
-
-    public static Specification<FaultResultEntity> resultUuidEquals(UUID value) {
-        return (root, cq, cb) -> cb.equal(getResultIdPath(root), value);
-    }
-
-    public static String getIdFieldName() {
+    public String getIdFieldName() {
         return FaultResultEntity.Fields.faultResultUuid;
     }
 
-    public static Path<UUID> getResultIdPath(Root<FaultResultEntity> root) {
+    public Path<UUID> getResultIdPath(Root<FaultResultEntity> root) {
         return root.get(FaultResultEntity.Fields.result).get(ShortCircuitAnalysisResultEntity.Fields.resultUuid);
     }
 
-    public static Specification<FaultResultEntity> appendWithLimitViolationsToSpecification(Specification<FaultResultEntity> specification) {
+    public Specification<FaultResultEntity> appendWithLimitViolationsToSpecification(Specification<FaultResultEntity> specification) {
         return specification.and(SpecificationUtils.isNotEmpty(FaultResultEntity.Fields.limitViolations));
     }
 
-    public static Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilter> resourceFilters) {
+    @Override
+    public Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilterDTO> resourceFilters) {
         // since sql joins generates duplicate results, we need to use distinct here
         Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
         // filter by resultUuid
@@ -59,8 +54,8 @@ public final class FaultResultSpecificationBuilder {
         return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
     }
 
-    public static Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilter> resourceFilters) {
-        List<ResourceFilter> childrenResourceFilter = resourceFilters.stream().filter(FaultResultSpecificationBuilder::isNotParentFilter)
+    public Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilterDTO> resourceFilters) {
+        List<ResourceFilterDTO> childrenResourceFilter = resourceFilters.stream().filter(this::isNotParentFilter)
                 .toList();
         Specification<FaultResultEntity> specification = Specification.where(uuidIn(uuids));
 
