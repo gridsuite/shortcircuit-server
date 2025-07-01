@@ -479,6 +479,18 @@ class ShortCircuitAnalysisControllerTest {
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                     .andExpect(status().isNotFound());
 
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}/fault_results/paged", OTHER_RESULT_UUID)
+                .param("mode", "FULL")
+                             .param("page", "1")
+                             .param("size", "2")
+                             .param("sort", "fault.id,DESC"))
+                .andExpect(status().isNotFound());
+
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}/feeder_results/paged", OTHER_RESULT_UUID)
+                    .param("page", "1")
+                    .param("size", "2"))
+                .andExpect(status().isNotFound());
+
             // test one result deletion
             mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))
                     .andExpect(status().isOk());

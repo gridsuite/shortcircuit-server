@@ -334,6 +334,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 default:
                     break;
             }
+            if (faultResultEntitiesPage.isEmpty()) {
+                return Page.empty();
+            }
             Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
@@ -352,6 +355,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         Optional<ShortCircuitAnalysisResultEntity> result = resultService.find(resultUuid);
         if (result.isPresent()) {
             Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(result.get(), resourceFilters, pageable);
+            if (feederResultEntitiesPage.isEmpty()) {
+                return Page.empty();
+            }
             Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
