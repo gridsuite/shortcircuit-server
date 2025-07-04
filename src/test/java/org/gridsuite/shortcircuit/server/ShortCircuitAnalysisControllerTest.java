@@ -432,6 +432,15 @@ class ShortCircuitAnalysisControllerTest {
             expectedResultsIdInOrder = faultsFromDatabase.stream().sorted(comparatorByFaultIdAndResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_0, faultResultsPageDto0Full, expectedResultsIdInOrder);
 
+            mockMvc.perform(get(
+                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                             .param("mode", "FULL")
+                             .param("page", "0")
+                             .param("size", "2")
+                             .param("sort", "fault.id")
+                             .param("filters", "[{\"column\":\"fault.id\",\"dataType\":\"text\",\"type\":\"startsWith\",\"value\":\"AAAAAAA\"}]"))
+                     .andExpect(status().isNoContent());
+
             result = mockMvc.perform(get(
                              "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
                              .param("mode", "FULL")
@@ -478,6 +487,13 @@ class ShortCircuitAnalysisControllerTest {
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                     .andExpect(status().isNotFound());
+
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}/fault_results/paged", OTHER_RESULT_UUID)
+                .param("mode", "FULL")
+                             .param("page", "1")
+                             .param("size", "2")
+                             .param("sort", "fault.id,DESC"))
+                .andExpect(status().isNotFound());
 
             // test one result deletion
             mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))
@@ -530,6 +546,18 @@ class ShortCircuitAnalysisControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
+
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}/feeder_results/paged", OTHER_RESULT_UUID)
+                    .param("page", "1")
+                    .param("size", "2"))
+                .andExpect(status().isNotFound());
+
+            mockMvc.perform(get(
+                            "/" + VERSION + "/results/{resultUuid}/feeder_results/paged", RESULT_UUID)
+                             .param("page", "0")
+                             .param("size", "2")
+                             .param("filters", "[{\"column\":\"connectableId\",\"dataType\":\"text\",\"type\":\"startsWith\",\"value\":\"AAAAAAA\"}]"))
+                     .andExpect(status().isNoContent());
 
             JsonNode faultResultsPageNode = mapper.readTree(result.getResponse().getContentAsString());
             List<FaultResultEntity> faultsFromDatabase = faultResultRepository.findAll();

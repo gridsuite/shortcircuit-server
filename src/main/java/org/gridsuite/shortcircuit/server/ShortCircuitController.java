@@ -95,8 +95,13 @@ public class ShortCircuitController {
                                                                   @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
                                                                   Pageable pageable) {
         Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, stringFilters, pageable);
-        return faultResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage)
-            : ResponseEntity.notFound().build();
+        if (faultResultsPage == null) {
+            return ResponseEntity.notFound().build();
+        } else if (faultResultsPage.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage);
+        }
     }
 
     @GetMapping(value = "/results/{resultUuid}/feeder_results/paged", produces = APPLICATION_JSON_VALUE)
@@ -107,8 +112,13 @@ public class ShortCircuitController {
                                                                     @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
                                                                     Pageable pageable) {
         Page<FeederResult> feederResultsPage = shortCircuitService.getFeederResultsPage(resultUuid, stringFilters, pageable);
-        return feederResultsPage != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(feederResultsPage)
-            : ResponseEntity.notFound().build();
+        if (feederResultsPage == null) {
+            return ResponseEntity.notFound().build();
+        } else if (feederResultsPage.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(feederResultsPage);
+        }
     }
 
     @DeleteMapping(value = "/results", produces = APPLICATION_JSON_VALUE)
