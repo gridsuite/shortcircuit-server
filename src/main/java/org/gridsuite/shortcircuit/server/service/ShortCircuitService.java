@@ -13,9 +13,11 @@ import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
+import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import com.powsybl.ws.commons.computation.service.AbstractComputationService;
@@ -64,12 +66,17 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     );
 
     private final ParametersRepository parametersRepository;
+    private FilterService filterService;
 
-    public ShortCircuitService(final NotificationService notificationService, final UuidGeneratorService uuidGeneratorService,
-                               final ShortCircuitAnalysisResultService resultService, final ParametersRepository parametersRepository,
+    public ShortCircuitService(final NotificationService notificationService,
+                               final UuidGeneratorService uuidGeneratorService,
+                               final ShortCircuitAnalysisResultService resultService,
+                               final ParametersRepository parametersRepository,
+                               final FilterService filterService,
                                final ObjectMapper objectMapper) {
         super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
         this.parametersRepository = parametersRepository;
+        this.filterService = filterService;
     }
 
     @Transactional
@@ -311,11 +318,19 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResult> getFaultResultsPage(UUID resultUuid,
+    public Page<FaultResult> getFaultResultsPage(UUID rootNetworkUuid,
+                                                 String variantId,
+                                                 UUID resultUuid,
                                                  FaultResultsMode mode,
                                                  String stringFilters,
+                                                 GlobalFilter globalFilter,
                                                  Pageable pageable) {
         List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
+        List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
+        if (globalFilter != null) {
+            Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(rootNetworkUuid, variantId, globalFilter);
+            resourceGlobalFilter.ifPresent(resourceGlobalFilters::add);
+        }
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
@@ -325,10 +340,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
             switch (mode) {
                 case BASIC, FULL:
-                    faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
+                    faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable, mode);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable);
+                    faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable);
                     break;
                 case NONE:
                 default:

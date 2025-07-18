@@ -6,8 +6,11 @@
  */
 package org.gridsuite.shortcircuit.server;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
+import com.powsybl.ws.commons.computation.dto.GlobalFilter;
+import com.powsybl.ws.commons.computation.utils.FilterUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,6 +24,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,10 +41,14 @@ import static org.springframework.http.MediaType.*;
 @RequestMapping(value = "/" + ShortCircuitApi.API_VERSION)
 @Tag(name = "Short circuit server")
 public class ShortCircuitController {
-    private final ShortCircuitService shortCircuitService;
 
-    public ShortCircuitController(ShortCircuitService shortCircuitService) {
+    private final ShortCircuitService shortCircuitService;
+    private final ObjectMapper objectMapper;
+
+    public ShortCircuitController(ShortCircuitService shortCircuitService,
+                                  ObjectMapper objectMapper) {
         this.shortCircuitService = shortCircuitService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
@@ -86,15 +95,20 @@ public class ShortCircuitController {
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a fault results page for a given short circuit analysis result")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
-        @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
+            @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<Page<FaultResult>> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                  @Parameter(description = "BASIC (faults without limits and feeders), " +
-                                                                      "FULL (faults with both), " +
-                                                                      "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
-                                                                      "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
+                                                                  @Parameter(description = "root network UUID") @RequestParam(value = "rootNetworkUuid", required = false) UUID rootNetworkUuid,
+                                                                  @Parameter(description = "variant Id") @RequestParam(name = "variantId", required = false) String variantId,
                                                                   @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
+                                                                  @Parameter(description = "Global Filters") @RequestParam(name = "globalFilters", required = false) String globalFilters,
+                                                                  @Parameter(description = "BASIC (faults without limits and feeders), " +
+                                                                          "FULL (faults with both), " +
+                                                                          "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
+                                                                          "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   Pageable pageable) {
-        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(resultUuid, mode, stringFilters, pageable);
+        String decodedStringGlobalFilters = globalFilters != null ? URLDecoder.decode(globalFilters, StandardCharsets.UTF_8) : null;
+        GlobalFilter globalFilter = FilterUtils.fromStringGlobalFiltersToDTO(decodedStringGlobalFilters, objectMapper);
+        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(rootNetworkUuid, variantId, resultUuid, mode, stringFilters, globalFilter, pageable);
         if (faultResultsPage == null) {
             return ResponseEntity.notFound().build();
         } else if (faultResultsPage.isEmpty()) {

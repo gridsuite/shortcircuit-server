@@ -10,8 +10,7 @@ package org.gridsuite.shortcircuit.server.repositories.specifications;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import com.powsybl.ws.commons.computation.specification.AbstractCommonSpecificationBuilder;
 import com.powsybl.ws.commons.computation.utils.SpecificationUtils;
-import jakarta.persistence.criteria.Path;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
@@ -60,5 +59,13 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
         Specification<FaultResultEntity> specification = Specification.where(uuidIn(uuids));
 
         return SpecificationUtils.appendFiltersToSpecification(specification, childrenResourceFilter);
+    }
+
+    public Specification<FaultResultEntity> addFeederResultJoinClause(List<String> ids) {
+        return (root, query, builder) -> {
+            // Jointure vers FeederResultEntity
+            Join<FaultResultEntity, FeederResultEntity> join = root.join("feederResults", JoinType.INNER);
+            return join.get(FeederResultEntity.Fields.connectableId).in(ids);
+        };
     }
 }
