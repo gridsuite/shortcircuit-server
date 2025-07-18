@@ -11,7 +11,6 @@ import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import com.powsybl.ws.commons.computation.service.AbstractComputationResultService;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
@@ -29,6 +28,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com
  */
-@Slf4j
 @AllArgsConstructor
 @Service
 public class ShortCircuitAnalysisResultService extends AbstractComputationResultService<ShortCircuitAnalysisStatus> {
@@ -77,7 +76,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
                     } else if (faultResult instanceof MagnitudeFaultResult magnitudeFaultResult) {
                         return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     } else {
-                        log.warn("Unknown FaultResult class: {}", faultResult.getClass());
+                        LOGGER.warn("Unknown FaultResult class: {}", faultResult.getClass());
                         return toGenericFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
                     }
                 })
@@ -269,6 +268,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     @Transactional(readOnly = true)
     public Page<FaultResultEntity> findFaultResultsPage(ShortCircuitAnalysisResultEntity result,
                                                         List<ResourceFilterDTO> resourceFilters,
+                                                        List<ResourceFilterDTO> resourceGlobalFilters,
                                                         Pageable pageable,
                                                         FaultResultsMode mode) {
         Objects.requireNonNull(result);
@@ -282,6 +282,14 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
+
+        if (!CollectionUtils.isEmpty(resourceGlobalFilters)) {
+            // TODO : crade en attendant pour tester
+            List<String> ids = new ArrayList<>();
+            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>) item.value()).stream().map(Object::toString).toList()));
+            // Ajout de la jointure sur les sous-noeuds
+            specification = specification.and(faultResultSpecificationBuilder.addFeederResultJoinClause(ids));
+        }
 
         Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
                 q.project(FaultResultEntity.Fields.faultResultUuid)
@@ -347,6 +355,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     @Transactional(readOnly = true)
     public Page<FaultResultEntity> findFaultResultsWithLimitViolationsPage(ShortCircuitAnalysisResultEntity result,
                                                                            List<ResourceFilterDTO> resourceFilters,
+                                                                           List<ResourceFilterDTO> resourceGlobalFilters,
                                                                            Pageable pageable) {
         Objects.requireNonNull(result);
 
@@ -360,6 +369,14 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
+
+        if (!CollectionUtils.isEmpty(resourceGlobalFilters)) {
+            // TODO : crade en attendant pour tester
+            List<String> ids = new ArrayList<>();
+            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>) item.value()).stream().map(Object::toString).toList()));
+            // Ajout de la jointure sur les sous-noeuds
+            specification = specification.and(faultResultSpecificationBuilder.addFeederResultJoinClause(ids));
+        }
 
         Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
                 q.project(FaultResultEntity.Fields.faultResultUuid)

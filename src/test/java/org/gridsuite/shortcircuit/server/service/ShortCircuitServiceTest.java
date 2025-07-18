@@ -43,6 +43,7 @@ class ShortCircuitServiceTest implements WithAssertions {
     private UuidGeneratorService uuidGeneratorService;
     private ShortCircuitAnalysisResultService resultService;
     private ParametersRepository parametersRepository;
+    private FilterService filterService;
     private ObjectMapper objectMapper;
     private ShortCircuitService shortCircuitService;
 
@@ -53,7 +54,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         this.resultService = mock(ShortCircuitAnalysisResultService.class);
         this.parametersRepository = mock(ParametersRepository.class);
         this.objectMapper = spy(new ObjectMapper());
-        this.shortCircuitService = new ShortCircuitService(notificationService, uuidGeneratorService, resultService, parametersRepository, objectMapper);
+        this.shortCircuitService = new ShortCircuitService(notificationService, uuidGeneratorService, resultService, parametersRepository, filterService, objectMapper);
     }
 
     @AfterEach
