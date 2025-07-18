@@ -9,11 +9,9 @@ package org.gridsuite.shortcircuit.server.service;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
-import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

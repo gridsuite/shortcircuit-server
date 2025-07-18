@@ -17,7 +17,6 @@ import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import com.powsybl.ws.commons.computation.service.AbstractComputationService;

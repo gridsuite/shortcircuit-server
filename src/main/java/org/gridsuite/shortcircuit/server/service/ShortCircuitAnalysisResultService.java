@@ -11,7 +11,6 @@ import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import com.powsybl.ws.commons.computation.service.AbstractComputationResultService;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
@@ -287,7 +286,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         if (!CollectionUtils.isEmpty(resourceGlobalFilters)) {
             // TODO : crade en attendant pour tester
             List<String> ids = new ArrayList<>();
-            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>)item.value()).stream().map(Object::toString).toList()));
+            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>) item.value()).stream().map(Object::toString).toList()));
             // Ajout de la jointure sur les sous-noeuds
             specification = specification.and(faultResultSpecificationBuilder.addFeederResultJoinClause(ids));
         }
@@ -374,7 +373,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         if (!CollectionUtils.isEmpty(resourceGlobalFilters)) {
             // TODO : crade en attendant pour tester
             List<String> ids = new ArrayList<>();
-            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>)item.value()).stream().map(Object::toString).toList()));
+            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>) item.value()).stream().map(Object::toString).toList()));
             // Ajout de la jointure sur les sous-noeuds
             specification = specification.and(faultResultSpecificationBuilder.addFeederResultJoinClause(ids));
         }

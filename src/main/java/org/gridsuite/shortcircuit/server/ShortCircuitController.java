@@ -95,7 +95,7 @@ public class ShortCircuitController {
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a fault results page for a given short circuit analysis result")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
-            @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
+        @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<Page<FaultResult>> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                                                   @Parameter(description = "root network UUID") @RequestParam(value = "rootNetworkUuid", required = false) UUID rootNetworkUuid,
                                                                   @Parameter(description = "variant Id") @RequestParam(name = "variantId", required = false) String variantId,
