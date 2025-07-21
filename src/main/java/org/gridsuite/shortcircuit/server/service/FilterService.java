@@ -10,7 +10,6 @@ import com.google.common.collect.Lists;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
-import com.powsybl.ws.commons.computation.utils.SpecificationUtils;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import lombok.NonNull;
@@ -18,10 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -54,7 +51,7 @@ public class FilterService extends AbstractFilterService {
         if (resourceFilters != null && !resourceFilters.isEmpty()) {
             Specification<X> completedSpecification = specification;
 
-            for(ResourceFilterDTO resourceFilter : resourceFilters) {
+            for (ResourceFilterDTO resourceFilter : resourceFilters) {
                 if (resourceFilter.dataType() == ResourceFilterDTO.DataType.TEXT) {
                     completedSpecification = appendInTextFilterToSpecification(completedSpecification, resourceFilter);
                 } else {
@@ -85,7 +82,7 @@ public class FilterService extends AbstractFilterService {
     }
 
     private void doLogWarn(ResourceFilterDTO resourceFilter) {
-        log.warn("Unexpected type encountered for {} : {} - {}", resourceFilter.column(), resourceFilter.type() ,resourceFilter.dataType());
+        log.warn("Unexpected type encountered for {} : {} - {}", resourceFilter.column(), resourceFilter.type(), resourceFilter.dataType());
     }
 
     private <X> Specification<X> generateInSpecification(String column, List<String> inPossibleValues) {
@@ -93,7 +90,7 @@ public class FilterService extends AbstractFilterService {
             List<List<String>> chunksOfInValues = Lists.partition(inPossibleValues, CHRUNK_SIZE);
             Specification<X> containerSpec = null;
 
-            for(List<String> chunk : chunksOfInValues) {
+            for (List<String> chunk : chunksOfInValues) {
                 Specification<X> multiOrEqualSpec = Specification.anyOf(in(column, chunk));
                 if (containerSpec == null) {
                     containerSpec = multiOrEqualSpec;
@@ -120,7 +117,7 @@ public class FilterService extends AbstractFilterService {
             String[] fields = dotSeparatedFields.split("\\.");
             Path<Y> path = root.get(fields[0]);
 
-            for(int i = 1; i < fields.length; ++i) {
+            for (int i = 1; i < fields.length; ++i) {
                 path = path.get(fields[i]);
             }
 
