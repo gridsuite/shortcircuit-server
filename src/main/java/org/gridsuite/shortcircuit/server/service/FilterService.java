@@ -30,7 +30,8 @@ import java.util.*;
 @Slf4j
 public class FilterService extends AbstractFilterService {
 
-    private static final int CHRUNK_SIZE = 500;
+    private static final String WARN_UNEXPECTED_TYPE_ENCOUNTERED_FOR = "Unexpected type encountered for {} : {} - {}";
+    private static final int CHUNK_SIZE = 500;
 
     public FilterService(
             NetworkStoreService networkStoreService,
@@ -82,12 +83,12 @@ public class FilterService extends AbstractFilterService {
     }
 
     private void doLogWarn(ResourceFilterDTO resourceFilter) {
-        log.warn("Unexpected type encountered for {} : {} - {}", resourceFilter.column(), resourceFilter.type(), resourceFilter.dataType());
+        log.warn(WARN_UNEXPECTED_TYPE_ENCOUNTERED_FOR, resourceFilter.column(), resourceFilter.type(), resourceFilter.dataType());
     }
 
     private <X> Specification<X> generateInSpecification(String column, List<String> inPossibleValues) {
-        if (inPossibleValues.size() > CHRUNK_SIZE) {
-            List<List<String>> chunksOfInValues = Lists.partition(inPossibleValues, CHRUNK_SIZE);
+        if (inPossibleValues.size() > CHUNK_SIZE) {
+            List<List<String>> chunksOfInValues = Lists.partition(inPossibleValues, CHUNK_SIZE);
             Specification<X> containerSpec = null;
 
             for (List<String> chunk : chunksOfInValues) {
