@@ -220,8 +220,7 @@ class ShortCircuitAnalysisControllerTest {
     @Autowired
     private FaultResultRepository faultResultRepository;
 
-    private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
-    private final ObjectMapper mapper = restTemplateConfig.objectMapper();
+    private final ObjectMapper mapper = RestTemplateConfig.objectMapper();
 
     private Network network;
     private Network network1;

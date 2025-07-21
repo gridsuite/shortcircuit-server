@@ -50,9 +50,8 @@ import static org.mockito.Mockito.*;
  */
 // TODO: This is a temporary test class - should be deleted when
 // AbstractFilterService is moved to the shared library
-@SuppressWarnings("unused")
-@ExtendWith(MockitoExtension.class)
-abstract class AbstractFilterServiceTest {
+@ExtendWith({ MockitoExtension.class })
+class FilterServiceTest {
 
     @Mock
     private NetworkStoreService networkStoreService;
