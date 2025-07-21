@@ -6,13 +6,22 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.google.common.collect.Lists;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
+import com.powsybl.ws.commons.computation.utils.SpecificationUtils;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.filter.utils.EquipmentType;
+import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,7 +30,10 @@ import java.util.*;
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
 @Service
+@Slf4j
 public class FilterService extends AbstractFilterService {
+
+    private static final int CHRUNK_SIZE = 500;
 
     public FilterService(
             NetworkStoreService networkStoreService,
@@ -34,6 +46,85 @@ public class FilterService extends AbstractFilterService {
         List<EquipmentType> equipmentTypes = List.of(EquipmentType.LINE, EquipmentType.TWO_WINDINGS_TRANSFORMER);
 
         // Call the common implementation with specific parameters
-        return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, FeederResultEntity.Fields.connectableId);
+        return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, FaultResultEntity.Fields.feederResults + "." + FeederResultEntity.Fields.connectableId);
+    }
+
+    public <X> Specification<X> appendInToSpecification(Specification<X> specification, List<ResourceFilterDTO> resourceFilters) {
+        Objects.requireNonNull(specification);
+        if (resourceFilters != null && !resourceFilters.isEmpty()) {
+            Specification<X> completedSpecification = specification;
+
+            for(ResourceFilterDTO resourceFilter : resourceFilters) {
+                if (resourceFilter.dataType() == ResourceFilterDTO.DataType.TEXT) {
+                    completedSpecification = appendInTextFilterToSpecification(completedSpecification, resourceFilter);
+                } else {
+                    doLogWarn(resourceFilter);
+                }
+            }
+
+            return completedSpecification;
+        } else {
+            return specification;
+        }
+    }
+
+    private <X> Specification<X> appendInTextFilterToSpecification(Specification<X> specification, ResourceFilterDTO resourceFilter) {
+        Specification<X> completedSpecification = specification;
+        if (resourceFilter.type() == ResourceFilterDTO.Type.IN) {
+            if (resourceFilter.value() instanceof Collection<?> valueList) {
+                List<String> inValues = valueList.stream().map(Object::toString).toList();
+                completedSpecification = specification.and(generateInSpecification(resourceFilter.column(), inValues));
+            } else {
+                doLogWarn(resourceFilter);
+            }
+        } else {
+            doLogWarn(resourceFilter);
+        }
+
+        return completedSpecification;
+    }
+
+    private void doLogWarn(ResourceFilterDTO resourceFilter) {
+        log.warn("Unexpected type encountered for {} : {} - {}", resourceFilter.column(), resourceFilter.type() ,resourceFilter.dataType());
+    }
+
+    private <X> Specification<X> generateInSpecification(String column, List<String> inPossibleValues) {
+        if (inPossibleValues.size() > CHRUNK_SIZE) {
+            List<List<String>> chunksOfInValues = Lists.partition(inPossibleValues, CHRUNK_SIZE);
+            Specification<X> containerSpec = null;
+
+            for(List<String> chunk : chunksOfInValues) {
+                Specification<X> multiOrEqualSpec = Specification.anyOf(in(column, chunk));
+                if (containerSpec == null) {
+                    containerSpec = multiOrEqualSpec;
+                } else {
+                    containerSpec = containerSpec.or(multiOrEqualSpec);
+                }
+            }
+
+            return containerSpec;
+        } else {
+            return Specification.anyOf(in(column, inPossibleValues));
+        }
+    }
+
+    public <X> Specification<X> in(String field, List<String> values) {
+        return (root, cq, cb) ->
+                getColumnPath(root, field).in(values);
+    }
+
+    private <X, Y> Path<Y> getColumnPath(Root<X> root, String dotSeparatedFields) {
+        if (!dotSeparatedFields.contains(".")) {
+            return root.get(dotSeparatedFields);
+        } else {
+            String[] fields = dotSeparatedFields.split("\\.");
+            Path<Y> path = root.get(fields[0]);
+
+            for(int i = 1; i < fields.length; ++i) {
+                path = path.get(fields[i]);
+            }
+
+            return path;
+        }
     }
 }

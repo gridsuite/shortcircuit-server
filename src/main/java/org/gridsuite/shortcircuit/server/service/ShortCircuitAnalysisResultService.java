@@ -56,6 +56,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     private static final Sort.Direction DEFAULT_SORT_DIRECTION = Sort.Direction.ASC;
 
     private final FaultResultSpecificationBuilder faultResultSpecificationBuilder;
+    private final FilterService filterService;
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
         return faultResult.getLimitViolations().stream()
@@ -278,18 +279,12 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
+        //specification = SpecificationUtils.appendFiltersToSpecification(specification, resourceGlobalFilters);
+        specification = filterService.appendInToSpecification(specification, resourceGlobalFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-
-        if (!CollectionUtils.isEmpty(resourceGlobalFilters)) {
-            // TODO : crade en attendant pour tester
-            List<String> ids = new ArrayList<>();
-            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>) item.value()).stream().map(Object::toString).toList()));
-            // Ajout de la jointure sur les sous-noeuds
-            specification = specification.and(faultResultSpecificationBuilder.addFeederResultJoinClause(ids));
-        }
 
         Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
                 q.project(FaultResultEntity.Fields.faultResultUuid)
@@ -365,18 +360,12 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = faultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
+        //specification = SpecificationUtils.appendFiltersToSpecification(specification, resourceGlobalFilters);
+        specification = filterService.appendInToSpecification(specification, resourceGlobalFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
-
-        if (!CollectionUtils.isEmpty(resourceGlobalFilters)) {
-            // TODO : crade en attendant pour tester
-            List<String> ids = new ArrayList<>();
-            resourceGlobalFilters.forEach(item -> ids.addAll(((Collection<?>) item.value()).stream().map(Object::toString).toList()));
-            // Ajout de la jointure sur les sous-noeuds
-            specification = specification.and(faultResultSpecificationBuilder.addFeederResultJoinClause(ids));
-        }
 
         Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
                 q.project(FaultResultEntity.Fields.faultResultUuid)

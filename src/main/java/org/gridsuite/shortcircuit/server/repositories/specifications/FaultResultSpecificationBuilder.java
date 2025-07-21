@@ -60,12 +60,4 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
 
         return SpecificationUtils.appendFiltersToSpecification(specification, childrenResourceFilter);
     }
-
-    public Specification<FaultResultEntity> addFeederResultJoinClause(List<String> ids) {
-        return (root, query, builder) -> {
-            // Jointure vers FeederResultEntity
-            Join<FaultResultEntity, FeederResultEntity> join = root.join("feederResults", JoinType.INNER);
-            return join.get(FeederResultEntity.Fields.connectableId).in(ids);
-        };
-    }
 }
