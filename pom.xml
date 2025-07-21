@@ -86,6 +86,7 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- overrides of imports -->
 
             <!-- imports -->
             <dependency>
