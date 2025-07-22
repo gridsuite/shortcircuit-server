@@ -8,12 +8,13 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.google.common.collect.Lists;
 import com.powsybl.network.store.client.NetworkStoreService;
-import com.powsybl.ws.commons.computation.dto.GlobalFilter;
-import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.gridsuite.computation.dto.GlobalFilter;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.service.AbstractFilterService;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;

@@ -7,10 +7,10 @@
 
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
-import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
-import com.powsybl.ws.commons.computation.specification.AbstractCommonSpecificationBuilder;
-import com.powsybl.ws.commons.computation.utils.SpecificationUtils;
 import jakarta.persistence.criteria.*;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.specification.AbstractCommonSpecificationBuilder;
+import org.gridsuite.computation.utils.SpecificationUtils;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;

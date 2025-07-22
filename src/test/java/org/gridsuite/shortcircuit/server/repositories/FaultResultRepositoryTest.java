@@ -9,7 +9,7 @@ package org.gridsuite.shortcircuit.server.repositories;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
-import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;

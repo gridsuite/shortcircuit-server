@@ -13,11 +13,12 @@ import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
-import com.powsybl.ws.commons.computation.dto.GlobalFilter;
-import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.computation.dto.GlobalFilter;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import com.powsybl.ws.commons.computation.service.AbstractComputationService;
 import com.powsybl.ws.commons.computation.service.NotificationService;
@@ -43,7 +44,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static com.powsybl.ws.commons.computation.utils.FilterUtils.fromStringFiltersToDTO;
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 
 /**
@@ -324,7 +324,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                                                  String stringFilters,
                                                  GlobalFilter globalFilter,
                                                  Pageable pageable) {
-        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
+        List<ResourceFilterDTO> resourceFilters = FilterUtils.fromStringFiltersToDTO(stringFilters, objectMapper);
         List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
         if (globalFilter != null) {
             Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(rootNetworkUuid, variantId, globalFilter);
@@ -363,7 +363,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     @Transactional(readOnly = true)
     public Page<FeederResult> getFeederResultsPage(UUID resultUuid, String stringFilters, Pageable pageable) {
-        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
+        List<ResourceFilterDTO> resourceFilters = FilterUtils.fromStringFiltersToDTO(stringFilters, objectMapper);
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultService.find(resultUuid);
