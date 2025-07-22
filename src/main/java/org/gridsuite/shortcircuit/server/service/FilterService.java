@@ -31,7 +31,7 @@ import java.util.*;
 public class FilterService extends AbstractFilterService {
 
     private static final String WARN_UNEXPECTED_TYPE_ENCOUNTERED_FOR = "Unexpected type encountered for {} : {} - {}";
-    private static final int CHUNK_SIZE = 500;
+    private static final int CHUNK_SIZE = 10000;
 
     public FilterService(
             NetworkStoreService networkStoreService,
