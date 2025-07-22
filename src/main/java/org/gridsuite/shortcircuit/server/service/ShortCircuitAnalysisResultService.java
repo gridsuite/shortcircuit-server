@@ -279,7 +279,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         Pageable modifiedPageable = addDefaultSort(filterOutChildrenSort(pageable, childrenSort),
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
-        specification = SpecificationUtils.appendInTextClauseToSpecification(specification, resourceGlobalFilters);
+        specification = SpecificationUtils.appendFiltersToSpecification(specification, resourceGlobalFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
@@ -359,7 +359,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
                 DEFAULT_FAULT_RESULT_SORT_COLUMN);
         Specification<FaultResultEntity> specification = faultResultSpecificationBuilder.buildSpecification(result.getResultUuid(), resourceFilters);
         specification = faultResultSpecificationBuilder.appendWithLimitViolationsToSpecification(specification);
-        specification = SpecificationUtils.appendInTextClauseToSpecification(specification, resourceGlobalFilters);
+        specification = SpecificationUtils.appendFiltersToSpecification(specification, resourceGlobalFilters);
         // WARN org.hibernate.hql.internal.ast.QueryTranslatorImpl -
         // HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
