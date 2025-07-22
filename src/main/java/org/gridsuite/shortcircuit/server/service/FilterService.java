@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.AbstractFilterService;
+import org.gridsuite.computation.utils.SpecificationUtils;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
@@ -42,6 +43,6 @@ public class FilterService extends AbstractFilterService {
         List<EquipmentType> equipmentTypes = List.of(EquipmentType.LINE, EquipmentType.TWO_WINDINGS_TRANSFORMER);
 
         // Call the common implementation with specific parameters
-        return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, FaultResultEntity.Fields.feederResults + "." + FeederResultEntity.Fields.connectableId);
+        return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, FaultResultEntity.Fields.feederResults + SpecificationUtils.FIELD_SEPARATOR + FeederResultEntity.Fields.connectableId);
     }
 }
