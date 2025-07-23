@@ -6,10 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.google.common.collect.Lists;
 import com.powsybl.network.store.client.NetworkStoreService;
-import jakarta.persistence.criteria.Path;
-import jakarta.persistence.criteria.Root;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.computation.dto.GlobalFilter;
@@ -20,14 +17,10 @@ import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-/**
- * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
- */
 @Service
 @Slf4j
 public class FilterService extends AbstractFilterService {
