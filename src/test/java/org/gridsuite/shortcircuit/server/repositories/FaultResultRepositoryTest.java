@@ -112,7 +112,7 @@ class FaultResultRepositoryTest {
     })
     void faultResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters, List<FaultResultEntity> faultList) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, Pageable.unpaged(), FaultResultsMode.BASIC);
-        assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
+        assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct : {}", resourceFilters)
             .containsExactlyInAnyOrderElementsOf(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
     }
 
@@ -192,6 +192,11 @@ class FaultResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, List.of("HIGH_SHORT_CIRCUIT_CURRENT", "HIGH_SHORT_CIRCUIT"), "limitViolations.limitType")),
+                List.of(faultResultEntity1, faultResultEntity3)),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.IN, List.of("HIGH_SHORT_CIRCUIT_CURRENT", "HIGH_SHORT_CIRCUIT"), "limitViolations.limitType")),
                 List.of(faultResultEntity1, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
