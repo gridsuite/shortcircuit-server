@@ -207,7 +207,18 @@ class FaultResultRepositoryTest {
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, null, "limitViolations.limitType")),
-                List.of()));
+                List.of()),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.NOT_EQUAL, "LOW_SHORT_CIRCUIT_CURRENT", "limitViolations.limitType")),
+                List.of(faultResultEntity1, faultResultEntity3)),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.NOT_EQUAL, List.of("LOW_SHORT_CIRCUIT_CURRENT", "THREE_PHASE"), "limitViolations.limitType")),
+                List.of(faultResultEntity1, faultResultEntity3)));
+
     }
 
     private Stream<Arguments> provideFeederFieldsStartFilters() {
