@@ -28,7 +28,7 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.CEI9
 @ContextConfiguration(classes = { RestTemplateConfig.class })
 @JsonTest
 class ShortCircuitParametersInfosTest implements WithAssertions {
-    private static final String DUMB_JSON = "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.3\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
+    private static final String DUMB_JSON = "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.4\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -45,7 +45,7 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
         final String jsonSerialized = objectMapper.writeValueAsString(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters()));
         JSONAssert.assertEquals(
             new JSONObject().put("predefinedParameters", ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909.toString())
-                            .put("parameters", new JSONObject().put("version", "1.3"))
+                            .put("parameters", new JSONObject().put("version", "1.4"))
                             .put("cei909VoltageRanges", CEI909_VOLTAGE_PROFILE.stream()
                                     .map(ShortCircuitParametersInfosTest::toJson)
                                     .reduce(new JSONArray(), JSONArray::put, (arr1, arr2) -> null)),
