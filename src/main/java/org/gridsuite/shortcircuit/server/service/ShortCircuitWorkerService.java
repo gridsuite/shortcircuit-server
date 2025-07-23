@@ -14,7 +14,7 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
-import com.powsybl.ws.commons.computation.service.*;
+import org.gridsuite.computation.service.*;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
