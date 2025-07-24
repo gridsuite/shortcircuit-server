@@ -13,14 +13,14 @@ import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
-import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.service.AbstractComputationService;
+import org.gridsuite.computation.service.NotificationService;
+import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
-import com.powsybl.ws.commons.computation.service.AbstractComputationService;
-import com.powsybl.ws.commons.computation.service.NotificationService;
-import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static com.powsybl.ws.commons.computation.utils.FilterUtils.fromStringFiltersToDTO;
+import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 
 /**

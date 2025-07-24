@@ -7,7 +7,7 @@
 package org.gridsuite.shortcircuit.server.repositories;
 
 import com.powsybl.shortcircuit.*;
-import com.powsybl.ws.commons.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;

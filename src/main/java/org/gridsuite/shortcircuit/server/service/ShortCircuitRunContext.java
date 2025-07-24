@@ -7,8 +7,8 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import com.powsybl.ws.commons.computation.dto.ReportInfos;
-import com.powsybl.ws.commons.computation.service.AbstractComputationRunContext;
+import org.gridsuite.computation.dto.ReportInfos;
+import org.gridsuite.computation.service.AbstractComputationRunContext;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.mutable.MutableLong;
