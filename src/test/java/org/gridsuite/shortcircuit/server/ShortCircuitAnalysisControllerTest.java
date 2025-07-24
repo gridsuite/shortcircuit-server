@@ -56,10 +56,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
-import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
-import static com.powsybl.ws.commons.computation.service.NotificationService.getCancelFailedMessage;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
+import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.computation.service.NotificationService.getCancelFailedMessage;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;

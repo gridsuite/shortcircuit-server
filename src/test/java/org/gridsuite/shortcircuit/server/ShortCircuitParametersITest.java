@@ -49,7 +49,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 import static org.gridsuite.shortcircuit.server.ShortCircuitParametersController.DUPLICATE_FROM;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.hamcrest.Matchers.matchesPattern;
