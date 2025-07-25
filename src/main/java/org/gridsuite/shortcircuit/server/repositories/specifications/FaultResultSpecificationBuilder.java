@@ -7,7 +7,8 @@
 
 package org.gridsuite.shortcircuit.server.repositories.specifications;
 
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.specification.AbstractCommonSpecificationBuilder;
 import org.gridsuite.computation.utils.SpecificationUtils;
