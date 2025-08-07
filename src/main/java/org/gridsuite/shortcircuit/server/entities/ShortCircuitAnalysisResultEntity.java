@@ -6,11 +6,10 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import jakarta.persistence.*;
 import lombok.experimental.FieldNameConstants;
 
 import java.time.Instant;
@@ -43,9 +42,13 @@ public class ShortCircuitAnalysisResultEntity {
     @Setter
     private Set<FaultResultEntity> faultResults;
 
-    public ShortCircuitAnalysisResultEntity(UUID resultUuid, Instant writeTimeStamp, Set<FaultResultEntity> faultResults) {
+    @Column(name = "debug_file_location")
+    private String debugFileLocation;
+
+    public ShortCircuitAnalysisResultEntity(UUID resultUuid, Instant writeTimeStamp, Set<FaultResultEntity> faultResults, String debugFileLocation) {
         this.resultUuid = resultUuid;
         this.writeTimeStamp = writeTimeStamp;
+        this.debugFileLocation = debugFileLocation;
         addFaultResults(faultResults);
     }
 

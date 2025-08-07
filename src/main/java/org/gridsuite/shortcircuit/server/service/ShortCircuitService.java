@@ -17,6 +17,7 @@ import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.AbstractComputationService;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
@@ -26,6 +27,7 @@ import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -65,22 +67,26 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     private final ParametersRepository parametersRepository;
 
-    public ShortCircuitService(final NotificationService notificationService, final UuidGeneratorService uuidGeneratorService,
-                               final ShortCircuitAnalysisResultService resultService, final ParametersRepository parametersRepository,
+    public ShortCircuitService(final NotificationService notificationService,
+                               final UuidGeneratorService uuidGeneratorService,
+                               final ShortCircuitAnalysisResultService resultService,
+                               @Autowired(required = false)
+                               ComputationS3Service computationS3Service,
+                               final ParametersRepository parametersRepository,
                                final ObjectMapper objectMapper) {
-        super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
+        super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, null);
         this.parametersRepository = parametersRepository;
     }
 
     @Transactional
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
-                                 String userId, String busId, final Optional<UUID> parametersUuid) {
+                                 String userId, String busId, boolean debug, final Optional<UUID> parametersUuid) {
         ShortCircuitParameters parameters = fromEntity(parametersUuid.flatMap(parametersRepository::findById).orElseGet(ShortCircuitParametersEntity::new)).parameters();
         parameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
         parameters.setDetailedReport(false);
         return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId,
             "default-provider", // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-            busId));
+            busId, debug));
     }
 
     @Override
