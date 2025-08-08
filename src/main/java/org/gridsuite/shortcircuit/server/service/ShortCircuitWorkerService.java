@@ -110,6 +110,13 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
+    protected Map<String, Object> getDebugHeaders(AbstractResultContext<ShortCircuitRunContext> resultContext, String messageError) {
+        Map<String, Object> debugHeaders = super.getDebugHeaders(resultContext, messageError);
+        debugHeaders.put(HEADER_BUS_ID, resultContext.getRunContext().getBusId());
+        return debugHeaders;
+    }
+
+    @Override
     protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
         List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(runContext) : getBusFaultFromBusId(runContext);
         ShortCircuitParameters parameters = runContext.getParameters();
