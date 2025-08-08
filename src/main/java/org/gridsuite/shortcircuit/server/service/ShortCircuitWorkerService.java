@@ -76,6 +76,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     public void preRun(ShortCircuitRunContext resultContext) {
         checkInconsistentVoltageLevels(resultContext);
+        super.preRun(resultContext);
     }
 
     private void checkInconsistentVoltageLevels(ShortCircuitRunContext resultContext) {
