@@ -45,7 +45,7 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
                 new VoltageLevelsWithWrongIpValuesMapper()
         ));
         this.runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParameters(),
-                null, "reporterId", "reportType", "userId", "default-provider", "busId");
+                null, "reporterId", "reportType", "userId", "default-provider", "busId", false);
     }
 
     @ParameterizedTest(name = "reporter_{0}.json")

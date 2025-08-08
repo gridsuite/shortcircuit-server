@@ -52,7 +52,8 @@ public final class TestUtils {
             null,
             null,
             "default-provider",  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-            null
+            null,
+            false
     );
 
     public static void assertQueuesEmptyThenClear(List<String> destinations, OutputDestination output) {

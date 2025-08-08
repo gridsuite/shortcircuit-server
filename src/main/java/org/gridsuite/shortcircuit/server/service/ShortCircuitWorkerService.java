@@ -13,11 +13,13 @@ import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
-import org.gridsuite.shortcircuit.server.ShortCircuitException;
+import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
+import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -28,9 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.BUS_OUT_OF_VOLTAGE;
-import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.MISSING_EXTENSION_DATA;
-import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.INCONSISTENT_VOLTAGE_LEVELS;
+import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
@@ -41,10 +41,17 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
     private final ReportMapperService reportMapper;
 
-    public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ExecutionService executionService,
-                                     NotificationService notificationService, ShortCircuitAnalysisResultService resultService,
-                                     ObjectMapper objectMapper, ReportMapperService reportMapper, ShortCircuitObserver shortCircuitObserver) {
-        super(networkStoreService, notificationService, reportService, resultService, executionService, shortCircuitObserver, objectMapper);
+    public ShortCircuitWorkerService(NetworkStoreService networkStoreService,
+                                     ReportService reportService,
+                                     ExecutionService executionService,
+                                     NotificationService notificationService,
+                                     ShortCircuitAnalysisResultService resultService,
+                                     @Autowired(required = false)
+                                     ComputationS3Service computationS3Service,
+                                     ObjectMapper objectMapper,
+                                     ReportMapperService reportMapper,
+                                     ShortCircuitObserver shortCircuitObserver) {
+        super(networkStoreService, notificationService, reportService, resultService, computationS3Service, executionService, shortCircuitObserver, objectMapper);
         this.reportMapper = reportMapper;
     }
 
@@ -69,6 +76,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     public void preRun(ShortCircuitRunContext resultContext) {
         checkInconsistentVoltageLevels(resultContext);
+        super.preRun(resultContext);
     }
 
     private void checkInconsistentVoltageLevels(ShortCircuitRunContext resultContext) {
@@ -104,7 +112,11 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
         List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(runContext) : getBusFaultFromBusId(runContext);
-        return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, runContext.getParameters(), executionService.getComputationManager(), List.of(), runContext.getReportNode());
+        ShortCircuitParameters parameters = runContext.getParameters();
+        if (runContext.getDebugDir() != null) {
+            parameters.setDebugDir(runContext.getDebugDir().toString());
+        }
+        return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, parameters, executionService.getComputationManager(), List.of(), runContext.getReportNode());
     }
 
     private List<Fault> getAllBusfaultFromNetwork(ShortCircuitRunContext context) {

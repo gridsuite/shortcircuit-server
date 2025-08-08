@@ -43,6 +43,7 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String provider = (String) headers.get(HEADER_PROVIDER);
         String userId = (String) headers.get(HEADER_USER_ID);
+        Boolean debug = (Boolean) headers.get(HEADER_DEBUG);
         String busId = (String) headers.get(HEADER_BUS_ID);
 
         ShortCircuitParameters parameters;
@@ -55,7 +56,7 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
         ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters,
-                reportUuid, reporterId, reportType, userId, provider, busId);
+                reportUuid, reporterId, reportType, userId, provider, busId, debug);
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
