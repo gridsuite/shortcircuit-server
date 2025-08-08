@@ -17,15 +17,16 @@ import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
-import org.gridsuite.computation.ComputationException;
-import org.gridsuite.computation.service.ExecutionService;
-import org.gridsuite.computation.service.NotificationService;
-import org.gridsuite.computation.service.ReportService;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
+import org.gridsuite.computation.ComputationException;
+import org.gridsuite.computation.s3.ComputationS3Service;
+import org.gridsuite.computation.service.ExecutionService;
+import org.gridsuite.computation.service.NotificationService;
+import org.gridsuite.computation.service.ReportService;
 import org.gridsuite.shortcircuit.server.TestUtils;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,8 +36,10 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,10 +59,13 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
     @Mock ExecutionService executionService;
     @Mock NotificationService notificationService;
     @Mock ShortCircuitAnalysisResultService resultService;
+    @Mock ComputationS3Service computationS3Service;
     @Mock ObjectMapper objectMapper;
     @Mock ReportMapperService reportMapperService;
     @Mock Network network;
     @Mock VariantManager variantManager;
+    @SpyBean
+    private S3Client s3Client;
 
     private ShortCircuitWorkerService workerService;
 
@@ -71,6 +77,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
                 executionService,
                 notificationService,
                 resultService,
+                computationS3Service,
                 objectMapper,
                 reportMapperService,
                 new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
@@ -89,7 +96,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
                 new ShortCircuitParameters(), reportUuid, reporterId, "AllBusesShortCircuitAnalysis", null,
                 "default-provider", // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-                null);
+                null, false);
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         ReportNode reportNode = ReportNode.newRootReportNode()
