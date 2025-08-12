@@ -37,55 +37,55 @@
         "children" : [ {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERAT3" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERAT8" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERAT4" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERATG" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERATF" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERATH" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERAT.HU6" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENER.TG2" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "GENERATJ" }
           }
         }, {
@@ -101,19 +101,19 @@
         "children" : [ {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "BATTERY1" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "BATTERYA" }
           }
         }, {
           "messageKey" : "disconnectedTerminalGenerator",
           "values" : {
-            "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+            "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
             "generator" : { "value" : "BATTERY2" }
           }
         }, {
@@ -134,7 +134,7 @@
               "vlId2" : { "value" : "MABCDP7" },
               "vlId1" : { "value" : "AABCDP7" },
               "nominalVoltage2" : { "value" : 300.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
               "rfix" : { "value" : 1.1234567 },
               "nominalVoltage1" : { "value" : 400.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "ABCDEFGHIJKLM" }
@@ -145,7 +145,7 @@
               "vlId2" : { "value" : "P.ABCP7" },
               "vlId1" : { "value" : "HABCDP7" },
               "nominalVoltage2" : { "value" : 400.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
               "rfix" : { "value" : 0.95 },
               "nominalVoltage1" : { "value" : 300.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "ABDCEFGHI.ABC" }
@@ -156,7 +156,7 @@
               "vlId2" : { "value" : "ABCDEP7" },
               "vlId1" : { "value" : "FGHIJP7" },
               "nominalVoltage2" : { "value" : 400.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
               "rfix" : { "value" : 0.95 },
               "nominalVoltage1" : { "value" : 300.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "ABCDEFGHIJKLM" }
@@ -167,7 +167,7 @@
               "vlId2" : { "value" : "QSDFGHJ" },
               "vlId1" : { "value" : "WXCVBN7" },
               "nominalVoltage2" : { "value" : 400.0, "type" : "VOLTAGE" },
-              "reportSeverity" : { "value" : "TRACE", "type" : "SEVERITY" },
+              "reportSeverity" : { "value" : "DETAIL", "type" : "SEVERITY" },
               "rfix" : { "value" : 0.95 },
               "nominalVoltage1" : { "value" : 300.0, "type" : "VOLTAGE" },
               "branch" : { "value" : "AZERTYUIOPKLM" }
