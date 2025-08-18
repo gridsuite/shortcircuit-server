@@ -16,6 +16,8 @@ powsybl:
 
 gridsuite:
   services:
+    filter-server:
+      base-uri: http://localhost:5027
     report-server:
       base-uri: http://localhost:5028
 
