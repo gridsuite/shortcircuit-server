@@ -119,7 +119,8 @@ class FeederResultRepositoryTest {
         "provideNotEqualFilters",
         "provideNotEqualNestedFieldsFilters",
         "provideLessThanOrEqualFilters",
-        "provideGreaterThanOrEqualFilters"
+        "provideGreaterThanOrEqualFilters",
+        "provideEqualsFilters"
     })
     void feederResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters, List<FeederResultEntity> feederList) {
         Page<FeederResultEntity> feederPage = shortCircuitAnalysisResultService.findFeederResultsPage(resultEntity, resourceFilters, Pageable.unpaged());
@@ -322,6 +323,41 @@ class FeederResultRepositoryTest {
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 22, "current"),
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.GREATER_THAN_OR_EQUAL, 53, "current")),
                 feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 53) >= 0).toList())
+        );
+    }
+
+    private Stream<Arguments> provideEqualsFilters() {
+        return Stream.of(
+                // Exact match on current
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 22.179775880774197, "current")),
+                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getCurrent(), 22.179775880774197) == 0).toList()),
+                // Match within tolerance
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 22.17978, "current")),
+                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Math.abs(feederResultEntity.getCurrent() - 22.17978) <= (Math.pow(10, -5) * 0.5)).toList()),
+                // Non-match outside tolerance
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 22.1798, "current")),
+                        feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> Math.abs(feederResultEntity.getCurrent() - 22.1798) <= (Math.pow(10, -4) * 0.5)).toList()),
+                // Nested field exact match
+                Arguments.of(
+                        resultFortescueEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 45.328664779663086, "fortescueCurrent.positiveMagnitude")),
+                        feederResultEntityFortescueList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getFortescueCurrent().getPositiveMagnitude(), 45.328664779663086) == 0).toList()),
+                // Nested field with tolerance
+                Arguments.of(
+                        resultFortescueEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 45.3287, "fortescueCurrent.positiveMagnitude")),
+                        feederResultEntityFortescueList.stream().filter(feederResultEntity -> Math.abs(feederResultEntity.getFortescueCurrent().getPositiveMagnitude() - 45.3287) <= (Math.pow(10, -4) * 0.5)).toList())
         );
     }
 

@@ -108,7 +108,9 @@ class FaultResultRepositoryTest {
         "provideOrEqualsNestedFieldsFilters",
         "provideContainsNestedFieldsFilters",
         "provideNotEqualFilters",
-        "provideNotEqualNestedFieldsFilters"
+        "provideNotEqualNestedFieldsFilters",
+        "provideEqualsFilters",
+        "provideEqualsNestedFieldsFilters"
     })
     void faultResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters, List<FaultResultEntity> faultList) {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, Pageable.unpaged(), FaultResultsMode.BASIC);
@@ -121,7 +123,9 @@ class FaultResultRepositoryTest {
         "provideOrEqualsNestedFieldsFilters",
         "provideContainsNestedFieldsFilters",
         "provideNotEqualFilters",
-        "provideNotEqualNestedFieldsFilters"
+        "provideNotEqualNestedFieldsFilters",
+        "provideEqualsFilters",
+        "provideEqualsNestedFieldsFilters"
     })
     void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters) {
         //Test with unsorted request and expect the result to be sorted by uuid anyway
@@ -394,6 +398,50 @@ class FaultResultRepositoryTest {
                 List.of(
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 21.328664779663086, "fortescueVoltage.positiveMagnitude")),
                 List.of())
+        );
+    }
+
+    private Stream<Arguments> provideEqualsFilters() {
+        return Stream.of(
+                // Exact match on current
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 45.3, "current")),
+                        List.of(faultResultEntity1)),
+                // Non-match outside tolerance
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 45.4, "current")),
+                        List.of())
+        );
+    }
+
+    private Stream<Arguments> provideEqualsNestedFieldsFilters() {
+        return Stream.of(
+                // Exact match on fortescueCurrent.positiveMagnitude
+                Arguments.of(
+                        resultFortescueEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 21.328664779663086, "fortescueCurrent.positiveMagnitude")),
+                        List.of(faultResultEntity4)),
+                // Match with tolerance
+                Arguments.of(
+                        resultFortescueEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 21.32866, "fortescueCurrent.positiveMagnitude")),
+                        List.of(faultResultEntity4)),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 33.54, "limitViolations.value")),
+                        List.of(faultResultEntity1)),
+                Arguments.of(
+                        resultMagnitudeEntity,
+                        List.of(
+                                new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 10.56, "limitViolations.value")),
+                        List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3))
         );
     }
 }
