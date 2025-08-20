@@ -12,10 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.AbstractFilterService;
-import org.gridsuite.computation.utils.SpecificationUtils;
 import org.gridsuite.filter.utils.EquipmentType;
-import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
-import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -33,9 +30,9 @@ public class FilterService extends AbstractFilterService {
 
     public Optional<ResourceFilterDTO> getResourceFilter(@NonNull UUID networkUuid, @NonNull String variantId, @NonNull GlobalFilter globalFilter) {
         // Get equipment types from violation types
-        List<EquipmentType> equipmentTypes = List.of(EquipmentType.LINE, EquipmentType.TWO_WINDINGS_TRANSFORMER);
+        List<EquipmentType> equipmentTypes = List.of(EquipmentType.SUBSTATION, EquipmentType.VOLTAGE_LEVEL);
 
         // Call the common implementation with specific parameters
-        return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, FaultResultEntity.Fields.feederResults + SpecificationUtils.FIELD_SEPARATOR + FeederResultEntity.Fields.connectableId);
+        return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, "fault.voltageLevelId");
     }
 }

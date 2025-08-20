@@ -96,7 +96,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         }
 
         return new FaultResultEntity(
-                new FaultEmbeddable(fault.getId(), fault.getElementId(), fault.getFaultType()),
+                new FaultEmbeddable(fault.getId(), fault.getElementId(), shortCircuitLimits == null ? null : shortCircuitLimits.getVoltageLevelId(), fault.getFaultType()),
                 Double.NaN,
                 faultResult.getShortCircuitPower(),
                 extractLimitViolations(faultResult),

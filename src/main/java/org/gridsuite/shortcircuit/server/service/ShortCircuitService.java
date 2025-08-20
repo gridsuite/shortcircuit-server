@@ -328,7 +328,12 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
         if (globalFilter != null) {
             Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(rootNetworkUuid, variantId, globalFilter);
-            resourceGlobalFilter.ifPresent(resourceGlobalFilters::add);
+            // No equipment verify global filters : no result
+            if (resourceGlobalFilter.isEmpty()) {
+                return Page.empty();
+            } else {
+                resourceGlobalFilters.add(resourceGlobalFilter.get());
+            }
         }
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
