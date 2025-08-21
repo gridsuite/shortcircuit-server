@@ -7,11 +7,10 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.iidm.network.Country;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.VariantManager;
+import com.powsybl.iidm.network.*;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
+import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
 import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
@@ -28,11 +27,11 @@ import org.gridsuite.filter.expertfilter.expertrule.NumberExpertRule;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.filter.utils.expertfilter.FieldType;
 import org.gridsuite.filter.utils.expertfilter.OperatorType;
+import org.gridsuite.shortcircuit.server.utils.NetworkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -45,25 +44,19 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockWebServerExtension.class)
 @SpringBootTest
 class FilterServiceTest {
 
-    private static final String NETWORK_UUID = "7928181c-7977-4592-ba19-88027e4254e4";
-    private static final String VARIANT_ID = "variant_id";
+    private static final UUID NETWORK_UUID = UUID.randomUUID();
     private static final UUID LIST_UUID = UUID.randomUUID();
     private static final Object TEST_FILTERS = List.of(createTestExpertFilter());
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Mock
-    private Network network;
-
-    @Mock
-    private VariantManager variantManager;
+    private final Network network = NetworkUtil.createSwitchNetwork(NETWORK_UUID, new NetworkFactoryImpl());
 
     @MockBean
     private NetworkStoreService networkStoreService;
@@ -71,19 +64,18 @@ class FilterServiceTest {
     @Autowired
     private FilterService filterService;
 
+    @BeforeEach
+    void setUp(final MockWebServer mockWebServer) throws Exception {
+        filterService = new FilterService(networkStoreService, initMockWebServer(mockWebServer));
+    }
+
     private static ExpertFilter createTestExpertFilter() {
         AbstractExpertRule simpleRule = NumberExpertRule.builder()
-                .value(220.0)
+                .value(400.0)
                 .field(FieldType.NOMINAL_VOLTAGE)
                 .operator(OperatorType.EQUALS)
                 .build();
         return new ExpertFilter(FilterServiceTest.LIST_UUID, new Date(), EquipmentType.VOLTAGE_LEVEL, simpleRule);
-    }
-
-    @BeforeEach
-    void setUp(final MockWebServer mockWebServer) throws Exception {
-        filterService = new FilterService(networkStoreService, initMockWebServer(mockWebServer));
-        doNothing().when(variantManager).setWorkingVariant(anyString());
     }
 
     private String initMockWebServer(final MockWebServer server) throws IOException {
@@ -108,31 +100,15 @@ class FilterServiceTest {
     }
 
     @Test
-    void testGetResourceFiltersWithAllFilters() {
-        // Test case with all types of filters
-        GlobalFilter globalFilter = GlobalFilter.builder()
-                .genericFilter(List.of(LIST_UUID))
-                .nominalV(List.of("220.0", "400.0"))
-                .countryCode(List.of(Country.FR, Country.DE))
-                .substationProperty(Map.of("prop1", List.of("value1", "value2")))
-                .build();
-
-        when(network.getVariantManager()).thenReturn(variantManager);
-        when(networkStoreService.getNetwork(any(UUID.class), any(PreloadingStrategy.class))).thenReturn(network);
-
-        Optional<ResourceFilterDTO> result = filterService.getResourceFilter(
-                UUID.fromString(NETWORK_UUID),
-                VARIANT_ID,
-                globalFilter
-        );
-
+    void testGetFilters() {
+        List<AbstractFilter> result = filterService.getFilters(List.of());
         assertNotNull(result);
-        if (result.isPresent()) {
-            ResourceFilterDTO dto = result.get();
-            assertEquals(ResourceFilterDTO.DataType.TEXT, dto.dataType());
-            assertEquals(ResourceFilterDTO.Type.IN, dto.type());
-            assertEquals("fault.voltageLevelId", dto.column());
-        }
+        assertTrue(result.isEmpty());
+
+        List<AbstractFilter> filters = filterService.getFilters(List.of(LIST_UUID));
+        assertNotNull(filters);
+        assertFalse(filters.isEmpty());
+        assertEquals(1, filters.size());
     }
 
     @Test
@@ -142,16 +118,21 @@ class FilterServiceTest {
                 .genericFilter(List.of())
                 .build();
 
-        when(network.getVariantManager()).thenReturn(variantManager);
-        when(networkStoreService.getNetwork(any(), any(PreloadingStrategy.class))).thenReturn(network);
-
-        Optional<ResourceFilterDTO> result = filterService.getResourceFilter(
-                UUID.fromString(NETWORK_UUID),
-                VARIANT_ID,
-                emptyGlobalFilter
-        );
-
+        Optional<ResourceFilterDTO> result = getResult(emptyGlobalFilter);
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testGetResourceFiltersWithAllFilters() {
+        // Test case with all types of filters
+        GlobalFilter globalFilter = GlobalFilter.builder()
+                .nominalV(List.of("220.0", "400.0"))
+                .countryCode(List.of(Country.FR, Country.DE))
+                .build();
+
+        Optional<ResourceFilterDTO> result = getResult(globalFilter);
+        assertFalse(result.isEmpty());
+        validateResult(result.get());
     }
 
     @Test
@@ -159,28 +140,28 @@ class FilterServiceTest {
         // Test case with generic filters
         GlobalFilter globalFilter = GlobalFilter.builder()
                 .genericFilter(List.of(LIST_UUID))
-                .nominalV(List.of("220.0"))
-                .countryCode(List.of(Country.FR))
                 .build();
 
-        when(network.getVariantManager()).thenReturn(variantManager);
-        when(networkStoreService.getNetwork(any(UUID.class), any(PreloadingStrategy.class))).thenReturn(network);
-
-        Optional<ResourceFilterDTO> result = filterService.getResourceFilter(
-                UUID.fromString(NETWORK_UUID),
-                VARIANT_ID,
-                globalFilter
-        );
-
-        assertNotNull(result);
+        Optional<ResourceFilterDTO> result = getResult(globalFilter);
+        assertFalse(result.isEmpty());
+        validateResult(result.get());
     }
 
-    @Test
-    void testGetFilters() {
-        List<AbstractFilter> result = filterService.getFilters(List.of());
-        assertTrue(result.isEmpty());
+    private Optional<ResourceFilterDTO> getResult(GlobalFilter globalFilter) {
+        when(networkStoreService.getNetwork(any(UUID.class), any(PreloadingStrategy.class))).thenReturn(network);
 
-        List<AbstractFilter> filters = filterService.getFilters(List.of(LIST_UUID));
-        assertNotNull(filters);
+        return filterService.getResourceFilter(
+                NETWORK_UUID,
+                VariantManagerConstants.INITIAL_VARIANT_ID,
+                globalFilter
+        );
+    }
+
+    private void validateResult(ResourceFilterDTO result) {
+        assertNotNull(result);
+        assertEquals(ResourceFilterDTO.DataType.TEXT, result.dataType());
+        assertEquals(ResourceFilterDTO.Type.IN, result.type());
+        assertEquals("fault.voltageLevelId", result.column());
+        assertEquals(2, ((List<?>) result.value()).size());
     }
 }
