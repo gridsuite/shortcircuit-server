@@ -30,7 +30,7 @@ public class FilterService extends AbstractFilterService {
 
     public Optional<ResourceFilterDTO> getResourceFilter(@NonNull UUID networkUuid, @NonNull String variantId, @NonNull GlobalFilter globalFilter) {
         // Get equipment types from violation types
-        List<EquipmentType> equipmentTypes = List.of(EquipmentType.SUBSTATION, EquipmentType.VOLTAGE_LEVEL);
+        List<EquipmentType> equipmentTypes = List.of(EquipmentType.VOLTAGE_LEVEL);
 
         // Call the common implementation with specific parameters
         return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, "fault.voltageLevelId");
