@@ -179,7 +179,7 @@ class ShortCircuitAnalysisControllerTest {
         static final ShortCircuitAnalysisResult RESULT_NO_SHORT_CIRCUIT_DATA = new ShortCircuitAnalysisResult(List.of(FAULT_NO_SHORT_CIRCUIT_DATA));
     }
 
-    private static class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
+    private static final class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
         @Override
         public String getName() {
             return "ShortCircuitAnalysisMock";
@@ -336,7 +336,7 @@ class ShortCircuitAnalysisControllerTest {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
 
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
-                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
+                .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
             shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
             when(runner.getName()).thenReturn("providerTest");
 
@@ -353,13 +353,13 @@ class ShortCircuitAnalysisControllerTest {
             shortCircuitParameters.setWithFortescueResult(false);
             String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
-                            .header(HEADER_USER_ID, "userId")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(parametersJson))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andReturn();
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    .header(HEADER_USER_ID, "userId")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(parametersJson))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
@@ -372,10 +372,10 @@ class ShortCircuitAnalysisControllerTest {
 
             // WITH_LIMIT_VIOLATIONS mode (default)
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andReturn();
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_WITH_LIMIT_VIOLATIONS, resultDto);
 
@@ -391,41 +391,42 @@ class ShortCircuitAnalysisControllerTest {
 
             // FULL mode
             result = mockMvc.perform(get(
-                             "/" + VERSION + "/results/{resultUuid}", RESULT_UUID)
-                            .param("mode", "FULL"))
-                     .andExpect(status().isOk())
-                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                     .andReturn();
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID)
+                    .param("mode", "FULL"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDtoFull = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
             assertResultsEquals(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL, resultDtoFull);
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
-                            .param("mode", "WITH_LIMIT_VIOLATIONS")
-                            .param("page", "0")
-                            .param("size", "2"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andReturn();
+                    "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                    .param("mode", "WITH_LIMIT_VIOLATIONS")
+                    .param("page", "0")
+                    .param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
             // It's not easy to deserialize into a Page implementation
             // ( e.g. https://stackoverflow.com/questions/52490399/spring-boot-page-deserialization-pageimpl-no-constructor ),
             // but for tests we care only about the content so we deserialize to DTOs only the content subfield using the jackson treemodel api
             JsonNode faultResultsPageNode = mapper.readTree(result.getResponse().getContentAsString());
             List<FaultResultEntity> faultsFromDatabase = faultResultRepository.findAll();
             List<String> expectedResultsIdInOrder = faultsFromDatabase.stream().filter(faultResultEntity -> faultResultEntity.getNbLimitViolations() != 0).sorted(comparatorByResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
-            ObjectReader faultResultsReader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FaultResult>>() { });
+            ObjectReader faultResultsReader = mapper.readerFor(new TypeReference<List<org.gridsuite.shortcircuit.server.dto.FaultResult>>() {
+            });
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0 = faultResultsReader.readValue(faultResultsPageNode.get("content"));
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_WITH_LIMIT_VIOLATIONS, faultResultsPageDto0, expectedResultsIdInOrder);
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
-                             .param("mode", "FULL")
-                             .param("page", "0")
-                             .param("size", "2")
-                             .param("sort", "fault.id"))
-                     .andExpect(status().isOk())
-                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                     .andReturn();
+                    "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                    .param("mode", "FULL")
+                    .param("page", "0")
+                    .param("size", "2")
+                    .param("sort", "fault.id"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
             JsonNode faultResultsPageNode0 = mapper.readTree(result.getResponse().getContentAsString());
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto0Full = faultResultsReader.readValue(faultResultsPageNode0.get("content"));
             faultsFromDatabase = faultResultRepository.findAll();
@@ -433,23 +434,23 @@ class ShortCircuitAnalysisControllerTest {
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_0, faultResultsPageDto0Full, expectedResultsIdInOrder);
 
             mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
-                             .param("mode", "FULL")
-                             .param("page", "0")
-                             .param("size", "2")
-                             .param("sort", "fault.id")
-                             .param("filters", "[{\"column\":\"fault.id\",\"dataType\":\"text\",\"type\":\"startsWith\",\"value\":\"AAAAAAA\"}]"))
-                     .andExpect(status().isNoContent());
+                    "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                    .param("mode", "FULL")
+                    .param("page", "0")
+                    .param("size", "2")
+                    .param("sort", "fault.id")
+                    .param("filters", "[{\"column\":\"fault.id\",\"dataType\":\"text\",\"type\":\"startsWith\",\"value\":\"AAAAAAA\"}]"))
+                .andExpect(status().isNoContent());
 
             result = mockMvc.perform(get(
-                             "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
-                             .param("mode", "FULL")
-                             .param("page", "1")
-                             .param("size", "2")
-                             .param("sort", "fault.id,DESC"))
-                     .andExpect(status().isOk())
-                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                     .andReturn();
+                    "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                    .param("mode", "FULL")
+                    .param("page", "1")
+                    .param("size", "2")
+                    .param("sort", "fault.id,DESC"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
             JsonNode faultResultsPageNode1 = mapper.readTree(result.getResponse().getContentAsString());
             List<org.gridsuite.shortcircuit.server.dto.FaultResult> faultResultsPageDto1Full = faultResultsReader.readValue(faultResultsPageNode1.get("content"));
             faultsFromDatabase = faultResultRepository.findAll();
@@ -458,19 +459,21 @@ class ShortCircuitAnalysisControllerTest {
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full, expectedResultsIdInOrder);
 
             // export zipped csv result
-            result = mockMvc.perform(post(
-                            "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(mapper.writeValueAsString(CsvTranslation.builder().headersCsv(CSV_HEADERS).
-                                    enumValueTranslations(enumTranslations).language("en").build())))
+            for (String language : List.of("fr", "en")) {
+                result = mockMvc.perform(post(
+                        "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(CsvTranslation.builder().headersCsv(CSV_HEADERS).
+                            enumValueTranslations(enumTranslations).language(language).build())))
                     .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                     .andReturn();
-            byte[] zipFile = result.getResponse().getContentAsByteArray();
-            byte[] unzippedCsvFile = unzip(zipFile);
-            String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
-            List<String> actualCsvLines = List.of(Arrays.asList(unzippedCsvFileAsString.split("\n")).get(0).split(","));
-            // Including "\uFEFF" indicates the UTF-8 BOM at the start
-            List<String> expectedLines = List.of(
+                byte[] zipFile = result.getResponse().getContentAsByteArray();
+                byte[] unzippedCsvFile = unzip(zipFile);
+                String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
+                List<String> actualCsvLines = List.of(Arrays.asList(unzippedCsvFileAsString.split("\n"))
+                    .get(0).split(language.equals("fr") ? ";" : ","));
+                // Including "\uFEFF" indicates the UTF-8 BOM at the start
+                List<String> expectedLines = List.of(
                     "\uFEFFID nœud",
                     "Type",
                     "Départs",
@@ -481,8 +484,9 @@ class ShortCircuitAnalysisControllerTest {
                     "Pcc (MVA)",
                     "Icc - Icc min (kA)",
                     "Icc - IMACC (kA)"
-            );
-            assertEquals(expectedLines, actualCsvLines);
+                );
+                assertEquals(expectedLines, actualCsvLines);
+            }
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))

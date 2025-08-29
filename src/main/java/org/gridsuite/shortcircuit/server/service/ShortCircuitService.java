@@ -198,7 +198,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return DecimalFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US).format(value);
     }
 
-    public byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations, String language) {
+    public static byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations, String language) {
         List<FaultResult> faultResults = result.getFaults();
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
