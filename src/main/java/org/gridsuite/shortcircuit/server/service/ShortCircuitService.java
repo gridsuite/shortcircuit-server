@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -195,7 +195,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static String convertDoubleToLocale(Double value, String language) {
-        return DecimalFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US).format(value);
+        return NumberFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US).format(value);
     }
 
     public static byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations, String language) {
