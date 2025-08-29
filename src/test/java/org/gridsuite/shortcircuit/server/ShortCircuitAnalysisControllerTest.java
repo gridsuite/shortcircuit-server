@@ -462,7 +462,7 @@ class ShortCircuitAnalysisControllerTest {
                             "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(mapper.writeValueAsString(CsvTranslation.builder().headersCsv(CSV_HEADERS).
-                                    enumValueTranslations(enumTranslations).build())))
+                                    enumValueTranslations(enumTranslations).language("en").build())))
                     .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                     .andReturn();
             byte[] zipFile = result.getResponse().getContentAsByteArray();

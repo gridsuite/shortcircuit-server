@@ -13,6 +13,7 @@ import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
+import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,6 +54,9 @@ import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 public class ShortCircuitService extends AbstractComputationService<ShortCircuitRunContext, ShortCircuitAnalysisResultService, ShortCircuitAnalysisStatus> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitService.class);
     public static final String GET_SHORT_CIRCUIT_RESULTS_MSG = "Get ShortCircuit Results {} in {}ms";
+    public static final char CSV_DELIMITER_FR = ';';
+    public static final char CSV_DELIMITER_EN = ',';
+    public static final char CSV_QUOTE_ESCAPE = '"';
 
     // This voltage intervals' definition is not clean and we could potentially lose some buses.
     // To be cleaned when VoltageRange uses intervals that are open on the right.
@@ -183,7 +188,17 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return result;
     }
 
-    public byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations) {
+    private static void setFormat(CsvFormat format, String language) {
+        format.setLineSeparator(System.lineSeparator());
+        format.setDelimiter(language != null && language.equals("fr") ? CSV_DELIMITER_FR : CSV_DELIMITER_EN);
+        format.setQuoteEscape(CSV_QUOTE_ESCAPE);
+    }
+
+    private static String convertDoubleToLocale(Double value, String language) {
+        return DecimalFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US).format(value);
+    }
+
+    public byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations, String language) {
         List<FaultResult> faultResults = result.getFaults();
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
@@ -196,6 +211,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             zipOutputStream.write(0xbf);
 
             CsvWriterSettings settings = new CsvWriterSettings();
+            setFormat(settings.getFormat(), language);
             CsvWriter csvWriter = new CsvWriter(zipOutputStream, StandardCharsets.UTF_8, settings);
 
             // Write headers to the CSV file
@@ -205,7 +221,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             for (FaultResult faultResult : faultResults) {
                 String faultResultId = faultResult.getFault().getId();
                 double faultCurrentValue = (faultResults.size() == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent()) / 1000.0;
-                String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : Double.toString(faultCurrentValue);
+                String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : convertDoubleToLocale(faultCurrentValue, language);
 
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
@@ -229,11 +245,11 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
                 ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
                 faultRowData.addAll(List.of(
-                        Double.toString(shortCircuitLimits.getIpMin() / 1000.0),
-                        Double.toString(shortCircuitLimits.getIpMax() / 1000.0),
-                        Double.toString(faultResult.getShortCircuitPower()),
-                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMin() / 1000.0),
-                        Double.toString(shortCircuitLimits.getDeltaCurrentIpMax() / 1000.0)
+                        convertDoubleToLocale(shortCircuitLimits.getIpMin() / 1000.0, language),
+                        convertDoubleToLocale(shortCircuitLimits.getIpMax() / 1000.0, language),
+                        convertDoubleToLocale(faultResult.getShortCircuitPower(), language),
+                        convertDoubleToLocale(shortCircuitLimits.getDeltaCurrentIpMin() / 1000.0, language),
+                        convertDoubleToLocale(shortCircuitLimits.getDeltaCurrentIpMax() / 1000.0, language)
                 ));
 
                 csvWriter.writeRow(faultRowData);
@@ -243,7 +259,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 if (!feederResults.isEmpty()) {
                     for (FeederResult feederResult : feederResults) {
                         double feederCurrentValue = (faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent()) / 1000.0;
-                        String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : Double.toString(feederCurrentValue);
+                        String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : convertDoubleToLocale(feederCurrentValue, language);
                         String feederSide = feederResult.getSide() != null ? enumValueTranslations.getOrDefault(feederResult.getSide(), "") : ""; // Assuming FeederResult also has a side
                         List<String> feederRowData = new ArrayList<>(List.of(
                                 faultResultId,
@@ -275,7 +291,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
         List<String> headersList = csvTranslation.headersCsv();
         Map<String, String> enumValueTranslations = csvTranslation.enumValueTranslations();
-        return exportToCsv(result, headersList, enumValueTranslations);
+        return exportToCsv(result, headersList, enumValueTranslations, csvTranslation.language());
     }
 
     @Transactional(readOnly = true)
