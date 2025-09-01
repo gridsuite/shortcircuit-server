@@ -72,7 +72,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     );
 
     private final ParametersRepository parametersRepository;
-    private FilterService filterService;
+    private final FilterService filterService;
 
     public ShortCircuitService(final NotificationService notificationService,
                                final UuidGeneratorService uuidGeneratorService,
@@ -238,6 +238,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
                         faultResultId,
+                        faultResult.getFault().getVoltageLevelId(),
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
                         faultCurrentValueStr,
@@ -310,22 +311,12 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
-        Optional<ShortCircuitAnalysisResultEntity> result;
-        switch (mode) {
-            case BASIC:
-                result = resultService.findWithFaultResults(resultUuid);
-                break;
-            case FULL:
-                result = resultService.findFullResults(resultUuid);
-                break;
-            case WITH_LIMIT_VIOLATIONS:
-                result = resultService.findResultsWithLimitViolations(resultUuid);
-                break;
-            case NONE:
-            default:
-                result = resultService.find(resultUuid);
-                break;
-        }
+        Optional<ShortCircuitAnalysisResultEntity> result = switch (mode) {
+            case BASIC -> resultService.findWithFaultResults(resultUuid);
+            case FULL -> resultService.findFullResults(resultUuid);
+            case WITH_LIMIT_VIOLATIONS -> resultService.findResultsWithLimitViolations(resultUuid);
+            default -> resultService.find(resultUuid);
+        };
         if (result.isPresent()) {
             ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
 
