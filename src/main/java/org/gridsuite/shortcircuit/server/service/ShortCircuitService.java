@@ -142,7 +142,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {
-        return new Fault(faultEmbeddable.getId(), faultEmbeddable.getElementId(), faultEmbeddable.getFaultType().name());
+        return new Fault(faultEmbeddable.getId(), faultEmbeddable.getElementId(), faultEmbeddable.getVoltageLevelId(), faultEmbeddable.getFaultType().name());
     }
 
     private static LimitViolation fromEntity(LimitViolationEmbeddable limitViolationEmbeddable) {

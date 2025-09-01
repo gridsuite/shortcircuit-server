@@ -21,5 +21,7 @@ public class Fault {
 
     private String elementId;
 
+    private String voltageLevelId;
+
     private String faultType;
 }
