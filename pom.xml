@@ -43,11 +43,11 @@
 
     <properties>
 
-        <gridsuite-dependencies.version>42.0.0</gridsuite-dependencies.version>
+        <gridsuite-dependencies.version>43.0.0</gridsuite-dependencies.version>
         <!-- FIXME to remove at next upgrade of gridsuite-dependencies -->
-        <gridsuite-computation.version>1.2.0</gridsuite-computation.version>
+        <gridsuite-computation.version>1.4.0-SNAPSHOT</gridsuite-computation.version>
         <!-- FIXME to remove at next upgrade of powsybl-ws-dependencies -->
-        <powsybl-ws-commons.version>1.28.1</powsybl-ws-commons.version>
+        <powsybl-ws-commons.version>1.29.0-SNAPSHOT</powsybl-ws-commons.version>
         <liquibase-hibernate-package>org.gridsuite.shortcircuit.server</liquibase-hibernate-package>
         <db-util.version>1.0.5</db-util.version>
         <sonar.organization>gridsuite</sonar.organization>
@@ -134,7 +134,6 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-ws-commons</artifactId>
-            <version>${powsybl-ws-commons.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
