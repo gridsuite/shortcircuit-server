@@ -7,6 +7,7 @@ import java.util.Map;
 
 @Builder
 public record CsvTranslation(
-        List<String> headersCsv,
-        Map<String, String> enumValueTranslations
+    List<String> headersCsv,
+    Map<String, String> enumValueTranslations,
+    String language
 ) { }
