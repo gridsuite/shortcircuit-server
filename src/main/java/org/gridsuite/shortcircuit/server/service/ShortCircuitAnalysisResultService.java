@@ -445,10 +445,10 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     @Override
     @Transactional
     public void saveDebugFileLocation(UUID resultUuid, String debugFilePath) {
-        resultRepository.findById(resultUuid).ifPresentOrElse(
-                (var resultEntity) -> resultRepository.updateDebugFileLocation(resultUuid, debugFilePath),
-                () -> resultRepository.save(new ShortCircuitAnalysisResultEntity(resultUuid, null, null, debugFilePath))
-        );
+        int updatedRows = resultRepository.updateDebugFileLocation(resultUuid, debugFilePath);
+        if (updatedRows == 0) {
+            resultRepository.save(new ShortCircuitAnalysisResultEntity(resultUuid, null, null, debugFilePath));
+        }
     }
 
     @Override
