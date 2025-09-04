@@ -10,9 +10,6 @@ import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEnti
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -35,9 +32,4 @@ public interface ResultRepository extends JpaRepository<ShortCircuitAnalysisResu
     Optional<ShortCircuitAnalysisResultEntity> findWithFaultResultsAndFeederResultsByResultUuid(UUID resultUuid);
 
     void deleteByResultUuid(UUID resultUuid);
-
-    @Modifying
-    @Query("UPDATE ShortCircuitAnalysisResultEntity r SET r.debugFileLocation = :debugFileLocation WHERE r.resultUuid = :resultUuid")
-    int updateDebugFileLocation(@Param("resultUuid") UUID resultUuid, @Param("debugFileLocation") String debugFileLocation);
-
 }
