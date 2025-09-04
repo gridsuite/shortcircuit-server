@@ -9,9 +9,9 @@ package org.gridsuite.shortcircuit.server.service;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
-import org.gridsuite.computation.dto.ResourceFilterDTO;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.AbstractComputationResultService;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
@@ -83,7 +83,7 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
                 })
                 .collect(Collectors.toSet());
         //We need to limit the precision to avoid database precision storage limit issue (postgres has a precision of 6 digits while h2 can go to 9)
-        return new ShortCircuitAnalysisResultEntity(resultUuid, Instant.now().truncatedTo(ChronoUnit.MICROS), faultResults);
+        return new ShortCircuitAnalysisResultEntity(resultUuid, Instant.now().truncatedTo(ChronoUnit.MICROS), faultResults, null);
     }
 
     private static FaultResultEntity toGenericFaultResultEntity(final FaultResult faultResult, final ShortCircuitLimits shortCircuitLimits) {
@@ -440,5 +440,23 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         }
         //nothing to do if the request is not paged
         return pageable;
+    }
+
+    @Override
+    @Transactional
+    public void saveDebugFileLocation(UUID resultUuid, String debugFilePath) {
+        resultRepository.findById(resultUuid).ifPresentOrElse(
+                resultEntity -> resultEntity.setDebugFileLocation(debugFilePath),
+                () -> resultRepository.save(new ShortCircuitAnalysisResultEntity(resultUuid, null, null, debugFilePath))
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String findDebugFileLocation(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return resultRepository.findById(resultUuid)
+                .map(ShortCircuitAnalysisResultEntity::getDebugFileLocation)
+                .orElse(null);
     }
 }

@@ -7,11 +7,11 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import org.gridsuite.computation.dto.ReportInfos;
-import org.gridsuite.computation.service.AbstractComputationRunContext;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.mutable.MutableLong;
+import org.gridsuite.computation.dto.ReportInfos;
+import org.gridsuite.computation.service.AbstractComputationRunContext;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 
 import java.util.*;
@@ -37,8 +37,8 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
     private final MutableLong adnSummarizeCounterT2W = new MutableLong();
 
     public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
-                                  UUID reportUuid, String reporterId, String reportType, String userId, String provider, String busId) {
-        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, provider, parameters);
+                                  UUID reportUuid, String reporterId, String reportType, String userId, String provider, String busId, Boolean debug) {
+        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, provider, parameters, debug);
         this.busId = busId;
     }
 }
