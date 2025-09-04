@@ -1,0 +1,21 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="souissimai" id="1756925997912-1s">
+        <!-- Remove the old default value -->
+        <dropDefaultValue
+                schemaName="public"
+                tableName="shortcircuit_parameters"
+                columnName="with_feeder_result"/>
+        <!-- Add a new default value: false -->
+        <addDefaultValue
+                schemaName="public"
+                tableName="shortcircuit_parameters"
+                columnName="with_feeder_result"
+                defaultValueBoolean="false"/>
+        <!-- Update all existing rows where the value is by default true to false -->
+        <update tableName="shortcircuit_parameters" schemaName="public">
+            <column name="with_feeder_result" valueBoolean="false"/>
+            <where>with_feeder_result = true</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

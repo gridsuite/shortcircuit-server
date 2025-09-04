@@ -180,7 +180,7 @@ class ShortCircuitParametersITest implements WithAssertions {
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .singleElement().as("parameters entity")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
-            .isEqualTo(new ShortCircuitParametersEntity(pUuid, true, false, true, StudyType.STEADY_STATE, 20.0, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
+            .isEqualTo(new ShortCircuitParametersEntity(pUuid, true, false, false, StudyType.STEADY_STATE, 20.0, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
                     true, false, true, true, InitialVoltageProfileMode.NOMINAL));
     }
 
@@ -240,7 +240,7 @@ class ShortCircuitParametersITest implements WithAssertions {
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .singleElement().as("parameters entity")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
-            .isEqualTo(new ShortCircuitParametersEntity(pUuid, true, false, true, StudyType.STEADY_STATE, 20.0, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
+            .isEqualTo(new ShortCircuitParametersEntity(pUuid, true, false, false, StudyType.STEADY_STATE, 20.0, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
                         true, false, true, true, InitialVoltageProfileMode.NOMINAL));
     }
 
