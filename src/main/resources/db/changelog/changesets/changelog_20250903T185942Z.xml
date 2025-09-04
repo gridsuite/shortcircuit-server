@@ -15,7 +15,6 @@
         <!-- Update all existing rows where the value is by default true to false -->
         <update tableName="shortcircuit_parameters" schemaName="public">
             <column name="with_feeder_result" valueBoolean="false"/>
-            <where>with_feeder_result = true</where>
         </update>
     </changeSet>
 </databaseChangeLog>
