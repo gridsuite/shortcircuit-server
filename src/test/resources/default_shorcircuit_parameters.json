@@ -2,7 +2,7 @@
   "version": "1.4",
   "withLimitViolations": true,
   "withVoltageResult": false,
-  "withFeederResult": true,
+  "withFeederResult": false,
   "studyType": "TRANSIENT",
   "minVoltageDropProportionalThreshold": 20.0,
   "withFortescueResult": false,

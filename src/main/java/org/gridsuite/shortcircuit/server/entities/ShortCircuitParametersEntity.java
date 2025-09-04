@@ -64,8 +64,8 @@ public class ShortCircuitParametersEntity {
     private boolean withVoltageResult = false;
 
     @Builder.Default
-    @Column(name = "withFeederResult", nullable = false, columnDefinition = "boolean default true")
-    private boolean withFeederResult = true;
+    @Column(name = "withFeederResult", nullable = false, columnDefinition = "boolean default false")
+    private boolean withFeederResult = false;
 
     @Builder.Default
     @Column(name = "studyType", columnDefinition = "varchar(255) default 'TRANSIENT'")
