@@ -30,10 +30,6 @@ public class ShortCircuitLimits {
 
     /**
      * For display
-     * @param ipMin
-     * @param ipMax
-     * @param deltaCurrentIpMin
-     * @param deltaCurrentIpMax
      */
     public ShortCircuitLimits(double ipMin, double ipMax, Double deltaCurrentIpMin, Double deltaCurrentIpMax) {
         this.voltageLevelId = DEFAULT;
@@ -44,10 +40,7 @@ public class ShortCircuitLimits {
     }
 
     /**
-     * Calculate IN
-     * @param voltageLevelId
-     * @param ipMin
-     * @param ipMax
+     * Calculate minimal INPUT data
      */
     public ShortCircuitLimits(String voltageLevelId, double ipMin, double ipMax) {
         this.voltageLevelId = voltageLevelId;

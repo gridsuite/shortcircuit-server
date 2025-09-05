@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
@@ -41,16 +42,11 @@ import static org.springframework.http.MediaType.*;
 @RestController
 @RequestMapping(value = "/" + ShortCircuitApi.API_VERSION)
 @Tag(name = "Short circuit server")
+@AllArgsConstructor
 public class ShortCircuitController {
 
     private final ShortCircuitService shortCircuitService;
     private final ObjectMapper objectMapper;
-
-    public ShortCircuitController(ShortCircuitService shortCircuitService,
-                                  ObjectMapper objectMapper) {
-        this.shortCircuitService = shortCircuitService;
-        this.objectMapper = objectMapper;
-    }
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a short circuit analysis on a network")
