@@ -18,6 +18,7 @@ import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -61,9 +62,10 @@ public class ShortCircuitController {
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false) String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
+                                           @Parameter(description = "Debug") @RequestParam(name = "debug", required = false, defaultValue = "false") boolean debug,
                                            @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid") Optional<UUID> parametersUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        return ResponseEntity.ok().contentType(APPLICATION_JSON).body(shortCircuitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, busId, parametersUuid));
+        return ResponseEntity.ok().contentType(APPLICATION_JSON).body(shortCircuitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, busId, debug, parametersUuid));
     }
 
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
@@ -189,4 +191,13 @@ public class ShortCircuitController {
     public ResponseEntity<List<LimitViolationType>> getLimitTypes(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(shortCircuitService.getLimitTypes(resultUuid));
     }
+
+    @GetMapping(value = "/results/{resultUuid}/download-debug-file", produces = "application/json")
+    @Operation(summary = "Download a short circuit analysis debug file")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Short circuit analysis debug file"),
+        @ApiResponse(responseCode = "404", description = "Short circuit analysis debug file has not been found")})
+    public ResponseEntity<Resource> downloadDebugFile(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        return shortCircuitService.downloadDebugFile(resultUuid);
+    }
+
 }

@@ -10,9 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
+import org.assertj.core.api.WithAssertions;
+import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
@@ -42,6 +43,7 @@ class ShortCircuitServiceTest implements WithAssertions {
     private NotificationService notificationService;
     private UuidGeneratorService uuidGeneratorService;
     private ShortCircuitAnalysisResultService resultService;
+    private ComputationS3Service computationS3Service;
     private ParametersRepository parametersRepository;
     private FilterService filterService;
     private ObjectMapper objectMapper;
@@ -55,7 +57,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         this.parametersRepository = mock(ParametersRepository.class);
         this.filterService = mock(FilterService.class);
         this.objectMapper = spy(new ObjectMapper());
-        this.shortCircuitService = new ShortCircuitService(notificationService, uuidGeneratorService, resultService, parametersRepository, filterService, objectMapper);
+        this.shortCircuitService = new ShortCircuitService(notificationService, uuidGeneratorService, resultService, computationS3Service, parametersRepository, filterService, objectMapper);
     }
 
     @AfterEach

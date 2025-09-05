@@ -19,16 +19,17 @@ import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.AbstractComputationService;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
 import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 
 /**
@@ -75,23 +77,25 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public ShortCircuitService(final NotificationService notificationService,
                                final UuidGeneratorService uuidGeneratorService,
                                final ShortCircuitAnalysisResultService resultService,
+                               @Autowired(required = false)
+                               ComputationS3Service computationS3Service,
                                final ParametersRepository parametersRepository,
                                final FilterService filterService,
                                final ObjectMapper objectMapper) {
-        super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
+        super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, null);
         this.parametersRepository = parametersRepository;
         this.filterService = filterService;
     }
 
     @Transactional
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
-                                 String userId, String busId, final Optional<UUID> parametersUuid) {
+                                 String userId, String busId, boolean debug, final Optional<UUID> parametersUuid) {
         ShortCircuitParameters parameters = fromEntity(parametersUuid.flatMap(parametersRepository::findById).orElseGet(ShortCircuitParametersEntity::new)).parameters();
         parameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
         parameters.setDetailedReport(false);
         return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId,
             "default-provider", // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-            busId));
+            busId, debug));
     }
 
     @Override
@@ -201,7 +205,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static String convertDoubleToLocale(Double value, String language) {
-        return NumberFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US).format(value);
+        NumberFormat nf = NumberFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US);
+        nf.setGroupingUsed(false);
+        return nf.format(value);
     }
 
     public static byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations, String language) {
@@ -340,7 +346,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                                                  String stringFilters,
                                                  GlobalFilter globalFilter,
                                                  Pageable pageable) {
-        List<ResourceFilterDTO> resourceFilters = FilterUtils.fromStringFiltersToDTO(stringFilters, objectMapper);
+        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
         if (globalFilter != null) {
             Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(rootNetworkUuid, variantId, globalFilter);
@@ -384,7 +390,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     @Transactional(readOnly = true)
     public Page<FeederResult> getFeederResultsPage(UUID resultUuid, String stringFilters, Pageable pageable) {
-        List<ResourceFilterDTO> resourceFilters = FilterUtils.fromStringFiltersToDTO(stringFilters, objectMapper);
+        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultService.find(resultUuid);

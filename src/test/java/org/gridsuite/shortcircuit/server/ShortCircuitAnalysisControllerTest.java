@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.MediaType;
@@ -49,7 +50,16 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.AbortableInputStream;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -58,16 +68,16 @@ import java.util.stream.Collectors;
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
-import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
-import static org.gridsuite.computation.service.NotificationService.getCancelFailedMessage;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.gridsuite.computation.s3.ComputationS3Service.METADATA_FILE_NAME;
+import static org.gridsuite.computation.service.NotificationService.*;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -192,6 +202,7 @@ class ShortCircuitAnalysisControllerTest {
     }
 
     // Destinations
+    private final String shortCircuitAnalysisDebugDestination = "shortcircuitanalysis.debug";
     private final String shortCircuitAnalysisResultDestination = "shortcircuitanalysis.result";
     private final String shortCircuitAnalysisRunDestination = "shortcircuitanalysis.run";
     private final String shortCircuitAnalysisCancelDestination = "shortcircuitanalysis.cancel";
@@ -221,6 +232,9 @@ class ShortCircuitAnalysisControllerTest {
     private FaultResultRepository faultResultRepository;
 
     private final ObjectMapper mapper = RestTemplateConfig.objectMapper();
+
+    @SpyBean
+    private S3Client s3Client;
 
     private Network network;
     private Network network1;
@@ -362,7 +376,9 @@ class ShortCircuitAnalysisControllerTest {
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            String resultUuid = Objects.requireNonNull(resultMessage.getHeaders().get("resultUuid")).toString();
+
+            assertEquals(RESULT_UUID.toString(), resultUuid);
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
             Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
@@ -504,6 +520,62 @@ class ShortCircuitAnalysisControllerTest {
 
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                     .andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
+    void runTestWithDebug() throws Exception {
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
+                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
+
+            // mock s3 client for run with debug
+            doReturn(PutObjectResponse.builder().build()).when(s3Client).putObject(eq(PutObjectRequest.builder().build()), any(RequestBody.class));
+            doReturn(new ResponseInputStream<>(
+                    GetObjectResponse.builder()
+                            .metadata(Map.of(METADATA_FILE_NAME, "debugFile"))
+                            .contentLength(100L).build(),
+                    AbortableInputStream.create(new ByteArrayInputStream("s3 debug file content".getBytes()))
+            )).when(s3Client).getObject(any(GetObjectRequest.class));
+
+            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
+            shortCircuitParameters.setWithFortescueResult(false);
+            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
+            MvcResult result = mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            .param(HEADER_DEBUG, "true")
+                            .header(HEADER_USER_ID, "userId")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(parametersJson))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
+            String resultUuid = Objects.requireNonNull(resultMessage.getHeaders().get("resultUuid")).toString();
+
+            assertEquals(RESULT_UUID.toString(), resultUuid);
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+
+            // check notification of debug
+            Message<byte[]> debugMessage = output.receive(TIMEOUT, shortCircuitAnalysisDebugDestination);
+            assertThat(debugMessage.getHeaders())
+                    .containsEntry(HEADER_RESULT_UUID, resultUuid);
+
+            // download debug zip file is ok
+            mockMvc.perform(get("/v1/results/{resultUuid}/download-debug-file", resultUuid))
+                    .andExpect(status().isOk());
+
+            // check interaction with s3 client
+            verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+            verify(s3Client, times(1)).getObject(any(GetObjectRequest.class));
         }
     }
 
