@@ -4,8 +4,5 @@
         <addColumn tableName="fault_result_entity">
             <column name="voltage_level_id" type="varchar(255)"/>
         </addColumn>
-        <update tableName="fault_result_entity">
-            <column name="voltage_level_id" valueComputed="regexp_replace(id, '_[0-9]{1,2}$', '')"/>
-        </update>
     </changeSet>
 </databaseChangeLog>
