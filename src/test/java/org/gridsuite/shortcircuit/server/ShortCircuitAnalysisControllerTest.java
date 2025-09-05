@@ -465,7 +465,6 @@ class ShortCircuitAnalysisControllerTest {
                     .param("filters", "[{\"column\":\"fault.id\",\"dataType\":\"text\",\"type\":\"startsWith\",\"value\":\"AAAAAAA\"}]"))
                 .andExpect(status().isNoContent());
 
-            //GlobalFilter globalFilter = objectMapper.readValue("{\"nominalV\":[\"380\"],\"countryCode\":[],\"genericFilter\":[]}", GlobalFilter.class);
             when(filterService.getResourceFilter(any(UUID.class), any(String.class), any(GlobalFilter.class))).thenReturn(Optional.of(new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.IN, List.of("GROSNP7"), "fault.voltageLevelId")));
 
             mockMvc.perform(get(
