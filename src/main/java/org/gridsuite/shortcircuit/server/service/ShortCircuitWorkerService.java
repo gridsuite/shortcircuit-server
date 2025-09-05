@@ -125,7 +125,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
                 .map(bus -> {
                     IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                     if (shortCircuitExtension != null) {
-                        shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+                        shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
                     }
                     return new BusFault(bus.getId(), bus.getId());
                 })
@@ -146,7 +146,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             }
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
-                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(bus.getId(), bus.getId()));
@@ -156,7 +156,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             String busIdFromBusView = bus.getVoltageLevel().getBusView().getMergedBus(busId).getId();
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
-                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));

@@ -32,6 +32,9 @@ public class FaultEmbeddable {
     private String elementId;
 
     @Column
+    private String voltageLevelId;
+
+    @Column
     @Enumerated(EnumType.STRING)
     private Fault.FaultType faultType;
 }
