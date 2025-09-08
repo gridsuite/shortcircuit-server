@@ -201,7 +201,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static String convertDoubleToLocale(Double value, String language) {
-        return NumberFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US).format(value);
+        NumberFormat nf = NumberFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US);
+        nf.setGroupingUsed(false);
+        return nf.format(value);
     }
 
     public static byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations, String language) {

@@ -42,6 +42,7 @@ public class ShortCircuitAnalysisResultEntity {
     @Setter
     private Set<FaultResultEntity> faultResults;
 
+    @Setter
     @Column(name = "debug_file_location")
     private String debugFileLocation;
 

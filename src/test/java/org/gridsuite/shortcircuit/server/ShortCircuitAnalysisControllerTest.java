@@ -548,6 +548,62 @@ class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
+    void runTestWithDebug() throws Exception {
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
+            shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(eq(network), anyList(), any(ShortCircuitParameters.class), any(ComputationManager.class), anyList(), any(ReportNode.class)))
+                    .thenReturn(CompletableFuture.completedFuture(ShortCircuitAnalysisResultMock.RESULT_MAGNITUDE_FULL));
+            shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
+            when(runner.getName()).thenReturn("providerTest");
+
+            // mock s3 client for run with debug
+            doReturn(PutObjectResponse.builder().build()).when(s3Client).putObject(eq(PutObjectRequest.builder().build()), any(RequestBody.class));
+            doReturn(new ResponseInputStream<>(
+                    GetObjectResponse.builder()
+                            .metadata(Map.of(METADATA_FILE_NAME, "debugFile"))
+                            .contentLength(100L).build(),
+                    AbortableInputStream.create(new ByteArrayInputStream("s3 debug file content".getBytes()))
+            )).when(s3Client).getObject(any(GetObjectRequest.class));
+
+            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
+            shortCircuitParameters.setWithFortescueResult(false);
+            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
+            MvcResult result = mockMvc.perform(post(
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            .param(HEADER_DEBUG, "true")
+                            .header(HEADER_USER_ID, "userId")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(parametersJson))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
+            String resultUuid = Objects.requireNonNull(resultMessage.getHeaders().get("resultUuid")).toString();
+
+            assertEquals(RESULT_UUID.toString(), resultUuid);
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+            Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
+            assertEquals(RESULT_UUID.toString(), runMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", runMessage.getHeaders().get("receiver"));
+
+            // check notification of debug
+            Message<byte[]> debugMessage = output.receive(TIMEOUT, shortCircuitAnalysisDebugDestination);
+            assertThat(debugMessage.getHeaders())
+                    .containsEntry(HEADER_RESULT_UUID, resultUuid);
+
+            // download debug zip file is ok
+            mockMvc.perform(get("/v1/results/{resultUuid}/download-debug-file", resultUuid))
+                    .andExpect(status().isOk());
+
+            // check interaction with s3 client
+            verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+            verify(s3Client, times(1)).getObject(any(GetObjectRequest.class));
+        }
+    }
+
+    @Test
     void testDeterministicResults() throws Exception {
         try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = Mockito.mockStatic(ShortCircuitAnalysis.class)) {
 
