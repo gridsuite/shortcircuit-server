@@ -247,7 +247,7 @@ class ShortCircuitServiceTest implements WithAssertions {
         final UUID pUuid = UUID.randomUUID();
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
         //entity that must have differences with defaults
-        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid, true, false, true, StudyType.TRANSIENT, 20.0,
+        final ShortCircuitParametersEntity pEntityUpdate = new ShortCircuitParametersEntity(pUuid, true, false, false, StudyType.TRANSIENT, 20.0,
                 ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, false, false, true, true, InitialVoltageProfileMode.NOMINAL);
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         assertThat(shortCircuitService.updateOrResetParameters(pUuid, null)).as("service call result").isTrue();
