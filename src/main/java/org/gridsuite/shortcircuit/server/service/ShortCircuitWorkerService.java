@@ -112,6 +112,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     @Override
     protected Map<String, Object> getDebugHeaders(AbstractResultContext<ShortCircuitRunContext> resultContext, String messageError) {
         Map<String, Object> debugHeaders = super.getDebugHeaders(resultContext, messageError);
+
+        // --- attach bus id to distinct between a ONE_BUS and ALL_BUSES computation type
         debugHeaders.put(HEADER_BUS_ID, resultContext.getRunContext().getBusId());
         return debugHeaders;
     }
