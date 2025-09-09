@@ -3,12 +3,10 @@
     <changeSet author="souissimai" id="1756925997912-1s">
         <!-- Remove the old default value -->
         <dropDefaultValue
-                schemaName="public"
                 tableName="shortcircuit_parameters"
                 columnName="with_feeder_result"/>
         <!-- Add a new default value: false -->
         <addDefaultValue
-                schemaName="public"
                 tableName="shortcircuit_parameters"
                 columnName="with_feeder_result"
                 defaultValueBoolean="false"/>
