@@ -4,14 +4,16 @@
         <!-- Remove the old default value -->
         <dropDefaultValue
                 tableName="shortcircuit_parameters"
+                columnDataType="boolean"
                 columnName="with_feeder_result"/>
         <!-- Add a new default value: false -->
         <addDefaultValue
                 tableName="shortcircuit_parameters"
+                columnDataType="boolean"
                 columnName="with_feeder_result"
                 defaultValueBoolean="false"/>
         <!-- Reset the value of with_feeder_result to false -->
-        <update tableName="shortcircuit_parameters" schemaName="public">
+        <update tableName="shortcircuit_parameters">
             <column name="with_feeder_result" valueBoolean="false"/>
         </update>
     </changeSet>
