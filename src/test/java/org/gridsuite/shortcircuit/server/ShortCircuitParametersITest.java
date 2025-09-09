@@ -5,10 +5,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.StudyType;
-import org.gridsuite.computation.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.WithAssertions;
+import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
@@ -99,27 +99,30 @@ class ShortCircuitParametersITest implements WithAssertions {
 
     @Test
     void runAnalysis() throws Exception {
-        runAnalysisTest(req -> { }, headers -> headers, defaultParametersJson);
+        runAnalysisTest(req -> { }, headers -> headers, false, defaultParametersJson);
     }
 
     @Test
     void runAnalysisWithParameters() throws Exception {
         final UUID paramsId = parametersRepository.save(new ShortCircuitParametersEntity()).getId();
-        runAnalysisTest(req -> req.queryParam("parametersId", paramsId.toString()), headers -> headers, defaultParametersJson);
+        runAnalysisTest(req -> req.queryParam("parametersId", paramsId.toString()), headers -> headers, false, defaultParametersJson);
     }
 
     @Test
     void runAnalysisWithBusId() throws Exception {
         final String busId = UUID.randomUUID().toString();
         runAnalysisTest(
-            req -> req.queryParam("busId", busId),
+            req -> req
+                    .queryParam("busId", busId),
             headers -> headers.put(HEADER_BUS_ID, busId),
+            true,
             defaultParametersJson.replace("\"withFortescueResult\":false", "\"withFortescueResult\":true"));
     }
 
-    private void runAnalysisTest(final Consumer<MockHttpServletRequestBuilder> requestSet, final UnaryOperator<Builder<String, Object>> headerSet, final String response) throws Exception {
+    private void runAnalysisTest(final Consumer<MockHttpServletRequestBuilder> requestSet, final UnaryOperator<Builder<String, Object>> headerSet, boolean debug, final String response) throws Exception {
         final MockHttpServletRequestBuilder requestBuilder = post("/v1/networks/{networkUuid}/run-and-save", NETWORK_ID).header(HEADER_USER_ID, USER_ID);
         requestSet.accept(requestBuilder);
+        requestBuilder.queryParam("debug", String.valueOf(debug));
         final String resultId = StringUtils.strip(mockMvc.perform(requestBuilder)
             .andDo(log())
             .andExpectAll(
@@ -152,6 +155,7 @@ class ShortCircuitParametersITest implements WithAssertions {
                 MessageHeaders.ID, UUID.randomUUID(),
                 MessageHeaders.TIMESTAMP, System.currentTimeMillis(),
                 "resultUuid", resultId,
+                "debug", debug,
                 // TODO : remove next line when fix in powsybl-ws-commons will handle null provider
                 "provider", "default-provider",
                 "networkUuid", NETWORK_ID.toString(),
