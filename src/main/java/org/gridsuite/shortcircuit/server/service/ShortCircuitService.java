@@ -238,7 +238,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
                         faultResultId,
-                        faultResult.getFault().getVoltageLevelId(),
+                        faultResult.getFault().getVoltageLevelId() != null ? faultResult.getFault().getVoltageLevelId() : "",
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
                         faultCurrentValueStr,
