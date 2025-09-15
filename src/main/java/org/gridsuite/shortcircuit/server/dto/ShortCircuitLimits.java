@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,9 +13,12 @@ import lombok.NoArgsConstructor;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 public class ShortCircuitLimits {
+
+    private static final String DEFAULT = "DEFAULT_VALUE";
+
+    private String voltageLevelId;
 
     private double ipMin;
 
@@ -26,7 +28,22 @@ public class ShortCircuitLimits {
 
     private Double deltaCurrentIpMax;
 
-    public ShortCircuitLimits(double ipMin, double ipMax) {
+    /**
+     * For display
+     */
+    public ShortCircuitLimits(double ipMin, double ipMax, Double deltaCurrentIpMin, Double deltaCurrentIpMax) {
+        this.voltageLevelId = DEFAULT;
+        this.ipMin = ipMin;
+        this.ipMax = ipMax;
+        this.deltaCurrentIpMin = deltaCurrentIpMin;
+        this.deltaCurrentIpMax = deltaCurrentIpMax;
+    }
+
+    /**
+     * Calculate minimal INPUT data
+     */
+    public ShortCircuitLimits(String voltageLevelId, double ipMin, double ipMax) {
+        this.voltageLevelId = voltageLevelId;
         this.ipMin = ipMin;
         this.ipMax = ipMax;
     }

@@ -24,6 +24,8 @@ import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
+import org.gridsuite.computation.dto.GlobalFilter;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.ReportService;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
@@ -31,6 +33,7 @@ import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
+import org.gridsuite.shortcircuit.server.service.FilterService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,6 +73,7 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingDouble;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gridsuite.computation.s3.ComputationS3Service.METADATA_FILE_NAME;
+import static org.gridsuite.computation.service.AbstractResultContext.VARIANT_ID_HEADER;
 import static org.gridsuite.computation.service.NotificationService.*;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
@@ -134,6 +138,10 @@ class ShortCircuitAnalysisControllerTest {
     );
 
     private static final int TIMEOUT = 1000;
+    @MockBean
+    private FilterService filterService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private static final class ShortCircuitAnalysisResultMock {
 
@@ -231,8 +239,7 @@ class ShortCircuitAnalysisControllerTest {
     @Autowired
     private FaultResultRepository faultResultRepository;
 
-    private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
-    private final ObjectMapper mapper = restTemplateConfig.objectMapper();
+    private final ObjectMapper mapper = RestTemplateConfig.objectMapper();
 
     @SpyBean
     private S3Client s3Client;
@@ -456,6 +463,19 @@ class ShortCircuitAnalysisControllerTest {
                     .param("size", "2")
                     .param("sort", "fault.id")
                     .param("filters", "[{\"column\":\"fault.id\",\"dataType\":\"text\",\"type\":\"startsWith\",\"value\":\"AAAAAAA\"}]"))
+                .andExpect(status().isNoContent());
+
+            when(filterService.getResourceFilter(any(UUID.class), any(String.class), any(GlobalFilter.class))).thenReturn(Optional.of(new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.IN, List.of("GROSNP7"), "fault.voltageLevelId")));
+
+            mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}/fault_results/paged", RESULT_UUID)
+                    .param("rootNetworkUuid", NETWORK_UUID.toString())
+                    .param("variantId", VARIANT_ID_HEADER)
+                    .param("mode", "FULL")
+                    .param("page", "0")
+                    .param("size", "2")
+                    .param("sort", "fault.id")
+                    .param("globalFilters", "{\"nominalV\":[\"380\"],\"countryCode\":[],\"genericFilter\":[]}"))
                 .andExpect(status().isNoContent());
 
             result = mockMvc.perform(get(

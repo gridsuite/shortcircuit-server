@@ -113,8 +113,8 @@ class FaultResultRepositoryTest {
         "provideEqualsNestedFieldsFilters"
     })
     void faultResultFilterTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters, List<FaultResultEntity> faultList) {
-        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.unpaged(), FaultResultsMode.BASIC);
-        assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct")
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, Pageable.unpaged(), FaultResultsMode.BASIC);
+        assertThat(faultPage.getContent()).extracting("fault.id").describedAs("Check if the IDs of the fault page are correct : {}", resourceFilters)
             .containsExactlyInAnyOrderElementsOf(faultList.stream().map(faultResultEntity -> faultResultEntity.getFault().getId()).toList());
     }
 
@@ -129,15 +129,15 @@ class FaultResultRepositoryTest {
     })
     void faultResultFilterWithPageableTest(ShortCircuitAnalysisResultEntity resultEntity, List<ResourceFilterDTO> resourceFilters) {
         //Test with unsorted request and expect the result to be sorted by uuid anyway
-        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC);
+        Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, Pageable.ofSize(3).withPage(0), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(o -> o.getFaultResultUuid().toString()));
 
         //Test with pageable containing a sort by current and expect the results to be sorted by current
-        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "current"))), FaultResultsMode.BASIC);
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "current"))), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getCurrent));
 
         //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
-        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()));
     }
 
@@ -153,6 +153,7 @@ class FaultResultRepositoryTest {
         Page<FaultResultEntity> faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(
                 resultEntity,
                 resourceFilters,
+                null,
                 PageRequest.of(0, 3, sort),
                 FaultResultsMode.FULL);
 
@@ -199,13 +200,29 @@ class FaultResultRepositoryTest {
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
+                    new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.IN, List.of("HIGH_SHORT_CIRCUIT_CURRENT", "HIGH_SHORT_CIRCUIT"), "limitViolations.limitType")),
+                List.of(faultResultEntity1, faultResultEntity3)),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, "LOW_SHORT_CIRCUIT_CURRENT", "limitViolations.limitType")),
                 List.of(faultResultEntity1, faultResultEntity2, faultResultEntity3)),
             Arguments.of(
                 resultMagnitudeEntity,
                 List.of(
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.EQUALS, null, "limitViolations.limitType")),
-                List.of()));
+                List.of()),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.NOT_EQUAL, "LOW_SHORT_CIRCUIT_CURRENT", "limitViolations.limitType")),
+                List.of(faultResultEntity1, faultResultEntity3)),
+            Arguments.of(
+                resultMagnitudeEntity,
+                List.of(
+                        new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.NOT_EQUAL, List.of("LOW_SHORT_CIRCUIT_CURRENT", "THREE_PHASE"), "limitViolations.limitType")),
+                List.of(faultResultEntity1, faultResultEntity3)));
+
     }
 
     private Stream<Arguments> provideFeederFieldsStartFilters() {

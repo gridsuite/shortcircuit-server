@@ -17,6 +17,7 @@ import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.AbstractComputationService;
@@ -71,6 +72,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     );
 
     private final ParametersRepository parametersRepository;
+    private final FilterService filterService;
 
     public ShortCircuitService(final NotificationService notificationService,
                                final UuidGeneratorService uuidGeneratorService,
@@ -78,9 +80,11 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                                @Autowired(required = false)
                                ComputationS3Service computationS3Service,
                                final ParametersRepository parametersRepository,
+                               final FilterService filterService,
                                final ObjectMapper objectMapper) {
         super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, null);
         this.parametersRepository = parametersRepository;
+        this.filterService = filterService;
     }
 
     @Transactional
@@ -138,7 +142,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static Fault fromEntity(FaultEmbeddable faultEmbeddable) {
-        return new Fault(faultEmbeddable.getId(), faultEmbeddable.getElementId(), faultEmbeddable.getFaultType().name());
+        return new Fault(faultEmbeddable.getId(), faultEmbeddable.getElementId(), faultEmbeddable.getVoltageLevelId(), faultEmbeddable.getFaultType().name());
     }
 
     private static LimitViolation fromEntity(LimitViolationEmbeddable limitViolationEmbeddable) {
@@ -234,6 +238,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 // Process faultResult data
                 List<String> faultRowData = new ArrayList<>(List.of(
                         faultResultId,
+                        faultResult.getFault().getVoltageLevelId(),
                         enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
                         "",
                         faultCurrentValueStr,
@@ -306,22 +311,12 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public ShortCircuitAnalysisResult getResult(UUID resultUuid, FaultResultsMode mode) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
-        Optional<ShortCircuitAnalysisResultEntity> result;
-        switch (mode) {
-            case BASIC:
-                result = resultService.findWithFaultResults(resultUuid);
-                break;
-            case FULL:
-                result = resultService.findFullResults(resultUuid);
-                break;
-            case WITH_LIMIT_VIOLATIONS:
-                result = resultService.findResultsWithLimitViolations(resultUuid);
-                break;
-            case NONE:
-            default:
-                result = resultService.find(resultUuid);
-                break;
-        }
+        Optional<ShortCircuitAnalysisResultEntity> result = switch (mode) {
+            case BASIC -> resultService.findWithFaultResults(resultUuid);
+            case FULL -> resultService.findFullResults(resultUuid);
+            case WITH_LIMIT_VIOLATIONS -> resultService.findResultsWithLimitViolations(resultUuid);
+            default -> resultService.find(resultUuid);
+        };
         if (result.isPresent()) {
             ShortCircuitAnalysisResultEntity sortedResult = sortByElementId(result.get());
 
@@ -335,11 +330,24 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResult> getFaultResultsPage(UUID resultUuid,
+    public Page<FaultResult> getFaultResultsPage(UUID rootNetworkUuid,
+                                                 String variantId,
+                                                 UUID resultUuid,
                                                  FaultResultsMode mode,
                                                  String stringFilters,
+                                                 GlobalFilter globalFilter,
                                                  Pageable pageable) {
         List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
+        List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
+        if (globalFilter != null) {
+            Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(rootNetworkUuid, variantId, globalFilter);
+            // No equipment verify global filters : no result
+            if (resourceGlobalFilter.isEmpty()) {
+                return Page.empty();
+            } else {
+                resourceGlobalFilters.add(resourceGlobalFilter.get());
+            }
+        }
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result;
@@ -349,10 +357,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
             switch (mode) {
                 case BASIC, FULL:
-                    faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, pageable, mode);
+                    faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable, mode);
                     break;
                 case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, pageable);
+                    faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable);
                     break;
                 case NONE:
                 default:
