@@ -553,7 +553,7 @@ class ShortCircuitAnalysisControllerTest {
             when(runner.getName()).thenReturn("providerTest");
 
             // mock s3 client for run with debug
-            doReturn(PutObjectResponse.builder().build()).when(s3Client).putObject(eq(PutObjectRequest.builder().build()), any(RequestBody.class));
+            doReturn(PutObjectResponse.builder().build()).when(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
             doReturn(new ResponseInputStream<>(
                     GetObjectResponse.builder()
                             .metadata(Map.of(METADATA_FILE_NAME, "debugFile"))
@@ -613,7 +613,7 @@ class ShortCircuitAnalysisControllerTest {
             when(runner.getName()).thenReturn("providerTest");
 
             // mock s3 client for run with debug
-            doReturn(PutObjectResponse.builder().build()).when(s3Client).putObject(eq(PutObjectRequest.builder().build()), any(RequestBody.class));
+            doReturn(PutObjectResponse.builder().build()).when(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
             doReturn(new ResponseInputStream<>(
                     GetObjectResponse.builder()
                             .metadata(Map.of(METADATA_FILE_NAME, "debugFile"))
