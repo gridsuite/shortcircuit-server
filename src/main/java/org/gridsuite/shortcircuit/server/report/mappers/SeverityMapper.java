@@ -2,14 +2,13 @@ package org.gridsuite.shortcircuit.server.report.mappers;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
+import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.report.ReportMapper;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Pass some of the verbose logs to {@link TypedValue#TRACE_SEVERITY TRACE} severity for example.
@@ -18,11 +17,12 @@ import org.jetbrains.annotations.Nullable;
 @AllArgsConstructor
 @Data
 public class SeverityMapper implements ReportMapper {
-    @Nullable private final String parentMessageKey; //"Conversion of ..."
+    @Nullable
+    private final String parentMessageKey; //"Conversion of ..."
     @NonNull private final String messageKey;
     @NonNull private final TypedValue severity;
 
-    public SeverityMapper(@NotNull String messageKey, @NotNull TypedValue severity) {
+    public SeverityMapper(@NonNull String messageKey, @NonNull TypedValue severity) {
         this(null, messageKey, severity);
     }
 
@@ -41,7 +41,7 @@ public class SeverityMapper implements ReportMapper {
         }
     }
 
-    private void testAndSet(final @NotNull ReportNode node) {
+    private void testAndSet(final @NonNull ReportNode node) {
         if (this.messageKey.equals(node.getMessageKey())) {
             node.addSeverity(this.severity);
         }

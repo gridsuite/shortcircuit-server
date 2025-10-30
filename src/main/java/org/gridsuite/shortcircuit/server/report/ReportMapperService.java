@@ -3,12 +3,11 @@ package org.gridsuite.shortcircuit.server.report;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.ReportNodeImpl;
 import com.powsybl.commons.report.ReportNodeNoOp;
+import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -46,7 +45,7 @@ public class ReportMapperService {
     }
 
     //TODO redo the function in non-recursive one to avoid possibly StackOverflowError
-    private void recursiveMap(@NotNull final ReportNode reportNode, @NotNull final ShortCircuitRunContext runContext) {
+    private void recursiveMap(@NonNull final ReportNode reportNode, @NonNull final ShortCircuitRunContext runContext) {
         for (final ReportMapper mapper : mappers) {
             mapper.transformNode(reportNode, runContext);
         }

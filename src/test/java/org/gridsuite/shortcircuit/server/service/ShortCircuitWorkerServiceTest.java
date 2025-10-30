@@ -38,9 +38,9 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.Collections;
@@ -66,7 +66,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
     @Mock ReportMapperService reportMapperService;
     @Mock Network network;
     @Mock VariantManager variantManager;
-    @SpyBean
+    @MockitoSpyBean
     private S3Client s3Client;
 
     private ShortCircuitWorkerService workerService;
