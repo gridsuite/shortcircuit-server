@@ -144,7 +144,7 @@ class ShortCircuitAnalysisControllerTest {
     private static final int TIMEOUT = 1000;
     @MockitoBean
     private FilterService filterService;
-    @SpyBean
+    @MockitoSpyBean
     private ShortCircuitParametersService shortCircuitParametersService;
     @Autowired
     private ObjectMapper objectMapper;
