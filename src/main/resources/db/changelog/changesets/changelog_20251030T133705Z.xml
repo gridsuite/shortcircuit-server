@@ -1,0 +1,22 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="bouzolssyl (generated)" id="1761831446242-1">
+        <createTable tableName="short_circuit_specific_parameters">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="short_circuit_specific_parametersPK"/>
+            </column>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="provider" type="VARCHAR(255)"/>
+            <column name="value_" type="VARCHAR(255)"/>
+            <column name="short_circuit_parameters_id" type="UUID"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="bouzolssyl (generated)" id="1761831446242-2">
+        <createIndex indexName="shortCircuitParametersEntity_specificParameters_index" tableName="short_circuit_specific_parameters">
+            <column name="short_circuit_parameters_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="bouzolssyl (generated)" id="1761831446242-3">
+        <addForeignKeyConstraint baseColumnNames="short_circuit_parameters_id" baseTableName="short_circuit_specific_parameters" constraintName="shortCircuitParametersEntity_specificParameters_fk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="shortcircuit_parameters" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

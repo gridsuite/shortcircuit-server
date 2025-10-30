@@ -9,9 +9,11 @@ package org.gridsuite.shortcircuit.server.report;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.ReportNodeDeserializer;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.extern.slf4j.Slf4j;
+
+import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.report.mappers.VoltageLevelsWithWrongIpValuesMapper;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,8 +46,8 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
                 beansInit.powsyblAdnTwoWindingsTransformersSummary(),
                 new VoltageLevelsWithWrongIpValuesMapper()
         ));
-        this.runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParameters(),
-                null, "reporterId", "reportType", "userId", "default-provider", "busId", false);
+        this.runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParametersValues(null, null, null, null), null,
+                new ReportInfos(null, "reporterId", "reportType"), "userId", "default-provider", "busId", false, null);
     }
 
     @ParameterizedTest(name = "reporter_{0}.json")

@@ -8,8 +8,9 @@ package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.NonNull;
+
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -46,14 +47,14 @@ public final class TestUtils {
             UUID.randomUUID(),
             null,
             null,
-            new ShortCircuitParameters(),
-            null,
+            ShortCircuitParametersValues.builder().build(),
             null,
             null,
             null,
             "default-provider",  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
             null,
-            false
+            false,
+            null
     );
 
     public static void assertQueuesEmptyThenClear(List<String> destinations, OutputDestination output) {

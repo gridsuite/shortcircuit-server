@@ -9,6 +9,7 @@ package org.gridsuite.shortcircuit.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,8 +17,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.gridsuite.computation.dto.GlobalFilter;
+import org.gridsuite.computation.dto.ReportInfos;
+import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -29,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
@@ -46,6 +49,7 @@ import static org.springframework.http.MediaType.*;
 public class ShortCircuitController {
 
     private final ShortCircuitService shortCircuitService;
+    private final UuidGeneratorService uuidGeneratorService;
     private final ObjectMapper objectMapper;
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
@@ -59,9 +63,23 @@ public class ShortCircuitController {
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false) String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
                                            @Parameter(description = "Debug") @RequestParam(name = "debug", required = false, defaultValue = "false") boolean debug,
-                                           @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid") Optional<UUID> parametersUuid,
+                                           @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid,
+                                           @Parameter(description = "resultUuid") @RequestParam(name = "resultUuid", required = false) UUID resultUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        return ResponseEntity.ok().contentType(APPLICATION_JSON).body(shortCircuitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, busId, debug, parametersUuid));
+        UUID resultUuidToRun = resultUuid != null ? resultUuid : uuidGeneratorService.generate();
+        ShortCircuitRunContext shortCircuitRunContext = ShortCircuitRunContext.builder()
+                .resultUuid(resultUuidToRun)
+                .networkUuid(networkUuid)
+                .variantId(variantId)
+                .receiver(receiver)
+                .reportInfos(ReportInfos.builder().reportUuid(reportUuid).reporterId(reporterId).computationType(reportType).build())
+                .userId(userId)
+                .parametersUuid(parametersUuid)
+                .busId(busId)
+                .debug(debug)
+                .provider("default-provider") // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+                .build();
+        return ResponseEntity.ok().contentType(APPLICATION_JSON).body(shortCircuitService.runAndSaveResult(shortCircuitRunContext));
     }
 
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)

@@ -22,7 +22,8 @@ public class ShortCircuitException extends RuntimeException {
         INVALID_EXPORT_PARAMS,
         FILE_EXPORT_ERROR,
         MISSING_EXTENSION_DATA,
-        INCONSISTENT_VOLTAGE_LEVELS
+        INCONSISTENT_VOLTAGE_LEVELS,
+        PARAMETERS_NOT_FOUND
     }
 
     private final Type type;

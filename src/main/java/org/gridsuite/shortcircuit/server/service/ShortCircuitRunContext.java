@@ -7,12 +7,15 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.ShortCircuitParameters;
+
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.AbstractComputationRunContext;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 
 import java.util.*;
 
@@ -20,12 +23,14 @@ import java.util.*;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Getter
-public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortCircuitParameters> {
+public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortCircuitParametersValues> {
     @Setter
     private Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
     private final String busId;
     @Setter
     private List<String> voltageLevelsWithWrongIsc = new ArrayList<>();
+    private final UUID parametersUuid;
+    private final UUID resultUuid;
 
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
     private final MutableLong adnSummarizeCounterGenerator = new MutableLong();
@@ -36,9 +41,21 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
     /** @see org.gridsuite.shortcircuit.server.report.mappers.AdnSummarizeMapper */
     private final MutableLong adnSummarizeCounterT2W = new MutableLong();
 
-    public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParameters parameters,
-                                  UUID reportUuid, String reporterId, String reportType, String userId, String provider, String busId, Boolean debug) {
-        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, provider, parameters, debug);
+    @Builder
+    public ShortCircuitRunContext(UUID networkUuid, String variantId, String receiver, ShortCircuitParametersValues parameters, UUID parametersUuid,
+                                   ReportInfos reportInfos, String userId, String provider, String busId, Boolean debug, UUID resultUuid) {
+        super(networkUuid, variantId, receiver, reportInfos, userId, provider, parameters, debug);
         this.busId = busId;
+        this.parametersUuid = parametersUuid;
+        this.resultUuid = resultUuid;
+    }
+
+    public ShortCircuitParameters buildParameters() {
+        ShortCircuitParameters params = getParameters() == null || getParameters().commonParameters() == null ?
+                ShortCircuitParameters.load() : getParameters().commonParameters();
+        if (getParameters() == null || getParameters().specificParameters() == null || getParameters().specificParameters().isEmpty()) {
+            return params; // no specific ShortCircuit params
+        }
+        return params;
     }
 }

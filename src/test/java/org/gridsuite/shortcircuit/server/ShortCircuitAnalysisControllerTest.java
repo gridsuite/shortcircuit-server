@@ -30,10 +30,13 @@ import org.gridsuite.computation.service.ReportService;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
 import org.gridsuite.shortcircuit.server.service.FilterService;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitParametersService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -104,6 +107,7 @@ class ShortCircuitAnalysisControllerTest {
     private static final UUID RESULT_UUID_TO_STOP = UUID.fromString("1c5212a9-e694-46a9-9eb2-cee60fc34675");
     private static final UUID REPORT_UUID = UUID.fromString("762b7298-8c0f-11ed-a1eb-0242ac120002");
     private static final ShortCircuitAnalysisResult RESULT = new ShortCircuitAnalysisResult(List.of());
+    private static final UUID PARAMETERS_UUID = UUID.fromString("762b7298-8c0f-11ed-a1eb-0242ac120003");
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
@@ -140,6 +144,8 @@ class ShortCircuitAnalysisControllerTest {
     private static final int TIMEOUT = 1000;
     @MockBean
     private FilterService filterService;
+    @SpyBean
+    private ShortCircuitParametersService shortCircuitParametersService;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -341,6 +347,15 @@ class ShortCircuitAnalysisControllerTest {
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
+
+        // parameters mocking
+        // ShortCircuitParametersValues shortCircuitParametersValues = ShortCircuitParametersValues.builder()
+        //         .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+        //         .commonParameters(ShortCircuitParameters.load())
+        //         .specificParameters(Collections.emptyMap())
+        //         .build();
+        ShortCircuitParametersValues shortCircuitParametersValues = shortCircuitParametersService.toShortCircuitParametersValues(new ShortCircuitParametersEntity());
+        doReturn(shortCircuitParametersValues).when(shortCircuitParametersService).getParametersValues(any());
     }
 
     @AfterEach
@@ -370,23 +385,17 @@ class ShortCircuitAnalysisControllerTest {
             //fault.id DESC and resultUuid (in that order) comparator
             Comparator<FaultResultEntity> comparatorByFaultIdDescAndResultUuid = comparing(FaultResultEntity::getFault, comparatorByFaultId).reversed().thenComparing(comparatorByResultUuid);
 
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
-            shortCircuitParameters.setWithFortescueResult(false);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + PARAMETERS_UUID, NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(parametersJson))
+                    .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, shortCircuitAnalysisResultDestination);
-            String resultUuid = Objects.requireNonNull(resultMessage.getHeaders().get("resultUuid")).toString();
-
-            assertEquals(RESULT_UUID.toString(), resultUuid);
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
             Message<byte[]> runMessage = output.receive(TIMEOUT, shortCircuitAnalysisRunDestination);
@@ -561,17 +570,12 @@ class ShortCircuitAnalysisControllerTest {
                     AbortableInputStream.create(new ByteArrayInputStream("s3 debug file content".getBytes()))
             )).when(s3Client).getObject(any(GetObjectRequest.class));
 
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
-            shortCircuitParameters.setWithFortescueResult(false);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
-
             // run with debug for all buses
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .param(HEADER_DEBUG, "true")
                             .header(HEADER_USER_ID, "userId")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(parametersJson))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -621,18 +625,13 @@ class ShortCircuitAnalysisControllerTest {
                     AbortableInputStream.create(new ByteArrayInputStream("s3 debug file content".getBytes()))
             )).when(s3Client).getObject(any(GetObjectRequest.class));
 
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
-            shortCircuitParameters.setWithFortescueResult(false);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
-
             // run with debug on one bus
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .param(HEADER_DEBUG, "true")
                             .param(HEADER_BUS_ID, "NGEN") // run on one bus
                             .header(HEADER_USER_ID, "userId")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(parametersJson))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -678,14 +677,11 @@ class ShortCircuitAnalysisControllerTest {
             Comparator<FaultResultEntity> comparatorByResultUuid = comparing(faultResultEntity -> faultResultEntity.getFaultResultUuid().toString());
             //current and resultUuid (in that order) comparator
             Comparator<FaultResultEntity> comparatorByCurrentAndResultUuid = comparingDouble(FaultResultEntity::getCurrent).thenComparing(comparatorByResultUuid);
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
-            shortCircuitParameters.setWithFortescueResult(false);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
+
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=AllBusesShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(parametersJson))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -738,15 +734,11 @@ class ShortCircuitAnalysisControllerTest {
             shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
             when(runner.getName()).thenReturn("providerTest");
 
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
-            shortCircuitParameters.setWithFortescueResult(true);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=OneBusShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                     .param(HEADER_BUS_ID, "NGEN")
                     .header(HEADER_USER_ID, "userId")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(parametersJson))
+                    .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -799,15 +791,11 @@ class ShortCircuitAnalysisControllerTest {
             shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
             when(runner.getName()).thenReturn("providerTest");
 
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
-            shortCircuitParameters.setWithFortescueResult(true);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=OneBusShortCircuitAnalysis&receiver=me&variantId=" + NODE_BREAKER_NETWORK_VARIANT_ID, NODE_BREAKER_NETWORK_UUID)
                     .param(HEADER_BUS_ID, "S1VL2_BBS1")
                     .header(HEADER_USER_ID, "userId")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(parametersJson))
+                    .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -933,15 +921,11 @@ class ShortCircuitAnalysisControllerTest {
             shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
             when(runner.getName()).thenReturn("providerTest");
 
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
-            shortCircuitParameters.setWithFortescueResult(true);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?reportType=OneBusShortCircuitAnalysis&receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .param(HEADER_BUS_ID, "NGEN")
                             .header(HEADER_USER_ID, "userId")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(parametersJson))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -1052,13 +1036,10 @@ class ShortCircuitAnalysisControllerTest {
             shortCircuitAnalysisMockedStatic.when(ShortCircuitAnalysis::find).thenReturn(runner);
             when(runner.getName()).thenReturn("providerTest");
 
-            ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters().setWithFortescueResult(false);
-            String parametersJson = mapper.writeValueAsString(shortCircuitParameters);
             mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(parametersJson))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -1081,8 +1062,7 @@ class ShortCircuitAnalysisControllerTest {
             mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_4_ID, NETWORK1_UUID)
                             .header(HEADER_USER_ID, "userId")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(parametersJson))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
