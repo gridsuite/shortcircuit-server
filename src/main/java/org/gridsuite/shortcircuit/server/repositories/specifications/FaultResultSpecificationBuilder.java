@@ -49,7 +49,7 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
         // since sql joins generates duplicate results, we need to use distinct here
         Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
         // filter by resultUuid
-        specification = specification.and(Specification.where(resultUuidEquals(resultUuid)));
+        specification = specification.and(resultUuidEquals(resultUuid));
 
         return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
     }
@@ -57,7 +57,7 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
     public Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilterDTO> resourceFilters) {
         List<ResourceFilterDTO> childrenResourceFilter = resourceFilters.stream().filter(this::isNotParentFilter)
                 .toList();
-        Specification<FaultResultEntity> specification = Specification.where(uuidIn(uuids));
+        Specification<FaultResultEntity> specification = uuidIn(uuids);
 
         return SpecificationUtils.appendFiltersToSpecification(specification, childrenResourceFilter);
     }

@@ -29,7 +29,7 @@ public final class FeederResultSpecificationBuilder {
     }
 
     public static Specification<FeederResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilterDTO> resourceFilters) {
-        Specification<FeederResultEntity> specification = Specification.where(resultUuidEquals(resultUuid));
+        Specification<FeederResultEntity> specification = resultUuidEquals(resultUuid);
         return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
     }
 }
