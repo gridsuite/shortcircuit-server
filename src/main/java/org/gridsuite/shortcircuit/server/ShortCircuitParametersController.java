@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
@@ -18,6 +19,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -51,6 +54,15 @@ public class ShortCircuitParametersController {
             @Parameter(description = "parameters UUID") @PathVariable("parametersUuid") UUID parametersUuid,
             @Parameter(description = "provider name") @RequestParam("provider") String provider) {
         return ResponseEntity.of(shortCircuitParametersService.getParametersValues(parametersUuid, provider));
+    }
+
+    @GetMapping(value = "/specific-parameters")
+    @Operation(summary = "Get all existing shortcircuit specific parameters for a given provider, or for all of them")
+    @ApiResponse(responseCode = "200", description = "The shortcircuit model-specific parameters")
+    public ResponseEntity<Map<String, List<com.powsybl.commons.parameters.Parameter>>> getSpecificShortCircuitParameters(
+            @Parameter(description = "The model provider") @RequestParam(name = "provider", required = false) String provider) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(ShortCircuitParametersService.getSpecificShortCircuitParameters(provider));
     }
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
