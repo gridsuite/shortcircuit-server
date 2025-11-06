@@ -275,12 +275,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .singleElement().as("parameters entity")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
             .ignoringFields("id")
-            .isEqualTo(new ShortCircuitParametersEntity(
-                ShortCircuitParametersInfos.builder()
-                    .commonParameters(ShortCircuitParameters.load())
-                    .specificParametersPerProvider(Map.of())
-                .build()
-                )
+            .isEqualTo(new ShortCircuitParametersEntity()
         );
     }
 
