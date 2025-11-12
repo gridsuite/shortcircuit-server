@@ -26,8 +26,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import com.powsybl.commons.parameters.Parameter;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
@@ -175,5 +179,19 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
         final ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
         verify(shortCircuitParametersService).updateParameters(uuidCaptor.capture(), isNull());
         assertThat(uuidCaptor.getValue()).isEqualTo(arg1);
+    }
+
+    @Test
+    void testGetSpecificParameters() throws Exception {
+        final String provider = "Courcirc_provider";
+        final Map<String, List<Parameter>> returned = Map.of(provider, List.of());
+        try (var mocked = Mockito.mockStatic(ShortCircuitParametersService.class)) {
+            mocked.when(() -> ShortCircuitParametersService.getSpecificShortCircuitParameters(Mockito.anyString())).thenReturn(returned);
+            mockMvc.perform(get("/v1/parameters/specific-parameters").param("provider", provider))
+                   .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON));
+            final ArgumentCaptor<String> providerCaptor = ArgumentCaptor.forClass(String.class);
+            mocked.verify(() -> ShortCircuitParametersService.getSpecificShortCircuitParameters(providerCaptor.capture()));
+            assertThat(providerCaptor.getValue()).isEqualTo(provider);
+        }
     }
 }

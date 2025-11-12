@@ -6,6 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.commons.parameters.Parameter;
+import com.powsybl.commons.parameters.ParameterScope;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
@@ -13,6 +15,7 @@ import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitSpecificParameterEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -26,6 +29,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Random;
@@ -308,5 +313,83 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         checkParametersEntityHasBeenUpdate(pEntity, pModifiedEntity, "default entity", defaultInfos);
         // verify no unwanted actions have been done
         verifyNoMoreInteractions(pEntity);
+    }
+
+    // specific parameters
+    @Test
+    void testCreateParametersWithSpecificParameters() {
+        final UUID pUuid = UUID.randomUUID();
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
+        when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pEntity);
+
+        final Map<String, Map<String, String>> specific = Collections.singletonMap("my_provider",
+            Collections.singletonMap("param", "value"));
+
+        final ShortCircuitParameters params = new ShortCircuitParameters(); // keep default common params
+        final ShortCircuitParametersInfos infos = new ShortCircuitParametersInfos(
+            ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
+            params,
+            specific
+        );
+
+        assertThat(parametersService.createParameters(infos)).as("service call result").isEqualTo(pUuid);
+
+        verify(pEntity).getId();
+        verifyNoMoreInteractions(pEntity);
+
+        final ArgumentCaptor<ShortCircuitParametersEntity> captor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
+        verify(parametersRepository).save(captor.capture());
+        final ShortCircuitParametersEntity saved = captor.getValue();
+
+        // ensure specific parameters have been converted and stored
+        assertThat(saved.getSpecificParameters()).as("specific parameters list").hasSize(1);
+        final ShortCircuitSpecificParameterEntity spec = saved.getSpecificParameters().get(0);
+        assertThat(spec.getProvider()).as("provider key").isEqualTo("my_provider");
+        assertThat(spec.getName()).as("parameter name").isEqualTo("param");
+        assertThat(spec.getValue()).as("parameter value").isEqualTo("value");
+    }
+
+    @Test
+    void testGetSpecificShortCircuitParametersNoProvider() {
+        final String randomProvider = "non_existing_provider_" + UUID.randomUUID();
+        final Map<String, List<Parameter>> result = ShortCircuitParametersService.getSpecificShortCircuitParameters(randomProvider);
+        assertThat(result).as("no provider must match a random name").isEmpty();
+    }
+
+    @Test
+    void testCreateAndRetrieveParametersWithSpecificParameters() {
+        final UUID pUuid = UUID.randomUUID();
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
+        when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pEntity);
+
+        final Map<String, Map<String, String>> specific = Collections.singletonMap("my_provider",
+            Collections.singletonMap("param", "value"));
+
+        final ShortCircuitParametersInfos infos = new ShortCircuitParametersInfos(
+            ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
+            new ShortCircuitParameters(),
+            specific
+        );
+
+        // create
+        assertThat(parametersService.createParameters(infos)).as("service call result").isEqualTo(pUuid);
+
+        final ArgumentCaptor<ShortCircuitParametersEntity> captor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
+        verify(parametersRepository).save(captor.capture());
+        final ShortCircuitParametersEntity saved = captor.getValue();
+
+        // saved entity must contain converted specific parameters
+        assertThat(saved.getSpecificParameters()).as("specific parameters list").hasSize(1);
+        final ShortCircuitSpecificParameterEntity spec = saved.getSpecificParameters().get(0);
+        assertThat(spec.getProvider()).as("provider key").isEqualTo("my_provider");
+        assertThat(spec.getName()).as("parameter name").isEqualTo("param");
+        assertThat(spec.getValue()).as("parameter value").isEqualTo("value");
+
+        // now stub findById to return the saved entity and retrieve DTO
+        when(parametersRepository.findById(pUuid)).thenReturn(Optional.of(saved));
+        final ShortCircuitParametersInfos retrieved = parametersService.getParameters(pUuid).orElseThrow();
+        assertThat(retrieved.specificParametersPerProvider()).as("retrieved specific parameters").isEqualTo(specific);
+
+        verify(parametersRepository).findById(pUuid);
     }
 }
