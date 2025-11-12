@@ -24,8 +24,6 @@ public final class ShortCircuitParametersConstants {
             new VoltageRange(390.0, 410.0, 1.05)
     );
 
-    public static final String UNIQUE_PROVIDER = "unique_provider";
-
     private ShortCircuitParametersConstants() {
         // utility class
     }
