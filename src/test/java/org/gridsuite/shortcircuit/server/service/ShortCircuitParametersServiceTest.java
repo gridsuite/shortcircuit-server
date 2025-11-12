@@ -349,6 +349,43 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     }
 
     @Test
+    void testDuplicateParametersWithSpecificParameters() {
+        final UUID sourceUuid = UUID.randomUUID();
+        final UUID savedUuid = UUID.randomUUID();
+
+        final ShortCircuitSpecificParameterEntity spec = new ShortCircuitSpecificParameterEntity(UUID.randomUUID(), "my_provider", "param", "value");
+        final ShortCircuitParametersEntity pEntityRaw = ShortCircuitParametersEntity.builder()
+            .specificParameters(List.of(spec))
+            .build();
+        final ShortCircuitParametersEntity pEntity = spy(pEntityRaw);
+        final ShortCircuitParametersEntity pSavedEntity = spy(ShortCircuitParametersEntity.builder().id(savedUuid).build());
+
+        when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
+        when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pSavedEntity);
+
+        final Optional<UUID> result = parametersService.duplicateParameters(sourceUuid);
+        assertThat(result).as("service call result").isPresent().contains(savedUuid);
+
+        verify(parametersRepository).findById(sourceUuid);
+        checkParametersEntityHasBeenRead(pEntity);
+
+        final ArgumentCaptor<ShortCircuitParametersEntity> captor = ArgumentCaptor.forClass(ShortCircuitParametersEntity.class);
+        verify(parametersRepository).save(captor.capture());
+        final ShortCircuitParametersEntity savedArg = captor.getValue();
+
+        assertThat(savedArg).as("saved entity must be a copy").isNotSameAs(pEntity);
+        assertThat(savedArg.getSpecificParameters()).as("specific parameters copied").hasSize(1);
+        final ShortCircuitSpecificParameterEntity savedSpec = savedArg.getSpecificParameters().get(0);
+        assertThat(savedSpec.getProvider()).isEqualTo("my_provider");
+        assertThat(savedSpec.getName()).isEqualTo("param");
+        assertThat(savedSpec.getValue()).isEqualTo("value");
+
+        verify(pSavedEntity).getId();
+        verifyNoMoreInteractions(pEntity);
+        verifyNoMoreInteractions(pSavedEntity);
+    }
+
+    @Test
     void testGetSpecificShortCircuitParametersNoProvider() {
         final String randomProvider = "non_existing_provider_" + UUID.randomUUID();
         final Map<String, List<Parameter>> result = ShortCircuitParametersService.getSpecificShortCircuitParameters(randomProvider);
