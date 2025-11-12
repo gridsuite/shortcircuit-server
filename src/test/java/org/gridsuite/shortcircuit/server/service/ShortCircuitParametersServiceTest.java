@@ -7,7 +7,6 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.commons.parameters.Parameter;
-import com.powsybl.commons.parameters.ParameterScope;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
