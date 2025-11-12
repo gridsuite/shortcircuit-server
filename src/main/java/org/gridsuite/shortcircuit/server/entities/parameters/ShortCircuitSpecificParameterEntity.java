@@ -45,11 +45,4 @@ public class ShortCircuitSpecificParameterEntity {
 
     @Column(name = "value_")
     private String value;
-
-    public ShortCircuitSpecificParameterEntity(@NonNull final ShortCircuitSpecificParameterEntity other) {
-        this.id = other.id;
-        this.provider = other.provider;
-        this.name = other.name;
-        this.value = other.value;
-    }
 }

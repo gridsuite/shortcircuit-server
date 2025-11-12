@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * @since 1.7.0
@@ -92,25 +91,6 @@ public class ShortCircuitParametersEntity {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "short_circuit_parameters_id", foreignKey = @ForeignKey(name = "shortCircuitParametersEntity_specificParameters_fk"))
     private List<ShortCircuitSpecificParameterEntity> specificParameters = new ArrayList<>();
-
-    public ShortCircuitParametersEntity(@NonNull final ShortCircuitParametersEntity sourceToClone) {
-        this.withLimitViolations = sourceToClone.isWithLimitViolations();
-        this.withVoltageResult = sourceToClone.isWithVoltageResult();
-        this.withFeederResult = sourceToClone.isWithFeederResult();
-        this.studyType = sourceToClone.getStudyType();
-        this.minVoltageDropProportionalThreshold = sourceToClone.getMinVoltageDropProportionalThreshold();
-        this.predefinedParameters = sourceToClone.getPredefinedParameters();
-        this.withLoads = sourceToClone.isWithLoads();
-        this.withShuntCompensators = sourceToClone.isWithShuntCompensators();
-        this.withVscConverterStations = sourceToClone.isWithVscConverterStations();
-        this.withNeutralPosition = sourceToClone.isWithNeutralPosition();
-        this.initialVoltageProfileMode = sourceToClone.getInitialVoltageProfileMode();
-        if (sourceToClone.getSpecificParameters() != null) {
-            this.specificParameters = sourceToClone.getSpecificParameters().stream()
-                    .map(ShortCircuitSpecificParameterEntity::new)
-                    .collect(Collectors.toList());
-        }
-    }
 
     public ShortCircuitParametersEntity(ShortCircuitParametersInfos shortCircuitParametersInfos) {
         assignAttributes(shortCircuitParametersInfos);
