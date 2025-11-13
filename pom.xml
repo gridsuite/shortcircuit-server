@@ -115,13 +115,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>com.rte-france.powsybl</groupId>
-            <artifactId>powsybl-courcirc-integration</artifactId>
-            <version>4.10.2</version>
-            <scope>runtime</scope>
-        </dependency>
-
         <!-- Annotation processor dependencies -->
         <dependency>
             <groupId>org.projectlombok</groupId>
