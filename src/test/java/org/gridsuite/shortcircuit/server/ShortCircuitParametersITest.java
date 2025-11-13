@@ -55,9 +55,13 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContex
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -270,21 +274,31 @@ class ShortCircuitParametersITest implements WithAssertions {
 
     @ParameterizedTest
     @MethodSource("testWithInvalidParametersArgArgs")
-    void testWithInvalidParametersArg(final RequestBuilder requestBuilder, final ResultMatcher statusResult) throws Exception {
-        mockMvc.perform(requestBuilder).andDo(log())
-                .andExpectAll(statusResult, content().bytes(new byte[0]));
+    void testWithInvalidParametersArg(final RequestBuilder requestBuilder, final ResultMatcher statusResult, final boolean throwsException, final Integer expectedStatus) throws Exception {
+        if (!throwsException) {
+            mockMvc.perform(requestBuilder).andDo(log())
+                    .andExpectAll(statusResult, content().bytes(new byte[0]));
+        } else {
+            mockMvc.perform(requestBuilder).andDo(log())
+                    .andExpectAll(statusResult, content().contentType(MediaType.APPLICATION_PROBLEM_JSON),
+                            jsonPath("$.status").value(expectedStatus),
+                            jsonPath("$.server").exists(),
+                            jsonPath("$.path").exists(),
+                            jsonPath("$.detail").exists(),
+                            jsonPath("$.timestamp").exists());
+        }
     }
 
     private static Stream<Arguments> testWithInvalidParametersArgArgs() {
         return Stream.of(
-            Arguments.of(get("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound()),
-            Arguments.of(delete("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound()),
-            Arguments.of(post("/v1/parameters"), status().isBadRequest()),
-            Arguments.of(post("/v1/parameters").content("{}"), status().isBadRequest()),
-            Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isBadRequest()),
-            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, ""), status().isBadRequest()),
-            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, UUID.randomUUID().toString()), status().isNotFound()),
-            Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound())
+            Arguments.of(get("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null),
+            Arguments.of(delete("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null),
+            Arguments.of(post("/v1/parameters"), status().isInternalServerError(), true, 500),
+            Arguments.of(post("/v1/parameters").content("{}"), status().isInternalServerError(), true, 500),
+            Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isInternalServerError(), true, 500),
+            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, ""), status().isInternalServerError(), true, 500),
+            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, UUID.randomUUID().toString()), status().isNotFound(), false, null),
+            Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null)
         );
     }
 }

@@ -32,15 +32,20 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith({ MockitoExtension.class })
-@WebMvcTest(controllers = { ShortCircuitParametersController.class })
+@WebMvcTest(controllers = { ShortCircuitParametersController.class, PropertyServerNameProvider.class })
 class ShortCircuitParametersControllerTest implements WithAssertions {
     private final String defaultParametersJson;
 

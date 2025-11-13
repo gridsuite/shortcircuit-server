@@ -6,6 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server;
 
+import com.powsybl.ws.commons.error.AbstractBusinessException;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -14,27 +16,18 @@ import java.util.Objects;
  * @author David SARTORI <david.sartori_externe at rte-france.com>
  */
 @Getter
-public class ShortCircuitException extends RuntimeException {
+public class ShortCircuitException extends AbstractBusinessException {
 
-    public enum Type {
-        BUS_OUT_OF_VOLTAGE,
-        RESULT_NOT_FOUND,
-        INVALID_EXPORT_PARAMS,
-        FILE_EXPORT_ERROR,
-        MISSING_EXTENSION_DATA,
-        INCONSISTENT_VOLTAGE_LEVELS
+    private final ShortcircuitBusinessErrorCode errorCode;
+
+    public ShortCircuitException(ShortcircuitBusinessErrorCode errorCode, String message) {
+        super(Objects.requireNonNull(message, "message must not be null"));
+        this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null");
     }
 
-    private final Type type;
-
-    public ShortCircuitException(Type type) {
-        super(Objects.requireNonNull(type.name()));
-        this.type = type;
+    @NotNull
+    @Override
+    public ShortcircuitBusinessErrorCode getBusinessErrorCode() {
+        return errorCode;
     }
-
-    public ShortCircuitException(Type type, String message) {
-        super(message);
-        this.type = type;
-    }
-
 }

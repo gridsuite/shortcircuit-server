@@ -17,6 +17,7 @@ import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.computation.ComputationException;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.s3.ComputationS3Service;
@@ -47,8 +48,10 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.gridsuite.computation.ComputationBusinessErrorCode.FILE_EXPORT_ERROR;
+import static org.gridsuite.computation.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
-import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
+import static org.gridsuite.shortcircuit.server.ShortcircuitBusinessErrorCode.INVALID_EXPORT_PARAMS;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -94,8 +97,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         parameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
         parameters.setDetailedReport(false);
         return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId,
-            "default-provider", // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-            busId, debug));
+                "default-provider", // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+                busId, debug));
     }
 
     @Override
@@ -157,37 +160,37 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     private static ShortCircuitParametersEntity toEntity(ShortCircuitParametersInfos parametersInfos) {
         final ShortCircuitParameters parameters = parametersInfos.parameters();
         return new ShortCircuitParametersEntity(
-            parameters.isWithLimitViolations(),
-            parameters.isWithVoltageResult(),
-            parameters.isWithFeederResult(),
-            parameters.getStudyType(),
-            parameters.getMinVoltageDropProportionalThreshold(),
-            parametersInfos.predefinedParameters(),
-            parameters.isWithLoads(),
-            parameters.isWithShuntCompensators(),
-            parameters.isWithVSCConverterStations(),
-            parameters.isWithNeutralPosition(),
-            parameters.getInitialVoltageProfileMode()
+                parameters.isWithLimitViolations(),
+                parameters.isWithVoltageResult(),
+                parameters.isWithFeederResult(),
+                parameters.getStudyType(),
+                parameters.getMinVoltageDropProportionalThreshold(),
+                parametersInfos.predefinedParameters(),
+                parameters.isWithLoads(),
+                parameters.isWithShuntCompensators(),
+                parameters.isWithVSCConverterStations(),
+                parameters.isWithNeutralPosition(),
+                parameters.getInitialVoltageProfileMode()
         );
     }
 
     private static ShortCircuitParametersInfos fromEntity(ShortCircuitParametersEntity entity) {
         Objects.requireNonNull(entity);
         return new ShortCircuitParametersInfos(
-            entity.getPredefinedParameters(),
-            new ShortCircuitParameters()
-                .setStudyType(entity.getStudyType())
-                .setMinVoltageDropProportionalThreshold(entity.getMinVoltageDropProportionalThreshold())
-                .setWithFeederResult(entity.isWithFeederResult())
-                .setWithLimitViolations(entity.isWithLimitViolations())
-                .setWithVoltageResult(entity.isWithVoltageResult())
-                .setWithLoads(entity.isWithLoads())
-                .setWithShuntCompensators(entity.isWithShuntCompensators())
-                .setWithVSCConverterStations(entity.isWithVscConverterStations())
-                .setWithNeutralPosition(entity.isWithNeutralPosition())
-                .setInitialVoltageProfileMode(entity.getInitialVoltageProfileMode())
-                // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
-                .setVoltageRanges(InitialVoltageProfileMode.CONFIGURED.equals(entity.getInitialVoltageProfileMode()) ? CEI909_VOLTAGE_PROFILE : null)
+                entity.getPredefinedParameters(),
+                new ShortCircuitParameters()
+                        .setStudyType(entity.getStudyType())
+                        .setMinVoltageDropProportionalThreshold(entity.getMinVoltageDropProportionalThreshold())
+                        .setWithFeederResult(entity.isWithFeederResult())
+                        .setWithLimitViolations(entity.isWithLimitViolations())
+                        .setWithVoltageResult(entity.isWithVoltageResult())
+                        .setWithLoads(entity.isWithLoads())
+                        .setWithShuntCompensators(entity.isWithShuntCompensators())
+                        .setWithVSCConverterStations(entity.isWithVscConverterStations())
+                        .setWithNeutralPosition(entity.isWithNeutralPosition())
+                        .setInitialVoltageProfileMode(entity.getInitialVoltageProfileMode())
+                        // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
+                        .setVoltageRanges(InitialVoltageProfileMode.CONFIGURED.equals(entity.getInitialVoltageProfileMode()) ? CEI909_VOLTAGE_PROFILE : null)
         );
     }
 
@@ -291,13 +294,13 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             csvWriter.close();
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new ShortCircuitException(FILE_EXPORT_ERROR, e.getMessage());
+            throw new ComputationException(FILE_EXPORT_ERROR, e.getMessage());
         }
     }
 
     public byte[] getZippedCsvExportResult(UUID resultUuid, ShortCircuitAnalysisResult result, CsvTranslation csvTranslation) {
         if (result == null) {
-            throw new ShortCircuitException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
+            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
         if (Objects.isNull(csvTranslation) || Objects.isNull(csvTranslation.headersCsv()) || Objects.isNull(csvTranslation.enumValueTranslations())) {
             throw new ShortCircuitException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
@@ -433,9 +436,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     @Transactional
     public Optional<UUID> duplicateParameters(UUID sourceParametersUuid) {
         return parametersRepository.findById(sourceParametersUuid)
-                                   .map(ShortCircuitParametersEntity::new)
-                                   .map(parametersRepository::save)
-                                   .map(ShortCircuitParametersEntity::getId);
+                .map(ShortCircuitParametersEntity::new)
+                .map(parametersRepository::save)
+                .map(ShortCircuitParametersEntity::getId);
     }
 
     public UUID createParameters(@Nullable final ShortCircuitParametersInfos parameters) {

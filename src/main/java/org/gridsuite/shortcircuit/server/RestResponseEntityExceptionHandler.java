@@ -7,23 +7,41 @@
 
 package org.gridsuite.shortcircuit.server;
 
+import com.powsybl.ws.commons.error.AbstractBaseRestExceptionHandler;
+import com.powsybl.ws.commons.error.AbstractBusinessException;
+import com.powsybl.ws.commons.error.BusinessErrorCode;
+import com.powsybl.ws.commons.error.ServerNameProvider;
+import lombok.NonNull;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import static org.gridsuite.computation.ComputationBusinessErrorCode.*;
+import static org.gridsuite.shortcircuit.server.ShortcircuitBusinessErrorCode.*;
 
 /**
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>
  */
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler {
-    @ExceptionHandler(ShortCircuitException.class)
-    protected ResponseEntity<Object> handleShortCircuitException(ShortCircuitException exception) {
-        return switch (exception.getType()) {
-            case RESULT_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
-            case INVALID_EXPORT_PARAMS -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
-            case BUS_OUT_OF_VOLTAGE, FILE_EXPORT_ERROR, MISSING_EXTENSION_DATA, INCONSISTENT_VOLTAGE_LEVELS ->
-                    ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
+public class RestResponseEntityExceptionHandler extends AbstractBaseRestExceptionHandler<AbstractBusinessException, BusinessErrorCode> {
+
+    protected RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
+        super(serverNameProvider);
+    }
+
+    @Override
+    protected @NonNull BusinessErrorCode getBusinessCode(AbstractBusinessException e) {
+        return e.getBusinessErrorCode();
+    }
+
+    @Override
+    protected HttpStatus mapStatus(BusinessErrorCode businessErrorCode) {
+        return switch (businessErrorCode) {
+            case RESULT_NOT_FOUND, NETWORK_NOT_FOUND, PARAMETERS_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case INVALID_FILTER_FORMAT,
+                 INVALID_SORT_FORMAT,
+                 INVALID_FILTER,
+                 INVALID_EXPORT_PARAMS -> HttpStatus.BAD_REQUEST;
+            default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }
 }
