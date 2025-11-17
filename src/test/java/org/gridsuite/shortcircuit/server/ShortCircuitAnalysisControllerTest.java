@@ -349,11 +349,6 @@ class ShortCircuitAnalysisControllerTest {
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
 
         // parameters mocking
-        // ShortCircuitParametersValues shortCircuitParametersValues = ShortCircuitParametersValues.builder()
-        //         .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
-        //         .commonParameters(ShortCircuitParameters.load())
-        //         .specificParameters(Collections.emptyMap())
-        //         .build();
         ShortCircuitParametersValues shortCircuitParametersValues = shortCircuitParametersService.toShortCircuitParametersValues(new ShortCircuitParametersEntity());
         doReturn(shortCircuitParametersValues).when(shortCircuitParametersService).getParametersValues(any());
     }

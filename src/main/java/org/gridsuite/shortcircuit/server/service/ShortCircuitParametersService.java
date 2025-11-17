@@ -80,9 +80,8 @@ public class ShortCircuitParametersService {
 
     @Transactional(readOnly = true)
     public Optional<ShortCircuitParametersValues> getParametersValues(UUID parametersUuid, String provider) {
+        // TODO replace when multiple providers support is added
         return parametersRepository.findById(parametersUuid).map(this::toShortCircuitParametersValues);
-        // TODO replace with next line when multiple providers support is added
-        // return parametersRepository.findById(parametersUuid).map(entity -> toShortCircuitParametersValues(provider, entity));
     }
 
     public ShortCircuitParametersValues getParametersValues(UUID parametersUuid) {
