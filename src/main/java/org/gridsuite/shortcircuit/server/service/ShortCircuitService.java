@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.*;
@@ -48,7 +49,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.gridsuite.computation.ComputationBusinessErrorCode.FILE_EXPORT_ERROR;
 import static org.gridsuite.computation.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
 import static org.gridsuite.computation.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
@@ -307,7 +307,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             csvWriter.close();
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new ComputationException(FILE_EXPORT_ERROR, e.getMessage());
+            throw new UncheckedIOException("Error occurred while writing data to csv file", e);
         }
     }
 
