@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import static org.gridsuite.computation.ComputationBusinessErrorCode.*;
-import static org.gridsuite.shortcircuit.server.ShortcircuitBusinessErrorCode.*;
+import static org.gridsuite.computation.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
 
 /**
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>

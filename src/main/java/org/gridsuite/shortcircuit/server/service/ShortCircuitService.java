@@ -49,9 +49,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.gridsuite.computation.ComputationBusinessErrorCode.FILE_EXPORT_ERROR;
+import static org.gridsuite.computation.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
 import static org.gridsuite.computation.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
-import static org.gridsuite.shortcircuit.server.ShortcircuitBusinessErrorCode.INVALID_EXPORT_PARAMS;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -303,7 +303,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
         if (Objects.isNull(csvTranslation) || Objects.isNull(csvTranslation.headersCsv()) || Objects.isNull(csvTranslation.enumValueTranslations())) {
-            throw new ShortCircuitException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
+            throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
         }
         List<String> headersList = csvTranslation.headersCsv();
         Map<String, String> enumValueTranslations = csvTranslation.enumValueTranslations();
