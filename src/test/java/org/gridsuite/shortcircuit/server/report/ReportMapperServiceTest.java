@@ -30,7 +30,7 @@ class ReportMapperServiceTest extends AbstractReportMapperTest {
     private static final String ROOT_REPORTER_ID = "00000000-0000-0000-0000-000000000000";
     private static final String SHORTCIRCUIT_TYPE_REPORT = "ShortCircuitAnalysis";
 
-    private final ShortCircuitRunContext runContext = new ShortCircuitRunContext(null, null, null, null, null, null, null, null, null, false, null);
+    private final ShortCircuitRunContext runContext = ShortCircuitRunContext.builder().debug(false).build();
     @Mock ReportMapper reportMapper;
     private ReportMapperService reportMapperService;
 

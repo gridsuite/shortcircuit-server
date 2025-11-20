@@ -96,10 +96,13 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         final UUID reportUuid = UUID.fromString("22222222-2222-2222-2222-222222222222");
         final UUID resultUuid = UUID.fromString("33333333-3333-3333-3333-333333333333");
         final String reporterId = "44444444-4444-4444-4444-444444444444";
-        final ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, null, null,
-                new ShortCircuitParametersValues(null, null, null, null), null, new ReportInfos(reportUuid, reporterId, "AllBusesShortCircuitAnalysis"), null,
-                ShortCircuitParametersConstants.DEFAULT_PROVIDER, // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-                null, false, null);
+        final ShortCircuitRunContext runContext = ShortCircuitRunContext.builder()
+            .networkUuid(networkUuid)
+            .parameters(ShortCircuitParametersValues.builder().build())
+            .reportInfos(new ReportInfos(reportUuid, reporterId, "AllBusesShortCircuitAnalysis"))
+            .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER) // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+            .debug(false)
+            .build();
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);
         final Network.BusView busViewMocked = Mockito.mock(Network.BusView.class);
         ReportNode reportNode = ReportNode.newRootReportNode()

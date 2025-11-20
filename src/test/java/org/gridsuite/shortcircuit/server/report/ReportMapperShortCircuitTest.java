@@ -47,8 +47,16 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
                 beansInit.powsyblAdnTwoWindingsTransformersSummary(),
                 new VoltageLevelsWithWrongIpValuesMapper()
         ));
-        this.runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParametersValues(null, null, null, null), null,
-                new ReportInfos(null, "reporterId", "reportType"), "userId", ShortCircuitParametersConstants.DEFAULT_PROVIDER, "busId", false, null);
+        this.runContext = ShortCircuitRunContext.builder()
+            .variantId("variantId")
+            .receiver("receiver")
+            .parameters(ShortCircuitParametersValues.builder().build())
+            .reportInfos(new ReportInfos(null, "reporterId", "reportType"))
+            .userId("userId")
+            .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
+            .busId("busId")
+            .debug(false)
+            .build();
     }
 
     @ParameterizedTest(name = "reporter_{0}.json")

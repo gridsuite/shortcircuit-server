@@ -68,7 +68,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
     @Test
     void testGetExistingParameters() throws Exception {
         final UUID arg = UUID.randomUUID();
-        final Optional<ShortCircuitParametersInfos> returned = Optional.of(new ShortCircuitParametersInfos(null, null, null));
+        final Optional<ShortCircuitParametersInfos> returned = Optional.of(ShortCircuitParametersInfos.builder().build());
         when(shortCircuitParametersService.getParameters(any(UUID.class))).thenReturn(returned);
         mockMvc.perform(get("/v1/parameters/{pUuid}", arg.toString()))
                .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().json(defaultParametersJson));
@@ -96,7 +96,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
                .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().string("\"" + returned + "\""));
         final ArgumentCaptor<ShortCircuitParametersInfos> dtoCaptor = ArgumentCaptor.forClass(ShortCircuitParametersInfos.class);
         verify(shortCircuitParametersService).createParameters(dtoCaptor.capture());
-        assertThat(dtoCaptor.getValue()).isEqualTo(new ShortCircuitParametersInfos(null, null, null));
+        assertThat(dtoCaptor.getValue()).isEqualTo(ShortCircuitParametersInfos.builder().build());
     }
 
     @Test
@@ -163,7 +163,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
         final ArgumentCaptor<ShortCircuitParametersInfos> dtoCaptor = ArgumentCaptor.forClass(ShortCircuitParametersInfos.class);
         verify(shortCircuitParametersService).updateParameters(uuidCaptor.capture(), dtoCaptor.capture());
         assertThat(uuidCaptor.getValue()).isEqualTo(arg1);
-        assertThat(dtoCaptor.getValue()).isEqualTo(new ShortCircuitParametersInfos(null, null, null));
+        assertThat(dtoCaptor.getValue()).isEqualTo(ShortCircuitParametersInfos.builder().build());
     }
 
     @MethodSource("testParametersArgs")
