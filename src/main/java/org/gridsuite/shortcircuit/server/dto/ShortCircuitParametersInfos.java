@@ -20,11 +20,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @since 1.7.0
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
 @Builder
 @Jacksonized
 public record ShortCircuitParametersInfos(
+    String provider,
     ShortCircuitPredefinedConfiguration predefinedParameters,
     ShortCircuitParameters commonParameters,
     Map<String, Map<String, String>> specificParametersPerProvider

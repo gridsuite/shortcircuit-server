@@ -13,6 +13,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,7 +45,7 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
 
     @Test
     void shouldSerializeCei909VoltageRanges() throws Exception {
-        final String jsonSerialized = objectMapper.writeValueAsString(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(), Collections.emptyMap()));
+        final String jsonSerialized = objectMapper.writeValueAsString(new ShortCircuitParametersInfos(ShortCircuitParametersConstants.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(), Collections.emptyMap()));
         JSONAssert.assertEquals(
             new JSONObject().put("predefinedParameters", ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909.toString())
                             .put("commonParameters", new JSONObject().put("version", "1.4"))

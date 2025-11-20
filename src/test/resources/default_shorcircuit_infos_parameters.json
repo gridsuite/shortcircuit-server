@@ -1,4 +1,5 @@
 {
+  "provider": "default-provider",
   "predefinedParameters": "ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP",
   "commonParameters": {
     "version": "1.4",

@@ -197,6 +197,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
             .ignoringFields("id")
             .isEqualTo(new ShortCircuitParametersEntity(ShortCircuitParametersInfos.builder()
+                .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
                 .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
                 .commonParameters(ShortCircuitParameters.load()
                     .setStudyType(StudyType.STEADY_STATE)
@@ -227,6 +228,7 @@ class ShortCircuitParametersITest implements WithAssertions {
     @Test
     void retrieveParameters() throws Exception {
         final UUID pUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
             .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
             .commonParameters(ShortCircuitParameters.load()
                 .setStudyType(StudyType.STEADY_STATE)
@@ -260,6 +262,7 @@ class ShortCircuitParametersITest implements WithAssertions {
     @Test
     void resetParameters() throws Exception {
         final UUID pUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
             .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
             .commonParameters(ShortCircuitParameters.load()
                 .setStudyType(StudyType.STEADY_STATE)
@@ -282,6 +285,7 @@ class ShortCircuitParametersITest implements WithAssertions {
     @Test
     void updateParameters() throws Exception {
         final UUID pUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
             .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
             .commonParameters(ShortCircuitParameters.load()
                 .setStudyType(StudyType.STEADY_STATE)
@@ -302,6 +306,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
             .ignoringFields("id")
             .isEqualTo(new ShortCircuitParametersEntity(ShortCircuitParametersInfos.builder()
+                .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
                 .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
                 .commonParameters(ShortCircuitParameters.load()
                     .setStudyType(StudyType.STEADY_STATE)
@@ -318,6 +323,7 @@ class ShortCircuitParametersITest implements WithAssertions {
     @Test
     void duplicateParameters() throws Exception {
         final ShortCircuitParametersInfos infos = ShortCircuitParametersInfos.builder()
+            .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
             .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909)
             .commonParameters(ShortCircuitParameters.load()
                 .setWithLimitViolations(false)

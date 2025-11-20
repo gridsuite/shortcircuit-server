@@ -85,7 +85,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         parameters.commonParameters().setDetailedReport(false);
         // set provider and parameters
         runContext.setParameters(parameters);
-        // runContext.setProvider(parameters.provider() != null ? parameters.provider() : getDefaultProvider());
+        runContext.setProvider(parameters.provider() != null ? parameters.provider() : getDefaultProvider());
         final UUID resultUuid = runContext.getResultUuid();
 
         // update status to running status

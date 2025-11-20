@@ -46,6 +46,7 @@ public class ShortCircuitParametersService {
     public ShortCircuitParametersInfos toShortCircuitParametersInfos(ShortCircuitParametersEntity entity) {
         Objects.requireNonNull(entity);
         return ShortCircuitParametersInfos.builder()
+            .provider(entity.getProvider())
             .predefinedParameters(entity.getPredefinedParameters())
             .commonParameters(entity.toShortCircuitParameters())
             .specificParametersPerProvider(entity.getSpecificParameters().stream()
@@ -73,7 +74,7 @@ public class ShortCircuitParametersService {
                 .predefinedParameters(entity.getPredefinedParameters())
                 .commonParameters(entity.toShortCircuitParameters())
                 .specificParameters(entity.getSpecificParameters().stream()
-                        .filter(p -> p.getProvider().equalsIgnoreCase(ShortCircuitParametersConstants.DEFAULT_PROVIDER))
+                        .filter(p -> p.getProvider().equalsIgnoreCase(entity.getProvider()))
                         .collect(Collectors.toMap(ShortCircuitSpecificParameterEntity::getName,
                                 ShortCircuitSpecificParameterEntity::getValue)))
                 .build();
@@ -81,8 +82,7 @@ public class ShortCircuitParametersService {
 
     @Transactional(readOnly = true)
     public Optional<ShortCircuitParametersValues> getParametersValues(UUID parametersUuid, String provider) {
-        // TODO replace when multiple providers support is added
-        return parametersRepository.findById(parametersUuid).map(this::toShortCircuitParametersValues);
+        return parametersRepository.findById(parametersUuid).map(entity -> toShortCircuitParametersValues(provider, entity));
     }
 
     public ShortCircuitParametersValues getParametersValues(UUID parametersUuid) {
@@ -149,5 +149,11 @@ public class ShortCircuitParametersService {
                             .toList();
                     return Pair.of(provider.getName(), params);
                 }).collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+    }
+
+    @Transactional(readOnly = true)
+    public String getProvider(UUID parametersUuid) {
+        // for now we have only one provider
+        return ShortCircuitParametersConstants.DEFAULT_PROVIDER;
     }
 }

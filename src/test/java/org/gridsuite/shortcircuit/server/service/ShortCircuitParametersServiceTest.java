@@ -13,6 +13,7 @@ import com.powsybl.shortcircuit.StudyType;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitSpecificParameterEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
@@ -69,6 +70,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     }
 
     private static void checkParametersEntityHasBeenRead(final ShortCircuitParametersEntity pEntity) {
+        verify(pEntity).getProvider();
         verify(pEntity).getPredefinedParameters();
         verify(pEntity).getSpecificParameters();
         verify(pEntity).toShortCircuitParameters();
@@ -95,12 +97,20 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     void testGetExistingParametersAndConversionToDto() {
         final UUID pUuid = UUID.randomUUID();
         final double minVoltDrop = new Random().nextDouble();
-        final ShortCircuitParametersEntity pEntity = spy(new ShortCircuitParametersEntity(pUuid, false, false, false, StudyType.STEADY_STATE, minVoltDrop,
-                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, false, false, false, false, InitialVoltageProfileMode.NOMINAL, Collections.emptyList()));
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder()
+            .id(pUuid)
+            .withLimitViolations(false)
+            .studyType(StudyType.STEADY_STATE)
+            .minVoltageDropProportionalThreshold(minVoltDrop)
+            .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909)
+            .withVscConverterStations(false)
+            .withNeutralPosition(false)
+            .build());
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         //can't spy call to fromEntity()
         assertThat(parametersService.getParameters(pUuid)).as("service call result")
                 .get().as("dto").usingRecursiveComparison().isEqualTo(new ShortCircuitParametersInfos(
+                        ShortCircuitParametersConstants.DEFAULT_PROVIDER,
                         ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters()
                             .setWithLimitViolations(false)
                             .setWithVoltageResult(false)
@@ -170,7 +180,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
         when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pEntity);
         //dto that must have differences with defaults
-        assertThat(parametersService.createParameters(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(), null)))
+        assertThat(parametersService.createParameters(new ShortCircuitParametersInfos(ShortCircuitParametersConstants.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(), null)))
                 .as("service call result").isEqualTo(pUuid);
         verify(pEntity).getId();
         verifyNoMoreInteractions(pEntity);
@@ -218,7 +228,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().id(pUuid).build());
         final ShortCircuitParameters pDtoUpdateParams = spy(new ShortCircuitParameters());
         //dto that must have differences with defaults
-        final ShortCircuitParametersInfos pDtoUpdateInfos = spy(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, pDtoUpdateParams, Collections.emptyMap()));
+        final ShortCircuitParametersInfos pDtoUpdateInfos = spy(new ShortCircuitParametersInfos(ShortCircuitParametersConstants.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, pDtoUpdateParams, Collections.emptyMap()));
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
 
         parametersService.updateParameters(pUuid, pDtoUpdateInfos);
@@ -228,6 +238,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         // verify we search the correct uid
         verify(parametersRepository).findById(pUuid);
         // verify DTO has been read
+        verify(pDtoUpdateInfos).provider();
         verify(pDtoUpdateInfos).commonParameters();
         verify(pDtoUpdateInfos).predefinedParameters();
         verify(pDtoUpdateInfos).specificParametersPerProvider();
@@ -254,8 +265,10 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         final ShortCircuitParametersInfos defaultInfos = parametersService.getDefaultParametersInfos();
         final ShortCircuitParametersEntity pEntity = spy(new ShortCircuitParametersEntity(defaultInfos).setId(pUuid));
         //entity that must have differences with defaults
-        final ShortCircuitParametersEntity pModifiedEntity = new ShortCircuitParametersEntity(pUuid, true, false, false, StudyType.TRANSIENT, 20.0,
-                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, false, false, true, true, InitialVoltageProfileMode.NOMINAL, null);
+        final ShortCircuitParametersEntity pModifiedEntity = ShortCircuitParametersEntity.builder()
+            .id(pUuid)
+            .withLimitViolations(false) // the diff
+            .build();
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
         parametersService.updateParameters(pUuid, null);
         // verify we search the correct uid
@@ -280,6 +293,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
 
         final ShortCircuitParameters params = new ShortCircuitParameters(); // keep default common params
         final ShortCircuitParametersInfos infos = new ShortCircuitParametersInfos(
+            ShortCircuitParametersConstants.DEFAULT_PROVIDER,
             ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
             params,
             specific
@@ -356,6 +370,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
             Collections.singletonMap("param", "value"));
 
         final ShortCircuitParametersInfos infos = new ShortCircuitParametersInfos(
+            ShortCircuitParametersConstants.DEFAULT_PROVIDER,
             ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
             new ShortCircuitParameters(),
             specific

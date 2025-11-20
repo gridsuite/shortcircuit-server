@@ -41,6 +41,10 @@ public class ShortCircuitParametersEntity {
     private UUID id;
 
     @Builder.Default
+    @Column(name = "provider")
+    private String provider = ShortCircuitParametersConstants.DEFAULT_PROVIDER;
+
+    @Builder.Default
     @Column(name = "withLimitViolations", nullable = false, columnDefinition = "boolean default true")
     private boolean withLimitViolations = true;
 
@@ -124,6 +128,7 @@ public class ShortCircuitParametersEntity {
                     }
                 });
             }
+            provider = shortCircuitParametersInfos.provider();
         }
         assignCommonValues(allCommonValues);
         assignSpecificValues(allSpecificValuesEntities);
