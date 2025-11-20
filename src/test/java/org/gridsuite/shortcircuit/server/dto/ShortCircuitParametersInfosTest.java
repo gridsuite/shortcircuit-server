@@ -74,7 +74,7 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
     static class TestConfig {
         @Bean
         public RestTemplateBuilder restTemplateBuilder() {
-            return new RestTemplateBuilder().detectRequestFactory(false);
+            return new RestTemplateBuilder();
         }
     }
 }
