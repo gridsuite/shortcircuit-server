@@ -6,6 +6,10 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.PlatformConfig;
+import com.powsybl.commons.extensions.Extension;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 
 import lombok.Builder;
@@ -56,6 +60,15 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
         if (getParameters() == null || getParameters().specificParameters() == null || getParameters().specificParameters().isEmpty()) {
             return params; // no specific ShortCircuit params
         }
+        ShortCircuitAnalysisProvider scProvider = ShortCircuitAnalysisProvider.findAll().stream()
+                .filter(p -> p.getName().equals(getProvider()))
+                .findFirst().orElseThrow(() -> new PowsyblException("ShortCircuit provider not found " + getProvider()));
+
+        Extension<ShortCircuitParameters> specificParametersExtension = scProvider.loadSpecificParameters(PlatformConfig.defaultConfig())
+                .orElseThrow(() -> new PowsyblException("Cannot add specific shortcircuit parameters with provider " + getProvider()));
+        params.addExtension((Class) specificParametersExtension.getClass(), specificParametersExtension);
+        scProvider.updateSpecificParameters(specificParametersExtension, getParameters().specificParameters());
+
         return params;
     }
 }
