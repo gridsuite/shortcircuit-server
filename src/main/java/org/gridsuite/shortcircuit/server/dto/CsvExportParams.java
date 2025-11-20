@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 @Builder
-public record CsvTranslation(
-    List<String> headersCsv,
+public record CsvExportParams(
+    List<String> csvHeader,
     Map<String, String> enumValueTranslations,
-    String language
+    String language,
+    boolean oneBusCase
 ) { }
