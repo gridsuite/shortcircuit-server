@@ -21,6 +21,7 @@ import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.core.io.Resource;
@@ -77,7 +78,7 @@ public class ShortCircuitController {
                 .parametersUuid(parametersUuid)
                 .busId(busId)
                 .debug(debug)
-                .provider("default-provider") // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+                .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER) // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
                 .build();
         return ResponseEntity.ok().contentType(APPLICATION_JSON).body(shortCircuitService.runAndSaveResult(shortCircuitRunContext));
     }

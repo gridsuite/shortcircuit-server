@@ -183,7 +183,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
 
     @Test
     void testGetSpecificParameters() throws Exception {
-        final String provider = "Courcirc_provider";
+        final String provider = "provider1";
         final Map<String, List<Parameter>> returned = Map.of(provider, List.of());
         try (var mocked = Mockito.mockStatic(ShortCircuitParametersService.class)) {
             mocked.when(() -> ShortCircuitParametersService.getSpecificShortCircuitParameters(Mockito.anyString())).thenReturn(returned);

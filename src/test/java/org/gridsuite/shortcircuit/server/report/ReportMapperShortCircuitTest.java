@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.report.mappers.VoltageLevelsWithWrongIpValuesMapper;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +48,7 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
                 new VoltageLevelsWithWrongIpValuesMapper()
         ));
         this.runContext = new ShortCircuitRunContext(null, "variantId", "receiver", new ShortCircuitParametersValues(null, null, null, null), null,
-                new ReportInfos(null, "reporterId", "reportType"), "userId", "default-provider", "busId", false, null);
+                new ReportInfos(null, "reporterId", "reportType"), "userId", ShortCircuitParametersConstants.DEFAULT_PROVIDER, "busId", false, null);
     }
 
     @ParameterizedTest(name = "reporter_{0}.json")

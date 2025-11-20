@@ -11,6 +11,7 @@ import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 import lombok.NonNull;
 
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -51,7 +52,7 @@ public final class TestUtils {
             null,
             null,
             null,
-            "default-provider",  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+            ShortCircuitParametersConstants.DEFAULT_PROVIDER,  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
             null,
             false,
             null

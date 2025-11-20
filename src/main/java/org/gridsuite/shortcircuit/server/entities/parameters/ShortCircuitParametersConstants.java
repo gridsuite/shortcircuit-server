@@ -14,6 +14,9 @@ import java.util.List;
  * Shared constants for short circuit parameters.
  */
 public final class ShortCircuitParametersConstants {
+
+    public static final String DEFAULT_PROVIDER = "default-provider";
+
     // This voltage intervals' definition is not clean and we could potentially lose some buses.
     // To be cleaned when VoltageRange uses intervals that are open on the right.
     // TODO: to be moved to RTE private config or to powsybl-rte-core

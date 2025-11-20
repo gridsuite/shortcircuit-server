@@ -17,6 +17,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitSpecificParameterEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
@@ -68,11 +69,11 @@ public class ShortCircuitParametersService {
 
     public ShortCircuitParametersValues toShortCircuitParametersValues(ShortCircuitParametersEntity entity) {
         return ShortCircuitParametersValues.builder()
-                .provider("default-provider")
+                .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
                 .predefinedParameters(entity.getPredefinedParameters())
                 .commonParameters(entity.toShortCircuitParameters())
                 .specificParameters(entity.getSpecificParameters().stream()
-                        .filter(p -> p.getProvider().equalsIgnoreCase("default-provider"))
+                        .filter(p -> p.getProvider().equalsIgnoreCase(ShortCircuitParametersConstants.DEFAULT_PROVIDER))
                         .collect(Collectors.toMap(ShortCircuitSpecificParameterEntity::getName,
                                 ShortCircuitSpecificParameterEntity::getValue)))
                 .build();
