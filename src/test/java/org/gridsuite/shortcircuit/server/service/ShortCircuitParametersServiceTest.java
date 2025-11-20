@@ -263,7 +263,9 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     void testResetExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
         final ShortCircuitParametersInfos defaultInfos = parametersService.getDefaultParametersInfos();
-        final ShortCircuitParametersEntity pEntity = spy(new ShortCircuitParametersEntity(defaultInfos).setId(pUuid));
+        final ShortCircuitParametersEntity entity = new ShortCircuitParametersEntity(defaultInfos);
+        entity.setId(pUuid);
+        final ShortCircuitParametersEntity pEntity = spy(entity);
         //entity that must have differences with defaults
         final ShortCircuitParametersEntity pModifiedEntity = ShortCircuitParametersEntity.builder()
             .id(pUuid)

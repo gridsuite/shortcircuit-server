@@ -12,7 +12,6 @@ import com.powsybl.shortcircuit.StudyType;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.Accessors;
 
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
@@ -28,7 +27,6 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Accessors(chain = true)
 @Getter
 @Setter
 @Entity

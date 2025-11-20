@@ -109,7 +109,7 @@ class ShortCircuitParametersITest implements WithAssertions {
 
     @Test
     void runAnalysisWithParameters() throws Exception {
-        final UUID parametersUuid = parametersRepository.save(new ShortCircuitParametersEntity().setMinVoltageDropProportionalThreshold(42.0)).getId();
+        final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder().minVoltageDropProportionalThreshold(42.0).build()).getId();
         runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, someParametersValuesJson);
     }
 
@@ -343,12 +343,16 @@ class ShortCircuitParametersITest implements WithAssertions {
                 content().contentType(MediaType.APPLICATION_JSON),
                 content().string(matchesPattern(TestUtils.UUID_IN_JSON))
             ).andReturn().getResponse().getContentAsByteArray(), UUID.class);
+        final ShortCircuitParametersEntity originalEntity = infos.toEntity();
+        originalEntity.setId(pUuid);
+        final ShortCircuitParametersEntity duplicatedEntity = infos.toEntity();
+        duplicatedEntity.setId(pUuidDuplicated);
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
             .ignoringCollectionOrder()
             .isEqualTo(List.of(
-                infos.toEntity().setId(pUuid),
-                infos.toEntity().setId(pUuidDuplicated)
+                originalEntity,
+                duplicatedEntity
             ));
     }
 
