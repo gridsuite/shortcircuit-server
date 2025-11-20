@@ -125,10 +125,6 @@ public class ShortCircuitParametersService {
         return toShortCircuitParametersInfos(new ShortCircuitParametersEntity());
     }
 
-    public ShortCircuitParametersValues getDefaultParametersValues(String provider) {
-        return toShortCircuitParametersValues(provider, new ShortCircuitParametersEntity());
-    }
-
     @Transactional
     public void updateParameters(UUID parametersUuid, ShortCircuitParametersInfos parametersInfos) {
         ShortCircuitParametersEntity shortCircuitParametersEntity = parametersRepository.findById(parametersUuid).orElseThrow();
