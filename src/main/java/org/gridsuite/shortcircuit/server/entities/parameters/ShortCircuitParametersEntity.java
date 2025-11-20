@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
 @Builder
 @NoArgsConstructor

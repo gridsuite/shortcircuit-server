@@ -11,7 +11,7 @@ import lombok.Builder;
 import java.util.Map;
 
 /**
- * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
 @Builder
 public record ShortCircuitParametersValues(

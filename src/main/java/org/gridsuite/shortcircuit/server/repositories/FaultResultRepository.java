@@ -20,7 +20,7 @@ import java.util.UUID;
 
 
 /**
- * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
 @Repository
 public interface FaultResultRepository extends JpaRepository<FaultResultEntity, UUID>, JpaSpecificationExecutor<FaultResultEntity> {
