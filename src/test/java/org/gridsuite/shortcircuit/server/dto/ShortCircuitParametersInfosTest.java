@@ -21,14 +21,18 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.test.context.ContextConfiguration;
 
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.CEI909_VOLTAGE_PROFILE;
 
-@ContextConfiguration(classes = { RestTemplateConfig.class, ShortCircuitParametersInfosTest.TestConfig.class })
+@ContextConfiguration(classes = {RestTemplateConfig.class})
+//NOTE: this surprises given the name AutoConfigureWebClient, but this is not actually web clients,
+// it is builders for webclients, and it's not just webflux webclient,
+// it's also resttemplatebuilder that we need.
+// And other builders are also registered but without consequences, they're just unused.
+// In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
+@AutoConfigureWebClient
 @JsonTest
 class ShortCircuitParametersInfosTest implements WithAssertions {
     private static final String DUMB_JSON = "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.4\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
@@ -69,12 +73,4 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
             .isThrownBy(() -> objectMapper.readValue("{" + DUMB_JSON + "}", ShortCircuitParametersInfos.class));
     }
 
-    // Needed to get a RestTemplateBuilder since we don't use the sprintboot context in this test class
-    @Configuration
-    static class TestConfig {
-        @Bean
-        public RestTemplateBuilder restTemplateBuilder() {
-            return new RestTemplateBuilder();
-        }
-    }
 }
