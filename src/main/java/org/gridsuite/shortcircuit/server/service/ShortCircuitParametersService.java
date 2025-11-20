@@ -32,7 +32,7 @@ import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 import lombok.NonNull;
 
 /**
- * @author Sylvain BOUZOLS <sylvain.bouzols at rte-france.com>
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
  */
 @Service
 public class ShortCircuitParametersService {

@@ -20,9 +20,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * @author Sylvain BOUZOLS <sylvain.bouzols at rte-france.com>
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
  */
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

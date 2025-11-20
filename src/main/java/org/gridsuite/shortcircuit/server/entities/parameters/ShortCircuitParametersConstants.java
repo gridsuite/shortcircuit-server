@@ -12,6 +12,7 @@ import java.util.List;
 
 /**
  * Shared constants for short circuit parameters.
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
  */
 public final class ShortCircuitParametersConstants {
 

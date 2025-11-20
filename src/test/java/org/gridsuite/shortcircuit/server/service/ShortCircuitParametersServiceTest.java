@@ -38,6 +38,9 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com
+ */
 @ExtendWith({ MockitoExtension.class })
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
