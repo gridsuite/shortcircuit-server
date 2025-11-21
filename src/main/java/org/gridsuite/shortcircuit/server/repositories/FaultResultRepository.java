@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,6 +36,8 @@ public interface FaultResultRepository extends JpaRepository<FaultResultEntity, 
 
     @Query(value = "SELECT faultResultUuid FROM FaultResultEntity WHERE result.resultUuid = ?1")
     Set<UUID> findAllFaultResultUuidsByShortCircuitResultUuid(UUID resultUuid);
+
+    List<FaultResultEntity> findAllByResultResultUuidAndFaultVoltageLevelId(UUID resultUuid, String voltageLevelId);
 
     // From: https://www.baeldung.com/spring-data-jpa-deleteby
     // "The @Query method creates a single SQL query against the database. By comparison, the deleteBy methods execute a read query, then delete each of the items one by one."
