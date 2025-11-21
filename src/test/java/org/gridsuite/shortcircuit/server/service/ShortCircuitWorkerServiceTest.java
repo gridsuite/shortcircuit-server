@@ -22,7 +22,7 @@ import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
-import org.gridsuite.computation.ComputationException;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.ExecutionService;
 import org.gridsuite.computation.service.NotificationService;

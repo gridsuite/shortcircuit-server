@@ -17,7 +17,7 @@ import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.computation.ComputationException;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.s3.ComputationS3Service;
@@ -48,8 +48,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.gridsuite.computation.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
-import static org.gridsuite.computation.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
+import static org.gridsuite.computation.error.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
+import static org.gridsuite.computation.error.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
 
 /**
