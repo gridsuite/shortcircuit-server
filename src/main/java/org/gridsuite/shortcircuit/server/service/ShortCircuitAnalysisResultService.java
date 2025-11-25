@@ -446,6 +446,10 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         return pageable;
     }
 
+    public List<FaultResultEntity> getFaultResultByVoltageLevelId(UUID resultUuid, String voltageLevelId) {
+        return faultResultRepository.findAllByResultResultUuidAndFaultVoltageLevelId(resultUuid, voltageLevelId);
+    }
+
     @Override
     @Transactional
     public void saveDebugFileLocation(UUID resultUuid, String debugFilePath) {
