@@ -213,4 +213,11 @@ public class ShortCircuitController {
         return shortCircuitService.downloadDebugFile(resultUuid);
     }
 
+    @GetMapping(value = "/default-provider", produces = TEXT_PLAIN_VALUE)
+    @Operation(summary = "Get shortcircuit default provider")
+    @ApiResponses(@ApiResponse(responseCode = "200", description = "The short circuit default provider has been found"))
+    public ResponseEntity<String> getDefaultShortCircuitProvider() {
+        return ResponseEntity.ok().body(shortCircuitService.getDefaultProvider());
+    }
+
 }

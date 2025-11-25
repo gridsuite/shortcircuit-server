@@ -27,6 +27,7 @@ import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParamet
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -68,8 +69,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                                ComputationS3Service computationS3Service,
                                final FilterService filterService,
                                final ShortCircuitParametersService parametersService,
+                               @Value("${shortcircuit-analysis.default-provider}") String defaultProvider,
                                final ObjectMapper objectMapper) {
-        super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, null);
+        super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, defaultProvider);
         this.filterService = filterService;
         this.parametersService = parametersService;
     }
@@ -80,7 +82,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         Objects.requireNonNull(runContext);
         ShortCircuitParametersValues parameters = runContext.getParametersUuid() != null
             ? parametersService.getParametersValues(runContext.getParametersUuid())
-            : parametersService.toShortCircuitParametersValues(new ShortCircuitParametersEntity());
+            : parametersService.toShortCircuitParametersValues(ShortCircuitParametersEntity.builder().provider(getDefaultProvider()).build());
         parameters.commonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
         parameters.commonParameters().setDetailedReport(false);
         // set provider and parameters

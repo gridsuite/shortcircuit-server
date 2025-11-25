@@ -53,7 +53,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     @BeforeAll
     void setup() {
         this.parametersRepository = mock(ParametersRepository.class);
-        this.parametersService = new ShortCircuitParametersService(parametersRepository);
+        this.parametersService = new ShortCircuitParametersService(parametersRepository, ShortCircuitParametersConstants.DEFAULT_PROVIDER);
     }
 
     @AfterEach

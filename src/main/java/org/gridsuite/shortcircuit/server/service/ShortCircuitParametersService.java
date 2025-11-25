@@ -17,10 +17,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
-import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitSpecificParameterEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,8 +39,12 @@ public class ShortCircuitParametersService {
 
     private final ParametersRepository parametersRepository;
 
-    public ShortCircuitParametersService(@NonNull ParametersRepository shortCircuitParametersRepository) {
+    private final String defaultProvider;
+
+    public ShortCircuitParametersService(@NonNull ParametersRepository shortCircuitParametersRepository,
+            @Value("${shortcircuit-analysis.default-provider}") String defaultProvider) {
         this.parametersRepository = shortCircuitParametersRepository;
+        this.defaultProvider = defaultProvider;
     }
 
     public ShortCircuitParametersInfos toShortCircuitParametersInfos(ShortCircuitParametersEntity entity) {
@@ -70,7 +74,7 @@ public class ShortCircuitParametersService {
 
     public ShortCircuitParametersValues toShortCircuitParametersValues(ShortCircuitParametersEntity entity) {
         return ShortCircuitParametersValues.builder()
-                .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER)
+                .provider(entity.getProvider())
                 .predefinedParameters(entity.getPredefinedParameters())
                 .commonParameters(entity.toShortCircuitParameters())
                 .specificParameters(entity.getSpecificParameters().stream()
@@ -118,7 +122,7 @@ public class ShortCircuitParametersService {
     }
 
     public UUID createDefaultParameters() {
-        return parametersRepository.save(new ShortCircuitParametersEntity()).getId();
+        return parametersRepository.save(ShortCircuitParametersEntity.builder().provider(defaultProvider).build()).getId();
     }
 
     public ShortCircuitParametersInfos getDefaultParametersInfos() {
@@ -149,7 +153,6 @@ public class ShortCircuitParametersService {
 
     @Transactional(readOnly = true)
     public String getProvider(UUID parametersUuid) {
-        // for now we have only one provider
-        return ShortCircuitParametersConstants.DEFAULT_PROVIDER;
+        return parametersRepository.findById(parametersUuid).map(ShortCircuitParametersEntity::getProvider).orElseThrow();
     }
 }
