@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server;
 
+import org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 

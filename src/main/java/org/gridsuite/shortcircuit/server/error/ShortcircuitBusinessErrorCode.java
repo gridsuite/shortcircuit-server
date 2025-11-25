@@ -1,4 +1,4 @@
-package org.gridsuite.shortcircuit.server;
+package org.gridsuite.shortcircuit.server.error;
 
 import com.powsybl.ws.commons.error.BusinessErrorCode;
 

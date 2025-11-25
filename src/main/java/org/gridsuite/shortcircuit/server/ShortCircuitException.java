@@ -9,6 +9,7 @@ package org.gridsuite.shortcircuit.server;
 import com.powsybl.ws.commons.error.AbstractBusinessException;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode;
 
 import java.util.Objects;
 

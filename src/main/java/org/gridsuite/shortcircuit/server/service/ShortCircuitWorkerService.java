@@ -30,9 +30,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.shortcircuit.server.ShortcircuitBusinessErrorCode.BUS_OUT_OF_VOLTAGE;
-import static org.gridsuite.shortcircuit.server.ShortcircuitBusinessErrorCode.INCONSISTENT_VOLTAGE_LEVELS;
-import static org.gridsuite.shortcircuit.server.ShortcircuitBusinessErrorCode.MISSING_EXTENSION_DATA;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.BUS_OUT_OF_VOLTAGE;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.INCONSISTENT_VOLTAGE_LEVELS;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.MISSING_EXTENSION_DATA;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
