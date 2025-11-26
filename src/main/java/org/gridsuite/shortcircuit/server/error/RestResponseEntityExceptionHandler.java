@@ -7,7 +7,7 @@
 package org.gridsuite.shortcircuit.server.error;
 
 import com.powsybl.ws.commons.error.ServerNameProvider;
-import org.gridsuite.computation.error.TypedComputationRestResponseEntityExceptionHandler;
+import org.gridsuite.computation.error.AbstractTypedComputationRestResponseEntityExceptionHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
  */
 
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler extends TypedComputationRestResponseEntityExceptionHandler<ShortcircuitBusinessErrorCode> {
+public class RestResponseEntityExceptionHandler extends AbstractTypedComputationRestResponseEntityExceptionHandler<ShortcircuitBusinessErrorCode> {
     protected RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
         super(serverNameProvider, ShortcircuitBusinessErrorCode.class);
     }
