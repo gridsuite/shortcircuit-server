@@ -290,6 +290,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return null;
     }
 
+    public Map<String, Double> getBasicResultForSpecificEquipment(UUID resultUuid, String voltageLevelId) {
+        return resultService.getFaultResultByVoltageLevelId(resultUuid, voltageLevelId).stream().collect(Collectors.toMap(fr -> fr.getFault().getElementId(), FaultResultEntity::getCurrent));
+    }
+
     @Transactional(readOnly = true)
     public Page<FaultResult> getFaultResultsPage(UUID rootNetworkUuid,
                                                  String variantId,
