@@ -42,7 +42,7 @@ public class ShortCircuitParametersService {
     private final String defaultProvider;
 
     public ShortCircuitParametersService(@NonNull ParametersRepository shortCircuitParametersRepository,
-            @Value("${shortcircuit-analysis.default-provider}") String defaultProvider) {
+            @Value("${shortcircuit-analysis.default-provider:#{T(org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants).DEFAULT_PROVIDER}}") String defaultProvider) {
         this.parametersRepository = shortCircuitParametersRepository;
         this.defaultProvider = defaultProvider;
     }

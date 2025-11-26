@@ -60,5 +60,3 @@ powsybl-ws:
     customQuery: ${powsybl-ws.database.customQueryBegin}reWriteBatchedInserts=true
     name: shortcircuit
 
-shortcircuit-analysis:
-  default-provider: default-provider

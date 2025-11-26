@@ -69,7 +69,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                                ComputationS3Service computationS3Service,
                                final FilterService filterService,
                                final ShortCircuitParametersService parametersService,
-                               @Value("${shortcircuit-analysis.default-provider}") String defaultProvider,
+                               @Value("${shortcircuit-analysis.default-provider:#{T(org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants).DEFAULT_PROVIDER}}") String defaultProvider,
                                final ObjectMapper objectMapper) {
         super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, defaultProvider);
         this.filterService = filterService;
