@@ -7,18 +7,22 @@
 package org.gridsuite.shortcircuit.server.error;
 
 import com.powsybl.ws.commons.error.AbstractBusinessExceptionHandler;
+import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 import com.powsybl.ws.commons.error.ServerNameProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 /**
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
  */
 
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler extends AbstractBusinessExceptionHandler<ShortCircuitException, ShortcircuitBusinessErrorCode> {
-    protected RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
+public class ShortcircuitExceptionHandler extends AbstractBusinessExceptionHandler<ShortCircuitException, ShortcircuitBusinessErrorCode> {
+    protected ShortcircuitExceptionHandler(ServerNameProvider serverNameProvider) {
         super(serverNameProvider);
     }
 
@@ -33,5 +37,11 @@ public class RestResponseEntityExceptionHandler extends AbstractBusinessExceptio
             case BUS_OUT_OF_VOLTAGE, INCONSISTENT_VOLTAGE_LEVELS, MISSING_EXTENSION_DATA ->
                     HttpStatus.INTERNAL_SERVER_ERROR;
         };
+    }
+
+    @ExceptionHandler(ShortCircuitException.class)
+    protected ResponseEntity<PowsyblWsProblemDetail> handleShortcircuitException(
+            ShortCircuitException exception, HttpServletRequest request) {
+        return super.handleDomainException(exception, request);
     }
 }

@@ -8,7 +8,7 @@ package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.ws.commons.error.BaseExceptionHandler;
-import org.gridsuite.computation.error.ComputationRestResponseEntityExceptionHandler;
+import org.gridsuite.computation.error.ComputationExceptionHandler;
 import org.gridsuite.computation.service.NotificationService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
-@SpringBootApplication(scanBasePackageClasses = {ShortCircuitApplication.class, NetworkStoreService.class, NotificationService.class, ComputationRestResponseEntityExceptionHandler.class, BaseExceptionHandler.class})
+@SpringBootApplication(scanBasePackageClasses = {ShortCircuitApplication.class, NetworkStoreService.class, NotificationService.class, ComputationExceptionHandler.class, BaseExceptionHandler.class})
 public class ShortCircuitApplication {
     public static void main(String[] args) {
         SpringApplication.run(ShortCircuitApplication.class, args);
