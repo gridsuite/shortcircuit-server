@@ -26,7 +26,7 @@ public class RestResponseEntityExceptionHandler extends AbstractBusinessExceptio
     protected @NonNull ShortcircuitBusinessErrorCode getBusinessCode(ShortCircuitException e) {
         return e.getBusinessErrorCode();
     }
-    
+
     @Override
     protected HttpStatus mapStatus(ShortcircuitBusinessErrorCode businessErrorCode) {
         return switch (businessErrorCode) {
