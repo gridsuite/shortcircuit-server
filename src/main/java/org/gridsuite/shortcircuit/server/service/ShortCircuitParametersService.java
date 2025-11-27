@@ -29,6 +29,7 @@ import com.powsybl.commons.parameters.Parameter;
 import com.powsybl.commons.parameters.ParameterScope;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 
+import lombok.Getter;
 import lombok.NonNull;
 
 /**
@@ -39,6 +40,7 @@ public class ShortCircuitParametersService {
 
     private final ParametersRepository parametersRepository;
 
+    @Getter
     private final String defaultProvider;
 
     public ShortCircuitParametersService(@NonNull ParametersRepository shortCircuitParametersRepository,
@@ -122,11 +124,11 @@ public class ShortCircuitParametersService {
     }
 
     public UUID createDefaultParameters() {
-        return parametersRepository.save(ShortCircuitParametersEntity.builder().provider(defaultProvider).build()).getId();
+        return parametersRepository.save(ShortCircuitParametersEntity.builder().provider(getDefaultProvider()).build()).getId();
     }
 
     public ShortCircuitParametersInfos getDefaultParametersInfos() {
-        return toShortCircuitParametersInfos(ShortCircuitParametersEntity.builder().provider(defaultProvider).build());
+        return toShortCircuitParametersInfos(ShortCircuitParametersEntity.builder().provider(getDefaultProvider()).build());
     }
 
     @Transactional
