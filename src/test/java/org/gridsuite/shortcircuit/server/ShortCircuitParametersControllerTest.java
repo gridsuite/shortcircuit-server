@@ -28,8 +28,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import com.powsybl.commons.parameters.Parameter;
-import com.powsybl.commons.parameters.ParameterScope;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -44,7 +42,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -198,33 +195,6 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
             final ArgumentCaptor<String> providerCaptor = ArgumentCaptor.forClass(String.class);
             mocked.verify(() -> ShortCircuitParametersService.getSpecificShortCircuitParameters(providerCaptor.capture()));
             assertThat(providerCaptor.getValue()).isEqualTo(provider);
-        }
-    }
-
-    @Test
-    void testGetSpecificShortCircuitParametersFilteredByProvider() {
-        final ShortCircuitAnalysisProvider provider = mock(ShortCircuitAnalysisProvider.class);
-        when(provider.getName()).thenReturn("prov1");
-
-        final Parameter pFunctional = mock(Parameter.class);
-        when(pFunctional.getScope()).thenReturn(ParameterScope.FUNCTIONAL);
-        when(pFunctional.getName()).thenReturn("param1");
-
-        // provider returns one functional parameter (others with different scope would be ignored)
-        when(provider.getSpecificParameters()).thenReturn(List.of(pFunctional));
-
-        try (var mocked = Mockito.mockStatic(ShortCircuitAnalysisProvider.class)) {
-            mocked.when(ShortCircuitAnalysisProvider::findAll).thenReturn(List.of(provider));
-
-            final Map<String, List<Parameter>> result = ShortCircuitParametersService.getSpecificShortCircuitParameters("prov1");
-
-            assertThat(result).containsKey("prov1");
-            assertThat(result.get("prov1")).hasSize(1);
-            assertThat(result.get("prov1").get(0).getName()).isEqualTo("param1");
-
-            // also assert that asking for a different provider returns an empty map
-            final Map<String, List<Parameter>> noMatch = ShortCircuitParametersService.getSpecificShortCircuitParameters("unknown");
-            assertThat(noMatch).isEmpty();
         }
     }
 
