@@ -6,8 +6,9 @@
  */
 package org.gridsuite.shortcircuit.server.error;
 
+import com.powsybl.ws.commons.error.AbstractBusinessExceptionHandler;
 import com.powsybl.ws.commons.error.ServerNameProvider;
-import org.gridsuite.computation.error.AbstractTypedComputationRestResponseEntityExceptionHandler;
+import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
@@ -16,13 +17,18 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
  */
 
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler extends AbstractTypedComputationRestResponseEntityExceptionHandler<ShortcircuitBusinessErrorCode> {
+public class RestResponseEntityExceptionHandler extends AbstractBusinessExceptionHandler<ShortCircuitException, ShortcircuitBusinessErrorCode> {
     protected RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
-        super(serverNameProvider, ShortcircuitBusinessErrorCode.class);
+        super(serverNameProvider);
     }
 
     @Override
-    protected HttpStatus mapSpecificStatus(ShortcircuitBusinessErrorCode businessErrorCode) {
+    protected @NonNull ShortcircuitBusinessErrorCode getBusinessCode(ShortCircuitException e) {
+        return e.getBusinessErrorCode();
+    }
+    
+    @Override
+    protected HttpStatus mapStatus(ShortcircuitBusinessErrorCode businessErrorCode) {
         return switch (businessErrorCode) {
             case BUS_OUT_OF_VOLTAGE, INCONSISTENT_VOLTAGE_LEVELS, MISSING_EXTENSION_DATA ->
                     HttpStatus.INTERNAL_SERVER_ERROR;
