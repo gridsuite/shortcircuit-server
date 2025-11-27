@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
-@SpringBootApplication(scanBasePackageClasses = { ShortCircuitApplication.class, NetworkStoreService.class, NotificationService.class, ComputationRestResponseEntityExceptionHandler.class, BaseExceptionHandler.class  })
+@SpringBootApplication(scanBasePackageClasses = {ShortCircuitApplication.class, NetworkStoreService.class, NotificationService.class, ComputationRestResponseEntityExceptionHandler.class, BaseExceptionHandler.class})
 public class ShortCircuitApplication {
     public static void main(String[] args) {
         SpringApplication.run(ShortCircuitApplication.class, args);
