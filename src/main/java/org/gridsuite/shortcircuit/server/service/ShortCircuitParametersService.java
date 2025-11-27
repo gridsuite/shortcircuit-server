@@ -126,7 +126,7 @@ public class ShortCircuitParametersService {
     }
 
     public ShortCircuitParametersInfos getDefaultParametersInfos() {
-        return toShortCircuitParametersInfos(new ShortCircuitParametersEntity());
+        return toShortCircuitParametersInfos(ShortCircuitParametersEntity.builder().provider(defaultProvider).build());
     }
 
     @Transactional
