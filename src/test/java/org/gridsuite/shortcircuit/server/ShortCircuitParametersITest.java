@@ -35,6 +35,7 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -374,5 +375,25 @@ class ShortCircuitParametersITest implements WithAssertions {
             Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, UUID.randomUUID().toString()), status().isNotFound()),
             Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound())
         );
+    }
+
+    @Test
+    void testgetProvider() throws Exception {
+        UUID parametersUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider("SC_PROVIDER")
+            .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+            .commonParameters(ShortCircuitParameters.load()
+                .setStudyType(StudyType.STEADY_STATE)
+                .setMinVoltageDropProportionalThreshold(Math.PI)
+            )
+            .specificParametersPerProvider(Map.of())
+            .build());
+
+        MvcResult result = mockMvc.perform(get(
+                        "/v1/parameters/{parametersUuid}/provider", parametersUuid))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertThat(result.getResponse().getContentAsString()).isEqualTo("SC_PROVIDER");
     }
 }
