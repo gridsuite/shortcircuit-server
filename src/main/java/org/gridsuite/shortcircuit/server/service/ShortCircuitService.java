@@ -23,7 +23,6 @@ import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
-import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +68,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                                ComputationS3Service computationS3Service,
                                final FilterService filterService,
                                final ShortCircuitParametersService parametersService,
-                               @Value("${shortcircuit-analysis.default-provider:#{T(org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants).DEFAULT_PROVIDER}}") String defaultProvider,
+                               @Value("${shortcircuit-analysis.default-provider}") String defaultProvider,
                                final ObjectMapper objectMapper) {
         super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, defaultProvider);
         this.filterService = filterService;
@@ -82,7 +81,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         Objects.requireNonNull(runContext);
         ShortCircuitParametersValues parameters = runContext.getParametersUuid() != null
             ? parametersService.getParametersValues(runContext.getParametersUuid())
-            : parametersService.toShortCircuitParametersValues(ShortCircuitParametersEntity.builder().provider(getDefaultProvider()).build());
+            : parametersService.getDefaultParametersValues();
         parameters.commonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
         parameters.commonParameters().setDetailedReport(false);
         // set provider and parameters

@@ -44,7 +44,7 @@ public class ShortCircuitParametersService {
     private final String defaultProvider;
 
     public ShortCircuitParametersService(@NonNull ParametersRepository shortCircuitParametersRepository,
-            @Value("${shortcircuit-analysis.default-provider:#{T(org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants).DEFAULT_PROVIDER}}") String defaultProvider) {
+            @Value("${shortcircuit-analysis.default-provider}") String defaultProvider) {
         this.parametersRepository = shortCircuitParametersRepository;
         this.defaultProvider = defaultProvider;
     }
@@ -123,12 +123,20 @@ public class ShortCircuitParametersService {
         return parametersRepository.save(parameters.toEntity()).getId();
     }
 
+    private ShortCircuitParametersEntity getDefaultEntity() {
+        return ShortCircuitParametersEntity.builder().provider(getDefaultProvider()).build();
+    }
+
     public UUID createDefaultParameters() {
-        return parametersRepository.save(ShortCircuitParametersEntity.builder().provider(getDefaultProvider()).build()).getId();
+        return parametersRepository.save(getDefaultEntity()).getId();
     }
 
     public ShortCircuitParametersInfos getDefaultParametersInfos() {
-        return toShortCircuitParametersInfos(ShortCircuitParametersEntity.builder().provider(getDefaultProvider()).build());
+        return toShortCircuitParametersInfos(getDefaultEntity());
+    }
+
+    public ShortCircuitParametersValues getDefaultParametersValues() {
+        return toShortCircuitParametersValues(getDefaultEntity());
     }
 
     @Transactional

@@ -30,7 +30,6 @@ import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.ReportService;
 import org.gridsuite.shortcircuit.server.TestUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
-import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,7 +99,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
             .networkUuid(networkUuid)
             .parameters(ShortCircuitParametersValues.builder().build())
             .reportInfos(new ReportInfos(reportUuid, reporterId, "AllBusesShortCircuitAnalysis"))
-            .provider(ShortCircuitParametersConstants.DEFAULT_PROVIDER) // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+            .provider(TestUtils.DEFAULT_PROVIDER) // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
             .debug(false)
             .build();
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);

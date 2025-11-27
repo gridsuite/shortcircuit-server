@@ -38,9 +38,8 @@ public class ShortCircuitParametersEntity {
     @Column(name = "id")
     private UUID id;
 
-    @Builder.Default
     @Column(name = "provider")
-    private String provider = ShortCircuitParametersConstants.DEFAULT_PROVIDER;
+    private String provider;
 
     @Builder.Default
     @Column(name = "withLimitViolations", nullable = false, columnDefinition = "boolean default true")
