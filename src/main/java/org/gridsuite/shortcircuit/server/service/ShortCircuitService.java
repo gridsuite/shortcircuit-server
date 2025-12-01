@@ -210,12 +210,81 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return nf.format(value);
     }
 
-    public static byte[] exportToCsv(ShortCircuitAnalysisResult result, List<String> headersList, Map<String, String> enumValueTranslations, String language) {
+    private void addLimitsRow(CsvWriter csvWriter, FaultResult faultResult, CsvExportParams csvExportParams, int faultNumber) {
+        String language = csvExportParams.language();
+        Map<String, String> enumValueTranslations = csvExportParams.enumValueTranslations();
+        String faultResultId = faultResult.getFault().getId();
+        double faultCurrentValue = (faultNumber == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent()) / 1000.0;
+        String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : convertDoubleToLocale(faultCurrentValue, language);
+
+        // Process faultResult data
+        List<String> faultRowData = new ArrayList<>(List.of(
+                faultResultId,
+                faultResult.getFault().getVoltageLevelId() != null ? faultResult.getFault().getVoltageLevelId() : "",
+                enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
+                "", // feeder
+                faultCurrentValueStr // Isc
+        ));
+        if (csvExportParams.oneBusCase()) {
+            faultRowData.add(""); // side (extra 1-bus mode column)
+        }
+        // limit type column (N comma-separated values)
+        List<LimitViolation> limitViolations = faultResult.getLimitViolations();
+        if (!limitViolations.isEmpty()) {
+            String limitTypes = limitViolations.stream()
+                    .map(LimitViolation::getLimitType)
+                    .map(type -> enumValueTranslations.getOrDefault(type, ""))
+                    .collect(Collectors.joining(", "));
+            faultRowData.add(limitTypes);
+        } else {
+            faultRowData.add("");
+        }
+
+        ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
+        faultRowData.addAll(List.of(
+                convertDoubleToLocale(shortCircuitLimits.getIpMin() / 1000.0, language),
+                convertDoubleToLocale(shortCircuitLimits.getIpMax() / 1000.0, language),
+                convertDoubleToLocale(faultResult.getShortCircuitPower(), language),
+                convertDoubleToLocale(shortCircuitLimits.getDeltaCurrentIpMin() / 1000.0, language),
+                convertDoubleToLocale(shortCircuitLimits.getDeltaCurrentIpMax() / 1000.0, language)
+        ));
+
+        csvWriter.writeRow(faultRowData);
+    }
+
+    private void addFeedersRows(CsvWriter csvWriter, FaultResult faultResult, CsvExportParams csvExportParams, int faultNumber) {
+        String language = csvExportParams.language();
+        Map<String, String> enumValueTranslations = csvExportParams.enumValueTranslations();
+        String faultResultId = faultResult.getFault().getId();
+
+        List<FeederResult> feederResults = faultResult.getFeederResults();
+        if (!feederResults.isEmpty()) {
+            for (FeederResult feederResult : feederResults) {
+                double feederCurrentValue = (faultNumber == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent()) / 1000.0;
+                String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : convertDoubleToLocale(feederCurrentValue, language);
+                String feederSide = feederResult.getSide() != null ? enumValueTranslations.getOrDefault(feederResult.getSide(), "") : ""; // Assuming FeederResult also has a side
+                List<String> feederRowData = new ArrayList<>(List.of(
+                        faultResultId,
+                        "", // VL
+                        "", // type
+                        feederResult.getConnectableId(),
+                        feederCurrentValueStr,
+                        feederSide
+                ));
+                csvWriter.writeRow(feederRowData);
+            }
+        } else {
+            csvWriter.writeRow(List.of("", "", "", "", "", ""));
+        }
+    }
+
+    public byte[] exportToCsv(ShortCircuitAnalysisResult result, CsvExportParams csvExportParams) {
         List<FaultResult> faultResults = result.getFaults();
+
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-            zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
 
+            zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
             // This code is for writing the UTF-8 Byte Order Mark (BOM) to a ZipOutputStream
             // by adding BOM to the beginning of file to help excel in some versions to detect this is UTF-8 encoding bytes
             zipOutputStream.write(0xef);
@@ -223,71 +292,15 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             zipOutputStream.write(0xbf);
 
             CsvWriterSettings settings = new CsvWriterSettings();
-            setFormat(settings.getFormat(), language);
+            setFormat(settings.getFormat(), csvExportParams.language());
             CsvWriter csvWriter = new CsvWriter(zipOutputStream, StandardCharsets.UTF_8, settings);
+            csvWriter.writeHeaders(csvExportParams.csvHeader());
 
-            // Write headers to the CSV file
-            csvWriter.writeHeaders(headersList);
-
-            // Write data to the CSV file
+            // Write data to the CSV file.
             for (FaultResult faultResult : faultResults) {
-                String faultResultId = faultResult.getFault().getId();
-                double faultCurrentValue = (faultResults.size() == 1 ? faultResult.getPositiveMagnitude() : faultResult.getCurrent()) / 1000.0;
-                String faultCurrentValueStr = Double.isNaN(faultCurrentValue) ? "" : convertDoubleToLocale(faultCurrentValue, language);
-
-                // Process faultResult data
-                List<String> faultRowData = new ArrayList<>(List.of(
-                        faultResultId,
-                        faultResult.getFault().getVoltageLevelId() != null ? faultResult.getFault().getVoltageLevelId() : "",
-                        enumValueTranslations.getOrDefault(faultResult.getFault().getFaultType(), ""),
-                        "",
-                        faultCurrentValueStr,
-                        ""
-                ));
-
-                List<LimitViolation> limitViolations = faultResult.getLimitViolations();
-                if (!limitViolations.isEmpty()) {
-                    String limitTypes = limitViolations.stream()
-                            .map(LimitViolation::getLimitType)
-                            .map(type -> enumValueTranslations.getOrDefault(type, ""))
-                            .collect(Collectors.joining(", "));
-                    faultRowData.add(limitTypes);
-                } else {
-                    faultRowData.add("");
-                }
-
-                ShortCircuitLimits shortCircuitLimits = faultResult.getShortCircuitLimits();
-                faultRowData.addAll(List.of(
-                        convertDoubleToLocale(shortCircuitLimits.getIpMin() / 1000.0, language),
-                        convertDoubleToLocale(shortCircuitLimits.getIpMax() / 1000.0, language),
-                        convertDoubleToLocale(faultResult.getShortCircuitPower(), language),
-                        convertDoubleToLocale(shortCircuitLimits.getDeltaCurrentIpMin() / 1000.0, language),
-                        convertDoubleToLocale(shortCircuitLimits.getDeltaCurrentIpMax() / 1000.0, language)
-                ));
-
-                csvWriter.writeRow(faultRowData);
-
-                // Process feederResults data
-                List<FeederResult> feederResults = faultResult.getFeederResults();
-                if (!feederResults.isEmpty()) {
-                    for (FeederResult feederResult : feederResults) {
-                        double feederCurrentValue = (faultResults.size() == 1 ? feederResult.getPositiveMagnitude() : feederResult.getCurrent()) / 1000.0;
-                        String feederCurrentValueStr = Double.isNaN(feederCurrentValue) ? "" : convertDoubleToLocale(feederCurrentValue, language);
-                        String feederSide = feederResult.getSide() != null ? enumValueTranslations.getOrDefault(feederResult.getSide(), "") : ""; // Assuming FeederResult also has a side
-                        List<String> feederRowData = new ArrayList<>(List.of(
-                                faultResultId,
-                                "",
-                                feederResult.getConnectableId(),
-                                feederCurrentValueStr,
-                                feederSide
-                        ));
-                        csvWriter.writeRow(feederRowData);
-                    }
-                } else {
-                    csvWriter.writeRow(List.of("", "", "", "", ""));
-                }
+                addLimitsRow(csvWriter, faultResult, csvExportParams, faultResults.size());
+                addFeedersRows(csvWriter, faultResult, csvExportParams, faultResults.size());
             }
-
             csvWriter.close();
             return outputStream.toByteArray();
         } catch (IOException e) {
@@ -295,16 +308,14 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] getZippedCsvExportResult(UUID resultUuid, ShortCircuitAnalysisResult result, CsvTranslation csvTranslation) {
+    public byte[] getZippedCsvExportResult(UUID resultUuid, ShortCircuitAnalysisResult result, CsvExportParams csvExportParams) {
         if (result == null) {
             throw new ShortCircuitException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
-        if (Objects.isNull(csvTranslation) || Objects.isNull(csvTranslation.headersCsv()) || Objects.isNull(csvTranslation.enumValueTranslations())) {
+        if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
             throw new ShortCircuitException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
         }
-        List<String> headersList = csvTranslation.headersCsv();
-        Map<String, String> enumValueTranslations = csvTranslation.enumValueTranslations();
-        return exportToCsv(result, headersList, enumValueTranslations, csvTranslation.language());
+        return exportToCsv(result, csvExportParams);
     }
 
     @Transactional(readOnly = true)
@@ -327,6 +338,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             return res;
         }
         return null;
+    }
+
+    public Map<String, Double> getBasicResultForSpecificEquipment(UUID resultUuid, String voltageLevelId) {
+        return resultService.getFaultResultByVoltageLevelId(resultUuid, voltageLevelId).stream().collect(Collectors.toMap(fr -> fr.getFault().getElementId(), FaultResultEntity::getCurrent));
     }
 
     @Transactional(readOnly = true)

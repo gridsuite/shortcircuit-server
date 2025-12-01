@@ -28,7 +28,7 @@ import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.ReportService;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.shortcircuit.server.dto.CsvTranslation;
+import org.gridsuite.shortcircuit.server.dto.CsvExportParams;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
@@ -499,7 +499,7 @@ class ShortCircuitAnalysisControllerTest {
                 result = mockMvc.perform(post(
                         "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(CsvTranslation.builder().headersCsv(CSV_HEADERS).
+                        .content(mapper.writeValueAsString(CsvExportParams.builder().csvHeader(CSV_HEADERS).
                             enumValueTranslations(enumTranslations).language(language).build())))
                     .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                     .andReturn();

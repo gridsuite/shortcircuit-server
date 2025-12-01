@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -78,16 +79,24 @@ public class ShortCircuitController {
                 : ResponseEntity.notFound().build();
     }
 
+    @GetMapping(value = "/results/{resultUuid}/fault_results/icc", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a map from fault results for a given short circuit analysis result and a specific voltage level")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The map busId -> ICC is returned")})
+    public ResponseEntity<Map<String, Double>> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                        @Parameter(description = "Voltage level ID to filter on") @RequestParam(value = "voltageLevelId")String voltageLevelId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(shortCircuitService.getBasicResultForSpecificEquipment(resultUuid, voltageLevelId));
+    }
+
     @PostMapping(value = "/results/{resultUuid}/csv", produces = APPLICATION_OCTET_STREAM_VALUE)
     @Operation(summary = "Get a short circuit analysis csv result from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis csv export"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<byte[]> getZippedCsvExportFaultResult(
             @Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-            @Parameter(description = "Csv headers and translations payload") @RequestBody CsvTranslation csvTranslation) {
+            @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
-                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, shortCircuitService.getResult(resultUuid, FaultResultsMode.FULL), csvTranslation));
+                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, shortCircuitService.getResult(resultUuid, FaultResultsMode.FULL), csvExportParams));
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)
