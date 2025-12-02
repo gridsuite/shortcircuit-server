@@ -16,12 +16,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.gridsuite.computation.dto.GlobalFilter;
-import org.gridsuite.computation.error.ComputationBusinessErrorCode;
-import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
-import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
-import org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -30,8 +26,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -41,7 +35,9 @@ import java.util.UUID;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
-import static org.springframework.http.MediaType.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
