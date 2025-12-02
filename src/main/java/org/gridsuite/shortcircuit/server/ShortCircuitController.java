@@ -35,6 +35,7 @@ import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -82,6 +83,14 @@ public class ShortCircuitController {
         ShortCircuitAnalysisResult result = shortCircuitService.getResult(resultUuid, mode);
         return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
                 : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping(value = "/results/{resultUuid}/fault_results/icc", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a map from fault results for a given short circuit analysis result and a specific voltage level")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The map busId -> ICC is returned")})
+    public ResponseEntity<Map<String, Double>> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                        @Parameter(description = "Voltage level ID to filter on") @RequestParam(value = "voltageLevelId")String voltageLevelId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(shortCircuitService.getBasicResultForSpecificEquipment(resultUuid, voltageLevelId));
     }
 
     @PostMapping(value = "/results/{resultUuid}/csv", produces = APPLICATION_OCTET_STREAM_VALUE)
