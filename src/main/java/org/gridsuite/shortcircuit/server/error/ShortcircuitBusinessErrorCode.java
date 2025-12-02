@@ -2,6 +2,9 @@ package org.gridsuite.shortcircuit.server.error;
 
 import com.powsybl.ws.commons.error.BusinessErrorCode;
 
+/**
+ * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
+ */
 public enum ShortcircuitBusinessErrorCode implements BusinessErrorCode {
     BUS_OUT_OF_VOLTAGE("shortcircuit.busOutOfVoltage"),
     MISSING_EXTENSION_DATA("shortcircuit.missingExtensionData"),
