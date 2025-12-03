@@ -38,9 +38,7 @@ import java.util.UUID;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE;
+import static org.springframework.http.MediaType.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
