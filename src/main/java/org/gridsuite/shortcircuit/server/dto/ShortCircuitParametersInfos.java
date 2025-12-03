@@ -12,21 +12,30 @@ import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import lombok.Builder;
 import lombok.extern.jackson.Jacksonized;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
+
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * @since 1.7.0
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
 @Builder
 @Jacksonized
 public record ShortCircuitParametersInfos(
+    String provider,
     ShortCircuitPredefinedConfiguration predefinedParameters,
-    ShortCircuitParameters parameters
+    ShortCircuitParameters commonParameters,
+    Map<String, Map<String, String>> specificParametersPerProvider
 ) {
     @JsonProperty(access = Access.READ_ONLY)
     public List<VoltageRange> cei909VoltageRanges() {
-        return ShortCircuitService.CEI909_VOLTAGE_PROFILE;
+        return ShortCircuitParametersConstants.CEI909_VOLTAGE_PROFILE;
+    }
+
+    public ShortCircuitParametersEntity toEntity() {
+        return new ShortCircuitParametersEntity(this);
     }
 }

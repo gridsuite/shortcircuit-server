@@ -7,18 +7,18 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.shortcircuit.ShortCircuitAnalysisResult;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.NonNull;
 import org.gridsuite.computation.service.AbstractComputationObserver;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.springframework.stereotype.Service;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
 @Service
-public class ShortCircuitObserver extends AbstractComputationObserver<ShortCircuitAnalysisResult, ShortCircuitParameters> {
+public class ShortCircuitObserver extends AbstractComputationObserver<ShortCircuitAnalysisResult, ShortCircuitParametersValues> {
 
     private static final String COMPUTATION_TYPE = "shortcircuitanalysis";
 

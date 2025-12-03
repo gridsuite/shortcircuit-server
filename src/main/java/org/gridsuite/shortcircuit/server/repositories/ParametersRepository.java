@@ -6,7 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

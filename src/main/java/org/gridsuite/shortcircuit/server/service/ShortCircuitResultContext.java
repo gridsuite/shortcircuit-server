@@ -8,9 +8,11 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.Getter;
+
+import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.AbstractResultContext;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
@@ -46,17 +48,26 @@ public class ShortCircuitResultContext extends AbstractResultContext<ShortCircui
         Boolean debug = (Boolean) headers.get(HEADER_DEBUG);
         String busId = (String) headers.get(HEADER_BUS_ID);
 
-        ShortCircuitParameters parameters;
+        ShortCircuitParametersValues parameters;
         try {
-            parameters = objectMapper.readValue(message.getPayload(), ShortCircuitParameters.class);
+            parameters = objectMapper.readValue(message.getPayload(), ShortCircuitParametersValues.class);
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
-        ShortCircuitRunContext runContext = new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters,
-                reportUuid, reporterId, reportType, userId, provider, busId, debug);
+        ShortCircuitRunContext runContext = ShortCircuitRunContext.builder()
+            .networkUuid(networkUuid)
+            .variantId(variantId)
+            .receiver(receiver)
+            .parameters(parameters)
+            .reportInfos(new ReportInfos(reportUuid, reporterId, reportType))
+            .userId(userId)
+            .provider(provider)
+            .busId(busId)
+            .debug(debug)
+            .build();
         return new ShortCircuitResultContext(resultUuid, runContext);
     }
 
