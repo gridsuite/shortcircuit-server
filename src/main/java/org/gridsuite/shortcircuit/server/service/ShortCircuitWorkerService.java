@@ -15,7 +15,7 @@ import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
-import org.gridsuite.shortcircuit.server.ShortCircuitException;
+import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
@@ -31,7 +31,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.BUS_OUT_OF_VOLTAGE;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.INCONSISTENT_VOLTAGE_LEVELS;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.MISSING_EXTENSION_DATA;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 
 /**
@@ -198,7 +200,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     @Override
     protected void handleNonCancellationException(AbstractResultContext<ShortCircuitRunContext> resultContext, Exception exception, AtomicReference<ReportNode> rootReporter) {
-        if (exception instanceof ShortCircuitException shortCircuitException && shortCircuitException.getType() == INCONSISTENT_VOLTAGE_LEVELS) {
+        if (exception instanceof ShortCircuitException shortCircuitException && shortCircuitException.getBusinessErrorCode() == INCONSISTENT_VOLTAGE_LEVELS) {
             postRun(resultContext.getRunContext(), rootReporter, null);
             sendResultMessage(resultContext, null);
         }

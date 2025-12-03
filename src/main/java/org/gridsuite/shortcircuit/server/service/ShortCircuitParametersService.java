@@ -6,15 +6,14 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+import com.powsybl.commons.config.PlatformConfig;
+import com.powsybl.commons.parameters.Parameter;
+import com.powsybl.commons.parameters.ParameterScope;
+import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
+import lombok.Getter;
+import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
-import org.gridsuite.shortcircuit.server.ShortCircuitException;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
@@ -24,13 +23,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.powsybl.commons.config.PlatformConfig;
-import com.powsybl.commons.parameters.Parameter;
-import com.powsybl.commons.parameters.ParameterScope;
-import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import lombok.Getter;
-import lombok.NonNull;
+import static org.gridsuite.computation.error.ComputationBusinessErrorCode.PARAMETERS_NOT_FOUND;
 
 /**
  * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
@@ -93,7 +89,7 @@ public class ShortCircuitParametersService {
 
     public ShortCircuitParametersValues getParametersValues(UUID parametersUuid) {
         return parametersRepository.findById(parametersUuid)
-                .map(this::toShortCircuitParametersValues).orElseThrow(() -> new ShortCircuitException(ShortCircuitException.Type.PARAMETERS_NOT_FOUND,
+                .map(this::toShortCircuitParametersValues).orElseThrow(() -> new ComputationException(PARAMETERS_NOT_FOUND,
                         "ShortCircuit parameters '" + parametersUuid + "' not found"));
     }
 
