@@ -3,16 +3,17 @@ package org.gridsuite.shortcircuit.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.computation.service.NotificationService;
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
-import org.gridsuite.shortcircuit.server.entities.ShortCircuitParametersEntity;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,6 +35,7 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -45,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -69,10 +70,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ShortCircuitParametersITest implements WithAssertions {
     private static final String USER_ID = "userTestId";
     private static final UUID NETWORK_ID = UUID.randomUUID();
-    private final String defaultParametersJson;
+    private final String defaultParametersValuesJson;
+    private final String defaultParametersInfosJson;
+    private final String someParametersValuesJson;
 
     public ShortCircuitParametersITest() throws Exception {
-        this.defaultParametersJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_parameters.json").toURI())).replaceAll("\\s+", "");
+        this.defaultParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "");
+        this.someParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "")
+            .replace("\"minVoltageDropProportionalThreshold\":20.0", "\"minVoltageDropProportionalThreshold\":42.0");
+        this.defaultParametersInfosJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_infos_parameters.json").toURI())).replaceAll("\\s+", "");
     }
 
     @Autowired
@@ -99,13 +105,13 @@ class ShortCircuitParametersITest implements WithAssertions {
 
     @Test
     void runAnalysis() throws Exception {
-        runAnalysisTest(req -> { }, headers -> headers, false, defaultParametersJson);
+        runAnalysisTest(req -> { }, headers -> headers, false, defaultParametersValuesJson);
     }
 
     @Test
     void runAnalysisWithParameters() throws Exception {
-        final UUID paramsId = parametersRepository.save(new ShortCircuitParametersEntity()).getId();
-        runAnalysisTest(req -> req.queryParam("parametersId", paramsId.toString()), headers -> headers, false, defaultParametersJson);
+        final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder().provider(TestUtils.DEFAULT_PROVIDER).minVoltageDropProportionalThreshold(42.0).build()).getId();
+        runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, someParametersValuesJson);
     }
 
     @Test
@@ -116,7 +122,13 @@ class ShortCircuitParametersITest implements WithAssertions {
                     .queryParam("busId", busId),
             headers -> headers.put(HEADER_BUS_ID, busId),
             true,
-            defaultParametersJson.replace("\"withFortescueResult\":false", "\"withFortescueResult\":true"));
+            defaultParametersValuesJson.replace("\"withFortescueResult\":false", "\"withFortescueResult\":true"));
+    }
+
+    /** Save parameters into the repository and return its UUID. */
+    protected UUID saveAndReturnId(ShortCircuitParametersInfos parametersInfos) {
+        parametersRepository.save(parametersInfos.toEntity());
+        return parametersRepository.findAll().get(0).getId();
     }
 
     private void runAnalysisTest(final Consumer<MockHttpServletRequestBuilder> requestSet, final UnaryOperator<Builder<String, Object>> headerSet, boolean debug, final String response) throws Exception {
@@ -157,7 +169,7 @@ class ShortCircuitParametersITest implements WithAssertions {
                 "resultUuid", resultId,
                 "debug", debug,
                 // TODO : remove next line when fix in powsybl-ws-commons will handle null provider
-                "provider", "default-provider",
+                "provider", TestUtils.DEFAULT_PROVIDER,
                 "networkUuid", NETWORK_ID.toString(),
                 HEADER_USER_ID, USER_ID
             ))).build()));
@@ -165,106 +177,183 @@ class ShortCircuitParametersITest implements WithAssertions {
 
     @Test
     void deleteParameters() throws Exception {
-        final UUID paramsId = parametersRepository.save(new ShortCircuitParametersEntity()).getId();
-        mockMvc.perform(delete("/v1/parameters/{id}", paramsId)).andExpectAll(status().isNoContent(), content().bytes(new byte[0]));
+        final UUID paramsId = parametersRepository.save(TestUtils.createDefaultParametersEntity()).getId();
+        mockMvc.perform(delete("/v1/parameters/{id}", paramsId)).andExpectAll(status().isOk(), content().bytes(new byte[0]));
         assertThat(parametersRepository.count()).isZero();
     }
 
     @Test
     void createParameters() throws Exception {
-        final UUID pUuid = objectMapper.readValue(mockMvc.perform(post("/v1/parameters").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"predefinedParameters\":\"ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP\",\"parameters\":" + defaultParametersJson
+        mockMvc.perform(post("/v1/parameters").contentType(MediaType.APPLICATION_JSON)
+                .content(defaultParametersInfosJson
                     .replace("\"withLoads\":false", "\"withLoads\":true")
                     .replace("\"studyType\":\"TRANSIENT\"", "\"studyType\":\"STEADY_STATE\"") + "}"))
             .andDo(log()).andExpectAll(
                 status().isOk(),
                 content().contentType(MediaType.APPLICATION_JSON),
                 content().string(matchesPattern(TestUtils.UUID_IN_JSON))
-            ).andReturn().getResponse().getContentAsByteArray(), UUID.class);
+            ).andReturn();
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .singleElement().as("parameters entity")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
-            .isEqualTo(new ShortCircuitParametersEntity(pUuid, true, false, false, StudyType.STEADY_STATE, 20.0, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
-                    true, false, true, true, InitialVoltageProfileMode.NOMINAL));
+            .ignoringFields("id")
+            .isEqualTo(new ShortCircuitParametersEntity(ShortCircuitParametersInfos.builder()
+                .provider(TestUtils.DEFAULT_PROVIDER)
+                .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+                .commonParameters(ShortCircuitParameters.load()
+                    .setStudyType(StudyType.STEADY_STATE)
+                    .setMinVoltageDropProportionalThreshold(20.0)
+                    .setWithNeutralPosition(true)
+                    .setWithVoltageResult(false)
+                    .setWithFeederResult(false)
+                    .setWithShuntCompensators(false)
+                )
+                .specificParametersPerProvider(Map.of())
+                .build()));
     }
 
     @Test
     void createDefaultParameters() throws Exception {
-        final UUID pUuid = objectMapper.readValue(mockMvc.perform(post("/v1/parameters/default")).andDo(log()).andExpectAll(
+        mockMvc.perform(post("/v1/parameters/default")).andDo(log()).andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
             content().string(matchesPattern(TestUtils.UUID_IN_JSON))
-        ).andReturn().getResponse().getContentAsByteArray(), UUID.class);
+        ).andReturn();
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .singleElement().as("parameters entity")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
-            .isEqualTo(new ShortCircuitParametersEntity().setId(pUuid));
+            .ignoringFields("id")
+            .isEqualTo(TestUtils.createDefaultParametersEntity());
     }
 
     @Test
     void retrieveParameters() throws Exception {
-        final UUID pId = parametersRepository.save(new ShortCircuitParametersEntity(true, true, true, StudyType.STEADY_STATE, Math.PI,
-            ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, true, true, true, true, InitialVoltageProfileMode.NOMINAL)).getId();
-        mockMvc.perform(get("/v1/parameters/{id}", pId)).andDo(log()).andExpectAll(
+        final UUID pUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider(TestUtils.DEFAULT_PROVIDER)
+            .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+            .commonParameters(ShortCircuitParameters.load()
+                .setStudyType(StudyType.STEADY_STATE)
+                .setMinVoltageDropProportionalThreshold(Math.PI)
+                .setWithNeutralPosition(true)
+            )
+            .specificParametersPerProvider(Map.of())
+            .build());
+
+        // build expected response programmatically (more robust than brittle string replacements)
+        final ShortCircuitParameters expectedCommon = ShortCircuitParameters.load()
+            .setStudyType(StudyType.STEADY_STATE)
+            .setMinVoltageDropProportionalThreshold(Math.PI)
+            .setWithNeutralPosition(true);
+
+        final Map<String, Object> expected = new java.util.HashMap<>();
+        expected.put("predefinedParameters", "ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP");
+        expected.put("specificParametersPerProvider", Map.of());
+        expected.put("commonParameters", expectedCommon);
+        expected.put("cei909VoltageRanges", ShortCircuitParametersConstants.CEI909_VOLTAGE_PROFILE);
+
+        final String expectedJson = objectMapper.writeValueAsString(expected);
+
+        mockMvc.perform(get("/v1/parameters/{id}", pUuid)).andDo(log()).andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"predefinedParameters\":\"ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP\",\"parameters\":" + defaultParametersJson
-                .replace("false", "true")
-                .replace("\"minVoltageDropProportionalThreshold\":20.0", "\"minVoltageDropProportionalThreshold\":3.141592653589793")
-                .replace("\"studyType\":\"TRANSIENT\"", "\"studyType\":\"STEADY_STATE\"")
-                + ",\"cei909VoltageRanges\":" + objectMapper.writeValueAsString(ShortCircuitService.CEI909_VOLTAGE_PROFILE) + "}", true)
+            content().json(expectedJson, false) // non-strict JSON comparison (order independent)
         );
     }
 
     @Test
     void resetParameters() throws Exception {
-        final UUID pId = parametersRepository.save(new ShortCircuitParametersEntity(true, true, true, StudyType.STEADY_STATE, Math.PI,
-                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, true, true, true, true, InitialVoltageProfileMode.NOMINAL)).getId();
-        mockMvc.perform(put("/v1/parameters/{id}", pId)).andDo(log()).andExpectAll(
-            status().isNoContent(),
+        final UUID pUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider(TestUtils.DEFAULT_PROVIDER)
+            .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+            .commonParameters(ShortCircuitParameters.load()
+                .setStudyType(StudyType.STEADY_STATE)
+                .setMinVoltageDropProportionalThreshold(Math.PI)
+            )
+            .specificParametersPerProvider(Map.of())
+            .build());
+        mockMvc.perform(put("/v1/parameters/{id}", pUuid)).andDo(log()).andExpectAll(
+            status().isOk(),
             content().bytes(new byte[0])
         );
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .singleElement().as("parameters entity")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
-            .isEqualTo(new ShortCircuitParametersEntity().setId(pId));
+            .ignoringFields("id")
+            .isEqualTo(TestUtils.createDefaultParametersEntity()
+        );
     }
 
     @Test
     void updateParameters() throws Exception {
-        final UUID pUuid = parametersRepository.save(new ShortCircuitParametersEntity(true, true, true, StudyType.STEADY_STATE, Math.PI,
-                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, true, true, true, true, InitialVoltageProfileMode.NOMINAL)).getId();
+        final UUID pUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider(TestUtils.DEFAULT_PROVIDER)
+            .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+            .commonParameters(ShortCircuitParameters.load()
+                .setStudyType(StudyType.STEADY_STATE)
+                .setMinVoltageDropProportionalThreshold(Math.PI)
+            )
+            .specificParametersPerProvider(null)
+            .build());
+
         mockMvc.perform(put("/v1/parameters/{id}", pUuid)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"predefinedParameters\":\"ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP\",\"parameters\":" + defaultParametersJson
+                .content(defaultParametersInfosJson
                     .replace("\"withLoads\":false", "\"withLoads\":true")
                     .replace("\"studyType\":\"TRANSIENT\"", "\"studyType\":\"STEADY_STATE\"") + "}"))
-            .andDo(log()).andExpectAll(status().isNoContent(), content().bytes(new byte[0]))
+            .andDo(log()).andExpectAll(status().isOk(), content().bytes(new byte[0]))
             .andReturn().getResponse().getContentAsByteArray();
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .singleElement().as("parameters entity")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
-            .isEqualTo(new ShortCircuitParametersEntity(pUuid, true, false, false, StudyType.STEADY_STATE, 20.0, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP,
-                        true, false, true, true, InitialVoltageProfileMode.NOMINAL));
+            .ignoringFields("id")
+            .isEqualTo(new ShortCircuitParametersEntity(ShortCircuitParametersInfos.builder()
+                .provider(TestUtils.DEFAULT_PROVIDER)
+                .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+                .commonParameters(ShortCircuitParameters.load()
+                    .setStudyType(StudyType.STEADY_STATE)
+                    .setMinVoltageDropProportionalThreshold(20.0)
+                    .setWithNeutralPosition(true)
+                    .setWithVoltageResult(false)
+                    .setWithFeederResult(false)
+                    .setWithShuntCompensators(false)
+                )
+                .specificParametersPerProvider(null)
+                .build()));
     }
 
     @Test
     void duplicateParameters() throws Exception {
-        final Supplier<ShortCircuitParametersEntity> generatorEntity = () -> new ShortCircuitParametersEntity(false, false, false, StudyType.TRANSIENT, 1.234,
-                ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, false, false, false, false, InitialVoltageProfileMode.NOMINAL);
-        final UUID pUuid = parametersRepository.save(generatorEntity.get()).getId();
+        final ShortCircuitParametersInfos infos = ShortCircuitParametersInfos.builder()
+            .provider(TestUtils.DEFAULT_PROVIDER)
+            .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909)
+            .commonParameters(ShortCircuitParameters.load()
+                .setWithLimitViolations(false)
+                .setWithFeederResult(false)
+                .setWithVoltageResult(false)
+                .setMinVoltageDropProportionalThreshold(1.234)
+                .setWithLoads(false)
+                .setWithShuntCompensators(false)
+                .setWithVSCConverterStations(false)
+            )
+            .specificParametersPerProvider(Map.of())
+            .build();
+        final UUID pUuid = saveAndReturnId(infos);
         final UUID pUuidDuplicated = objectMapper.readValue(mockMvc.perform(post("/v1/parameters").queryParam(DUPLICATE_FROM, pUuid.toString()))
             .andDo(log()).andExpectAll(
                 status().isOk(),
                 content().contentType(MediaType.APPLICATION_JSON),
                 content().string(matchesPattern(TestUtils.UUID_IN_JSON))
             ).andReturn().getResponse().getContentAsByteArray(), UUID.class);
+        final ShortCircuitParametersEntity originalEntity = infos.toEntity();
+        originalEntity.setId(pUuid);
+        final ShortCircuitParametersEntity duplicatedEntity = infos.toEntity();
+        duplicatedEntity.setId(pUuidDuplicated);
         assertThat(parametersRepository.findAll()).as("parameters in database")
             .usingRecursiveComparison() //because JPA entities haven't equals implemented
             .ignoringCollectionOrder()
             .isEqualTo(List.of(
-                generatorEntity.get().setId(pUuid),
-                generatorEntity.get().setId(pUuidDuplicated)
+                originalEntity,
+                duplicatedEntity
             ));
     }
 
@@ -286,5 +375,25 @@ class ShortCircuitParametersITest implements WithAssertions {
             Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, UUID.randomUUID().toString()), status().isNotFound()),
             Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound())
         );
+    }
+
+    @Test
+    void testgetProvider() throws Exception {
+        UUID parametersUuid = saveAndReturnId(ShortCircuitParametersInfos.builder()
+            .provider("SC_PROVIDER")
+            .predefinedParameters(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP)
+            .commonParameters(ShortCircuitParameters.load()
+                .setStudyType(StudyType.STEADY_STATE)
+                .setMinVoltageDropProportionalThreshold(Math.PI)
+            )
+            .specificParametersPerProvider(Map.of())
+            .build());
+
+        MvcResult result = mockMvc.perform(get(
+                        "/v1/parameters/{parametersUuid}/provider", parametersUuid))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertThat(result.getResponse().getContentAsString()).isEqualTo("SC_PROVIDER");
     }
 }

@@ -8,8 +8,10 @@ package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
 import lombok.NonNull;
+
+import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -31,12 +33,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  */
 public final class TestUtils {
     private static final long TIMEOUT = 100;
+    public static final String DEFAULT_PROVIDER = "default-provider";
 
     /**
      * Matcher for {@link java.util.UUID UUID v4}.
      */
     public static final Pattern UUID_V4 = Pattern.compile("[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}", Pattern.CASE_INSENSITIVE);
     public static final Pattern UUID_IN_JSON = Pattern.compile("^\"" + UUID_V4.pattern() + "\"$", Pattern.CASE_INSENSITIVE);
+
+    public static final ShortCircuitParametersEntity createDefaultParametersEntity() {
+        return ShortCircuitParametersEntity.builder().provider(TestUtils.DEFAULT_PROVIDER).build();
+    }
 
     private TestUtils() {
         throw new IllegalStateException("Not implemented exception");
@@ -46,14 +53,14 @@ public final class TestUtils {
             UUID.randomUUID(),
             null,
             null,
-            new ShortCircuitParameters(),
+            ShortCircuitParametersValues.builder().build(),
             null,
             null,
             null,
+            DEFAULT_PROVIDER,  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
             null,
-            "default-provider",  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-            null,
-            false
+            false,
+            null
     );
 
     public static void assertQueuesEmptyThenClear(List<String> destinations, OutputDestination output) {
