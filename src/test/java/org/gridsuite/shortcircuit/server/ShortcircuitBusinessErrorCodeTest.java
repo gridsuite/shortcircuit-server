@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
  */
 
-public class ShortcircuitBusinessErrorCodeTest {
+class ShortcircuitBusinessErrorCodeTest {
     @ParameterizedTest
     @EnumSource(ShortcircuitBusinessErrorCode.class)
     void valueMatchesEnumName(ShortcircuitBusinessErrorCode code) {
