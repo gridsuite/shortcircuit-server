@@ -1,6 +1,7 @@
 {
   "predefinedParameters": null,
-  "parameters": null,
+  "commonParameters": null,
+  "specificParametersPerProvider": null,
   "cei909VoltageRanges": [
     {
       "range": {

@@ -9,35 +9,32 @@ package org.gridsuite.shortcircuit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
-import com.powsybl.shortcircuit.InitialVoltageProfileMode;
-import com.powsybl.shortcircuit.ShortCircuitParameters;
-import com.powsybl.shortcircuit.VoltageRange;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.AbstractComputationService;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.shortcircuit.server.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
-import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.*;
@@ -47,8 +44,9 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.gridsuite.computation.error.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
+import static org.gridsuite.computation.error.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
-import static org.gridsuite.shortcircuit.server.ShortCircuitException.Type.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -61,47 +59,37 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public static final char CSV_DELIMITER_EN = ',';
     public static final char CSV_QUOTE_ESCAPE = '"';
 
-    // This voltage intervals' definition is not clean and we could potentially lose some buses.
-    // To be cleaned when VoltageRange uses intervals that are open on the right.
-    // TODO: to be moved to RTE private config or to powsybl-rte-core
-    public static final List<VoltageRange> CEI909_VOLTAGE_PROFILE = List.of(
-            new VoltageRange(0, 199.999, 1.1),
-            new VoltageRange(200.0, 299.999, 1.09),
-            new VoltageRange(300.0, 389.99, 1.10526),
-            new VoltageRange(390.0, 410.0, 1.05)
-    );
-
-    private final ParametersRepository parametersRepository;
     private final FilterService filterService;
+
+    private final ShortCircuitParametersService parametersService;
 
     public ShortCircuitService(final NotificationService notificationService,
                                final UuidGeneratorService uuidGeneratorService,
                                final ShortCircuitAnalysisResultService resultService,
                                @Autowired(required = false)
                                ComputationS3Service computationS3Service,
-                               final ParametersRepository parametersRepository,
                                final FilterService filterService,
+                               final ShortCircuitParametersService parametersService,
+                               @Value("${shortcircuit-analysis.default-provider}") String defaultProvider,
                                final ObjectMapper objectMapper) {
-        super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, null);
-        this.parametersRepository = parametersRepository;
+        super(notificationService, resultService, computationS3Service, objectMapper, uuidGeneratorService, defaultProvider);
         this.filterService = filterService;
-    }
-
-    @Transactional
-    public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType,
-                                 String userId, String busId, boolean debug, final Optional<UUID> parametersUuid) {
-        ShortCircuitParameters parameters = fromEntity(parametersUuid.flatMap(parametersRepository::findById).orElseGet(ShortCircuitParametersEntity::new)).parameters();
-        parameters.setWithFortescueResult(StringUtils.isNotBlank(busId));
-        parameters.setDetailedReport(false);
-        return runAndSaveResult(new ShortCircuitRunContext(networkUuid, variantId, receiver, parameters, reportUuid, reporterId, reportType, userId,
-            "default-provider", // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-            busId, debug));
+        this.parametersService = parametersService;
     }
 
     @Override
+    @Transactional
     public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
         Objects.requireNonNull(runContext);
-        final UUID resultUuid = uuidGeneratorService.generate();
+        ShortCircuitParametersValues parameters = runContext.getParametersUuid() != null
+            ? parametersService.getParametersValues(runContext.getParametersUuid())
+            : parametersService.getDefaultParametersValues();
+        parameters.commonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
+        parameters.commonParameters().setDetailedReport(false);
+        // set provider and parameters
+        runContext.setParameters(parameters);
+        runContext.setProvider(parameters.provider() != null ? parameters.provider() : getDefaultProvider());
+        final UUID resultUuid = runContext.getResultUuid();
 
         // update status to running status
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING);
@@ -152,43 +140,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(), feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
-    }
-
-    private static ShortCircuitParametersEntity toEntity(ShortCircuitParametersInfos parametersInfos) {
-        final ShortCircuitParameters parameters = parametersInfos.parameters();
-        return new ShortCircuitParametersEntity(
-            parameters.isWithLimitViolations(),
-            parameters.isWithVoltageResult(),
-            parameters.isWithFeederResult(),
-            parameters.getStudyType(),
-            parameters.getMinVoltageDropProportionalThreshold(),
-            parametersInfos.predefinedParameters(),
-            parameters.isWithLoads(),
-            parameters.isWithShuntCompensators(),
-            parameters.isWithVSCConverterStations(),
-            parameters.isWithNeutralPosition(),
-            parameters.getInitialVoltageProfileMode()
-        );
-    }
-
-    private static ShortCircuitParametersInfos fromEntity(ShortCircuitParametersEntity entity) {
-        Objects.requireNonNull(entity);
-        return new ShortCircuitParametersInfos(
-            entity.getPredefinedParameters(),
-            new ShortCircuitParameters()
-                .setStudyType(entity.getStudyType())
-                .setMinVoltageDropProportionalThreshold(entity.getMinVoltageDropProportionalThreshold())
-                .setWithFeederResult(entity.isWithFeederResult())
-                .setWithLimitViolations(entity.isWithLimitViolations())
-                .setWithVoltageResult(entity.isWithVoltageResult())
-                .setWithLoads(entity.isWithLoads())
-                .setWithShuntCompensators(entity.isWithShuntCompensators())
-                .setWithVSCConverterStations(entity.isWithVscConverterStations())
-                .setWithNeutralPosition(entity.isWithNeutralPosition())
-                .setInitialVoltageProfileMode(entity.getInitialVoltageProfileMode())
-                // the voltageRanges is not taken into account when initialVoltageProfileMode=NOMINAL
-                .setVoltageRanges(InitialVoltageProfileMode.CONFIGURED.equals(entity.getInitialVoltageProfileMode()) ? CEI909_VOLTAGE_PROFILE : null)
-        );
     }
 
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
@@ -304,16 +255,16 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             csvWriter.close();
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new ShortCircuitException(FILE_EXPORT_ERROR, e.getMessage());
+            throw new UncheckedIOException("Error occurred while writing data to csv file", e);
         }
     }
 
     public byte[] getZippedCsvExportResult(UUID resultUuid, ShortCircuitAnalysisResult result, CsvExportParams csvExportParams) {
         if (result == null) {
-            throw new ShortCircuitException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
+            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
         if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
-            throw new ShortCircuitException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
+            throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
         }
         return exportToCsv(result, csvExportParams);
     }
@@ -432,38 +383,4 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return resultService.findFaultTypes(resultUuid);
     }
 
-    public Optional<ShortCircuitParametersInfos> getParameters(final UUID parametersUuid) {
-        return parametersRepository.findById(parametersUuid).map(ShortCircuitService::fromEntity);
-    }
-
-    @Transactional
-    public boolean deleteParameters(final UUID parametersUuid) {
-        final boolean result = parametersRepository.existsById(parametersUuid);
-        if (result) {
-            parametersRepository.deleteById(parametersUuid);
-        }
-        return result;
-    }
-
-    @Transactional
-    public Optional<UUID> duplicateParameters(UUID sourceParametersUuid) {
-        return parametersRepository.findById(sourceParametersUuid)
-                                   .map(ShortCircuitParametersEntity::new)
-                                   .map(parametersRepository::save)
-                                   .map(ShortCircuitParametersEntity::getId);
-    }
-
-    public UUID createParameters(@Nullable final ShortCircuitParametersInfos parameters) {
-        return parametersRepository.save(parameters != null ? toEntity(parameters) : new ShortCircuitParametersEntity()).getId();
-    }
-
-    @Transactional
-    public boolean updateOrResetParameters(final UUID parametersUuid, @Nullable final ShortCircuitParametersInfos givenParameters) {
-        return parametersRepository.findById(parametersUuid)
-            .map(parameters -> {
-                parameters.updateWith(givenParameters != null ? toEntity(givenParameters) : new ShortCircuitParametersEntity());
-                return true;
-            })
-            .orElse(false);
-    }
 }

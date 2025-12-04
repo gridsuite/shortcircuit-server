@@ -1,0 +1,20 @@
+{
+  "provider": "default-provider",
+  "predefinedParameters": "ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP",
+  "commonParameters": {
+    "version": "1.4",
+    "withLimitViolations": true,
+    "withVoltageResult": false,
+    "withFeederResult": false,
+    "studyType": "TRANSIENT",
+    "minVoltageDropProportionalThreshold": 20.0,
+    "withFortescueResult": false,
+    "withLoads": false,
+    "withShuntCompensators": false,
+    "withVSCConverterStations": true,
+    "withNeutralPosition": true,
+    "initialVoltageProfileMode": "NOMINAL",
+    "detailedReport": false
+  },
+  "specificParametersPerProvider": {}
+}

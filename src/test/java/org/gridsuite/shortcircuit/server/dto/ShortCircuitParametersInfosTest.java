@@ -13,6 +13,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
+import org.gridsuite.shortcircuit.server.TestUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,7 +25,9 @@ import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.test.context.ContextConfiguration;
 
-import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.CEI909_VOLTAGE_PROFILE;
+import static org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants.CEI909_VOLTAGE_PROFILE;
+
+import java.util.Collections;
 
 @ContextConfiguration(classes = {RestTemplateConfig.class})
 //NOTE: this surprises given the name AutoConfigureWebClient, but this is not actually web clients,
@@ -49,10 +52,11 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
 
     @Test
     void shouldSerializeCei909VoltageRanges() throws Exception {
-        final String jsonSerialized = objectMapper.writeValueAsString(new ShortCircuitParametersInfos(ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters()));
+        final String jsonSerialized = objectMapper.writeValueAsString(new ShortCircuitParametersInfos(TestUtils.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(), Collections.emptyMap()));
         JSONAssert.assertEquals(
             new JSONObject().put("predefinedParameters", ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909.toString())
-                            .put("parameters", new JSONObject().put("version", "1.4"))
+                            .put("commonParameters", new JSONObject().put("version", "1.4"))
+                            .put("specificParametersPerProvider", new JSONObject())
                             .put("cei909VoltageRanges", CEI909_VOLTAGE_PROFILE.stream()
                                     .map(ShortCircuitParametersInfosTest::toJson)
                                     .reduce(new JSONArray(), JSONArray::put, (arr1, arr2) -> null)),

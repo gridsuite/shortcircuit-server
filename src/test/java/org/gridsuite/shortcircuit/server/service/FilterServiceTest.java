@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -62,11 +63,14 @@ class FilterServiceTest {
     private NetworkStoreService networkStoreService;
 
     @Autowired
+    RestTemplateBuilder restTemplateBuilder;
+
+    @Autowired
     private FilterService filterService;
 
     @BeforeEach
     void setUp(final MockWebServer mockWebServer) throws Exception {
-        filterService = new FilterService(networkStoreService, initMockWebServer(mockWebServer));
+        filterService = new FilterService(restTemplateBuilder, networkStoreService, initMockWebServer(mockWebServer));
     }
 
     private static ExpertFilter createTestExpertFilter() {
