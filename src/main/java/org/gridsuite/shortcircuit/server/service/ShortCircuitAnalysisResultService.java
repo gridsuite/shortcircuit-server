@@ -285,26 +285,12 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         // cf. https://vladmihalcea.com/fix-hibernate-hhh000104-entity-fetch-pagination-warning-message/
         // We must separate in two requests, one with pagination the other one with Join Fetch
 
-        List<String> projectionProperties = new ArrayList<>();
-        projectionProperties.add(FaultResultEntity.Fields.faultResultUuid);
-
-        for (Sort.Order order : modifiedPageable.getSort()) {
-            String property = order.getProperty();
-            if (!property.equals(FaultResultEntity.Fields.faultResultUuid) && !projectionProperties.contains(property)) {
-                projectionProperties.add(property);
-            }
-        }
-
-        Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q -> {
-            var query = q.as(FaultResultRepository.EntityId.class)
-                    .sortBy(modifiedPageable.getSort());
-            if (projectionProperties.size() == 1) {
-                query = query.project(FaultResultEntity.Fields.faultResultUuid);
-            } else {
-                query = query.project(projectionProperties.toArray(new String[0]));
-            }
-            return query.page(modifiedPageable);
-        });
+        Page<FaultResultRepository.EntityId> uuidPage = faultResultRepository.findBy(specification, q ->
+                q.project(FaultResultEntity.Fields.faultResultUuid)
+                        .as(FaultResultRepository.EntityId.class)
+                        .sortBy(modifiedPageable.getSort())
+                        .page(modifiedPageable)
+        );
 
         if (!uuidPage.hasContent()) {
             return Page.empty();
