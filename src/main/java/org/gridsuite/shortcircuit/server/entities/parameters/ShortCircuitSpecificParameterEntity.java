@@ -38,9 +38,9 @@ public class ShortCircuitSpecificParameterEntity {
     @Column(name = "provider")
     private String provider;
 
-    @Column(name = "name", columnDefinition = "varchar(500)")
+    @Column(name = "name")
     private String name;
 
-    @Column(name = "value_")
+    @Column(name = "value_", columnDefinition = "varchar(500)")
     private String value;
 }
