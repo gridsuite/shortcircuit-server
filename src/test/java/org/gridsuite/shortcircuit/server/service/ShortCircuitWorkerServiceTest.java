@@ -22,13 +22,14 @@ import io.micrometer.observation.ObservationRegistry;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
-import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.dto.ReportInfos;
 
+import org.gridsuite.computation.error.ComputationRunException;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.ExecutionService;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.ReportService;
+import org.gridsuite.shortcircuit.server.PropertyServerNameProvider;
 import org.gridsuite.shortcircuit.server.TestUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
@@ -83,7 +84,8 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
                 computationS3Service,
                 objectMapper,
                 reportMapperService,
-                new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry())
+                new ShortCircuitObserver(ObservationRegistry.create(), new SimpleMeterRegistry()),
+                new PropertyServerNameProvider("server-name")
         );
     }
 
@@ -149,7 +151,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             final var run = workerService.consumeRun();
-            assertThrows(ComputationException.class, () -> run.accept(message));
+            assertThrows(ComputationRunException.class, () -> run.accept(message));
         }
     }
 
