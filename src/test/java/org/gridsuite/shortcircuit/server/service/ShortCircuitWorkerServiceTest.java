@@ -102,7 +102,6 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
             .networkUuid(networkUuid)
             .parameters(ShortCircuitParametersValues.builder().build())
             .reportInfos(new ReportInfos(reportUuid, reporterId, "AllBusesShortCircuitAnalysis"))
-            .provider(TestUtils.DEFAULT_PROVIDER) // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
             .debug(false)
             .build();
         final ShortCircuitResultContext resultContext = new ShortCircuitResultContext(resultUuid, runContext);

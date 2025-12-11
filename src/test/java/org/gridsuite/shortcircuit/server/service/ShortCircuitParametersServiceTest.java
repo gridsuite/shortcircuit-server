@@ -100,7 +100,6 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder()
             .provider(TestUtils.DEFAULT_PROVIDER)
             .id(pUuid)
-            .provider(TestUtils.DEFAULT_PROVIDER)
             .withLimitViolations(false)
             .studyType(StudyType.STEADY_STATE)
             .minVoltageDropProportionalThreshold(minVoltDrop)
