@@ -172,7 +172,6 @@ class ShortCircuitParametersITest implements WithAssertions {
                 MessageHeaders.TIMESTAMP, System.currentTimeMillis(),
                 "resultUuid", resultId,
                 "debug", debug,
-                // TODO : remove next line when fix in powsybl-ws-commons will handle null provider
                 "provider", TestUtils.DEFAULT_PROVIDER,
                 "networkUuid", NETWORK_ID.toString(),
                 HEADER_USER_ID, USER_ID
