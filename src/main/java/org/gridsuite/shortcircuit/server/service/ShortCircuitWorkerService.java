@@ -15,6 +15,7 @@ import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
+import org.gridsuite.shortcircuit.server.PropertyServerNameProvider;
 import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
@@ -53,8 +54,9 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
                                      ComputationS3Service computationS3Service,
                                      ObjectMapper objectMapper,
                                      ReportMapperService reportMapper,
-                                     ShortCircuitObserver shortCircuitObserver) {
-        super(networkStoreService, notificationService, reportService, resultService, computationS3Service, executionService, shortCircuitObserver, objectMapper);
+                                     ShortCircuitObserver shortCircuitObserver,
+                                     PropertyServerNameProvider propertyServerNameProvider) {
+        super(networkStoreService, notificationService, reportService, resultService, computationS3Service, executionService, shortCircuitObserver, objectMapper, propertyServerNameProvider);
         this.reportMapper = reportMapper;
     }
 

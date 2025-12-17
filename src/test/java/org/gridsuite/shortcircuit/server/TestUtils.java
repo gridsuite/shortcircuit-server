@@ -57,7 +57,7 @@ public final class TestUtils {
             null,
             null,
             null,
-            DEFAULT_PROVIDER,  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+            null,
             null,
             false,
             null
