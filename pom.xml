@@ -183,6 +183,14 @@
         </dependency>
 
         <!-- Runtime dependencies -->
+        <!-- TODO Remove at next update of powsybl-rte -->
+        <dependency>
+            <groupId>com.rte-france.powsybl</groupId>
+            <artifactId>powsybl-courcirc-integration</artifactId>
+            <version>5.0.1</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- TODO remove END-->
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-classic</artifactId>
