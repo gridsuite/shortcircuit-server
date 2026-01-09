@@ -479,7 +479,7 @@ class ShortCircuitAnalysisControllerTest {
                     .param("page", "0")
                     .param("size", "2")
                     .param("sort", "fault.id")
-                    .param("globalFilters", "{\"nominalV\":[\"380\"],\"countryCode\":[],\"genericFilter\":[]}"))
+                    .param("globalFilters", "{\"voltageRanges\":[[350, 400]],\"countryCode\":[],\"genericFilter\":[]}"))
                 .andExpect(status().isNoContent());
 
             result = mockMvc.perform(get(

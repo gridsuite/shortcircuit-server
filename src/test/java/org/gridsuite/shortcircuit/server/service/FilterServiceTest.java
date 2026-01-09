@@ -130,7 +130,7 @@ class FilterServiceTest {
     void testGetResourceFiltersWithAllFilters() {
         // Test case with all types of filters
         GlobalFilter globalFilter = GlobalFilter.builder()
-                .nominalV(List.of("220.0", "400.0"))
+                .voltageRanges(List.of(List.of(200, 250), List.of(380, 420)))
                 .countryCode(List.of(Country.FR, Country.DE))
                 .build();
 
