@@ -143,7 +143,7 @@ class FilterServiceTest {
     void testGetResourceFiltersWithGenericFilters() {
         // Test case with generic filters
         GlobalFilter globalFilter = GlobalFilter.builder()
-                .genericFilter(List.of(LIST_UUID))
+                .substationOrVoltageLevelFilter(List.of(LIST_UUID))
                 .build();
 
         Optional<ResourceFilterDTO> result = getResult(globalFilter);
