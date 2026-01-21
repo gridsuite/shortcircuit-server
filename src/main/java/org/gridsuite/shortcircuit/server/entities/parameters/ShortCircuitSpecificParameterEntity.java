@@ -16,12 +16,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
  * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

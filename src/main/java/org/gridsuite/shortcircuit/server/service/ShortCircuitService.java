@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
@@ -21,7 +22,10 @@ import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.AbstractComputationService;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
+import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
+import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
 import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +81,95 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         this.parametersService = parametersService;
     }
 
+    private List<Map<String, Object>> translatePowerElectronicsClusters(Object powerElectronicsClustersValue, UUID networkUuid, String variantId) throws IOException {
+        // Normalize specific parameters: for "powerElectronicsClusters" convert objects that contain a
+        // "filterUuids" entry (List<UUID>) into objects containing "equipmentIds" (String[]).
+        LOGGER.debug("SBO specific before powerElectronicsClusters filters computation: {}", powerElectronicsClustersValue);
+        if (powerElectronicsClustersValue == null) {
+            return Collections.emptyList();
+        }
+
+        // parse into typed list
+        List<PowerElectronicsCluster> clusters = objectMapper.convertValue(powerElectronicsClustersValue, new TypeReference<List<PowerElectronicsCluster>>() { });
+
+        // filter by active one only and get all filterUuids
+        List<UUID> filterUuids = clusters.stream()
+            .filter(c -> c.isActive())
+            .flatMap(item -> item.getFilters().stream().map(FilterElements::getFilterId))
+            .toList();
+
+        // Apply filters using filterService
+        List<FilterEquipments> filterEquipments = filterService.getFilterEquipments(filterUuids, networkUuid, variantId);
+
+        // regroup by filterIds in clusters list to get equipmentIds
+        Map<UUID, List<String>> filterIdToEquipmentIds = new HashMap<>();
+        for (FilterEquipments fe : filterEquipments) {
+            filterIdToEquipmentIds.put(fe.getFilterId(), fe.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId).toList());
+        }
+        // replace filterUuids by equipmentIds in clusters
+        List<Map<String, Object>> normalizedClusters = new ArrayList<>();
+        for (PowerElectronicsCluster cluster : clusters) {
+            Map<String, Object> normalizedCluster = new HashMap<>();
+            //normalizedCluster.put("id", cluster.getId());
+            normalizedCluster.put("alpha", cluster.getAlpha());
+            normalizedCluster.put("u0", cluster.getU0());
+            normalizedCluster.put("usMin", cluster.getUsMin());
+            normalizedCluster.put("usMax", cluster.getUsMax());
+            normalizedCluster.put("type", cluster.getType());
+            // get equipmentIds from filterIds
+            Set<String> equipmentIds = new HashSet<>();
+            for (UUID filterId : cluster.getFilters().stream().map(FilterElements::getFilterId).toList()) {
+                List<String> ids = filterIdToEquipmentIds.get(filterId);
+                if (ids != null) {
+                    equipmentIds.addAll(ids);
+                }
+            }
+            normalizedCluster.put("equipmentIds", equipmentIds);
+            //normalizedCluster.put("active", cluster.isActive());
+            normalizedClusters.add(normalizedCluster);
+        }
+        LOGGER.debug("SBO specific after powerElectronicsClusters filters computation: clusters={}, normalizedClusters={}", clusters, normalizedClusters);
+        // Replace single quotes with double quotes
+        return normalizedClusters;
+    }
+
+    private Map<String, Object> translateSpecificParameters(Map<String, Object> specificParameters, UUID networkUuid, String variantId) {
+        // Build a merged, structured specificParameters map:
+        Map<String, Object> mergedSpecificParameters = new HashMap<>();
+        // 1) start from existing specificParameters, parsing any JSON strings into JsonNode
+        if (specificParameters != null) {
+            for (var e : specificParameters.entrySet()) {
+                Object val = e.getValue();
+                if (val instanceof String s) {
+                    String trimmed = s.trim();
+                    if (!trimmed.isEmpty() && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
+                        try {
+                            // parse textual JSON into a JsonNode (structured)
+                            mergedSpecificParameters.put(e.getKey(), objectMapper.readTree(s));
+                            continue;
+                        } catch (IOException ex) {
+                            // not valid JSON -> keep as plain string
+                        }
+                    }
+                }
+                mergedSpecificParameters.put(e.getKey(), val);
+            }
+        }
+
+        // This is defensive: we check types at runtime and only transform when the expected shape is present.
+        try {
+            if (specificParameters != null && specificParameters.containsKey("powerElectronicsClusters")) {
+                List<Map<String, Object>> powerElectronicsClustersValue = translatePowerElectronicsClusters(mergedSpecificParameters.get("powerElectronicsClusters"), networkUuid, variantId);
+                LOGGER.debug("SBO powerElectronicsClustersValue after translation: {}", powerElectronicsClustersValue);
+                mergedSpecificParameters.put("powerElectronicsClusters", objectMapper.valueToTree(powerElectronicsClustersValue));
+            }
+        } catch (Exception ex) {
+            // avoid breaking the run flow for unexpected shapes; log if you have a logger available
+            LOGGER.debug("Could not normalize specific parameters for powerElectronicsClusters", ex);
+        }
+        return mergedSpecificParameters;
+    }
+
     @Override
     @Transactional
     public UUID runAndSaveResult(ShortCircuitRunContext runContext) {
@@ -84,15 +177,27 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         ShortCircuitParametersValues parameters = runContext.getParametersUuid() != null
             ? parametersService.getParametersValues(runContext.getParametersUuid())
             : parametersService.getDefaultParametersValues();
-        parameters.commonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
-        parameters.commonParameters().setDetailedReport(false);
+        parameters.getCommonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
+        parameters.getCommonParameters().setDetailedReport(false);
+
+        LOGGER.debug("SBO before translation specificParameters: {}", parameters.getSpecificParameters());
+        Map<String, Object> translatedSpecificParameters = translateSpecificParameters(parameters.getSpecificParameters(), runContext.getNetworkUuid(), runContext.getVariantId());
+        LOGGER.debug("SBO translated specificParameters: {}", translatedSpecificParameters);
+        parameters.setSpecificParameters(translatedSpecificParameters);
+
         // set provider and parameters
         runContext.setParameters(parameters);
-        runContext.setProvider(parameters.provider() != null ? parameters.provider() : getDefaultProvider());
+        runContext.setProvider(parameters.getProvider() != null ? parameters.getProvider() : getDefaultProvider());
         final UUID resultUuid = runContext.getResultUuid();
 
         // update status to running status
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING);
+
+        LOGGER.debug("specificParameters types: {}",
+            parameters.getSpecificParameters() == null ? "null" :
+            parameters.getSpecificParameters().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() == null ? "null" : e.getValue().getClass().getName()))
+        );
         notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }

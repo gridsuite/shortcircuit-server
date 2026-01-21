@@ -3,17 +3,26 @@ package org.gridsuite.shortcircuit.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.computation.service.NotificationService;
+import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
+import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
+import org.gridsuite.shortcircuit.server.dto.FilterElements;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
+import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
+import org.gridsuite.shortcircuit.server.dto.powsybl_private.AbstractPowerElectronicsData.PowerElectronicsType;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
+import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitSpecificParameterEntity;
 import org.gridsuite.shortcircuit.server.repositories.ParametersRepository;
+import org.gridsuite.shortcircuit.server.service.FilterService;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -26,6 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,6 +66,7 @@ import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContex
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -74,15 +85,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ShortCircuitParametersITest implements WithAssertions {
     private static final String USER_ID = "userTestId";
     private static final UUID NETWORK_ID = UUID.randomUUID();
+    private static final UUID FILTER_UUID = UUID.randomUUID();
+    private static final UUID FILTER_UUID_1 = UUID.randomUUID();
+    private static final UUID FILTER_UUID_2 = UUID.randomUUID();
+    private static final UUID FILTER_UUID_3 = UUID.randomUUID();
     private final String defaultParametersValuesJson;
     private final String defaultParametersInfosJson;
     private final String someParametersValuesJson;
+    private final String shortcircuitParametersValues01Json;
+    private final String shortcircuitParametersValues02Json;
+    private final String shortcircuitParametersValues03Json;
 
     public ShortCircuitParametersITest() throws Exception {
         this.defaultParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "");
         this.someParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "")
             .replace("\"minVoltageDropProportionalThreshold\":20.0", "\"minVoltageDropProportionalThreshold\":42.0");
         this.defaultParametersInfosJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_infos_parameters.json").toURI())).replaceAll("\\s+", "");
+        this.shortcircuitParametersValues01Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_01.json").toURI())).replaceAll("\\s+", "");
+        this.shortcircuitParametersValues02Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_02.json").toURI())).replaceAll("\\s+", "");
+        this.shortcircuitParametersValues03Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_03.json").toURI())).replaceAll("\\s+", "");
     }
 
     @Autowired
@@ -96,6 +117,9 @@ class ShortCircuitParametersITest implements WithAssertions {
 
     @MockitoBean
     private NotificationService notificationService; //to keep; for not testing notification part, it's tested in another class test
+
+    @MockitoBean
+    private FilterService filterService;
 
     @BeforeAll
     void checkDatabaseClean() {
@@ -116,6 +140,70 @@ class ShortCircuitParametersITest implements WithAssertions {
     void runAnalysisWithParameters() throws Exception {
         final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder().provider(TestUtils.DEFAULT_PROVIDER).minVoltageDropProportionalThreshold(42.0).build()).getId();
         runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, someParametersValuesJson);
+    }
+
+    @Test
+    void runAnalysisWithPowerElectronicsClusters() throws Exception {
+        final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder()
+            .provider(TestUtils.DEFAULT_PROVIDER)
+            .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
+                .name("powerElectronicsClusters")
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, PowerElectronicsType.HVDC, List.of(new FilterElements(FILTER_UUID, "f")), true))))
+                .build()
+            ))
+            .build()
+        ).getId();
+
+        when(filterService.getFilterEquipments(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of(
+            new FilterEquipments(FILTER_UUID, List.of(new IdentifiableAttributes("eq_1", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_2", IdentifiableType.GENERATOR, 0.0)), List.of())
+        ));
+
+        runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues01Json);
+    }
+
+    @Test
+    void runAnalysisWithPowerElectronicsClusters2() throws Exception {
+        final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder()
+            .provider(TestUtils.DEFAULT_PROVIDER)
+            .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
+                .name("powerElectronicsClusters")
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, PowerElectronicsType.HVDC, List.of(
+                        new FilterElements(FILTER_UUID_1, "f1"),
+                        new FilterElements(FILTER_UUID_2, "f2"),
+                        new FilterElements(FILTER_UUID_3, "f3")
+                    ),
+                    true))))
+                .build()
+            ))
+            .build()
+        ).getId();
+
+        when(filterService.getFilterEquipments(List.of(FILTER_UUID_1, FILTER_UUID_2, FILTER_UUID_3), NETWORK_ID, null)).thenReturn(List.of(
+            new FilterEquipments(FILTER_UUID_1, List.of(new IdentifiableAttributes("eq_f1", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_common", IdentifiableType.GENERATOR, 0.0)), List.of()),
+            new FilterEquipments(FILTER_UUID_2, List.of(new IdentifiableAttributes("eq_f2", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_common", IdentifiableType.GENERATOR, 0.0)), List.of()),
+            new FilterEquipments(FILTER_UUID_3, List.of(), List.of())
+        ));
+
+        runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues02Json);
+    }
+
+    @Test
+    void runAnalysisWithPowerElectronicsClusters3Empty() throws Exception {
+        final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder()
+            .provider(TestUtils.DEFAULT_PROVIDER)
+            .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
+                .name("powerElectronicsClusters")
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, PowerElectronicsType.HVDC, List.of(new FilterElements(FILTER_UUID_1, "f1")), true))))
+                .build()
+            ))
+            .build()
+        ).getId();
+
+        when(filterService.getFilterEquipments(List.of(FILTER_UUID_1, FILTER_UUID_2, FILTER_UUID_3), NETWORK_ID, null)).thenReturn(List.of(
+            new FilterEquipments(FILTER_UUID_3, List.of(), List.of())
+        ));
+
+        runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues03Json);
     }
 
     @Test
@@ -153,10 +241,11 @@ class ShortCircuitParametersITest implements WithAssertions {
         //FIXME: to remove when https://github.com/powsybl/powsybl-ws-commons/pull/53 is merged
         verify(notificationService).sendRunMessage(messageCaptor.capture());
         assertThat(messageCaptor.getValue()).as("message sent").usingRecursiveComparison()
+            .ignoringCollectionOrder()
             .withEqualsForFields((String j1, String j2) -> {
                 //we can have more details than with simple string comparaison
                 try {
-                    JSONAssert.assertEquals(j2, j1, true);
+                    JSONAssert.assertEquals(j2, j1, JSONCompareMode.NON_EXTENSIBLE);
                     return true;
                 } catch (JSONException ex) {
                     log.error("payload not equals", ex);
