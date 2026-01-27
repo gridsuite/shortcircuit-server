@@ -229,9 +229,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] exportToCsv(ShortCircuitAnalysisResult result, CsvExportParams csvExportParams) {
-        List<FaultResult> faultResults = result.getFaults();
-
+    public byte[] exportToCsv(List<FaultResult> faultResults, CsvExportParams csvExportParams) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
@@ -259,14 +257,14 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] getZippedCsvExportResult(UUID resultUuid, ShortCircuitAnalysisResult result, CsvExportParams csvExportParams) {
-        if (result == null) {
+    public byte[] getZippedCsvExportResult(UUID resultUuid, List<FaultResult> faultResults, CsvExportParams csvExportParams) {
+        if (faultResults.isEmpty()) {
             throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
         if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
             throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
         }
-        return exportToCsv(result, csvExportParams);
+        return exportToCsv(faultResults, csvExportParams);
     }
 
     @Transactional(readOnly = true)
@@ -296,7 +294,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResult> getFaultResultsPage(UUID rootNetworkUuid,
+    public Page<FaultResult> getFaultResultsPage(UUID networkUuid,
                                                  String variantId,
                                                  UUID resultUuid,
                                                  FaultResultsMode mode,
@@ -306,7 +304,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
         if (globalFilter != null) {
-            Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(rootNetworkUuid, variantId, globalFilter);
+            Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(networkUuid, variantId, globalFilter);
             // No equipment verify global filters : no result
             if (resourceGlobalFilter.isEmpty()) {
                 return Page.empty();
