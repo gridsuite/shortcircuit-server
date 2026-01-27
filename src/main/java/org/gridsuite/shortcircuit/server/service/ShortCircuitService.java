@@ -303,7 +303,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                                                  Pageable pageable) {
         List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
-        if (globalFilter != null) {
+        if (globalFilter != null && !globalFilter.isEmpty()) {
             Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(networkUuid, variantId, globalFilter);
             // No equipment verify global filters : no result
             if (resourceGlobalFilter.isEmpty()) {
