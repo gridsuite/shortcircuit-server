@@ -67,11 +67,7 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
         Extension<ShortCircuitParameters> specificParametersExtension = scProvider.loadSpecificParameters(PlatformConfig.defaultConfig())
                 .orElseThrow(() -> new PowsyblException("Cannot add specific shortcircuit parameters with provider " + getProvider()));
         params.addExtension((Class) specificParametersExtension.getClass(), specificParametersExtension);
-        // convert specific parameters values to Map<String,String> expected by updateSpecificParameters
-        Map<String, String> specificParams = new HashMap<>();
-        getParameters().getSpecificParameters().forEach((k, v) -> specificParams.put(k, v == null ? null : v.toString()));
-        // TODO There is a problem here, it doesn't work, it doesn't update extension values
-        scProvider.updateSpecificParameters(specificParametersExtension, specificParams);
+        scProvider.updateSpecificParameters(specificParametersExtension, getParameters().getSpecificParameters());
 
         return params;
     }

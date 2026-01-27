@@ -30,5 +30,5 @@ public class ShortCircuitParametersValues {
     private ShortCircuitParameters commonParameters;
     // Mutable map that can hold structured values (JsonNode / objects) to avoid double-quoting
     @Builder.Default
-    private Map<String, Object> specificParameters = new HashMap<>();
+    private Map<String, String> specificParameters = new HashMap<>();
 }

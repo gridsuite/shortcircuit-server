@@ -81,16 +81,15 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         this.parametersService = parametersService;
     }
 
-    private List<Map<String, Object>> translatePowerElectronicsClusters(Object powerElectronicsClustersValue, UUID networkUuid, String variantId) throws IOException {
+    private List<Object> translatePowerElectronicsClusters(String powerElectronicsClustersValue, UUID networkUuid, String variantId) throws IOException {
         // Normalize specific parameters: for "powerElectronicsClusters" convert objects that contain a
         // "filterUuids" entry (List<UUID>) into objects containing "equipmentIds" (String[]).
-        LOGGER.debug("SBO specific before powerElectronicsClusters filters computation: {}", powerElectronicsClustersValue);
         if (powerElectronicsClustersValue == null) {
             return Collections.emptyList();
         }
 
         // parse into typed list
-        List<PowerElectronicsCluster> clusters = objectMapper.convertValue(powerElectronicsClustersValue, new TypeReference<List<PowerElectronicsCluster>>() { });
+        List<PowerElectronicsCluster> clusters = objectMapper.readValue(powerElectronicsClustersValue, new TypeReference<List<PowerElectronicsCluster>>() { });
 
         // filter by active one only and get all filterUuids
         List<UUID> filterUuids = clusters.stream()
@@ -107,10 +106,11 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             filterIdToEquipmentIds.put(fe.getFilterId(), fe.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId).toList());
         }
         // replace filterUuids by equipmentIds in clusters
-        List<Map<String, Object>> normalizedClusters = new ArrayList<>();
+        List<Object> normalizedClusters = new ArrayList<>();
+        int index = 0;
         for (PowerElectronicsCluster cluster : clusters) {
             Map<String, Object> normalizedCluster = new HashMap<>();
-            //normalizedCluster.put("id", cluster.getId());
+            normalizedCluster.put("id", Integer.toString(index++));
             normalizedCluster.put("alpha", cluster.getAlpha());
             normalizedCluster.put("u0", cluster.getU0());
             normalizedCluster.put("usMin", cluster.getUsMin());
@@ -125,49 +125,32 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 }
             }
             normalizedCluster.put("equipmentIds", equipmentIds);
-            //normalizedCluster.put("active", cluster.isActive());
+            // serialize the normalizedCluster map to a JSON string
             normalizedClusters.add(normalizedCluster);
         }
-        LOGGER.debug("SBO specific after powerElectronicsClusters filters computation: clusters={}, normalizedClusters={}", clusters, normalizedClusters);
         // Replace single quotes with double quotes
         return normalizedClusters;
     }
 
-    private Map<String, Object> translateSpecificParameters(Map<String, Object> specificParameters, UUID networkUuid, String variantId) {
-        // Build a merged, structured specificParameters map:
-        Map<String, Object> mergedSpecificParameters = new HashMap<>();
-        // 1) start from existing specificParameters, parsing any JSON strings into JsonNode
-        if (specificParameters != null) {
-            for (var e : specificParameters.entrySet()) {
-                Object val = e.getValue();
-                if (val instanceof String s) {
-                    String trimmed = s.trim();
-                    if (!trimmed.isEmpty() && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
-                        try {
-                            // parse textual JSON into a JsonNode (structured)
-                            mergedSpecificParameters.put(e.getKey(), objectMapper.readTree(s));
-                            continue;
-                        } catch (IOException ex) {
-                            // not valid JSON -> keep as plain string
-                        }
-                    }
-                }
-                mergedSpecificParameters.put(e.getKey(), val);
-            }
-        }
+    private Map<String, String> translateSpecificParameters(Map<String, String> specificParameters, UUID networkUuid, String variantId) {
+        
 
         // This is defensive: we check types at runtime and only transform when the expected shape is present.
         try {
             if (specificParameters != null && specificParameters.containsKey("powerElectronicsClusters")) {
-                List<Map<String, Object>> powerElectronicsClustersValue = translatePowerElectronicsClusters(mergedSpecificParameters.get("powerElectronicsClusters"), networkUuid, variantId);
-                LOGGER.debug("SBO powerElectronicsClustersValue after translation: {}", powerElectronicsClustersValue);
-                mergedSpecificParameters.put("powerElectronicsClusters", objectMapper.valueToTree(powerElectronicsClustersValue));
+                // Build a merged, structured specificParameters map:
+                Map<String, String> mergedSpecificParameters = new HashMap<>(specificParameters != null ? specificParameters : Collections.emptyMap());
+                List<Object> powerElectronicsClustersValue = translatePowerElectronicsClusters(specificParameters.get("powerElectronicsClusters"), networkUuid, variantId);
+                // TODO restore powerElectronicsClusters name with the plural ending 's' when fixed in powsybl
+                mergedSpecificParameters.remove("powerElectronicsClusters");
+                mergedSpecificParameters.put("powerElectronicsCluster", objectMapper.writeValueAsString(powerElectronicsClustersValue));
+                return mergedSpecificParameters;
             }
         } catch (Exception ex) {
             // avoid breaking the run flow for unexpected shapes; log if you have a logger available
-            LOGGER.debug("Could not normalize specific parameters for powerElectronicsClusters", ex);
+            LOGGER.info("Could not normalize specific parameters for powerElectronicsClusters", ex);
         }
-        return mergedSpecificParameters;
+        return specificParameters;
     }
 
     @Override
@@ -180,9 +163,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         parameters.getCommonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
         parameters.getCommonParameters().setDetailedReport(false);
 
-        LOGGER.debug("SBO before translation specificParameters: {}", parameters.getSpecificParameters());
-        Map<String, Object> translatedSpecificParameters = translateSpecificParameters(parameters.getSpecificParameters(), runContext.getNetworkUuid(), runContext.getVariantId());
-        LOGGER.debug("SBO translated specificParameters: {}", translatedSpecificParameters);
+        Map<String, String> translatedSpecificParameters = translateSpecificParameters(parameters.getSpecificParameters(), runContext.getNetworkUuid(), runContext.getVariantId());
         parameters.setSpecificParameters(translatedSpecificParameters);
 
         // set provider and parameters
