@@ -316,14 +316,14 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         if (childrenSort.isEmpty()) {
             return pageable;
         }
-        return PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(pageable.getSort().stream().filter(sortOrder ->
-                                !sortOrder.getProperty().equals(childrenSort.get().getProperty())
-                        ).toList()
-                )
-        );
+        Sort finalSort = Sort.by(pageable.getSort().stream().filter(sortOrder ->
+                        !sortOrder.getProperty().equals(childrenSort.get().getProperty())
+                ).toList());
+        if (pageable.isPaged()) {
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
+        } else {
+            return Pageable.unpaged(finalSort);
+        }
     }
 
     private Optional<Sort.Order> extractChildrenSort(Pageable pageable) {
@@ -437,10 +437,14 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     }
 
     private Pageable addDefaultSort(Pageable pageable, String defaultSortColumn) {
-        if (pageable.isPaged() && pageable.getSort().getOrderFor(defaultSortColumn) == null) {
+        if (pageable.getSort().getOrderFor(defaultSortColumn) == null) {
             //if it's already sorted by our defaultColumn we don't add another sort by the same column
             Sort finalSort = pageable.getSort().and(Sort.by(DEFAULT_SORT_DIRECTION, defaultSortColumn));
-            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
+            if (pageable.isPaged()) {
+                return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
+            } else {
+                return Pageable.unpaged(finalSort);
+            }
         }
         //nothing to do if the request is not paged
         return pageable;
