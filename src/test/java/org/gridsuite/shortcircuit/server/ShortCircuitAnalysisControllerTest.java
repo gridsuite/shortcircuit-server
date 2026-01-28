@@ -112,31 +112,6 @@ class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_4_ID = "variant_4";
     private static final String VARIANT_5_ID = "variant_5";
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
-    private static final List<String> CSV_HEADERS = List.of(
-            "ID nœud",
-            "Type",
-            "Départs",
-            "Icc (kA)",
-            "Type de limite",
-            "Icc min (kA)",
-            "IMACC (kA)",
-            "Pcc (MVA)",
-            "Icc - Icc min (kA)",
-            "Icc - IMACC (kA)"
-    );
-
-    private final Map<String, String> enumTranslations = Map.of(
-            "THREE_PHASE", "Triphasé",
-            "SINGLE_PHASE", "Monophasé",
-            "ACTIVE_POWER", "Puissance active",
-            "APPARENT_POWER", "Puissance apparente",
-            "CURRENT", "Intensité",
-            "LOW_VOLTAGE", "Tension basse",
-            "HIGH_VOLTAGE", "Tension haute",
-            "LOW_SHORT_CIRCUIT_CURRENT", "Icc min",
-            "HIGH_SHORT_CIRCUIT_CURRENT", "Icc max",
-            "OTHER", "Autre"
-    );
 
     private static final int TIMEOUT = 1000;
     @MockitoBean
@@ -1014,6 +989,7 @@ class ShortCircuitAnalysisControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
+            System.out.println(resultDto.getFaults().get(0).getShortCircuitLimits().getIpMin());
             assertEquals(10.5, resultDto.getFaults().get(0).getShortCircuitLimits().getIpMin(), 0.1);
             assertEquals(200.0, resultDto.getFaults().get(0).getShortCircuitLimits().getIpMax(), 0.1);
             assertEquals(10.5, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMin(), 0.1);

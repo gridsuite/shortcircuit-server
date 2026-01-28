@@ -16,10 +16,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
@@ -31,8 +29,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -117,9 +113,7 @@ public class ShortCircuitController {
             @Parameter(description = "Global Filters") @RequestParam(name = "globalFilters", required = false) String globalFilters,
             @Parameter(description = "Sort parameters") Sort sort,
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
-        String decodedStringGlobalFilters = globalFilters != null ? URLDecoder.decode(globalFilters, StandardCharsets.UTF_8) : null;
-        GlobalFilter globalFilter = FilterUtils.fromStringGlobalFiltersToDTO(decodedStringGlobalFilters, objectMapper);
-        Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilter, Pageable.unpaged(sort));
+        Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
                 .body(shortCircuitService.getZippedCsvExportResult(
@@ -143,9 +137,7 @@ public class ShortCircuitController {
                                                                           "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
                                                                           "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   Pageable pageable) {
-        String decodedStringGlobalFilters = globalFilters != null ? URLDecoder.decode(globalFilters, StandardCharsets.UTF_8) : null;
-        GlobalFilter globalFilter = FilterUtils.fromStringGlobalFiltersToDTO(decodedStringGlobalFilters, objectMapper);
-        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, mode, filters, globalFilter, pageable);
+        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, mode, filters, globalFilters, pageable);
         if (faultResultsPage == null) {
             return ResponseEntity.notFound().build();
         } else if (faultResultsPage.isEmpty()) {
