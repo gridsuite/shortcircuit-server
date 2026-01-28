@@ -104,10 +104,22 @@ public class ShortCircuitCsvExportTest {
                                 .language("en").build())))
                 .andExpectAll(status().isNotFound());
 
-        // test with invalid csv export parameters
+        // test with invalid csv export parameters : CsvExportParams, csvHeader or enumValueTranslations is null
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder().build())))
+                .andExpectAll(status().isBadRequest());
+
+        mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(CsvExportParams.builder()
+                                .csvHeader(CSV_HEADERS).build())))
+                .andExpectAll(status().isBadRequest());
+
+        mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(CsvExportParams.builder()
+                                .enumValueTranslations(enumTranslations).build())))
                 .andExpectAll(status().isBadRequest());
 
         // test on headers
