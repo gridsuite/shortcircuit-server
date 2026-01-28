@@ -119,12 +119,12 @@ public class ShortCircuitController {
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
         String decodedStringGlobalFilters = globalFilters != null ? URLDecoder.decode(globalFilters, StandardCharsets.UTF_8) : null;
         GlobalFilter globalFilter = FilterUtils.fromStringGlobalFiltersToDTO(decodedStringGlobalFilters, objectMapper);
-        List<FaultResult> result = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilter, Pageable.unpaged(sort)).getContent();
+        Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilter, Pageable.unpaged(sort));
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
                 .body(shortCircuitService.getZippedCsvExportResult(
                         resultUuid,
-                        result,
+                        resultPage,
                         csvExportParams
                 ));
     }

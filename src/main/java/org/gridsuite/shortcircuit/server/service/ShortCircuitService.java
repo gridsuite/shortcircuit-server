@@ -257,14 +257,14 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] getZippedCsvExportResult(UUID resultUuid, List<FaultResult> faultResults, CsvExportParams csvExportParams) {
-        if (faultResults.isEmpty()) {
+    public byte[] getZippedCsvExportResult(UUID resultUuid, Page<FaultResult> faultResultsPage, CsvExportParams csvExportParams) {
+        if (faultResultsPage == null) {
             throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
         if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
             throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
         }
-        return exportToCsv(faultResults, csvExportParams);
+        return exportToCsv(faultResultsPage.getContent(), csvExportParams);
     }
 
     @Transactional(readOnly = true)
