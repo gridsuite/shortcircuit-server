@@ -157,7 +157,7 @@ public class ShortCircuitCsvExportTest {
                     "Icc - IMACC (kA)"
             );
             assertEquals(expectedHeaders, actualCsv.getFirst());
-            // there should be 5 lines : header + 2 fault results + 2 (empty) feeder results
+            // there should be 5 lines : header + 2 fault results + 2 empty lines
             assertEquals(5, actualCsv.size());
         }
 
