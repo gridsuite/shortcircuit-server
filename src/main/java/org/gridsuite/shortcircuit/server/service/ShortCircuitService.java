@@ -133,8 +133,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private Map<String, String> translateSpecificParameters(Map<String, String> specificParameters, UUID networkUuid, String variantId) {
-        
-
         // This is defensive: we check types at runtime and only transform when the expected shape is present.
         try {
             if (specificParameters != null && specificParameters.containsKey("powerElectronicsClusters")) {
