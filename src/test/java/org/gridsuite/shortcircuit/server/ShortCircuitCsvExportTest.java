@@ -33,7 +33,7 @@ import static java.lang.Double.NaN;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @AutoConfigureMockMvc
 @SpringBootTest
-public class ShortCircuitCsvExportTest {
+class ShortCircuitCsvExportTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -56,14 +56,14 @@ public class ShortCircuitCsvExportTest {
 
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
     private static final UUID RESULT_UUID_NOT_FOUND = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
+    private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+    private static final String VARIANT_ID = "variantId";
 
     private static final Fault FAULT_1 = new Fault("faultId1", "faultElementId1", "faultVoltageLevelId1", "faultType1");
     private static final Fault FAULT_2 = new Fault("faultId2", "faultElementId2", "faultVoltageLevelId2", "faultType2");
     private static final ShortCircuitLimits LIMITS = new ShortCircuitLimits(10.5, 200, 34.8, -154.7);
     private static final FaultResult FAULT_RESULT_1 = new FaultResult(FAULT_1, 50, NaN, 20, List.of(), List.of(), LIMITS);
     private static final FaultResult FAULT_RESULT_2 = new FaultResult(FAULT_2, 40, NaN, 10, List.of(), List.of(), LIMITS);
-    private static final List<FaultResult> FAULT_RESULTS = List.of(FAULT_RESULT_1, FAULT_RESULT_2);
-    private static final List<FaultResult> FAULT_RESULTS_FILTERED_AND_SORTED = List.of(FAULT_RESULT_1);
 
     private static final List<String> CSV_HEADERS = List.of(
             "ID nœud",
@@ -77,7 +77,7 @@ public class ShortCircuitCsvExportTest {
             "Icc - Icc min (kA)",
             "Icc - IMACC (kA)"
     );
-    private final Map<String, String> enumTranslations = Map.of(
+    private static final Map<String, String> ENUM_TRANSLATIONS = Map.of(
             "THREE_PHASE", "Triphasé",
             "SINGLE_PHASE", "Monophasé",
             "ACTIVE_POWER", "Puissance active",
@@ -89,103 +89,128 @@ public class ShortCircuitCsvExportTest {
             "HIGH_SHORT_CIRCUIT_CURRENT", "Icc max",
             "OTHER", "Autre"
     );
-    private static final Sort SORT = Sort.by("property");
-    private static final String FILTERS = "filters";
-    private static final String GLOBAL_FILTERS = "globalFilters";
+    private static final String SORT = "sortField";
+    private static final String FILTERS = "[{\"filter\": \"\"}]";
+    private static final String GLOBAL_FILTERS = "{\"globalFilter\": []}";
 
     @Test
-    void test() throws Exception {
-        Page<FaultResult> page = new PageImpl<>(FAULT_RESULTS, Pageable.unpaged(), FAULT_RESULTS.size());
-        Page<FaultResult> pageFilteredAndSorted = new PageImpl<>(FAULT_RESULTS_FILTERED_AND_SORTED, Pageable.unpaged(), FAULT_RESULTS_FILTERED_AND_SORTED.size());
-
-        doReturn(page).when(shortCircuitService).getFaultResultsPage(nullable(UUID.class), nullable(String.class), eq(RESULT_UUID), nullable(FaultResultsMode.class), nullable(String.class), nullable(String.class), nullable(Pageable.class));
-        doReturn(pageFilteredAndSorted).when(shortCircuitService).getFaultResultsPage(nullable(UUID.class), nullable(String.class), eq(RESULT_UUID), nullable(FaultResultsMode.class), eq(FILTERS), eq(GLOBAL_FILTERS), eq(Pageable.unpaged(SORT)));
-        doReturn(null).when(shortCircuitService).getFaultResultsPage(nullable(UUID.class), nullable(String.class), eq(RESULT_UUID_NOT_FOUND), nullable(FaultResultsMode.class), nullable(String.class), nullable(String.class), nullable(Pageable.class));
-        MvcResult result;
-
+    void runTest() throws Exception {
+        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS)
-                                .enumValueTranslations(enumTranslations)
+                                .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
+        verify(shortCircuitService, times(1)).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
 
         // test with filters and sort parameters
+        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(eq(NETWORK_UUID), eq(VARIANT_ID), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(FILTERS), eq(GLOBAL_FILTERS), eq(Pageable.unpaged(Sort.by(SORT))));
         mockMvc.perform(post(
                         "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .param("networkUuid", NETWORK_UUID.toString())
+                        .param("variantId", VARIANT_ID)
                         .param("filters", FILTERS)
                         .param("globalFilters", GLOBAL_FILTERS)
-                        .param("sort", SORT.toString())
+                        .param("sort", SORT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS)
-                                .enumValueTranslations(enumTranslations)
+                                .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
-
-        for (String language : List.of("fr", "en")) {
-            // tester le contenu aussi (addrows), avec filters, globalFilters, sort
-            result = mockMvc.perform(post(
-                            "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                            .param("filters", FILTERS)
-                            .param("globalFilters", GLOBAL_FILTERS)
-                            .param("sort", SORT.toString())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                    .csvHeader(CSV_HEADERS)
-                                    .enumValueTranslations(enumTranslations)
-                                    .language(language).build())))
-                    .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
-                    .andReturn();
-            byte[] zipFile = result.getResponse().getContentAsByteArray();
-            byte[] unzippedCsvFile = unzip(zipFile);
-            String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
-            List<List<String>> actualCsv = Arrays.asList(unzippedCsvFileAsString.split("\n"))
-                    .stream().map(line -> List.of(line.split(language.equals("fr") ? ";" : ","))).toList();
-            // Including "\uFEFF" indicates the UTF-8 BOM at the start
-            List<String> expectedHeaders = List.of(
-                    "\uFEFFID nœud",
-                    "Type",
-                    "Départs",
-                    "Icc (kA)",
-                    "Type de limite",
-                    "Icc min (kA)",
-                    "IMACC (kA)",
-                    "Pcc (MVA)",
-                    "Icc - Icc min (kA)",
-                    "Icc - IMACC (kA)"
-            );
-            assertEquals(expectedHeaders, actualCsv.getFirst());
-            // there should be 5 lines : header + 2 fault results + 2 empty lines
-            assertEquals(5, actualCsv.size());
-        }
+        verify(shortCircuitService, times(1)).getFaultResultsPage(eq(NETWORK_UUID), eq(VARIANT_ID), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(FILTERS), eq(GLOBAL_FILTERS), eq(Pageable.unpaged(Sort.by(SORT))));
 
         // test with result not found
+        doReturn(null).when(shortCircuitService).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID_NOT_FOUND), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS)
-                                .enumValueTranslations(enumTranslations)
+                                .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isNotFound());
+        verify(shortCircuitService, times(1)).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID_NOT_FOUND), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+    }
 
-        // test with invalid csv export parameters : CsvExportParams, csvHeader or enumValueTranslations is null
+    @Test
+    void runWithInvalidCsvExportParametersTest() throws Exception {
+        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+
+        // test with empty CsvExportParams
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder().build())))
                 .andExpectAll(status().isBadRequest());
 
+        // test with null enumValueTranslations
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS).build())))
                 .andExpectAll(status().isBadRequest());
 
+        // test with null csvHeader
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .enumValueTranslations(enumTranslations).build())))
+                                .enumValueTranslations(ENUM_TRANSLATIONS).build())))
                 .andExpectAll(status().isBadRequest());
+    }
+
+    @Test
+    void resultTest() throws Exception {
+        Page<FaultResult> page = new PageImpl<>(List.of(FAULT_RESULT_1, FAULT_RESULT_2), Pageable.unpaged(), 2);
+        doReturn(page).when(shortCircuitService).getFaultResultsPage(eq(NETWORK_UUID), eq(VARIANT_ID), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+        MvcResult result;
+
+        int expectedResultSize = 5;
+        // Including "\uFEFF" indicates the UTF-8 BOM at the start
+        List<String> expectedHeaders = List.of(
+                "\uFEFFID nœud",
+                "Type",
+                "Départs",
+                "Icc (kA)",
+                "Type de limite",
+                "Icc min (kA)",
+                "IMACC (kA)",
+                "Pcc (MVA)",
+                "Icc - Icc min (kA)",
+                "Icc - IMACC (kA)"
+        );
+        List<String> expectedLine1 = List.of("faultId1", "faultVoltageLevelId1", "", "", "0.05", "", "0.011", "0.2", "20", "0.035", "-0.155");
+        List<String> expectedLine3 = List.of("faultId2", "faultVoltageLevelId2", "", "", "0.04", "", "0.011", "0.2", "10", "0.035", "-0.155");
+        List<String> expectedBlankLine = List.of();
+
+        for (String language : List.of("fr", "en")) {
+            result = mockMvc.perform(post(
+                            "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                            .param("networkUuid", NETWORK_UUID.toString())
+                            .param("variantId", VARIANT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(CsvExportParams.builder()
+                                    .csvHeader(CSV_HEADERS)
+                                    .enumValueTranslations(ENUM_TRANSLATIONS)
+                                    .language(language).build())))
+                    .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                    .andReturn();
+            byte[] zipFile = result.getResponse().getContentAsByteArray();
+            byte[] unzippedCsvFile = unzip(zipFile);
+            String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
+            List<List<String>> actualCsv = Arrays.stream(unzippedCsvFileAsString.split("\n"))
+                    .map(line -> line.split(language.equals("fr") ? ";" : ",")) // csv separator
+                    .map(fields -> Arrays.stream(fields)
+                            .map(field -> language.equals("fr") ? field.replace(",", ".") : field) // number formating
+                            .toList())
+                    .toList();
+
+            assertEquals(expectedResultSize, actualCsv.size());
+            assertEquals(expectedHeaders, actualCsv.getFirst());
+            assertEquals(expectedLine1, actualCsv.get(1));
+            assertEquals(expectedBlankLine, actualCsv.get(2));
+            assertEquals(expectedLine3, actualCsv.get(3));
+            assertEquals(expectedBlankLine, actualCsv.get(4));
+        }
     }
 }
