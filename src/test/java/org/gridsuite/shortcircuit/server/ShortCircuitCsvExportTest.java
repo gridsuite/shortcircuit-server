@@ -32,7 +32,6 @@ import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static java.lang.Double.NaN;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -95,7 +94,7 @@ class ShortCircuitCsvExportTest {
 
     @Test
     void runTest() throws Exception {
-        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
@@ -103,10 +102,10 @@ class ShortCircuitCsvExportTest {
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
-        verify(shortCircuitService, times(1)).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+        verify(shortCircuitService, times(1)).getFaultResultsPage(null, null, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
 
         // test with filters and sort parameters
-        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(eq(NETWORK_UUID), eq(VARIANT_ID), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(FILTERS), eq(GLOBAL_FILTERS), eq(Pageable.unpaged(Sort.by(SORT))));
+        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, FILTERS, GLOBAL_FILTERS, Pageable.unpaged(Sort.by(SORT)));
         mockMvc.perform(post(
                         "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .param("networkUuid", NETWORK_UUID.toString())
@@ -120,10 +119,10 @@ class ShortCircuitCsvExportTest {
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
-        verify(shortCircuitService, times(1)).getFaultResultsPage(eq(NETWORK_UUID), eq(VARIANT_ID), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(FILTERS), eq(GLOBAL_FILTERS), eq(Pageable.unpaged(Sort.by(SORT))));
+        verify(shortCircuitService, times(1)).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, FILTERS, GLOBAL_FILTERS, Pageable.unpaged(Sort.by(SORT)));
 
         // test with result not found
-        doReturn(null).when(shortCircuitService).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID_NOT_FOUND), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+        doReturn(null).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID_NOT_FOUND, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
@@ -131,12 +130,12 @@ class ShortCircuitCsvExportTest {
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isNotFound());
-        verify(shortCircuitService, times(1)).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID_NOT_FOUND), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+        verify(shortCircuitService, times(1)).getFaultResultsPage(null, null, RESULT_UUID_NOT_FOUND, FaultResultsMode.FULL, null, null, Pageable.unpaged());
     }
 
     @Test
     void runWithInvalidCsvExportParametersTest() throws Exception {
-        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(eq(null), eq(null), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+        doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
 
         // test with empty CsvExportParams
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
@@ -162,7 +161,7 @@ class ShortCircuitCsvExportTest {
     @Test
     void resultTest() throws Exception {
         Page<FaultResult> page = new PageImpl<>(List.of(FAULT_RESULT_1, FAULT_RESULT_2), Pageable.unpaged(), 2);
-        doReturn(page).when(shortCircuitService).getFaultResultsPage(eq(NETWORK_UUID), eq(VARIANT_ID), eq(RESULT_UUID), eq(FaultResultsMode.FULL), eq(null), eq(null), eq(Pageable.unpaged()));
+        doReturn(page).when(shortCircuitService).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         MvcResult result;
 
         int expectedResultSize = 5;
