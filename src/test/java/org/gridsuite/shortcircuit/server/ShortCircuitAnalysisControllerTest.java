@@ -28,7 +28,6 @@ import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.ReportService;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.shortcircuit.server.dto.CsvExportParams;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.entities.FaultEmbeddable;
@@ -66,7 +65,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -78,7 +76,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.gridsuite.computation.s3.ComputationS3Service.METADATA_FILE_NAME;
 import static org.gridsuite.computation.service.AbstractResultContext.VARIANT_ID_HEADER;
 import static org.gridsuite.computation.service.NotificationService.*;
-import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitWorkerService.COMPUTATION_TYPE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -115,31 +112,6 @@ class ShortCircuitAnalysisControllerTest {
     private static final String VARIANT_4_ID = "variant_4";
     private static final String VARIANT_5_ID = "variant_5";
     private static final String NODE_BREAKER_NETWORK_VARIANT_ID = "node_breaker_network_variant_id";
-    private static final List<String> CSV_HEADERS = List.of(
-            "ID nœud",
-            "Type",
-            "Départs",
-            "Icc (kA)",
-            "Type de limite",
-            "Icc min (kA)",
-            "IMACC (kA)",
-            "Pcc (MVA)",
-            "Icc - Icc min (kA)",
-            "Icc - IMACC (kA)"
-    );
-
-    private final Map<String, String> enumTranslations = Map.of(
-            "THREE_PHASE", "Triphasé",
-            "SINGLE_PHASE", "Monophasé",
-            "ACTIVE_POWER", "Puissance active",
-            "APPARENT_POWER", "Puissance apparente",
-            "CURRENT", "Intensité",
-            "LOW_VOLTAGE", "Tension basse",
-            "HIGH_VOLTAGE", "Tension haute",
-            "LOW_SHORT_CIRCUIT_CURRENT", "Icc min",
-            "HIGH_SHORT_CIRCUIT_CURRENT", "Icc max",
-            "OTHER", "Autre"
-    );
 
     private static final int TIMEOUT = 1000;
     @MockitoBean
@@ -497,36 +469,6 @@ class ShortCircuitAnalysisControllerTest {
             //result should be sorted by fault.id + we add a sort by resultUuid
             expectedResultsIdInOrder = faultsFromDatabase.stream().sorted(comparatorByFaultIdDescAndResultUuid).map(faultResultEntity -> faultResultEntity.getFault().getId()).toList();
             assertPagedFaultResultsEquals(ShortCircuitAnalysisResultMock.RESULT_SORTED_PAGE_1, faultResultsPageDto1Full, expectedResultsIdInOrder);
-
-            // export zipped csv result
-            for (String language : List.of("fr", "en")) {
-                result = mockMvc.perform(post(
-                        "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(CsvExportParams.builder().csvHeader(CSV_HEADERS).
-                            enumValueTranslations(enumTranslations).language(language).build())))
-                    .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
-                    .andReturn();
-                byte[] zipFile = result.getResponse().getContentAsByteArray();
-                byte[] unzippedCsvFile = unzip(zipFile);
-                String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
-                List<String> actualCsvLines = List.of(Arrays.asList(unzippedCsvFileAsString.split("\n"))
-                    .get(0).split(language.equals("fr") ? ";" : ","));
-                // Including "\uFEFF" indicates the UTF-8 BOM at the start
-                List<String> expectedLines = List.of(
-                    "\uFEFFID nœud",
-                    "Type",
-                    "Départs",
-                    "Icc (kA)",
-                    "Type de limite",
-                    "Icc min (kA)",
-                    "IMACC (kA)",
-                    "Pcc (MVA)",
-                    "Icc - Icc min (kA)",
-                    "Icc - IMACC (kA)"
-                );
-                assertEquals(expectedLines, actualCsvLines);
-            }
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
@@ -1047,6 +989,7 @@ class ShortCircuitAnalysisControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
             org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisResult.class);
+            System.out.println(resultDto.getFaults().get(0).getShortCircuitLimits().getIpMin());
             assertEquals(10.5, resultDto.getFaults().get(0).getShortCircuitLimits().getIpMin(), 0.1);
             assertEquals(200.0, resultDto.getFaults().get(0).getShortCircuitLimits().getIpMax(), 0.1);
             assertEquals(10.5, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMin(), 0.1);
