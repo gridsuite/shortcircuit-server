@@ -180,7 +180,6 @@ class ShortCircuitCsvExportTest {
         );
         List<String> expectedLine1 = List.of("faultId1", "faultVoltageLevelId1", "", "", "0.05", "", "0.011", "0.2", "20", "0.035", "-0.155");
         List<String> expectedLine3 = List.of("faultId2", "faultVoltageLevelId2", "", "", "0.04", "", "0.011", "0.2", "10", "0.035", "-0.155");
-        List<String> expectedBlankLine = List.of();
 
         for (String language : List.of("fr", "en")) {
             result = mockMvc.perform(post(
