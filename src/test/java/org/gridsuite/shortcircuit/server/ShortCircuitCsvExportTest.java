@@ -164,7 +164,7 @@ class ShortCircuitCsvExportTest {
         doReturn(page).when(shortCircuitService).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         MvcResult result;
 
-        int expectedResultSize = 5;
+        int expectedResultSize = 3;
         // Including "\uFEFF" indicates the UTF-8 BOM at the start
         List<String> expectedHeaders = List.of(
                 "\uFEFFID nœud",
@@ -207,9 +207,7 @@ class ShortCircuitCsvExportTest {
             assertEquals(expectedResultSize, actualCsv.size());
             assertEquals(expectedHeaders, actualCsv.getFirst());
             assertEquals(expectedLine1, actualCsv.get(1));
-            assertEquals(expectedBlankLine, actualCsv.get(2));
-            assertEquals(expectedLine3, actualCsv.get(3));
-            assertEquals(expectedBlankLine, actualCsv.get(4));
+            assertEquals(expectedLine3, actualCsv.get(2));
         }
     }
 }
