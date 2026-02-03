@@ -92,8 +92,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         List<PowerElectronicsCluster> clusters = objectMapper.readValue(powerElectronicsClustersValue, new TypeReference<List<PowerElectronicsCluster>>() { });
 
         // filter by active one only and get all filterUuids
-        List<UUID> filterUuids = clusters.stream()
+        List<PowerElectronicsCluster> activeClusters = clusters.stream()
             .filter(c -> c.isActive())
+            .toList();
+        List<UUID> filterUuids = activeClusters.stream()
             .flatMap(item -> item.getFilters().stream().map(FilterElements::getFilterId))
             .toList();
 
@@ -108,7 +110,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         // replace filterUuids by equipmentIds in clusters
         List<Object> normalizedClusters = new ArrayList<>();
         int index = 0;
-        for (PowerElectronicsCluster cluster : clusters) {
+        for (PowerElectronicsCluster cluster : activeClusters) {
             Map<String, Object> normalizedCluster = new HashMap<>();
             normalizedCluster.put("id", Integer.toString(index++));
             normalizedCluster.put("alpha", cluster.getAlpha());
