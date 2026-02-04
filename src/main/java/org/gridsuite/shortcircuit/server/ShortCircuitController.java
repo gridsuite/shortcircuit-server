@@ -16,22 +16,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -110,10 +107,20 @@ public class ShortCircuitController {
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<byte[]> getZippedCsvExportFaultResult(
             @Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+            @Parameter(description = "network UUID") @RequestParam(value = "networkUuid", required = false) UUID networkUuid,
+            @Parameter(description = "variant Id") @RequestParam(name = "variantId", required = false) String variantId,
+            @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String filters,
+            @Parameter(description = "Global Filters") @RequestParam(name = "globalFilters", required = false) String globalFilters,
+            @Parameter(description = "Sort parameters") Sort sort,
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
+        Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
-                .body(shortCircuitService.getZippedCsvExportResult(resultUuid, shortCircuitService.getResult(resultUuid, FaultResultsMode.FULL), csvExportParams));
+                .body(shortCircuitService.getZippedCsvExportResult(
+                        resultUuid,
+                        resultPage,
+                        csvExportParams
+                ));
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)
@@ -121,18 +128,16 @@ public class ShortCircuitController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The page of fault results"),
         @ApiResponse(responseCode = "404", description = "Short circuit analysis result has not been found")})
     public ResponseEntity<Page<FaultResult>> getPagedFaultResults(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                                  @Parameter(description = "root network UUID") @RequestParam(value = "rootNetworkUuid", required = false) UUID rootNetworkUuid,
+                                                                  @Parameter(description = "network UUID") @RequestParam(value = "networkUuid", required = false) UUID networkUuid,
                                                                   @Parameter(description = "variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-                                                                  @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String stringFilters,
+                                                                  @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String filters,
                                                                   @Parameter(description = "Global Filters") @RequestParam(name = "globalFilters", required = false) String globalFilters,
                                                                   @Parameter(description = "BASIC (faults without limits and feeders), " +
                                                                           "FULL (faults with both), " +
                                                                           "WITH_LIMIT_VIOLATIONS (like FULL but only those with limit violations) or " +
                                                                           "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   Pageable pageable) {
-        String decodedStringGlobalFilters = globalFilters != null ? URLDecoder.decode(globalFilters, StandardCharsets.UTF_8) : null;
-        GlobalFilter globalFilter = FilterUtils.fromStringGlobalFiltersToDTO(decodedStringGlobalFilters, objectMapper);
-        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(rootNetworkUuid, variantId, resultUuid, mode, stringFilters, globalFilter, pageable);
+        Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, mode, filters, globalFilters, pageable);
         if (faultResultsPage == null) {
             return ResponseEntity.notFound().build();
         } else if (faultResultsPage.isEmpty()) {

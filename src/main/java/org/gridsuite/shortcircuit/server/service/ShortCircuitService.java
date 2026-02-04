@@ -24,6 +24,7 @@ import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
 import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
+import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
 import org.gridsuite.shortcircuit.server.entities.*;
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.*;
@@ -315,9 +317,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] exportToCsv(ShortCircuitAnalysisResult result, CsvExportParams csvExportParams) {
-        List<FaultResult> faultResults = result.getFaults();
-
+    public byte[] exportToCsv(List<FaultResult> faultResults, CsvExportParams csvExportParams) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
@@ -345,14 +345,14 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] getZippedCsvExportResult(UUID resultUuid, ShortCircuitAnalysisResult result, CsvExportParams csvExportParams) {
-        if (result == null) {
+    public byte[] getZippedCsvExportResult(UUID resultUuid, Page<FaultResult> faultResultsPage, CsvExportParams csvExportParams) {
+        if (faultResultsPage == null) {
             throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
         if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
             throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
         }
-        return exportToCsv(result, csvExportParams);
+        return exportToCsv(faultResultsPage.getContent(), csvExportParams);
     }
 
     @Transactional(readOnly = true)
@@ -382,17 +382,19 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     @Transactional(readOnly = true)
-    public Page<FaultResult> getFaultResultsPage(UUID rootNetworkUuid,
+    public Page<FaultResult> getFaultResultsPage(UUID networkUuid,
                                                  String variantId,
                                                  UUID resultUuid,
                                                  FaultResultsMode mode,
                                                  String stringFilters,
-                                                 GlobalFilter globalFilter,
+                                                 String globalFilters,
                                                  Pageable pageable) {
+        String decodedStringGlobalFilters = globalFilters != null ? URLDecoder.decode(globalFilters, StandardCharsets.UTF_8) : null;
+        GlobalFilter globalFilter = FilterUtils.fromStringGlobalFiltersToDTO(decodedStringGlobalFilters, objectMapper);
         List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         List<ResourceFilterDTO> resourceGlobalFilters = new ArrayList<>();
-        if (globalFilter != null) {
-            Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(rootNetworkUuid, variantId, globalFilter);
+        if (globalFilter != null && !globalFilter.isEmpty()) {
+            Optional<ResourceFilterDTO> resourceGlobalFilter = filterService.getResourceFilter(networkUuid, variantId, globalFilter);
             // No equipment verify global filters : no result
             if (resourceGlobalFilter.isEmpty()) {
                 return Page.empty();
