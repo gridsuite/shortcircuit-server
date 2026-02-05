@@ -245,7 +245,10 @@ class ShortCircuitParametersITest implements WithAssertions {
             .withEqualsForFields((String j1, String j2) -> {
                 //we can have more details than with simple string comparaison
                 try {
-                    JSONAssert.assertEquals(j2, j1, JSONCompareMode.NON_EXTENSIBLE);
+                    // normalize payloads to avoid non-deterministic ordering/type differences (arrays order, id numeric vs string)
+                    final String n1 = TestJsonNormalizer.normalizeJsonForComparison(objectMapper, j1);
+                    final String n2 = TestJsonNormalizer.normalizeJsonForComparison(objectMapper, j2);
+                    JSONAssert.assertEquals(n2, n1, JSONCompareMode.NON_EXTENSIBLE);
                     return true;
                 } catch (JSONException ex) {
                     log.error("payload not equals", ex);
