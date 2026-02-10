@@ -13,15 +13,13 @@ import org.gridsuite.shortcircuit.server.dto.FilterElements;
 // DUPLICATED AND ADAPTED from private code should be removed
 public class PowerElectronicsCluster extends AbstractPowerElectronicsData {
 
-
-    // List<String> equipmentIds; // Either generators or HVDC
     List<FilterElements> filters; // ADDED
 
-    PowerElectronicsCluster() {
+    protected PowerElectronicsCluster() {
         // Needed for deserialization
     }
 
-    public PowerElectronicsCluster(/*String id, */double alpha, double u0, double usMin, double usMax, PowerElectronicsType type, List<FilterElements> filters, Boolean active) {
+    public PowerElectronicsCluster(double alpha, double u0, double usMin, double usMax, PowerElectronicsType type, List<FilterElements> filters, Boolean active) {
         super(alpha, u0, usMin, usMax, type, active);
         this.filters = filters;
     }
