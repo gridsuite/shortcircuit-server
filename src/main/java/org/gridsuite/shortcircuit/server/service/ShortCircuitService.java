@@ -315,8 +315,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 ));
                 csvWriter.writeRow(feederRowData);
             }
-        } else {
-            csvWriter.writeRow(List.of("", "", "", "", "", ""));
         }
     }
 
