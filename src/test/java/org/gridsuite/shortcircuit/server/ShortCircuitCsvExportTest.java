@@ -9,6 +9,7 @@ package org.gridsuite.shortcircuit.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
+import org.gridsuite.shortcircuit.server.utils.ResultType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -96,6 +97,7 @@ class ShortCircuitCsvExportTest {
     void runTest() throws Exception {
         doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS)
@@ -110,6 +112,7 @@ class ShortCircuitCsvExportTest {
                         "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .param("networkUuid", NETWORK_UUID.toString())
                         .param("variantId", VARIANT_ID)
+                        .param("resultType", ResultType.ALL_BUSES.name())
                         .param("filters", FILTERS)
                         .param("globalFilters", GLOBAL_FILTERS)
                         .param("sort", SORT)
@@ -124,6 +127,7 @@ class ShortCircuitCsvExportTest {
         // test with result not found
         doReturn(null).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID_NOT_FOUND, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
+                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS)
@@ -139,12 +143,14 @@ class ShortCircuitCsvExportTest {
 
         // test with empty CsvExportParams
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder().build())))
                 .andExpectAll(status().isBadRequest());
 
         // test with null enumValueTranslations
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS).build())))
@@ -152,6 +158,7 @@ class ShortCircuitCsvExportTest {
 
         // test with null csvHeader
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .enumValueTranslations(ENUM_TRANSLATIONS).build())))
@@ -186,6 +193,7 @@ class ShortCircuitCsvExportTest {
                             "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                             .param("networkUuid", NETWORK_UUID.toString())
                             .param("variantId", VARIANT_ID)
+                            .param("resultType", ResultType.ALL_BUSES.name())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(mapper.writeValueAsString(CsvExportParams.builder()
                                     .csvHeader(CSV_HEADERS)

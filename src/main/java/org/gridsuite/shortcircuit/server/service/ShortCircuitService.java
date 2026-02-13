@@ -47,7 +47,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.gridsuite.computation.error.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
-import static org.gridsuite.computation.error.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
 
 /**
@@ -144,6 +143,33 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(), feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
     }
 
+    private static FaultResult faultResultFromFeederResultEntities(List<FeederResultEntity> feederResultEntities) {
+        if (feederResultEntities == null || feederResultEntities.isEmpty()) {
+            return new FaultResult();
+        }
+
+        FaultResultEntity faultResultEntity = feederResultEntities.getFirst().getFaultResult();
+        Fault fault = fromEntity(faultResultEntity.getFault());
+        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(
+                faultResultEntity.getIpMin(),
+                faultResultEntity.getIpMax(),
+                faultResultEntity.getDeltaCurrentIpMin(),
+                faultResultEntity.getDeltaCurrentIpMax()
+        );
+        List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(ShortCircuitService::fromEntity).toList();
+        List<FeederResult> feederResults = feederResultEntities.stream().map(ShortCircuitService::fromEntity).toList();
+
+        return new FaultResult(
+                fault,
+                faultResultEntity.getCurrent(),
+                faultResultEntity.getPositiveMagnitude(),
+                faultResultEntity.getShortCircuitPower(),
+                limitViolations,
+                feederResults,
+                shortCircuitLimits
+        );
+    }
+
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
         result.setFaultResults(result.getFaultResults().stream()
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
@@ -229,7 +255,11 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] exportToCsv(List<FaultResult> faultResults, CsvExportParams csvExportParams) {
+    public byte[] getZippedCsvExportResult(List<FaultResult> faultResults, CsvExportParams csvExportParams) {
+        if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
+            throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
+        }
+
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
@@ -255,16 +285,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         } catch (IOException e) {
             throw new UncheckedIOException("Error occurred while writing data to csv file", e);
         }
-    }
-
-    public byte[] getZippedCsvExportResult(UUID resultUuid, Page<FaultResult> faultResultsPage, CsvExportParams csvExportParams) {
-        if (faultResultsPage == null) {
-            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
-        }
-        if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
-            throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
-        }
-        return exportToCsv(faultResultsPage.getContent(), csvExportParams);
     }
 
     @Transactional(readOnly = true)
@@ -347,21 +367,46 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     @Transactional(readOnly = true)
     public Page<FeederResult> getFeederResultsPage(UUID resultUuid, String stringFilters, Pageable pageable) {
-        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
+        Page<FeederResultEntity> feederResultEntitiesPage = getFeederResultsEntityPage(resultUuid, stringFilters, pageable);
+        if (feederResultEntitiesPage == null) {
+            return null;
+        }
+        if (feederResultEntitiesPage.isEmpty()) {
+            return Page.empty();
+        }
+        Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+            LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+        }
+        return feederResultsPage;
+    }
+
+    @Transactional(readOnly = true)
+    public FaultResult getOneBusFaultResult(UUID resultUuid, String stringFilters, Pageable pageable) {
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+        Page<FeederResultEntity> feederResultEntitiesPage = getFeederResultsEntityPage(resultUuid, stringFilters, pageable);
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        }
+        if (feederResultEntitiesPage == null || feederResultEntitiesPage.isEmpty()) {
+            return null;
+        }
+        return faultResultFromFeederResultEntities(feederResultEntitiesPage.getContent());
+    }
+
+    public Page<FeederResultEntity> getFeederResultsEntityPage(UUID resultUuid, String stringFilters, Pageable pageable) {
+        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         Optional<ShortCircuitAnalysisResultEntity> result = resultService.find(resultUuid);
         if (result.isPresent()) {
             Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(result.get(), resourceFilters, pageable);
             if (feederResultEntitiesPage.isEmpty()) {
                 return Page.empty();
             }
-            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
-            }
-            return feederResultsPage;
+            return feederResultEntitiesPage;
         }
         return null;
     }
