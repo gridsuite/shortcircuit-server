@@ -94,7 +94,7 @@ class ShortCircuitCsvExportTest {
     private static final String GLOBAL_FILTERS = "{\"globalFilter\": []}";
 
     @Test
-    void runTest() throws Exception {
+    void runAllBusesTest() throws Exception {
         doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .param("resultType", ResultType.ALL_BUSES.name())
@@ -135,6 +135,47 @@ class ShortCircuitCsvExportTest {
                                 .language("en").build())))
                 .andExpectAll(status().isNotFound());
         verify(shortCircuitService, times(1)).getFaultResultsPage(null, null, RESULT_UUID_NOT_FOUND, FaultResultsMode.FULL, null, null, Pageable.unpaged());
+    }
+
+    @Test
+    void runOneBusTest() throws Exception {
+        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
+        mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .param("resultType", ResultType.ONE_BUS.name())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(CsvExportParams.builder()
+                                .csvHeader(CSV_HEADERS)
+                                .enumValueTranslations(ENUM_TRANSLATIONS)
+                                .language("en").build())))
+                .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
+        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
+
+        // test with filters and sort parameters
+        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, FILTERS, Pageable.unpaged(Sort.by(SORT)));
+        mockMvc.perform(post(
+                        "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                        .param("resultType", ResultType.ONE_BUS.name())
+                        .param("filters", FILTERS)
+                        .param("sort", SORT)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(CsvExportParams.builder()
+                                .csvHeader(CSV_HEADERS)
+                                .enumValueTranslations(ENUM_TRANSLATIONS)
+                                .language("en").build())))
+                .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
+        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, FILTERS, Pageable.unpaged(Sort.by(SORT)));
+
+        // test with result not found
+        doReturn(null).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Pageable.unpaged());
+        mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
+                        .param("resultType", ResultType.ONE_BUS.name())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(CsvExportParams.builder()
+                                .csvHeader(CSV_HEADERS)
+                                .enumValueTranslations(ENUM_TRANSLATIONS)
+                                .language("en").build())))
+                .andExpectAll(status().isNotFound());
+        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Pageable.unpaged());
     }
 
     @Test
