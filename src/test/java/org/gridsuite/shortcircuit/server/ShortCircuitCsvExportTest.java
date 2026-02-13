@@ -51,15 +51,18 @@ class ShortCircuitCsvExportTest {
     private ObjectMapper mapper;
 
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
+    private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
     private static final UUID RESULT_UUID_NOT_FOUND = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final String VARIANT_ID = "variantId";
 
     private static final Fault FAULT_1 = new Fault("faultId1", "faultElementId1", "faultVoltageLevelId1", "faultType1");
     private static final Fault FAULT_2 = new Fault("faultId2", "faultElementId2", "faultVoltageLevelId2", "faultType2");
+    private static final FeederResult FEEDER_RESULT = new FeederResult("connectableId", 50, NaN, "");
     private static final ShortCircuitLimits LIMITS = new ShortCircuitLimits(10.5, 200, 34.8, -154.7);
     private static final FaultResult FAULT_RESULT_1 = new FaultResult(FAULT_1, 50, NaN, 20, List.of(), List.of(), LIMITS);
     private static final FaultResult FAULT_RESULT_2 = new FaultResult(FAULT_2, 40, NaN, 10, List.of(), List.of(), LIMITS);
+    private static final FaultResult FAULT_RESULT_3 = new FaultResult(FAULT_1, 50, NaN, 20, List.of(), List.of(FEEDER_RESULT), LIMITS);
 
     private static final List<String> CSV_HEADERS_ALL_BUSES = List.of(
             "Nœud électrique",
@@ -231,10 +234,14 @@ class ShortCircuitCsvExportTest {
                 "Icc - Icc min (kA)",
                 "Icc - IMACC (kA)"
         );
-        List<String> expectedLine = List.of("faultId1", "faultVoltageLevelId1", "", "", "", "", "", "0.011", "0.2", "20", "0.035", "-0.155");
+        List<String> expectedLine1 = List.of("faultId1", "faultVoltageLevelId1", "", "", "", "", "", "0.011", "0.2", "20", "0.035", "-0.155");
+        List<String> expectedLine2 = List.of("faultId1", "", "", "connectableId");
 
         doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
-        resultTest(true, List.of(expectedHeaders, expectedLine));
+        resultTest(RESULT_UUID, true, List.of(expectedHeaders, expectedLine1));
+
+        doReturn(FAULT_RESULT_3).when(shortCircuitService).getOneBusFaultResult(OTHER_RESULT_UUID, null, Pageable.unpaged());
+        resultTest(OTHER_RESULT_UUID, true, List.of(expectedHeaders, expectedLine1, expectedLine2));
     }
 
     @Test
@@ -258,15 +265,15 @@ class ShortCircuitCsvExportTest {
 
         Page<FaultResult> page = new PageImpl<>(List.of(FAULT_RESULT_1, FAULT_RESULT_2), Pageable.unpaged(), 2);
         doReturn(page).when(shortCircuitService).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
-        resultTest(false, List.of(expectedHeaders, expectedLine1, expectedLine2));
+        resultTest(RESULT_UUID, false, List.of(expectedHeaders, expectedLine1, expectedLine2));
     }
 
-    void resultTest(boolean oneBusCase, List<List<String>> expectedLines) throws Exception {
+    void resultTest(UUID resultUuid, boolean oneBusCase, List<List<String>> expectedLines) throws Exception {
         MvcResult result;
 
         for (String language : List.of("fr", "en")) {
             result = mockMvc.perform(post(
-                            "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
+                            "/" + VERSION + "/results/{resultUuid}/csv", resultUuid)
                             .param("networkUuid", NETWORK_UUID.toString())
                             .param("variantId", VARIANT_ID)
                             .contentType(MediaType.APPLICATION_JSON)
