@@ -9,7 +9,6 @@ package org.gridsuite.shortcircuit.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
-import org.gridsuite.shortcircuit.server.utils.ResultType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,10 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static java.lang.Double.NaN;
@@ -65,11 +61,26 @@ class ShortCircuitCsvExportTest {
     private static final FaultResult FAULT_RESULT_1 = new FaultResult(FAULT_1, 50, NaN, 20, List.of(), List.of(), LIMITS);
     private static final FaultResult FAULT_RESULT_2 = new FaultResult(FAULT_2, 40, NaN, 10, List.of(), List.of(), LIMITS);
 
-    private static final List<String> CSV_HEADERS = List.of(
-            "ID nœud",
+    private static final List<String> CSV_HEADERS_ALL_BUSES = List.of(
+            "Nœud électrique",
+            "Poste",
             "Type",
             "Départs",
             "Icc (kA)",
+            "Type de limite",
+            "Icc min (kA)",
+            "IMACC (kA)",
+            "Pcc (MVA)",
+            "Icc - Icc min (kA)",
+            "Icc - IMACC (kA)"
+    );
+    private static final List<String> CSV_HEADERS_ONE_BUS = List.of(
+            "Nœud électrique",
+            "Poste",
+            "Type",
+            "Départs",
+            "Icc (kA)",
+            "Côté",
             "Type de limite",
             "Icc min (kA)",
             "IMACC (kA)",
@@ -97,10 +108,9 @@ class ShortCircuitCsvExportTest {
     void runAllBusesTest() throws Exception {
         doReturn(Page.empty()).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .csvHeader(CSV_HEADERS)
+                                .csvHeader(CSV_HEADERS_ALL_BUSES)
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
@@ -112,13 +122,12 @@ class ShortCircuitCsvExportTest {
                         "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .param("networkUuid", NETWORK_UUID.toString())
                         .param("variantId", VARIANT_ID)
-                        .param("resultType", ResultType.ALL_BUSES.name())
                         .param("filters", FILTERS)
                         .param("globalFilters", GLOBAL_FILTERS)
                         .param("sort", SORT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .csvHeader(CSV_HEADERS)
+                                .csvHeader(CSV_HEADERS_ALL_BUSES)
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
@@ -127,10 +136,9 @@ class ShortCircuitCsvExportTest {
         // test with result not found
         doReturn(null).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID_NOT_FOUND, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
-                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .csvHeader(CSV_HEADERS)
+                                .csvHeader(CSV_HEADERS_ALL_BUSES)
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
                 .andExpectAll(status().isNotFound());
@@ -141,12 +149,13 @@ class ShortCircuitCsvExportTest {
     void runOneBusTest() throws Exception {
         doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                        .param("resultType", ResultType.ONE_BUS.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .csvHeader(CSV_HEADERS)
+                                .csvHeader(CSV_HEADERS_ONE_BUS)
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
-                                .language("en").build())))
+                                .language("en")
+                                .oneBusCase(true)
+                                .build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
         verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
 
@@ -154,26 +163,28 @@ class ShortCircuitCsvExportTest {
         doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, FILTERS, Pageable.unpaged(Sort.by(SORT)));
         mockMvc.perform(post(
                         "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                        .param("resultType", ResultType.ONE_BUS.name())
                         .param("filters", FILTERS)
                         .param("sort", SORT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .csvHeader(CSV_HEADERS)
+                                .csvHeader(CSV_HEADERS_ONE_BUS)
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
-                                .language("en").build())))
+                                .language("en")
+                                .oneBusCase(true)
+                                .build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
         verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, FILTERS, Pageable.unpaged(Sort.by(SORT)));
 
         // test with result not found
         doReturn(null).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
-                        .param("resultType", ResultType.ONE_BUS.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .csvHeader(CSV_HEADERS)
+                                .csvHeader(CSV_HEADERS_ONE_BUS)
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
-                                .language("en").build())))
+                                .language("en")
+                                .oneBusCase(true)
+                                .build())))
                 .andExpectAll(status().isNotFound());
         verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Pageable.unpaged());
     }
@@ -184,22 +195,19 @@ class ShortCircuitCsvExportTest {
 
         // test with empty CsvExportParams
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder().build())))
                 .andExpectAll(status().isBadRequest());
 
         // test with null enumValueTranslations
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                .csvHeader(CSV_HEADERS).build())))
+                                .csvHeader(CSV_HEADERS_ALL_BUSES).build())))
                 .andExpectAll(status().isBadRequest());
 
         // test with null csvHeader
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
-                        .param("resultType", ResultType.ALL_BUSES.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .enumValueTranslations(ENUM_TRANSLATIONS).build())))
@@ -207,15 +215,34 @@ class ShortCircuitCsvExportTest {
     }
 
     @Test
-    void resultTest() throws Exception {
-        Page<FaultResult> page = new PageImpl<>(List.of(FAULT_RESULT_1, FAULT_RESULT_2), Pageable.unpaged(), 2);
-        doReturn(page).when(shortCircuitService).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
-        MvcResult result;
-
-        int expectedResultSize = 3;
+    void oneBusResultTest() throws Exception {
         // Including "\uFEFF" indicates the UTF-8 BOM at the start
         List<String> expectedHeaders = List.of(
-                "\uFEFFID nœud",
+                "\uFEFFNœud électrique",
+                "Poste",
+                "Type",
+                "Départs",
+                "Icc (kA)",
+                "Côté",
+                "Type de limite",
+                "Icc min (kA)",
+                "IMACC (kA)",
+                "Pcc (MVA)",
+                "Icc - Icc min (kA)",
+                "Icc - IMACC (kA)"
+        );
+        List<String> expectedLine = List.of("faultId1", "faultVoltageLevelId1", "", "", "", "", "", "0.011", "0.2", "20", "0.035", "-0.155");
+
+        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
+        resultTest(true, List.of(expectedHeaders, expectedLine));
+    }
+
+    @Test
+    void allBusesResultTest() throws Exception {
+        // Including "\uFEFF" indicates the UTF-8 BOM at the start
+        List<String> expectedHeaders = List.of(
+                "\uFEFFNœud électrique",
+                "Poste",
                 "Type",
                 "Départs",
                 "Icc (kA)",
@@ -227,19 +254,27 @@ class ShortCircuitCsvExportTest {
                 "Icc - IMACC (kA)"
         );
         List<String> expectedLine1 = List.of("faultId1", "faultVoltageLevelId1", "", "", "0.05", "", "0.011", "0.2", "20", "0.035", "-0.155");
-        List<String> expectedLine3 = List.of("faultId2", "faultVoltageLevelId2", "", "", "0.04", "", "0.011", "0.2", "10", "0.035", "-0.155");
+        List<String> expectedLine2 = List.of("faultId2", "faultVoltageLevelId2", "", "", "0.04", "", "0.011", "0.2", "10", "0.035", "-0.155");
+
+        Page<FaultResult> page = new PageImpl<>(List.of(FAULT_RESULT_1, FAULT_RESULT_2), Pageable.unpaged(), 2);
+        doReturn(page).when(shortCircuitService).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, null, null, Pageable.unpaged());
+        resultTest(false, List.of(expectedHeaders, expectedLine1, expectedLine2));
+    }
+
+    void resultTest(boolean oneBusCase, List<List<String>> expectedLines) throws Exception {
+        MvcResult result;
 
         for (String language : List.of("fr", "en")) {
             result = mockMvc.perform(post(
                             "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                             .param("networkUuid", NETWORK_UUID.toString())
                             .param("variantId", VARIANT_ID)
-                            .param("resultType", ResultType.ALL_BUSES.name())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(mapper.writeValueAsString(CsvExportParams.builder()
-                                    .csvHeader(CSV_HEADERS)
+                                    .csvHeader(oneBusCase ? CSV_HEADERS_ONE_BUS : CSV_HEADERS_ALL_BUSES)
                                     .enumValueTranslations(ENUM_TRANSLATIONS)
-                                    .language(language).build())))
+                                    .language(language)
+                                    .oneBusCase(oneBusCase).build())))
                     .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                     .andReturn();
             byte[] zipFile = result.getResponse().getContentAsByteArray();
@@ -252,10 +287,7 @@ class ShortCircuitCsvExportTest {
                             .toList())
                     .toList();
 
-            assertEquals(expectedResultSize, actualCsv.size());
-            assertEquals(expectedHeaders, actualCsv.getFirst());
-            assertEquals(expectedLine1, actualCsv.get(1));
-            assertEquals(expectedLine3, actualCsv.get(2));
+            assertEquals(expectedLines, actualCsv);
         }
     }
 }

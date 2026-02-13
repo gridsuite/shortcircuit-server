@@ -22,7 +22,6 @@ import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
-import org.gridsuite.shortcircuit.server.utils.ResultType;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -112,29 +111,23 @@ public class ShortCircuitController {
             @Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
             @Parameter(description = "network UUID") @RequestParam(value = "networkUuid", required = false) UUID networkUuid,
             @Parameter(description = "variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "Result type") @RequestParam(name = "resultType") ResultType resultType,
             @Parameter(description = "Filters") @RequestParam(name = "filters", required = false) String filters,
             @Parameter(description = "Global Filters") @RequestParam(name = "globalFilters", required = false) String globalFilters,
             @Parameter(description = "Sort parameters") Sort sort,
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
         List<FaultResult> faultResults;
-        switch (resultType) {
-            case ONE_BUS:
-                FaultResult result = shortCircuitService.getOneBusFaultResult(resultUuid, filters, Pageable.unpaged(sort));
-                if (result == null) {
-                    throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
-                }
-                faultResults = List.of(result);
-                break;
-            case ALL_BUSES:
-                Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
-                if (resultPage == null) {
-                    throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
-                }
-                faultResults = resultPage.getContent();
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported result type: " + resultType);
+        if (csvExportParams.oneBusCase()) {
+            FaultResult result = shortCircuitService.getOneBusFaultResult(resultUuid, filters, Pageable.unpaged(sort));
+            if (result == null) {
+                throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
+            }
+            faultResults = List.of(result);
+        } else {
+            Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
+            if (resultPage == null) {
+                throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
+            }
+            faultResults = resultPage.getContent();
         }
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))

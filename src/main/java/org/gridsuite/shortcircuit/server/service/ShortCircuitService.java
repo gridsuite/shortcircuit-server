@@ -367,46 +367,43 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     @Transactional(readOnly = true)
     public Page<FeederResult> getFeederResultsPage(UUID resultUuid, String stringFilters, Pageable pageable) {
-        AtomicReference<Long> startTime = new AtomicReference<>();
-        startTime.set(System.nanoTime());
-        Page<FeederResultEntity> feederResultEntitiesPage = getFeederResultsEntityPage(resultUuid, stringFilters, pageable);
-        if (feederResultEntitiesPage == null) {
-            return null;
-        }
-        if (feederResultEntitiesPage.isEmpty()) {
-            return Page.empty();
-        }
-        Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-            LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
-        }
-        return feederResultsPage;
-    }
-
-    @Transactional(readOnly = true)
-    public FaultResult getOneBusFaultResult(UUID resultUuid, String stringFilters, Pageable pageable) {
-        AtomicReference<Long> startTime = new AtomicReference<>();
-        startTime.set(System.nanoTime());
-        Page<FeederResultEntity> feederResultEntitiesPage = getFeederResultsEntityPage(resultUuid, stringFilters, pageable);
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-        }
-        if (feederResultEntitiesPage == null || feederResultEntitiesPage.isEmpty()) {
-            return null;
-        }
-        return faultResultFromFeederResultEntities(feederResultEntitiesPage.getContent());
-    }
-
-    public Page<FeederResultEntity> getFeederResultsEntityPage(UUID resultUuid, String stringFilters, Pageable pageable) {
         List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> result = resultService.find(resultUuid);
         if (result.isPresent()) {
             Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(result.get(), resourceFilters, pageable);
             if (feederResultEntitiesPage.isEmpty()) {
                 return Page.empty();
             }
-            return feederResultEntitiesPage;
+            Page<FeederResult> feederResultsPage = feederResultEntitiesPage.map(ShortCircuitService::fromEntity);
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+            }
+            return feederResultsPage;
+        }
+        return null;
+    }
+
+    @Transactional(readOnly = true)
+    public FaultResult getOneBusFaultResult(UUID resultUuid, String stringFilters, Pageable pageable) {
+        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+        Optional<ShortCircuitAnalysisResultEntity> resultEntity = resultService.find(resultUuid);
+        if (resultEntity.isPresent()) {
+            Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(resultEntity.get(), resourceFilters, pageable);
+            if (feederResultEntitiesPage.isEmpty()) {
+                ShortCircuitAnalysisResult result = fromEntity(resultEntity.get(), FaultResultsMode.FULL);
+                return result.getFaults().getFirst();
+            }
+            FaultResult faultResult = faultResultFromFeederResultEntities(feederResultEntitiesPage.getContent());
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+            }
+            return faultResult;
         }
         return null;
     }
