@@ -117,7 +117,7 @@ public class ShortCircuitController {
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
         List<FaultResult> faultResults;
         if (csvExportParams.oneBusCase()) {
-            FaultResult result = shortCircuitService.getOneBusFaultResult(resultUuid, filters, Pageable.unpaged(sort));
+            FaultResult result = shortCircuitService.getOneBusFaultResult(resultUuid, filters, sort);
             if (result == null) {
                 throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
             }

@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -143,12 +144,25 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(), feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
     }
 
-    private static FaultResult faultResultFromFeederResultEntities(List<FeederResultEntity> feederResultEntities) {
+    private static FaultResult buildFaultResultFromSomeOfItsFeederResultEntities(List<FeederResultEntity> feederResultEntities) {
+        /*
+         * Build a FaultResult from a subset of its FeederResultEntities.
+         *
+         * <p>All feederResultEntities must belong to the same parent FaultResult.
+         * The resulting FaultResult will include only the provided feeders, preserving their order.
+         */
         if (feederResultEntities == null || feederResultEntities.isEmpty()) {
             return new FaultResult();
         }
 
         FaultResultEntity faultResultEntity = feederResultEntities.getFirst().getFaultResult();
+
+        for (FeederResultEntity feederResultEntity : feederResultEntities) {
+            if (!feederResultEntity.getFaultResult().equals(faultResultEntity)) {
+                throw new IllegalStateException("All FeederResults must be associated with the same FaultResult");
+            }
+        }
+
         Fault fault = fromEntity(faultResultEntity.getFault());
         ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(
                 faultResultEntity.getIpMin(),
@@ -387,21 +401,20 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     @Transactional(readOnly = true)
-    public FaultResult getOneBusFaultResult(UUID resultUuid, String stringFilters, Pageable pageable) {
+    public FaultResult getOneBusFaultResult(UUID resultUuid, String stringFilters, Sort sort) {
         List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> resultEntity = resultService.find(resultUuid);
         if (resultEntity.isPresent()) {
-            Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(resultEntity.get(), resourceFilters, pageable);
+            Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(resultEntity.get(), resourceFilters, Pageable.unpaged(sort));
             if (feederResultEntitiesPage.isEmpty()) {
                 ShortCircuitAnalysisResult result = fromEntity(resultEntity.get(), FaultResultsMode.FULL);
                 return result.getFaults().getFirst();
             }
-            FaultResult faultResult = faultResultFromFeederResultEntities(feederResultEntitiesPage.getContent());
+            FaultResult faultResult = buildFaultResultFromSomeOfItsFeederResultEntities(feederResultEntitiesPage.getContent());
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
             }
             return faultResult;
         }

@@ -150,7 +150,7 @@ class ShortCircuitCsvExportTest {
 
     @Test
     void runOneBusTest() throws Exception {
-        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
+        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Sort.unsorted());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
@@ -160,10 +160,10 @@ class ShortCircuitCsvExportTest {
                                 .oneBusCase(true)
                                 .build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
-        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
+        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, null, Sort.unsorted());
 
         // test with filters and sort parameters
-        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, FILTERS, Pageable.unpaged(Sort.by(SORT)));
+        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, FILTERS, Sort.by(SORT));
         mockMvc.perform(post(
                         "/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID)
                         .param("filters", FILTERS)
@@ -176,10 +176,10 @@ class ShortCircuitCsvExportTest {
                                 .oneBusCase(true)
                                 .build())))
                 .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_OCTET_STREAM));
-        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, FILTERS, Pageable.unpaged(Sort.by(SORT)));
+        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, FILTERS, Sort.by(SORT));
 
         // test with result not found
-        doReturn(null).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Pageable.unpaged());
+        doReturn(null).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Sort.unsorted());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
@@ -189,7 +189,7 @@ class ShortCircuitCsvExportTest {
                                 .oneBusCase(true)
                                 .build())))
                 .andExpectAll(status().isNotFound());
-        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Pageable.unpaged());
+        verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Sort.unsorted());
     }
 
     @Test
@@ -237,10 +237,10 @@ class ShortCircuitCsvExportTest {
         List<String> expectedLine1 = List.of("faultId1", "faultVoltageLevelId1", "", "", "", "", "", "0.011", "0.2", "20", "0.035", "-0.155");
         List<String> expectedLine2 = List.of("faultId1", "", "", "connectableId");
 
-        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Pageable.unpaged());
+        doReturn(FAULT_RESULT_1).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID, null, Sort.unsorted());
         resultTest(RESULT_UUID, true, List.of(expectedHeaders, expectedLine1));
 
-        doReturn(FAULT_RESULT_3).when(shortCircuitService).getOneBusFaultResult(OTHER_RESULT_UUID, null, Pageable.unpaged());
+        doReturn(FAULT_RESULT_3).when(shortCircuitService).getOneBusFaultResult(OTHER_RESULT_UUID, null, Sort.unsorted());
         resultTest(OTHER_RESULT_UUID, true, List.of(expectedHeaders, expectedLine1, expectedLine2));
     }
 
