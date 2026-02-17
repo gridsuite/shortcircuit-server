@@ -329,7 +329,8 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     private Optional<Sort.Order> extractChildrenSort(Pageable pageable) {
         return pageable.getSort().stream()
                 .filter(sortOrder ->
-                        sortOrder.getProperty().contains(FeederResultEntity.Fields.connectableId))
+                    sortOrder.getProperty().contains(FeederResultEntity.Fields.connectableId)
+                        || sortOrder.getProperty().contains(FeederResultEntity.Fields.side))
                 .findFirst();
     }
 
@@ -412,16 +413,39 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     private void sortFeeders(Page<FaultResultEntity> pagedFaultResults, Optional<Sort.Order> childrenSort) {
         // feeders may only be sorted by connectableId
         if (childrenSort.isPresent()) {
-            pagedFaultResults.forEach(res -> res.getFeederResults().sort(
-                childrenSort.get().isAscending() ?
-                    Comparator.comparing(FeederResultEntity::getConnectableId) :
-                    Comparator.comparing(FeederResultEntity::getConnectableId).reversed()
+            Comparator<FeederResultEntity> comparator = getFeedersComparatorForFaultResults(childrenSort);
+
+            boolean isSortOrderAscending = childrenSort.map(Sort.Order::isAscending).orElse(true);
+
+            pagedFaultResults.forEach(res -> res.getFeederResults().sort(isSortOrderAscending ?
+                comparator :
+                comparator.reversed()
             ));
         } else {
             // otherwise by default feederResults (within each individual faultResult) are sorted by 'current' in descending order :
             pagedFaultResults.forEach(res -> res.getFeederResults().sort(
                     Comparator.comparingDouble(FeederResultEntity::getCurrent).reversed()));
         }
+    }
+
+    private static Comparator<FeederResultEntity> getFeedersComparatorForFaultResults(Optional<Sort.Order> feedersSortOrder) {
+        if (feedersSortOrder.isPresent()) {
+            String field = feedersSortOrder.get().getProperty()
+                .replaceFirst(FaultResultEntity.Fields.feederResults + SpecificationUtils.FIELD_SEPARATOR, "");
+            return getCommonComparator(field);
+        } else {
+            return Comparator.comparing(FeederResultEntity::getConnectableId);
+        }
+    }
+
+    private static Comparator<FeederResultEntity> getCommonComparator(String field) {
+        return switch (field) {
+            case FeederResultEntity.Fields.side ->
+                Comparator.comparing(FeederResultEntity::getSide, Comparator.nullsLast(Comparator.naturalOrder()));
+            case FeederResultEntity.Fields.connectableId ->
+                Comparator.comparing(FeederResultEntity::getConnectableId, Comparator.nullsLast(Comparator.naturalOrder()));
+            default -> throw new IllegalArgumentException("Sorting on the column '" + field + "' is not supported"); // not supposed to happen
+        };
     }
 
     @Transactional(readOnly = true)
