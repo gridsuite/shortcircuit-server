@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * @author Florent MILLOT <florent.millot@rte-france.com>
@@ -29,7 +30,7 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
 
     @Override
     public boolean isNotParentFilter(ResourceFilterDTO filter) {
-        return filter.column().contains(FeederResultEntity.Fields.connectableId);
+        return List.of(FeederResultEntity.Fields.connectableId, FeederResultEntity.Fields.side).contains(filter.column());
     }
 
     public String getIdFieldName() {
@@ -46,17 +47,21 @@ public final class FaultResultSpecificationBuilder extends AbstractCommonSpecifi
 
     @Override
     public Specification<FaultResultEntity> buildSpecification(UUID resultUuid, List<ResourceFilterDTO> resourceFilters) {
+        List<ResourceFilterDTO> parentResourceFilter = resourceFilters.stream().filter(Predicate.not(this::isNotParentFilter))
+            .toList();
         // since sql joins generates duplicate results, we need to use distinct here
         Specification<FaultResultEntity> specification = SpecificationUtils.distinct();
         // filter by resultUuid
         specification = specification.and(Specification.where(resultUuidEquals(resultUuid)));
 
-        return SpecificationUtils.appendFiltersToSpecification(specification, resourceFilters);
+        return SpecificationUtils.appendFiltersToSpecification(specification, parentResourceFilter);
     }
 
     public Specification<FaultResultEntity> buildFeedersSpecification(List<UUID> uuids, List<ResourceFilterDTO> resourceFilters) {
         List<ResourceFilterDTO> childrenResourceFilter = resourceFilters.stream().filter(this::isNotParentFilter)
-                .toList();
+            // TODO: temporary fix, this should be sent from frontend
+            .map(rf -> new ResourceFilterDTO(rf.dataType(), rf.type(), rf.value(), "feederResults." + rf.column(), rf.tolerance()))
+            .toList();
         Specification<FaultResultEntity> specification = Specification.where(uuidIn(uuids));
 
         return SpecificationUtils.appendFiltersToSpecification(specification, childrenResourceFilter);
