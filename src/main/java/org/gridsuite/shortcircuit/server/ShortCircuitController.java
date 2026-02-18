@@ -113,14 +113,16 @@ public class ShortCircuitController {
             @Parameter(description = "Global Filters") @RequestParam(name = "globalFilters", required = false) String globalFilters,
             @Parameter(description = "Sort parameters") Sort sort,
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
-        Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
+        List<FaultResult> faultResults;
+        if (csvExportParams.oneBusCase()) {
+            faultResults = List.of(shortCircuitService.getOneBusFaultResult(resultUuid, filters, sort));
+        } else {
+            Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
+            faultResults = resultPage.getContent();
+        }
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
-                .body(shortCircuitService.getZippedCsvExportResult(
-                        resultUuid,
-                        resultPage,
-                        csvExportParams
-                ));
+                .body(shortCircuitService.getZippedCsvExportResult(faultResults, csvExportParams));
     }
 
     @GetMapping(value = "/results/{resultUuid}/fault_results/paged", produces = APPLICATION_JSON_VALUE)
@@ -138,9 +140,7 @@ public class ShortCircuitController {
                                                                           "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   Pageable pageable) {
         Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, mode, filters, globalFilters, pageable);
-        if (faultResultsPage == null) {
-            return ResponseEntity.notFound().build();
-        } else if (faultResultsPage.isEmpty()) {
+        if (faultResultsPage.isEmpty()) {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage);
