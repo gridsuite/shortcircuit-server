@@ -140,9 +140,7 @@ public class ShortCircuitController {
                                                                           "NONE (no fault)") @RequestParam(name = "mode", required = false, defaultValue = "FULL") FaultResultsMode mode,
                                                                   Pageable pageable) {
         Page<FaultResult> faultResultsPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, mode, filters, globalFilters, pageable);
-        if (faultResultsPage == null) {
-            return ResponseEntity.notFound().build();
-        } else if (faultResultsPage.isEmpty()) {
+       if (faultResultsPage.isEmpty()) {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(faultResultsPage);

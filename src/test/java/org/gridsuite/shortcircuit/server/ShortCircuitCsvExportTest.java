@@ -7,6 +7,7 @@
 package org.gridsuite.shortcircuit.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static java.lang.Double.NaN;
 import static org.gridsuite.shortcircuit.server.TestUtils.unzip;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -137,14 +139,14 @@ class ShortCircuitCsvExportTest {
         verify(shortCircuitService, times(1)).getFaultResultsPage(NETWORK_UUID, VARIANT_ID, RESULT_UUID, FaultResultsMode.FULL, FILTERS, GLOBAL_FILTERS, Pageable.unpaged(Sort.by(SORT)));
 
         // test with result not found
-        doReturn(null).when(shortCircuitService).getFaultResultsPage(null, null, RESULT_UUID_NOT_FOUND, FaultResultsMode.FULL, null, null, Pageable.unpaged());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
                                 .csvHeader(CSV_HEADERS_ALL_BUSES)
                                 .enumValueTranslations(ENUM_TRANSLATIONS)
                                 .language("en").build())))
-                .andExpectAll(status().isNotFound());
+                .andExpect(result ->
+                        assertInstanceOf(ComputationException.class, result.getResolvedException()));
         verify(shortCircuitService, times(1)).getFaultResultsPage(null, null, RESULT_UUID_NOT_FOUND, FaultResultsMode.FULL, null, null, Pageable.unpaged());
     }
 
@@ -179,7 +181,6 @@ class ShortCircuitCsvExportTest {
         verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID, FILTERS, Sort.by(SORT));
 
         // test with result not found
-        doReturn(null).when(shortCircuitService).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Sort.unsorted());
         mockMvc.perform(post("/" + VERSION + "/results/{resultUuid}/csv", RESULT_UUID_NOT_FOUND)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(CsvExportParams.builder()
@@ -188,7 +189,8 @@ class ShortCircuitCsvExportTest {
                                 .language("en")
                                 .oneBusCase(true)
                                 .build())))
-                .andExpectAll(status().isNotFound());
+                .andExpect(result ->
+                        assertInstanceOf(ComputationException.class, result.getResolvedException()));
         verify(shortCircuitService, times(1)).getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Sort.unsorted());
     }
 
