@@ -97,9 +97,10 @@ class ShortCircuitServiceTest {
     @Test
     void getOneBusFaultResultsWhenResultNotFoundTest() {
         when(resultService.find(RESULT_UUID_NOT_FOUND)).thenReturn(Optional.empty());
+        Sort sort = Sort.unsorted();
         ComputationException exception = assertThrows(
                 ComputationException.class,
-                () -> shortCircuitService.getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Sort.unsorted())
+                () -> shortCircuitService.getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, sort)
         );
         assertEquals(RESULT_NOT_FOUND, exception.getErrorCode());
         assertTrue(exception.getMessage().contains(RESULT_UUID_NOT_FOUND.toString()));
