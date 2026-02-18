@@ -48,6 +48,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.gridsuite.computation.error.ComputationBusinessErrorCode.INVALID_EXPORT_PARAMS;
+import static org.gridsuite.computation.error.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.utils.FilterUtils.fromStringFiltersToDTO;
 
 /**
@@ -157,10 +158,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
         FaultResultEntity faultResultEntity = feederResultEntities.getFirst().getFaultResult();
 
-        for (FeederResultEntity feederResultEntity : feederResultEntities) {
-            if (!feederResultEntity.getFaultResult().equals(faultResultEntity)) {
-                throw new IllegalStateException("All FeederResults must be associated with the same FaultResult");
-            }
+        if (!feederResultEntities.stream().allMatch(feederResult -> feederResult.getFaultResult().equals(faultResultEntity))) {
+            throw new IllegalStateException("All FeederResults must be associated with the same FaultResult");
         }
 
         Fault fault = fromEntity(faultResultEntity.getFault());
@@ -353,30 +352,30 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         Optional<ShortCircuitAnalysisResultEntity> result;
         // get without faultResults : FaultResultsM.NONE
         result = resultService.find(resultUuid);
-        if (result.isPresent()) {
-            Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
-            switch (mode) {
-                case BASIC, FULL:
-                    faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable, mode);
-                    break;
-                case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable);
-                    break;
-                case NONE:
-                default:
-                    break;
-            }
-            if (faultResultEntitiesPage.isEmpty()) {
-                return Page.empty();
-            }
-            Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
-            }
-            return faultResultsPage;
+        if (result.isEmpty()) {
+            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
-        return null;
+        Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
+        switch (mode) {
+            case BASIC, FULL:
+                faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable, mode);
+                break;
+            case WITH_LIMIT_VIOLATIONS:
+                faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable);
+                break;
+            case NONE:
+            default:
+                break;
+        }
+        if (faultResultEntitiesPage.isEmpty()) {
+            return Page.empty();
+        }
+        Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+            LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+        }
+        return faultResultsPage;
     }
 
     @Transactional(readOnly = true)
@@ -406,19 +405,19 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
         Optional<ShortCircuitAnalysisResultEntity> resultEntity = resultService.find(resultUuid);
-        if (resultEntity.isPresent()) {
-            Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(resultEntity.get(), resourceFilters, Pageable.unpaged(sort));
-            if (feederResultEntitiesPage.isEmpty()) {
-                ShortCircuitAnalysisResult result = fromEntity(resultEntity.get(), FaultResultsMode.FULL);
-                return result.getFaults().getFirst();
-            }
-            FaultResult faultResult = buildFaultResultFromSomeOfItsFeederResultEntities(feederResultEntitiesPage.getContent());
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-            }
-            return faultResult;
+        if (resultEntity.isEmpty()) {
+            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
-        return null;
+        Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(resultEntity.get(), resourceFilters, Pageable.unpaged(sort));
+        if (feederResultEntitiesPage.isEmpty()) {
+            ShortCircuitAnalysisResult result = fromEntity(resultEntity.get(), FaultResultsMode.FULL);
+            return result.getFaults().getFirst();
+        }
+        FaultResult faultResult = buildFaultResultFromSomeOfItsFeederResultEntities(feederResultEntitiesPage.getContent());
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        }
+        return faultResult;
     }
 
     @Override

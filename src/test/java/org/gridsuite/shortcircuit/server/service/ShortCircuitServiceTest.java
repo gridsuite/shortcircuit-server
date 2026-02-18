@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import org.gridsuite.computation.error.ComputationException;
 import com.powsybl.iidm.network.ThreeSides;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 import static java.lang.Double.NaN;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.gridsuite.computation.error.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import com.powsybl.shortcircuit.Fault.*;
@@ -95,8 +97,12 @@ class ShortCircuitServiceTest {
     @Test
     void getOneBusFaultResultsWhenResultNotFoundTest() {
         when(resultService.find(RESULT_UUID_NOT_FOUND)).thenReturn(Optional.empty());
-        FaultResult result = shortCircuitService.getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Sort.unsorted());
-        assertNull(result);
+        ComputationException exception = assertThrows(
+                ComputationException.class,
+                () -> shortCircuitService.getOneBusFaultResult(RESULT_UUID_NOT_FOUND, null, Sort.unsorted())
+        );
+        assertEquals(RESULT_NOT_FOUND, exception.getErrorCode());
+        assertTrue(exception.getMessage().contains(RESULT_UUID_NOT_FOUND.toString()));
     }
 
     @Test

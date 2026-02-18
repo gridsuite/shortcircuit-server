@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.gridsuite.computation.dto.ReportInfos;
-import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
@@ -35,7 +34,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.powsybl.shortcircuit.Fault.FaultType;
-import static org.gridsuite.computation.error.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.*;
 
@@ -117,16 +115,9 @@ public class ShortCircuitController {
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
         List<FaultResult> faultResults;
         if (csvExportParams.oneBusCase()) {
-            FaultResult result = shortCircuitService.getOneBusFaultResult(resultUuid, filters, sort);
-            if (result == null) {
-                throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
-            }
-            faultResults = List.of(result);
+            faultResults = List.of(shortCircuitService.getOneBusFaultResult(resultUuid, filters, sort));
         } else {
             Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
-            if (resultPage == null) {
-                throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
-            }
             faultResults = resultPage.getContent();
         }
         return ResponseEntity.ok()
