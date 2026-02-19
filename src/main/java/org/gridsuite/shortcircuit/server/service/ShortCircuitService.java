@@ -64,6 +64,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public static final char CSV_DELIMITER_FR = ';';
     public static final char CSV_DELIMITER_EN = ',';
     public static final char CSV_QUOTE_ESCAPE = '"';
+    public static final String POWER_ELECTRONICS_CLUSTERS = "powerElectronicsClusters";
+    // TODO remove when name fixed in powsybl
+    public static final String POWER_ELECTRONICS_CLUSTER = "powerElectronicsCluster";
 
     private final FilterService filterService;
 
@@ -142,13 +145,13 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, UUID networkUuid, String variantId) {
         // This is defensive: we check types at runtime and only transform when the expected shape is present.
         try {
-            if (specificParameters != null && specificParameters.containsKey("powerElectronicsClusters")) {
+            if (specificParameters != null && specificParameters.containsKey(POWER_ELECTRONICS_CLUSTERS)) {
                 // Build a merged, structured specificParameters map:
                 Map<String, String> mergedSpecificParameters = new HashMap<>(specificParameters);
-                List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get("powerElectronicsClusters"), networkUuid, variantId);
+                List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS), networkUuid, variantId);
                 // TODO restore powerElectronicsClusters name with the plural ending 's' when fixed in powsybl
-                mergedSpecificParameters.remove("powerElectronicsClusters");
-                mergedSpecificParameters.put("powerElectronicsCluster", objectMapper.writeValueAsString(powerElectronicsClustersValue));
+                mergedSpecificParameters.remove(POWER_ELECTRONICS_CLUSTERS);
+                mergedSpecificParameters.put(POWER_ELECTRONICS_CLUSTER, objectMapper.writeValueAsString(powerElectronicsClustersValue));
                 return mergedSpecificParameters;
             }
         } catch (Exception ex) {
@@ -179,11 +182,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         // update status to running status
         setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING);
 
-        LOGGER.debug("specificParameters types: {}",
-            parameters.getSpecificParameters() == null ? "null" :
-            parameters.getSpecificParameters().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() == null ? "null" : e.getValue().getClass().getName()))
-        );
         notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }

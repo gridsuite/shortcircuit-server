@@ -17,11 +17,16 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Utility class to normalize JSON strings for comparison in tests, by sorting arrays and parsing embedded JSON strings
  * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
 public final class TestJsonNormalizer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestJsonNormalizer.class);
+
     private TestJsonNormalizer() {
     }
 
@@ -81,6 +86,7 @@ public final class TestJsonNormalizer {
                                     normalizeNode(objectMapper, parsed);
                                     arr.set(i, parsed);
                                 } catch (Exception ignored) {
+                                    LOGGER.warn("Failed to parse array element as JSON: {}", t, ignored);
                                 }
                             }
                         }
@@ -156,6 +162,7 @@ public final class TestJsonNormalizer {
                             normalizeNode(objectMapper, parsed);
                             arr.set(i, parsed);
                         } catch (Exception ignored) {
+                            LOGGER.warn("Failed to parse array element as JSON: {}", t, ignored);
                         }
                     }
                 }
