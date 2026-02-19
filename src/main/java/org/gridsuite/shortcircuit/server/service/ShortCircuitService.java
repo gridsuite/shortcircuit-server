@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -231,6 +232,44 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(), feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
     }
 
+    private static FaultResult buildFaultResultFromSomeOfItsFeederResultEntities(List<FeederResultEntity> feederResultEntities) {
+        /*
+         * Build a FaultResult from a subset of its FeederResultEntities.
+         *
+         * <p>All feederResultEntities must belong to the same parent FaultResult.
+         * The resulting FaultResult will include only the provided feeders, preserving their order.
+         */
+        if (feederResultEntities == null || feederResultEntities.isEmpty()) {
+            return new FaultResult();
+        }
+
+        FaultResultEntity faultResultEntity = feederResultEntities.getFirst().getFaultResult();
+
+        if (!feederResultEntities.stream().allMatch(feederResult -> feederResult.getFaultResult().equals(faultResultEntity))) {
+            throw new IllegalStateException("All FeederResults must be associated with the same FaultResult");
+        }
+
+        Fault fault = fromEntity(faultResultEntity.getFault());
+        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(
+                faultResultEntity.getIpMin(),
+                faultResultEntity.getIpMax(),
+                faultResultEntity.getDeltaCurrentIpMin(),
+                faultResultEntity.getDeltaCurrentIpMax()
+        );
+        List<LimitViolation> limitViolations = faultResultEntity.getLimitViolations().stream().map(ShortCircuitService::fromEntity).toList();
+        List<FeederResult> feederResults = feederResultEntities.stream().map(ShortCircuitService::fromEntity).toList();
+
+        return new FaultResult(
+                fault,
+                faultResultEntity.getCurrent(),
+                faultResultEntity.getPositiveMagnitude(),
+                faultResultEntity.getShortCircuitPower(),
+                limitViolations,
+                feederResults,
+                shortCircuitLimits
+        );
+    }
+
     private static ShortCircuitAnalysisResultEntity sortByElementId(ShortCircuitAnalysisResultEntity result) {
         result.setFaultResults(result.getFaultResults().stream()
                 .sorted(Comparator.comparing(fr -> fr.getFault().getElementId()))
@@ -316,7 +355,11 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         }
     }
 
-    public byte[] exportToCsv(List<FaultResult> faultResults, CsvExportParams csvExportParams) {
+    public byte[] getZippedCsvExportResult(List<FaultResult> faultResults, CsvExportParams csvExportParams) {
+        if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
+            throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
+        }
+
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
@@ -342,16 +385,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         } catch (IOException e) {
             throw new UncheckedIOException("Error occurred while writing data to csv file", e);
         }
-    }
-
-    public byte[] getZippedCsvExportResult(UUID resultUuid, Page<FaultResult> faultResultsPage, CsvExportParams csvExportParams) {
-        if (faultResultsPage == null) {
-            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
-        }
-        if (Objects.isNull(csvExportParams) || Objects.isNull(csvExportParams.csvHeader()) || Objects.isNull(csvExportParams.enumValueTranslations())) {
-            throw new ComputationException(INVALID_EXPORT_PARAMS, "Missing information to export short-circuit result as csv: file headers and enum translation must be provided");
-        }
-        return exportToCsv(faultResultsPage.getContent(), csvExportParams);
     }
 
     @Transactional(readOnly = true)
@@ -406,30 +439,30 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         Optional<ShortCircuitAnalysisResultEntity> result;
         // get without faultResults : FaultResultsM.NONE
         result = resultService.find(resultUuid);
-        if (result.isPresent()) {
-            Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
-            switch (mode) {
-                case BASIC, FULL:
-                    faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable, mode);
-                    break;
-                case WITH_LIMIT_VIOLATIONS:
-                    faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable);
-                    break;
-                case NONE:
-                default:
-                    break;
-            }
-            if (faultResultEntitiesPage.isEmpty()) {
-                return Page.empty();
-            }
-            Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
-                LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
-            }
-            return faultResultsPage;
+        if (result.isEmpty()) {
+            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
         }
-        return null;
+        Page<FaultResultEntity> faultResultEntitiesPage = Page.empty();
+        switch (mode) {
+            case BASIC, FULL:
+                faultResultEntitiesPage = resultService.findFaultResultsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable, mode);
+                break;
+            case WITH_LIMIT_VIOLATIONS:
+                faultResultEntitiesPage = resultService.findFaultResultsWithLimitViolationsPage(result.get(), resourceFilters, resourceGlobalFilters, pageable);
+                break;
+            case NONE:
+            default:
+                break;
+        }
+        if (faultResultEntitiesPage.isEmpty()) {
+            return Page.empty();
+        }
+        Page<FaultResult> faultResultsPage = faultResultEntitiesPage.map(fr -> fromEntity(fr, mode));
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+            LOGGER.info("pageable =  {}", LogUtils.sanitizeParam(pageable.toString()));
+        }
+        return faultResultsPage;
     }
 
     @Transactional(readOnly = true)
@@ -451,6 +484,27 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             return feederResultsPage;
         }
         return null;
+    }
+
+    @Transactional(readOnly = true)
+    public FaultResult getOneBusFaultResult(UUID resultUuid, String stringFilters, Sort sort) {
+        List<ResourceFilterDTO> resourceFilters = fromStringFiltersToDTO(stringFilters, objectMapper);
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+        Optional<ShortCircuitAnalysisResultEntity> resultEntity = resultService.find(resultUuid);
+        if (resultEntity.isEmpty()) {
+            throw new ComputationException(RESULT_NOT_FOUND, "The short circuit analysis result '" + resultUuid + "' does not exist");
+        }
+        Page<FeederResultEntity> feederResultEntitiesPage = resultService.findFeederResultsPage(resultEntity.get(), resourceFilters, Pageable.unpaged(sort));
+        if (feederResultEntitiesPage.isEmpty()) {
+            ShortCircuitAnalysisResult result = fromEntity(resultEntity.get(), FaultResultsMode.FULL);
+            return result.getFaults().getFirst();
+        }
+        FaultResult faultResult = buildFaultResultFromSomeOfItsFeederResultEntities(feederResultEntitiesPage.getContent());
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(GET_SHORT_CIRCUIT_RESULTS_MSG, resultUuid, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get()));
+        }
+        return faultResult;
     }
 
     @Override
