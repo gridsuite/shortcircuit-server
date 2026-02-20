@@ -7,7 +7,9 @@
 package org.gridsuite.shortcircuit.server.dto.powsybl_private;
 
 // DUPLICATED AND ADAPTED from private code should be removed
-
+/**
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
+ */
 public abstract class AbstractPowerElectronicsData {
 
     protected AbstractPowerElectronicsData() {

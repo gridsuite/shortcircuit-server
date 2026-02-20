@@ -11,6 +11,9 @@ import java.util.List;
 import org.gridsuite.shortcircuit.server.dto.FilterElements;
 
 // DUPLICATED AND ADAPTED from private code should be removed
+/**
+ * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
+ */
 public class PowerElectronicsCluster extends AbstractPowerElectronicsData {
 
     List<FilterElements> filters; // ADDED
