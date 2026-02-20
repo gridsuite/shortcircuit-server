@@ -7,21 +7,31 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.network.store.client.NetworkStoreService;
+
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.AbstractFilterService;
+import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
+import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
 
 @Service
 @Slf4j
 public class FilterService extends AbstractFilterService {
+    private static final String QUERY_PARAM_VARIANT_ID = "variantId";
+    private static final String NETWORK_UUID = "networkUuid";
 
     public FilterService(RestTemplateBuilder restTemplateBuilder,
                          NetworkStoreService networkStoreService,
@@ -35,5 +45,34 @@ public class FilterService extends AbstractFilterService {
 
         // Call the common implementation with specific parameters
         return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, "fault.voltageLevelId");
+    }
+
+    public List<FilterEquipments> getFilterEquipments(List<UUID> filterUuids, UUID networkUuid, String variantId) {
+        Objects.requireNonNull(filterUuids);
+        Objects.requireNonNull(networkUuid);
+
+        var uriComponentsBuilder = UriComponentsBuilder
+                .fromPath(DELIMITER + FILTER_API_VERSION + "/filters/export")
+                .queryParam(IDS, filterUuids)
+                .queryParam(NETWORK_UUID, networkUuid.toString());
+        if (!StringUtils.isBlank(variantId)) {
+            uriComponentsBuilder.queryParam(QUERY_PARAM_VARIANT_ID, variantId);
+        }
+        var path = uriComponentsBuilder.build().toUriString();
+
+        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<FilterEquipments>>() {
+                }).getBody();
+    }
+
+    public List<IdentifiableAttributes> getIdentifiablesFromFilters(List<UUID> filterUuids, UUID networkUuid, String variantId) {
+        List<FilterEquipments> filterEquipments = getFilterEquipments(filterUuids, networkUuid, variantId);
+
+        List<IdentifiableAttributes> mergedIdentifiables = new ArrayList<>();
+        for (FilterEquipments filterEquipment : filterEquipments) {
+            mergedIdentifiables.addAll(filterEquipment.getIdentifiableAttributes());
+        }
+
+        return mergedIdentifiables;
     }
 }

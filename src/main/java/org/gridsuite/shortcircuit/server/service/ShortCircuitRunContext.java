@@ -55,9 +55,9 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
     }
 
     public ShortCircuitParameters buildParameters() {
-        ShortCircuitParameters params = getParameters() == null || getParameters().commonParameters() == null ?
-                ShortCircuitParameters.load() : getParameters().commonParameters();
-        if (getParameters() == null || getParameters().specificParameters() == null || getParameters().specificParameters().isEmpty()) {
+        ShortCircuitParameters params = getParameters() == null || getParameters().getCommonParameters() == null ?
+                ShortCircuitParameters.load() : getParameters().getCommonParameters();
+        if (getParameters() == null || getParameters().getSpecificParameters() == null || getParameters().getSpecificParameters().isEmpty()) {
             return params; // no specific ShortCircuit params
         }
         ShortCircuitAnalysisProvider scProvider = ShortCircuitAnalysisProvider.findAll().stream()
@@ -67,7 +67,7 @@ public class ShortCircuitRunContext extends AbstractComputationRunContext<ShortC
         Extension<ShortCircuitParameters> specificParametersExtension = scProvider.loadSpecificParameters(PlatformConfig.defaultConfig())
                 .orElseThrow(() -> new PowsyblException("Cannot add specific shortcircuit parameters with provider " + getProvider()));
         params.addExtension((Class) specificParametersExtension.getClass(), specificParametersExtension);
-        scProvider.updateSpecificParameters(specificParametersExtension, getParameters().specificParameters());
+        scProvider.updateSpecificParameters(specificParametersExtension, getParameters().getSpecificParameters());
 
         return params;
     }

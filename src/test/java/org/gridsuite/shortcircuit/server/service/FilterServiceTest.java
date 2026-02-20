@@ -24,6 +24,8 @@ import org.gridsuite.filter.AbstractFilter;
 import org.gridsuite.filter.expertfilter.ExpertFilter;
 import org.gridsuite.filter.expertfilter.expertrule.AbstractExpertRule;
 import org.gridsuite.filter.expertfilter.expertrule.NumberExpertRule;
+import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
+import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.filter.utils.expertfilter.FieldType;
 import org.gridsuite.filter.utils.expertfilter.OperatorType;
@@ -53,6 +55,9 @@ class FilterServiceTest {
 
     private static final UUID NETWORK_UUID = UUID.randomUUID();
     private static final UUID LIST_UUID = UUID.randomUUID();
+    private static final UUID FILTER_UUID_1 = UUID.randomUUID();
+    private static final UUID FILTER_UUID_2 = UUID.randomUUID();
+    private static final List<UUID> FILTER_UUID_LIST = List.of(FILTER_UUID_1, FILTER_UUID_2);
     private static final Object TEST_FILTERS = List.of(createTestExpertFilter());
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -91,6 +96,31 @@ class FilterServiceTest {
                 String requestPath = Objects.requireNonNull(request.getPath());
                 if (requestPath.matches("/v1/filters/metadata\\?ids=.*")) {
                     return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonFiltersExpected);
+                } else if (requestPath.matches(String.format("/v1/filters/export\\?ids=.*&networkUuid=%s", NETWORK_UUID))) {
+                    List<FilterEquipments> filterEquipmentsList = List.of(
+                            new FilterEquipments(
+                                FILTER_UUID_1,
+                                List.of(
+                                    new IdentifiableAttributes("attr1", IdentifiableType.GENERATOR, 0.0)
+                                ),
+                                List.of()
+                            ),
+                            new FilterEquipments(
+                                FILTER_UUID_2,
+                                List.of(
+                                    new IdentifiableAttributes("attr2", IdentifiableType.LINE, 0.0),
+                                    new IdentifiableAttributes("attr3", IdentifiableType.LINE, 0.0)
+                                ),
+                                List.of()
+                            )
+                    );
+                    String jsonResponse;
+                    try {
+                        jsonResponse = objectMapper.writeValueAsString(filterEquipmentsList);
+                    } catch (IOException e) {
+                        return new MockResponse.Builder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).body("Error serializing response").build();
+                    }
+                    return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonResponse);
                 } else {
                     return new MockResponse.Builder().code(HttpStatus.NOT_FOUND.value()).body("Path not supported: " + request.getPath()).build();
                 }
@@ -167,5 +197,21 @@ class FilterServiceTest {
         assertEquals(ResourceFilterDTO.Type.IN, result.type());
         assertEquals("fault.voltageLevelId", result.column());
         assertEquals(2, ((List<?>) result.value()).size());
+    }
+
+    @Test
+    void testGetFilterEquipments() {
+
+        List<FilterEquipments> result = filterService.getFilterEquipments(FILTER_UUID_LIST, NETWORK_UUID, null);
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void testGetIdentifiablesFromFilters() {
+
+        List<IdentifiableAttributes> result = filterService.getIdentifiablesFromFilters(FILTER_UUID_LIST, NETWORK_UUID, null);
+
+        assertEquals(3, result.size());
     }
 }
