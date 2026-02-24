@@ -61,4 +61,4 @@ powsybl-ws:
     name: shortcircuit
 
 shortcircuit-analysis:
-  default-provider: default-provider
+  default-provider: Courcirc

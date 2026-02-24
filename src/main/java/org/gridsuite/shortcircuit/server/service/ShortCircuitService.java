@@ -8,7 +8,9 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ThreeSides;
+import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvFormat;
@@ -68,6 +70,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public static final String POWER_ELECTRONICS_CLUSTERS = "powerElectronicsClusters";
     // TODO remove when name fixed in powsybl
     public static final String POWER_ELECTRONICS_CLUSTER = "powerElectronicsCluster";
+    public static final String NODE_CLUSTER = "nodeCluster";
 
     private final FilterService filterService;
 
@@ -143,17 +146,40 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return normalizedClusters;
     }
 
-    private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, UUID networkUuid, String variantId) {
+    private List<String> deserializeInCalculationClusterFilters(String inCalculationClusterFiltersValue, UUID networkUuid, String variantId, Network network) throws IOException {
+        List<FilterElements> filterData = objectMapper.readValue(inCalculationClusterFiltersValue, new TypeReference<List<FilterElements>>() { });
+        List<UUID> filterUuids = filterData.stream()
+                .map(FilterElements::getFilterId)
+                .toList();
+
+        // Apply filters using filterService
+        List<IdentifiableAttributes> filterIdentifiables = filterService.getIdentifiablesFromFilters(filterUuids, networkUuid, variantId);
+
+        // regroup by filterIds in clusters list to get equipmentIds
+        List<String> busIds = new ArrayList<>();
+        filterIdentifiables.forEach(identifiableAttributes -> {
+            VoltageLevel voltageLevel = network.getVoltageLevel(identifiableAttributes.getId());
+            if (voltageLevel != null) {
+                voltageLevel.getBusView().getBusStream().forEach(bus -> busIds.add(bus.getId()));
+            }
+        });
+        return busIds;
+    }
+
+    private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, UUID networkUuid, String variantId, Network network) {
         // This is defensive: we check types at runtime and only transform when the expected shape is present.
         try {
-            if (specificParameters != null && specificParameters.containsKey(POWER_ELECTRONICS_CLUSTERS)) {
-                // Build a merged, structured specificParameters map:
-                Map<String, String> mergedSpecificParameters = new HashMap<>(specificParameters);
-                List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS), networkUuid, variantId);
-                // TODO restore powerElectronicsClusters name with the plural ending 's' when fixed in powsybl
-                mergedSpecificParameters.remove(POWER_ELECTRONICS_CLUSTERS);
-                mergedSpecificParameters.put(POWER_ELECTRONICS_CLUSTER, objectMapper.writeValueAsString(powerElectronicsClustersValue));
-                return mergedSpecificParameters;
+            if (specificParameters != null) {
+                if (specificParameters.containsKey(POWER_ELECTRONICS_CLUSTERS)) {
+                    List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS), networkUuid, variantId);
+                    specificParameters.remove(POWER_ELECTRONICS_CLUSTERS);
+                    specificParameters.put(POWER_ELECTRONICS_CLUSTER, objectMapper.writeValueAsString(powerElectronicsClustersValue));
+                }
+                if (specificParameters.containsKey(NODE_CLUSTER)) {
+                    List<String> inCalculationClusterFiltersValue = deserializeInCalculationClusterFilters(specificParameters.get(NODE_CLUSTER), networkUuid, variantId, network);
+                    specificParameters.remove(NODE_CLUSTER);
+                    specificParameters.put(NODE_CLUSTER, objectMapper.writeValueAsString(inCalculationClusterFiltersValue));
+                }
             }
         } catch (Exception ex) {
             // avoid breaking the run flow for unexpected shapes; log if you have a logger available
@@ -172,7 +198,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         parameters.getCommonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
         parameters.getCommonParameters().setDetailedReport(false);
 
-        Map<String, String> translatedSpecificParameters = deserializeSpecificParameters(parameters.getSpecificParameters(), runContext.getNetworkUuid(), runContext.getVariantId());
+        Map<String, String> translatedSpecificParameters = deserializeSpecificParameters(parameters.getSpecificParameters(), runContext.getNetworkUuid(), runContext.getVariantId(), runContext.getNetwork());
         parameters.setSpecificParameters(translatedSpecificParameters);
 
         // set provider and parameters
