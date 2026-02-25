@@ -214,7 +214,7 @@ class ShortCircuitParametersITest implements WithAssertions {
                 .provider(TestUtils.DEFAULT_PROVIDER)
                 .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                         .name("nodeCluster")
-                        .value(objectMapper.writeValueAsString(List.of("busId1")))
+                        .value(objectMapper.writeValueAsString(List.of("busId1", "busId2")))
                         .build()
                 ))
                 .build()
