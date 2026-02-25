@@ -155,7 +155,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         // Apply filters using filterService
         List<IdentifiableAttributes> filterIdentifiables = filterService.getIdentifiablesFromFilters(filterUuids, networkUuid, variantId);
 
-        // regroup by filterIds in clusters list to get equipmentIds
+        // get bus Ids from IdentifiableAttributes
         List<String> busIds = new ArrayList<>();
         filterIdentifiables.forEach(identifiableAttributes -> {
             VoltageLevel voltageLevel = network.getVoltageLevel(identifiableAttributes.getId());
@@ -177,7 +177,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 }
                 if (specificParameters.containsKey(NODE_CLUSTER)) {
                     List<String> inCalculationClusterFiltersValue = deserializeInCalculationClusterFilters(specificParameters.get(NODE_CLUSTER), networkUuid, variantId, network);
-                    specificParameters.remove(NODE_CLUSTER);
                     specificParameters.put(NODE_CLUSTER, objectMapper.writeValueAsString(inCalculationClusterFiltersValue));
                 }
             }
