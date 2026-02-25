@@ -148,8 +148,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 // Build a merged, structured specificParameters map:
                 Map<String, String> mergedSpecificParameters = new HashMap<>(specificParameters);
                 List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS), networkUuid, variantId);
-                // TODO restore powerElectronicsClusters name with the plural ending 's' when fixed in powsybl
-                mergedSpecificParameters.remove(POWER_ELECTRONICS_CLUSTERS);
                 mergedSpecificParameters.put(POWER_ELECTRONICS_CLUSTERS, objectMapper.writeValueAsString(powerElectronicsClustersValue));
                 return mergedSpecificParameters;
             }
