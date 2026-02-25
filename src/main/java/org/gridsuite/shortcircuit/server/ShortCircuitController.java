@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.security.LimitViolationType;
 
@@ -48,7 +47,6 @@ public class ShortCircuitController {
 
     private final ShortCircuitService shortCircuitService;
     private final UuidGeneratorService uuidGeneratorService;
-    private final ObjectMapper objectMapper;
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a short circuit analysis on a network")
@@ -225,13 +223,6 @@ public class ShortCircuitController {
         @ApiResponse(responseCode = "404", description = "Short circuit analysis debug file has not been found")})
     public ResponseEntity<Resource> downloadDebugFile(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
         return shortCircuitService.downloadDebugFile(resultUuid);
-    }
-
-    @GetMapping(value = "/default-provider", produces = TEXT_PLAIN_VALUE)
-    @Operation(summary = "Get shortcircuit default provider")
-    @ApiResponses(@ApiResponse(responseCode = "200", description = "The short circuit default provider has been found"))
-    public ResponseEntity<String> getDefaultShortCircuitProvider() {
-        return ResponseEntity.ok().body(shortCircuitService.getDefaultProvider());
     }
 
 }

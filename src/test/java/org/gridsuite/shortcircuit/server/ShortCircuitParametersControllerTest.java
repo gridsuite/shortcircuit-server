@@ -24,7 +24,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import com.powsybl.commons.parameters.Parameter;
@@ -53,8 +52,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = { ShortCircuitParametersController.class, PropertyServerNameProvider.class })
 class ShortCircuitParametersControllerTest implements WithAssertions {
     private final String defaultParametersJson;
-
-    private static final String SC_PROVIDER = "SC_PROVIDER";
 
     public ShortCircuitParametersControllerTest() throws Exception {
         this.defaultParametersJson = Files.readString(Paths.get(this.getClass().getResource(this.getClass().getSimpleName() + ".json").toURI())).replaceAll("\\s+", "");
@@ -199,20 +196,5 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
             mocked.verify(() -> ShortCircuitParametersService.getSpecificShortCircuitParameters(providerCaptor.capture()));
             assertThat(providerCaptor.getValue()).isEqualTo(provider);
         }
-    }
-
-    @Test
-    void testGetProvider() throws Exception {
-        final String returned = SC_PROVIDER;
-        final UUID id = UUID.randomUUID();
-        when(shortCircuitParametersService.getProvider(any(UUID.class))).thenReturn(returned);
-
-        MvcResult result = mockMvc.perform(get("/v1/parameters/{parametersUuid}/provider", id))
-            .andExpect(status().isOk())
-            .andReturn();
-
-        // verify service called with the expected UUID and response content matches
-        verify(shortCircuitParametersService).getProvider(id);
-        assertThat(result.getResponse().getContentAsString()).isEqualTo(returned);
     }
 }

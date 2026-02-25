@@ -108,12 +108,4 @@ public class ShortCircuitParametersController {
             return ResponseEntity.notFound().build();
         }
     }
-
-    @GetMapping(value = "/{uuid}/provider")
-    @Operation(summary = "Get the provider")
-    @ApiResponse(responseCode = "200", description = "provider were returned")
-    public ResponseEntity<String> getProvider(
-            @Parameter(description = "parameters UUID") @PathVariable("uuid") UUID parametersUuid) {
-        return ResponseEntity.ok().body(shortCircuitParametersService.getProvider(parametersUuid));
-    }
 }
