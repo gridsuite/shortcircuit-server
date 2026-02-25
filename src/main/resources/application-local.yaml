@@ -33,4 +33,4 @@ logging:
     com.rte_france.powsybl.courcirc.Courcirc: WARN
 
 shortcircuit-analysis:
-  default-provider: Courcirc
+  default-provider: default-provider
