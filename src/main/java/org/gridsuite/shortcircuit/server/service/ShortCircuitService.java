@@ -148,7 +148,12 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 .map(FilterElements::getFilterId)
                 .toList();
         // Apply filters using filterService
-        return filterService.getFilterBusIds(filterUuids, networkUuid, variantId);
+        List<FilterEquipments> filteredBuses = filterService.getFilterBusIds(filterUuids, networkUuid, variantId);
+        return filteredBuses.stream()
+                .flatMap(filterBus -> filterBus.getIdentifiableAttributes().stream())
+                .map(IdentifiableAttributes::getId)
+                .distinct()
+                .toList();
     }
 
     private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, ShortCircuitRunContext runContext) {

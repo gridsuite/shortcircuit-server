@@ -212,7 +212,11 @@ class ShortCircuitParametersITest implements WithAssertions {
                 .build()
         ).getId();
 
-        when(filterService.getFilterBusIds(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of("busId1", "busId2"));
+        when(filterService.getFilterBusIds(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of(
+                new FilterEquipments(FILTER_UUID, List.of(
+                        new IdentifiableAttributes("busId1", IdentifiableType.BUS, 0.0),
+                        new IdentifiableAttributes("busId2", IdentifiableType.BUS, 0.0)
+                ), List.of())));
 
         runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues04Json);
     }
