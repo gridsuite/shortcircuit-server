@@ -47,6 +47,24 @@ public class FilterService extends AbstractFilterService {
         return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, "fault.voltageLevelId");
     }
 
+    public List<String> getFilterBusIds(List<UUID> filterUuids, UUID networkUuid, String variantId) {
+        Objects.requireNonNull(filterUuids);
+        Objects.requireNonNull(networkUuid);
+
+        var uriComponentsBuilder = UriComponentsBuilder
+                .fromPath(DELIMITER + FILTER_API_VERSION + "/filters/export/busIds")
+                .queryParam(IDS, filterUuids)
+                .queryParam(NETWORK_UUID, networkUuid.toString());
+        if (!StringUtils.isBlank(variantId)) {
+            uriComponentsBuilder.queryParam(QUERY_PARAM_VARIANT_ID, variantId);
+        }
+        var path = uriComponentsBuilder.build().toUriString();
+
+        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<String>>() {
+                }).getBody();
+    }
+
     public List<FilterEquipments> getFilterEquipments(List<UUID> filterUuids, UUID networkUuid, String variantId) {
         Objects.requireNonNull(filterUuids);
         Objects.requireNonNull(networkUuid);

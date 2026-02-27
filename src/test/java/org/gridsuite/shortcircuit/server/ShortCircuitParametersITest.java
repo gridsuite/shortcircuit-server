@@ -206,15 +206,13 @@ class ShortCircuitParametersITest implements WithAssertions {
                 .provider(TestUtils.DEFAULT_PROVIDER)
                 .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                         .name("nodeCluster")
-                        .value(objectMapper.writeValueAsString(List.of("busId1", "busId2")))
+                        .value(objectMapper.writeValueAsString(List.of(new FilterElements(FILTER_UUID, "f"))))
                         .build()
                 ))
                 .build()
         ).getId();
 
-        when(filterService.getFilterEquipments(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of(
-                new FilterEquipments(FILTER_UUID, List.of(new IdentifiableAttributes("eq_1", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_2", IdentifiableType.GENERATOR, 0.0)), List.of())
-        ));
+        when(filterService.getFilterBusIds(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of("busId1", "busId2"));
 
         runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues04Json);
     }

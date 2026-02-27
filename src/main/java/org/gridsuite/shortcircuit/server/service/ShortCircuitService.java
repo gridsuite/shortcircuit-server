@@ -8,25 +8,23 @@ package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ThreeSides;
-import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.ws.commons.LogUtils;
 import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.AbstractComputationService;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
+import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
 import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
-import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
 import org.gridsuite.shortcircuit.server.entities.*;
@@ -144,24 +142,13 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return normalizedClusters;
     }
 
-    private List<String> deserializeInCalculationClusterFilters(String inCalculationClusterFiltersValue, UUID networkUuid, String variantId, Network network) throws IOException {
+    private List<String> deserializeBusIdsForNodeCluster(String inCalculationClusterFiltersValue, UUID networkUuid, String variantId) throws IOException {
         List<FilterElements> filterData = objectMapper.readValue(inCalculationClusterFiltersValue, new TypeReference<List<FilterElements>>() { });
         List<UUID> filterUuids = filterData.stream()
                 .map(FilterElements::getFilterId)
                 .toList();
-
         // Apply filters using filterService
-        List<IdentifiableAttributes> filterIdentifiables = filterService.getIdentifiablesFromFilters(filterUuids, networkUuid, variantId);
-
-        // get bus Ids from IdentifiableAttributes
-        List<String> busIds = new ArrayList<>();
-        filterIdentifiables.forEach(identifiableAttributes -> {
-            VoltageLevel voltageLevel = network.getVoltageLevel(identifiableAttributes.getId());
-            if (voltageLevel != null) {
-                voltageLevel.getBusView().getBusStream().forEach(bus -> busIds.add(bus.getId()));
-            }
-        });
-        return busIds;
+        return filterService.getFilterBusIds(filterUuids, networkUuid, variantId);
     }
 
     private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, ShortCircuitRunContext runContext) {
@@ -174,9 +161,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                     specificParameters.put(POWER_ELECTRONICS_CLUSTERS, objectMapper.writeValueAsString(powerElectronicsClustersValue));
                 }
                 if (specificParameters.containsKey(NODE_CLUSTER)) {
-                    List<String> inCalculationClusterFiltersValue = deserializeInCalculationClusterFilters(specificParameters.get(NODE_CLUSTER),
-                            runContext.getNetworkUuid(), runContext.getVariantId(), runContext.getNetwork());
-                    specificParameters.put(NODE_CLUSTER, objectMapper.writeValueAsString(inCalculationClusterFiltersValue));
+                    List<String> busIdsInNodeCluster = deserializeBusIdsForNodeCluster(specificParameters.get(NODE_CLUSTER), runContext.getNetworkUuid(), runContext.getVariantId());
+                    specificParameters.put(NODE_CLUSTER, objectMapper.writeValueAsString(busIdsInNodeCluster));
                 }
             }
         } catch (Exception ex) {
