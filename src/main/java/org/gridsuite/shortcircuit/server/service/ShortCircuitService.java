@@ -68,8 +68,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public static final char CSV_DELIMITER_EN = ',';
     public static final char CSV_QUOTE_ESCAPE = '"';
     public static final String POWER_ELECTRONICS_CLUSTERS = "powerElectronicsClusters";
-    // TODO remove when name fixed in powsybl
-    public static final String POWER_ELECTRONICS_CLUSTER = "powerElectronicsCluster";
     public static final String NODE_CLUSTER = "nodeCluster";
 
     private final FilterService filterService;
@@ -166,17 +164,18 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return busIds;
     }
 
-    private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, UUID networkUuid, String variantId, Network network) {
+    private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, ShortCircuitRunContext runContext) {
         // This is defensive: we check types at runtime and only transform when the expected shape is present.
         try {
             if (specificParameters != null) {
                 if (specificParameters.containsKey(POWER_ELECTRONICS_CLUSTERS)) {
-                    List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS), networkUuid, variantId);
-                    specificParameters.remove(POWER_ELECTRONICS_CLUSTERS);
-                    specificParameters.put(POWER_ELECTRONICS_CLUSTER, objectMapper.writeValueAsString(powerElectronicsClustersValue));
+                    List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS),
+                            runContext.getNetworkUuid(), runContext.getVariantId());
+                    specificParameters.put(POWER_ELECTRONICS_CLUSTERS, objectMapper.writeValueAsString(powerElectronicsClustersValue));
                 }
                 if (specificParameters.containsKey(NODE_CLUSTER)) {
-                    List<String> inCalculationClusterFiltersValue = deserializeInCalculationClusterFilters(specificParameters.get(NODE_CLUSTER), networkUuid, variantId, network);
+                    List<String> inCalculationClusterFiltersValue = deserializeInCalculationClusterFilters(specificParameters.get(NODE_CLUSTER),
+                            runContext.getNetworkUuid(), runContext.getVariantId(), runContext.getNetwork());
                     specificParameters.put(NODE_CLUSTER, objectMapper.writeValueAsString(inCalculationClusterFiltersValue));
                 }
             }
@@ -197,7 +196,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         parameters.getCommonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
         parameters.getCommonParameters().setDetailedReport(false);
 
-        Map<String, String> translatedSpecificParameters = deserializeSpecificParameters(parameters.getSpecificParameters(), runContext.getNetworkUuid(), runContext.getVariantId(), runContext.getNetwork());
+        Map<String, String> translatedSpecificParameters = deserializeSpecificParameters(parameters.getSpecificParameters(), runContext);
         parameters.setSpecificParameters(translatedSpecificParameters);
 
         // set provider and parameters

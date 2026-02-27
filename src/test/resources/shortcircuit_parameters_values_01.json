@@ -17,6 +17,6 @@
     "detailedReport": false
   },
   "specificParameters": {
-    "powerElectronicsCluster": "[{\"id\":\"0\",\"equipmentIds\": [\"eq_1\",\"eq_2\"], \"alpha\": 2.0, \"u0\": 90.0, \"usMin\": 10.0, \"usMax\": 40.0, \"type\": \"HVDC\"}]"
+    "powerElectronicsClusters": "[{\"id\":\"0\",\"equipmentIds\": [\"eq_1\",\"eq_2\"], \"alpha\": 2.0, \"u0\": 90.0, \"usMin\": 10.0, \"usMax\": 40.0, \"type\": \"HVDC\"}]"
   }
 }
