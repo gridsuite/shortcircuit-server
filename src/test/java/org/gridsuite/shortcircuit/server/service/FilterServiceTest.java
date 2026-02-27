@@ -121,6 +121,15 @@ class FilterServiceTest {
                         return new MockResponse.Builder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).body("Error serializing response").build();
                     }
                     return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonResponse);
+                } else if (requestPath.matches(String.format("/v1/filters/export/busIds\\?ids=.*&networkUuid=%s", NETWORK_UUID))) {
+                    List<String> busIds = List.of("bus1", "bus2");
+                    String jsonResponse;
+                    try {
+                        jsonResponse = objectMapper.writeValueAsString(busIds);
+                    } catch (IOException e) {
+                        return new MockResponse.Builder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).body("Error serializing response").build();
+                    }
+                    return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonResponse);
                 } else {
                     return new MockResponse.Builder().code(HttpStatus.NOT_FOUND.value()).body("Path not supported: " + request.getPath()).build();
                 }
@@ -203,6 +212,14 @@ class FilterServiceTest {
     void testGetFilterEquipments() {
 
         List<FilterEquipments> result = filterService.getFilterEquipments(FILTER_UUID_LIST, NETWORK_UUID, null);
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void testGetFilterBusIds() {
+
+        List<String> result = filterService.getFilterBusIds(FILTER_UUID_LIST, NETWORK_UUID, null);
 
         assertEquals(2, result.size());
     }
