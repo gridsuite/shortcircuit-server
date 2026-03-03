@@ -26,6 +26,7 @@ import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
 import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
 import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.dto.powsybl_private.AbstractPowerElectronicsData;
 import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.slf4j.Logger;
@@ -98,7 +99,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
         // filter by active one only and get all filterUuids
         List<PowerElectronicsCluster> activeClusters = clusters.stream()
-            .filter(c -> c.isActive())
+            .filter(AbstractPowerElectronicsData::isActive)
             .toList();
         List<UUID> filterUuids = activeClusters.stream()
             .flatMap(item -> item.getFilters().stream().map(FilterElements::getFilterId))
