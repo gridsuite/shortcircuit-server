@@ -97,7 +97,7 @@ class ShortCircuitParametersITest implements WithAssertions {
         this.shortcircuitParametersValues01Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_01.json").toURI())).replaceAll("\\s+", "");
         this.shortcircuitParametersValues02Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_02.json").toURI())).replaceAll("\\s+", "");
         this.shortcircuitParametersValues03Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_03.json").toURI())).replaceAll("\\s+", "");
-        this.shortcircuitParametersValues04Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_04.json").toURI())).replaceAll("\\s+", "");
+        this.shortcircuitParametersValues04Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_04.json").toURI()));
     }
 
     @Autowired
