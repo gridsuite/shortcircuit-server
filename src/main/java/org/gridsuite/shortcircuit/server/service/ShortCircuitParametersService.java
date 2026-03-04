@@ -138,7 +138,7 @@ public class ShortCircuitParametersService {
     @Transactional
     public void updateParameters(UUID parametersUuid, ShortCircuitParametersInfos parametersInfos) {
         ShortCircuitParametersEntity shortCircuitParametersEntity = parametersRepository.findById(parametersUuid).orElseThrow();
-        //if the parameters is null it means it's a reset to defaultValues, but we need to keep the provider because it's updated separately
+        //if the parameters is null it means it's a reset to defaultValues
         if (parametersInfos == null) {
             shortCircuitParametersEntity.update(getDefaultParametersInfos());
         } else {
@@ -155,10 +155,5 @@ public class ShortCircuitParametersService {
                             .toList();
                     return Pair.of(provider.getName(), params);
                 }).collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
-    }
-
-    @Transactional(readOnly = true)
-    public String getProvider(UUID parametersUuid) {
-        return parametersRepository.findById(parametersUuid).map(ShortCircuitParametersEntity::getProvider).orElseThrow();
     }
 }
