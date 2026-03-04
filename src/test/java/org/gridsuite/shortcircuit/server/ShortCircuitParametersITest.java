@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.WithAssertions;
@@ -17,7 +16,6 @@ import org.gridsuite.shortcircuit.server.dto.FilterElements;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
-import org.gridsuite.shortcircuit.server.dto.powsybl_private.AbstractPowerElectronicsData.PowerElectronicsType;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitSpecificParameterEntity;
@@ -61,19 +59,13 @@ import java.util.stream.Stream;
 
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 import static org.gridsuite.shortcircuit.server.ShortCircuitParametersController.DUPLICATE_FROM;
+import static org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster.Type.HVDC;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.hamcrest.Matchers.matchesPattern;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -147,7 +139,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .provider(TestUtils.DEFAULT_PROVIDER)
             .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                 .name("powerElectronicsClusters")
-                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, PowerElectronicsType.HVDC, List.of(new FilterElements(FILTER_UUID, "f")), true))))
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(new FilterElements(FILTER_UUID, "f")), true))))
                 .build()
             ))
             .build()
@@ -166,7 +158,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .provider(TestUtils.DEFAULT_PROVIDER)
             .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                 .name("powerElectronicsClusters")
-                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, PowerElectronicsType.HVDC, List.of(
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(
                         new FilterElements(FILTER_UUID_1, "f1"),
                         new FilterElements(FILTER_UUID_2, "f2"),
                         new FilterElements(FILTER_UUID_3, "f3")
@@ -192,7 +184,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .provider(TestUtils.DEFAULT_PROVIDER)
             .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                 .name("powerElectronicsClusters")
-                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, PowerElectronicsType.HVDC, List.of(new FilterElements(FILTER_UUID_1, "f1")), true))))
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(new FilterElements(FILTER_UUID_1, "f1")), true))))
                 .build()
             ))
             .build()

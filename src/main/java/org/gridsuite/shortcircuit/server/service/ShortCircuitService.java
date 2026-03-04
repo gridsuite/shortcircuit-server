@@ -66,8 +66,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public static final char CSV_DELIMITER_EN = ',';
     public static final char CSV_QUOTE_ESCAPE = '"';
     public static final String POWER_ELECTRONICS_CLUSTERS = "powerElectronicsClusters";
-    // TODO remove when name fixed in powsybl
-    public static final String POWER_ELECTRONICS_CLUSTER = "powerElectronicsCluster";
 
     private final FilterService filterService;
 
@@ -150,9 +148,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 // Build a merged, structured specificParameters map:
                 Map<String, String> mergedSpecificParameters = new HashMap<>(specificParameters);
                 List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS), networkUuid, variantId);
-                // TODO restore powerElectronicsClusters name with the plural ending 's' when fixed in powsybl
-                mergedSpecificParameters.remove(POWER_ELECTRONICS_CLUSTERS);
-                mergedSpecificParameters.put(POWER_ELECTRONICS_CLUSTER, objectMapper.writeValueAsString(powerElectronicsClustersValue));
+                mergedSpecificParameters.put(POWER_ELECTRONICS_CLUSTERS, objectMapper.writeValueAsString(powerElectronicsClustersValue));
                 return mergedSpecificParameters;
             }
         } catch (Exception ex) {

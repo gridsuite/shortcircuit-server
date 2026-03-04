@@ -15,26 +15,18 @@ public abstract class AbstractPowerElectronicsData {
     protected AbstractPowerElectronicsData() {
     }
 
-    public enum PowerElectronicsType {
-        WIND,
-        SOLAR,
-        HVDC
-    }
-
     private double alpha;
     private double u0;
     private double usMin;
     private double usMax;
-    PowerElectronicsType type;
     // ADDED
     Boolean active = true;
 
-    protected AbstractPowerElectronicsData(double alpha, double u0, double usMin, double usMax, PowerElectronicsType type, Boolean active) {
+    protected AbstractPowerElectronicsData(double alpha, double u0, double usMin, double usMax, Boolean active) {
         this.alpha = alpha;
         this.u0 = u0;
         this.usMin = usMin;
         this.usMax = usMax;
-        this.type = type;
         this.active = active;
     }
 
@@ -52,10 +44,6 @@ public abstract class AbstractPowerElectronicsData {
 
     public double getUsMax() {
         return usMax;
-    }
-
-    public PowerElectronicsType getType() {
-        return type;
     }
 
     // ADDED
