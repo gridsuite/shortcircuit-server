@@ -121,6 +121,31 @@ class FilterServiceTest {
                         return new MockResponse.Builder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).body("Error serializing response").build();
                     }
                     return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonResponse);
+                } else if (requestPath.matches(String.format("/v1/filters/export/busIds\\?ids=.*&networkUuid=%s", NETWORK_UUID))) {
+                    List<FilterEquipments> filterEquipmentsList = List.of(
+                            new FilterEquipments(
+                                    FILTER_UUID_1,
+                                    List.of(
+                                            new IdentifiableAttributes("busId1", IdentifiableType.BUS, 0.0)
+                                    ),
+                                    List.of()
+                            ),
+                            new FilterEquipments(
+                                    FILTER_UUID_2,
+                                    List.of(
+                                            new IdentifiableAttributes("busId1", IdentifiableType.BUS, 0.0),
+                                            new IdentifiableAttributes("busId2", IdentifiableType.BUS, 0.0)
+                                    ),
+                                    List.of()
+                            )
+                    );
+                    String jsonResponse;
+                    try {
+                        jsonResponse = objectMapper.writeValueAsString(filterEquipmentsList);
+                    } catch (IOException e) {
+                        return new MockResponse.Builder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).body("Error serializing response").build();
+                    }
+                    return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonResponse);
                 } else {
                     return new MockResponse.Builder().code(HttpStatus.NOT_FOUND.value()).body("Path not supported: " + request.getPath()).build();
                 }
@@ -203,6 +228,14 @@ class FilterServiceTest {
     void testGetFilterEquipments() {
 
         List<FilterEquipments> result = filterService.getFilterEquipments(FILTER_UUID_LIST, NETWORK_UUID, null);
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void testGetFilterBusIds() {
+
+        List<FilterEquipments> result = filterService.getFilterBusIds(FILTER_UUID_LIST, NETWORK_UUID, null);
 
         assertEquals(2, result.size());
     }

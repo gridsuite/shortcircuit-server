@@ -15,17 +15,18 @@ import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.AbstractComputationService;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.computation.service.UuidGeneratorService;
+import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
 import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
-import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.dto.powsybl_private.AbstractPowerElectronicsData;
 import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.slf4j.Logger;
@@ -66,6 +67,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public static final char CSV_DELIMITER_EN = ',';
     public static final char CSV_QUOTE_ESCAPE = '"';
     public static final String POWER_ELECTRONICS_CLUSTERS = "powerElectronicsClusters";
+    public static final String NODE_CLUSTER = "nodeCluster";
+    public static final String NODE_CLUSTER_FILTER_IDS = "nodeClusterFilterIds";
 
     private final FilterService filterService;
 
@@ -97,7 +100,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
         // filter by active one only and get all filterUuids
         List<PowerElectronicsCluster> activeClusters = clusters.stream()
-            .filter(c -> c.isActive())
+            .filter(AbstractPowerElectronicsData::isActive)
             .toList();
         List<UUID> filterUuids = activeClusters.stream()
             .flatMap(item -> item.getFilters().stream().map(FilterElements::getFilterId))
@@ -141,15 +144,34 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         return normalizedClusters;
     }
 
-    private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, UUID networkUuid, String variantId) {
+    private List<String> deserializeBusIdsForNodeCluster(String inCalculationClusterFiltersValue, UUID networkUuid, String variantId) throws IOException {
+        List<FilterElements> filterData = objectMapper.readValue(inCalculationClusterFiltersValue, new TypeReference<List<FilterElements>>() { });
+        List<UUID> filterUuids = filterData.stream()
+                .map(FilterElements::getFilterId)
+                .toList();
+        // Apply filters using filterService
+        List<FilterEquipments> filteredBuses = filterService.getFilterBusIds(filterUuids, networkUuid, variantId);
+        return filteredBuses.stream()
+                .flatMap(filterBus -> filterBus.getIdentifiableAttributes().stream())
+                .map(IdentifiableAttributes::getId)
+                .distinct()
+                .toList();
+    }
+
+    private Map<String, String> deserializeSpecificParameters(Map<String, String> specificParameters, ShortCircuitRunContext runContext) {
         // This is defensive: we check types at runtime and only transform when the expected shape is present.
         try {
-            if (specificParameters != null && specificParameters.containsKey(POWER_ELECTRONICS_CLUSTERS)) {
-                // Build a merged, structured specificParameters map:
-                Map<String, String> mergedSpecificParameters = new HashMap<>(specificParameters);
-                List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS), networkUuid, variantId);
-                mergedSpecificParameters.put(POWER_ELECTRONICS_CLUSTERS, objectMapper.writeValueAsString(powerElectronicsClustersValue));
-                return mergedSpecificParameters;
+            if (specificParameters != null) {
+                if (specificParameters.containsKey(POWER_ELECTRONICS_CLUSTERS)) {
+                    List<Object> powerElectronicsClustersValue = deserializePowerElectronicsClusters(specificParameters.get(POWER_ELECTRONICS_CLUSTERS),
+                            runContext.getNetworkUuid(), runContext.getVariantId());
+                    specificParameters.put(POWER_ELECTRONICS_CLUSTERS, objectMapper.writeValueAsString(powerElectronicsClustersValue));
+                }
+                if (specificParameters.containsKey(NODE_CLUSTER_FILTER_IDS)) {
+                    List<String> busIdsInNodeCluster = deserializeBusIdsForNodeCluster(specificParameters.get(NODE_CLUSTER_FILTER_IDS), runContext.getNetworkUuid(), runContext.getVariantId());
+                    specificParameters.put(NODE_CLUSTER, busIdsInNodeCluster.toString());
+                    specificParameters.remove(NODE_CLUSTER_FILTER_IDS);
+                }
             }
         } catch (Exception ex) {
             // avoid breaking the run flow for unexpected shapes; log if you have a logger available
@@ -168,7 +190,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         parameters.getCommonParameters().setWithFortescueResult(StringUtils.isNotBlank(runContext.getBusId()));
         parameters.getCommonParameters().setDetailedReport(false);
 
-        Map<String, String> translatedSpecificParameters = deserializeSpecificParameters(parameters.getSpecificParameters(), runContext.getNetworkUuid(), runContext.getVariantId());
+        Map<String, String> translatedSpecificParameters = deserializeSpecificParameters(parameters.getSpecificParameters(), runContext);
         parameters.setSpecificParameters(translatedSpecificParameters);
 
         // set provider and parameters

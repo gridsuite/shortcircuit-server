@@ -86,6 +86,7 @@ class ShortCircuitParametersITest implements WithAssertions {
     private final String shortcircuitParametersValues01Json;
     private final String shortcircuitParametersValues02Json;
     private final String shortcircuitParametersValues03Json;
+    private final String shortcircuitParametersValues04Json;
 
     public ShortCircuitParametersITest() throws Exception {
         this.defaultParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "");
@@ -95,6 +96,7 @@ class ShortCircuitParametersITest implements WithAssertions {
         this.shortcircuitParametersValues01Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_01.json").toURI())).replaceAll("\\s+", "");
         this.shortcircuitParametersValues02Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_02.json").toURI())).replaceAll("\\s+", "");
         this.shortcircuitParametersValues03Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_03.json").toURI())).replaceAll("\\s+", "");
+        this.shortcircuitParametersValues04Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_04.json").toURI()));
     }
 
     @Autowired
@@ -195,6 +197,27 @@ class ShortCircuitParametersITest implements WithAssertions {
         ));
 
         runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues03Json);
+    }
+
+    @Test
+    void runAnalysisWithNodeCluster() throws Exception {
+        final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder()
+                .provider(TestUtils.DEFAULT_PROVIDER)
+                .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
+                        .name("nodeClusterFilterIds")
+                        .value(objectMapper.writeValueAsString(List.of(new FilterElements(FILTER_UUID, "f"))))
+                        .build()
+                ))
+                .build()
+        ).getId();
+
+        when(filterService.getFilterBusIds(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of(
+                new FilterEquipments(FILTER_UUID, List.of(
+                        new IdentifiableAttributes("busId1", IdentifiableType.BUS, 0.0),
+                        new IdentifiableAttributes("busId2", IdentifiableType.BUS, 0.0)
+                ), List.of())));
+
+        runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues04Json);
     }
 
     @Test
