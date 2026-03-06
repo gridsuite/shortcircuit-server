@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.computation.error.ComputationBusinessErrorCode.PARAMETERS_NOT_FOUND;
@@ -112,11 +111,11 @@ public class ShortCircuitParametersService {
     private ShortCircuitParametersEntity checkFilterExistenceForNodeCluster(ShortCircuitParametersEntity shortCircuitParametersEntity) {
         ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity = getNodeClusterFilterSpecificParameter(shortCircuitParametersEntity);
         if (nodeClusterFilterIdsEntity != null) {
-            shortCircuitParametersEntity.getSpecificParameters().remove(nodeClusterFilterIdsEntity);
-            Map<UUID, FilterElements> localFilters = deserializeFilterFromNodeCluster(nodeClusterFilterIdsEntity);
-            List<UUID> filterMetadata = filterService.getFilters(localFilters.keySet().stream().toList()).stream().map(AbstractFilter::getId).toList();
-            localFilters.forEach((filterId, filterElement) -> {
-                if (!filterMetadata.contains(filterId)) {
+            List<FilterElements> localFilters = deserializeFilterFromNodeCluster(nodeClusterFilterIdsEntity);
+            List<UUID> localFiltersIds = localFilters.stream().map(FilterElements::getFilterId).toList();
+            List<UUID> filterMetadata = filterService.getFilters(localFiltersIds).stream().map(AbstractFilter::getId).toList();
+            localFilters.forEach(filterElement -> {
+                if (!filterMetadata.contains(filterElement.getFilterId())) {
                     filterElement.setFilterName(null);
                 }
             });
@@ -125,22 +124,22 @@ public class ShortCircuitParametersService {
         return shortCircuitParametersEntity;
     }
 
-    private void reAddNodeClusterToSpecificParameters(ShortCircuitParametersEntity shortCircuitParametersEntity, ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity, Map<UUID, FilterElements> localFilters) {
+    private void reAddNodeClusterToSpecificParameters(ShortCircuitParametersEntity shortCircuitParametersEntity, ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity, List<FilterElements> localFilters) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
+            String serializedNodeCluster = objectMapper.writeValueAsString(localFilters);
             shortCircuitParametersEntity.getSpecificParameters().add(new ShortCircuitSpecificParameterEntity(nodeClusterFilterIdsEntity.getId(),
-                    nodeClusterFilterIdsEntity.getProvider(), NODE_CLUSTER_FILTER_IDS, objectMapper.writeValueAsString(localFilters.values())));
+                    nodeClusterFilterIdsEntity.getProvider(), NODE_CLUSTER_FILTER_IDS, serializedNodeCluster));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private Map<UUID, FilterElements> deserializeFilterFromNodeCluster(ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity) {
+    private List<FilterElements> deserializeFilterFromNodeCluster(ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity) {
         ObjectMapper objectMapper = new ObjectMapper();
-        Map<UUID, FilterElements> localFilters;
+        List<FilterElements> localFilters;
         try {
-            localFilters = objectMapper.readValue(nodeClusterFilterIdsEntity.getValue(), new TypeReference<List<FilterElements>>() { }).stream()
-                    .collect(Collectors.toMap(FilterElements::getFilterId, Function.identity()));
+            localFilters = objectMapper.readValue(nodeClusterFilterIdsEntity.getValue(), new TypeReference<List<FilterElements>>() { });
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -154,6 +153,7 @@ public class ShortCircuitParametersService {
                 .getSpecificParameters()) {
             if (shortCircuitSpecificParameterEntity.getName().equals(NODE_CLUSTER_FILTER_IDS)) {
                 nodeClusterFilterIdsEntity = shortCircuitSpecificParameterEntity;
+                shortCircuitParametersEntity.getSpecificParameters().remove(shortCircuitSpecificParameterEntity);
                 break;
             }
         }
