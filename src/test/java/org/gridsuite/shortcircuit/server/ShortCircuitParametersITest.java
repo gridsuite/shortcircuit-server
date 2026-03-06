@@ -205,7 +205,7 @@ class ShortCircuitParametersITest implements WithAssertions {
         final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder()
                 .provider(TestUtils.DEFAULT_PROVIDER)
                 .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
-                        .name("nodeCluster")
+                        .name("nodeClusterFilterIds")
                         .value(objectMapper.writeValueAsString(List.of(new FilterElements(nodeCLusterFilterUuid, "f"))))
                         .build()
                 ))
