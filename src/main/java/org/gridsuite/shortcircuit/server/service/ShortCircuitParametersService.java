@@ -6,6 +6,9 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.config.PlatformConfig;
 import com.powsybl.commons.parameters.Parameter;
 import com.powsybl.commons.parameters.ParameterScope;
@@ -14,6 +17,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.gridsuite.computation.error.ComputationException;
+import org.gridsuite.filter.AbstractFilter;
+import org.gridsuite.shortcircuit.server.dto.FilterElements;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
@@ -24,9 +29,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.computation.error.ComputationBusinessErrorCode.PARAMETERS_NOT_FOUND;
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.NODE_CLUSTER_FILTER_IDS;
 
 /**
  * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
@@ -38,11 +45,13 @@ public class ShortCircuitParametersService {
 
     @Getter
     private final String defaultProvider;
+    private final FilterService filterService;
 
     public ShortCircuitParametersService(@NonNull ParametersRepository shortCircuitParametersRepository,
-            @Value("${shortcircuit-analysis.default-provider}") String defaultProvider) {
+                                         @Value("${shortcircuit-analysis.default-provider}") String defaultProvider, FilterService filterService) {
         this.parametersRepository = shortCircuitParametersRepository;
         this.defaultProvider = defaultProvider;
+        this.filterService = filterService;
     }
 
     public ShortCircuitParametersInfos toShortCircuitParametersInfos(ShortCircuitParametersEntity entity) {
@@ -95,7 +104,60 @@ public class ShortCircuitParametersService {
 
     @Transactional(readOnly = true)
     public Optional<ShortCircuitParametersInfos> getParameters(final UUID parametersUuid) {
-        return parametersRepository.findById(parametersUuid).map(this::toShortCircuitParametersInfos);
+        return parametersRepository.findById(parametersUuid)
+                .map(this::checkFilterExistenceForNodeCluster)
+                .map(this::toShortCircuitParametersInfos);
+    }
+
+    private ShortCircuitParametersEntity checkFilterExistenceForNodeCluster(ShortCircuitParametersEntity shortCircuitParametersEntity) {
+        ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity = getNodeClusterFilterSpecificParameter(shortCircuitParametersEntity);
+        if (nodeClusterFilterIdsEntity != null) {
+            shortCircuitParametersEntity.getSpecificParameters().remove(nodeClusterFilterIdsEntity);
+            Map<UUID, FilterElements> localFilters = deserializeFilterFromNodeCluster(nodeClusterFilterIdsEntity);
+            List<UUID> filterMetadata = filterService.getFilters(localFilters.keySet().stream().toList()).stream().map(AbstractFilter::getId).toList();
+            localFilters.forEach((filterId, filterElement) -> {
+                if (!filterMetadata.contains(filterId)) {
+                    filterElement.setFilterName(null);
+                }
+            });
+            reAddNodeClusterToSpecificParameters(shortCircuitParametersEntity, nodeClusterFilterIdsEntity, localFilters);
+        }
+        return shortCircuitParametersEntity;
+    }
+
+    private void reAddNodeClusterToSpecificParameters(ShortCircuitParametersEntity shortCircuitParametersEntity, ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity, Map<UUID, FilterElements> localFilters) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            shortCircuitParametersEntity.getSpecificParameters().add(new ShortCircuitSpecificParameterEntity(nodeClusterFilterIdsEntity.getId(),
+                    nodeClusterFilterIdsEntity.getProvider(), NODE_CLUSTER_FILTER_IDS, objectMapper.writeValueAsString(localFilters.values())));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Map<UUID, FilterElements> deserializeFilterFromNodeCluster(ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<UUID, FilterElements> localFilters;
+        try {
+            localFilters = objectMapper.readValue(nodeClusterFilterIdsEntity.getValue(), new TypeReference<List<FilterElements>>() { }).stream()
+                    .collect(Collectors.toMap(FilterElements::getFilterId, Function.identity()));
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return localFilters;
+    }
+
+    private ShortCircuitSpecificParameterEntity getNodeClusterFilterSpecificParameter(ShortCircuitParametersEntity shortCircuitParametersEntity) {
+        ShortCircuitSpecificParameterEntity nodeClusterFilterIdsEntity = null;
+        for (ShortCircuitSpecificParameterEntity shortCircuitSpecificParameterEntity : shortCircuitParametersEntity
+                .getSpecificParameters()) {
+            if (shortCircuitSpecificParameterEntity.getName().equals(NODE_CLUSTER_FILTER_IDS)) {
+                nodeClusterFilterIdsEntity = shortCircuitSpecificParameterEntity;
+                break;
+            }
+        }
+        return nodeClusterFilterIdsEntity;
     }
 
     @Transactional

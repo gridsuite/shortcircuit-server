@@ -48,12 +48,13 @@ import static org.mockito.Mockito.*;
 class ShortCircuitParametersServiceTest implements WithAssertions {
 
     private ShortCircuitParametersService parametersService;
+    private FilterService filterService;
     private ParametersRepository parametersRepository;
 
     @BeforeAll
     void setup() {
         this.parametersRepository = mock(ParametersRepository.class);
-        this.parametersService = new ShortCircuitParametersService(parametersRepository, TestUtils.DEFAULT_PROVIDER);
+        this.parametersService = new ShortCircuitParametersService(parametersRepository, TestUtils.DEFAULT_PROVIDER, filterService);
     }
 
     @AfterEach
