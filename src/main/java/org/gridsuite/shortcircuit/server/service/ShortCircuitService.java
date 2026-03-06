@@ -68,6 +68,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     public static final char CSV_QUOTE_ESCAPE = '"';
     public static final String POWER_ELECTRONICS_CLUSTERS = "powerElectronicsClusters";
     public static final String NODE_CLUSTER = "nodeCluster";
+    public static final String NODE_CLUSTER_FILTER_IDS = "nodeClusterFilterIds";
 
     private final FilterService filterService;
 
@@ -166,9 +167,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                             runContext.getNetworkUuid(), runContext.getVariantId());
                     specificParameters.put(POWER_ELECTRONICS_CLUSTERS, objectMapper.writeValueAsString(powerElectronicsClustersValue));
                 }
-                if (specificParameters.containsKey(NODE_CLUSTER)) {
-                    List<String> busIdsInNodeCluster = deserializeBusIdsForNodeCluster(specificParameters.get(NODE_CLUSTER), runContext.getNetworkUuid(), runContext.getVariantId());
+                if (specificParameters.containsKey(NODE_CLUSTER_FILTER_IDS)) {
+                    List<String> busIdsInNodeCluster = deserializeBusIdsForNodeCluster(specificParameters.get(NODE_CLUSTER_FILTER_IDS), runContext.getNetworkUuid(), runContext.getVariantId());
                     specificParameters.put(NODE_CLUSTER, busIdsInNodeCluster.toString());
+                    specificParameters.remove(NODE_CLUSTER_FILTER_IDS);
                 }
             }
         } catch (Exception ex) {
