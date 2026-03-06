@@ -201,19 +201,18 @@ class ShortCircuitParametersITest implements WithAssertions {
 
     @Test
     void runAnalysisWithNodeCluster() throws Exception {
-        UUID nodeCLusterFilterUuid = UUID.fromString("8a8789bc-02d4-4ed8-9b78-51dc6c491a0c");
         final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder()
                 .provider(TestUtils.DEFAULT_PROVIDER)
                 .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                         .name("nodeClusterFilterIds")
-                        .value(objectMapper.writeValueAsString(List.of(new FilterElements(nodeCLusterFilterUuid, "f"))))
+                        .value(objectMapper.writeValueAsString(List.of(new FilterElements(FILTER_UUID, "f"))))
                         .build()
                 ))
                 .build()
         ).getId();
 
-        when(filterService.getFilterBusIds(List.of(nodeCLusterFilterUuid), NETWORK_ID, null)).thenReturn(List.of(
-                new FilterEquipments(nodeCLusterFilterUuid, List.of(
+        when(filterService.getFilterBusIds(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of(
+                new FilterEquipments(FILTER_UUID, List.of(
                         new IdentifiableAttributes("busId1", IdentifiableType.BUS, 0.0),
                         new IdentifiableAttributes("busId2", IdentifiableType.BUS, 0.0)
                 ), List.of())));
