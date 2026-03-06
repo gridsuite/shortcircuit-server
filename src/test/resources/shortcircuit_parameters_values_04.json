@@ -17,6 +17,6 @@
     "detailedReport": false
   },
   "specificParameters": {
-    "nodeCluster": "[busId1, busId2]"
+    "nodeCluster": "[{\"filterId\":\"8a8789bc-02d4-4ed8-9b78-51dc6c491a0c\",\"filterName\":\"f\"}]"
   }
 }
