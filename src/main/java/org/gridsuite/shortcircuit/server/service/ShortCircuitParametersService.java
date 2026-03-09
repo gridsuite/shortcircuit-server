@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -133,7 +134,7 @@ public class ShortCircuitParametersService {
             String serializedNodeCluster = objectMapper.writeValueAsString(localFilters);
             shortCircuitParametersInfos.specificParametersPerProvider().get(provider).put(NODE_CLUSTER_FILTER_IDS, serializedNodeCluster);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -144,7 +145,7 @@ public class ShortCircuitParametersService {
             localFilters = objectMapper.readValue(nodeClusterFilterIdsEntity, new TypeReference<List<FilterElements>>() { });
 
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
         return localFilters;
     }
