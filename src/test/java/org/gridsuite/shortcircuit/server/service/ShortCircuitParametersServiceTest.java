@@ -71,13 +71,9 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     }
 
     private static void checkParametersEntityHasBeenRead(final ShortCircuitParametersEntity pEntity) {
-        checkParametersEntityHasBeenRead(pEntity, 1);
-    }
-
-    private static void checkParametersEntityHasBeenRead(final ShortCircuitParametersEntity pEntity, int getSpecificParametersTimes) {
         verify(pEntity).getProvider();
         verify(pEntity).getPredefinedParameters();
-        verify(pEntity, times(getSpecificParametersTimes)).getSpecificParameters();
+        verify(pEntity).getSpecificParameters();
         verify(pEntity).toShortCircuitParameters();
     }
 
@@ -129,7 +125,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
                             .setWithNeutralPosition(false)
                             .setInitialVoltageProfileMode(InitialVoltageProfileMode.NOMINAL),
                         Collections.emptyMap()));
-        checkParametersEntityHasBeenRead(pEntity, 2);
+        checkParametersEntityHasBeenRead(pEntity);
         verifyNoMoreInteractions(pEntity);
         verify(parametersRepository).findById(pUuid);
     }
@@ -412,7 +408,6 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     @Test
     void testGettingParametersWithNodeClusterFilters() throws JsonProcessingException {
         final UUID pUuid = UUID.randomUUID();
-        final double minVoltDrop = new Random().nextDouble();
         final UUID nodeClusterFilterId = UUID.randomUUID();
         final UUID filterId1 = UUID.randomUUID();
         final UUID filterId2 = UUID.randomUUID();
@@ -449,7 +444,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
                         .setWithVoltageResult(false)
                         .setMinVoltageDropProportionalThreshold(20.0),
                         specificParametersPerProvider));
-        checkParametersEntityHasBeenRead(pEntity, 4);
+        checkParametersEntityHasBeenRead(pEntity);
         verifyNoMoreInteractions(pEntity);
         verify(parametersRepository).findById(pUuid);
     }
