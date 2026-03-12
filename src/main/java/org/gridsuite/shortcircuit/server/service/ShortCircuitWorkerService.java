@@ -159,7 +159,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         String busId = context.getBusId();
         if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
             List<String> nodeClusters = getNodeClusters(context);
-            if (!nodeClusters.contains(busId)) {
+            if (!nodeClusters.isEmpty() && !nodeClusters.contains(busId)) {
                 throw new ShortCircuitException(BUS_OUT_OF_NODE_CLUSTER, "Selected bus is out of node cluster");
             }
         }

@@ -145,6 +145,9 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         when(busbarSection.getTerminal()).thenReturn(terminal);
         when(terminal.getBusView()).thenReturn(busView);
         when(busView.getBus()).thenReturn(null);
+        when(runContext.getParameters())
+                .thenReturn(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "bus1, bus2"))
+                        .build());
 
         try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
@@ -172,7 +175,33 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             final var run = workerService.consumeRun();
-            assertThrows(ComputationRunException.class, () -> run.accept(message));
+            String errorMessage = assertThrows(ComputationRunException.class, () -> run.accept(message)).getMessage();
+            assertThat(errorMessage).contains("ShortCircuit provider not found null");
+        }
+    }
+
+    @Test
+    void testBuseIdOutsideNodeCluster() throws Exception {
+        var analysisProvider = spy(new ShortCircuitAnalysisProviderMock(new ShortCircuitAnalysisResult(Collections.emptyList())));
+        var message = new GenericMessage<>("test");
+        var runContext = mock(ShortCircuitRunContext.class);
+        var resultContext = new ShortCircuitResultContext(UUID.randomUUID(), runContext);
+        var busId = "bus3";
+
+        when(runContext.getBusId()).thenReturn(busId);
+        when(runContext.getNetwork()).thenReturn(network);
+        when(networkStoreService.getNetwork(any(), any())).thenReturn(network);
+        when(network.getVariantManager()).thenReturn(variantManager);
+        when(runContext.getParameters())
+                .thenReturn(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "bus1, bus2"))
+                        .build());
+
+        try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
+             var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
+            shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
+            final var run = workerService.consumeRun();
+            String errorMessage = assertThrows(ComputationRunException.class, () -> run.accept(message)).getMessage();
+            assertThat(errorMessage).contains("Selected bus is out of node cluster");
         }
     }
 
