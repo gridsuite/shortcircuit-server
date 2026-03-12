@@ -6,7 +6,6 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.*;
@@ -27,7 +26,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
-import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,17 +45,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     public static final String COMPUTATION_TYPE = "Short circuit analysis";
     private final ReportMapperService reportMapper;
 
-    public ShortCircuitWorkerService(NetworkStoreService networkStoreService,
-                                     ReportService reportService,
-                                     ExecutionService executionService,
-                                     NotificationService notificationService,
-                                     ShortCircuitAnalysisResultService resultService,
-                                     @Autowired(required = false)
-                                     ComputationS3Service computationS3Service,
-                                     ObjectMapper objectMapper,
-                                     ReportMapperService reportMapper,
-                                     ShortCircuitObserver shortCircuitObserver,
-                                     PropertyServerNameProvider propertyServerNameProvider) {
+    public ShortCircuitWorkerService(NetworkStoreService networkStoreService, ReportService reportService, ExecutionService executionService, NotificationService notificationService, ShortCircuitAnalysisResultService resultService, @Autowired(required = false) ComputationS3Service computationS3Service, ObjectMapper objectMapper, ReportMapperService reportMapper, ShortCircuitObserver shortCircuitObserver, PropertyServerNameProvider propertyServerNameProvider) {
         super(networkStoreService, notificationService, reportService, resultService, computationS3Service, executionService, shortCircuitObserver, objectMapper, propertyServerNameProvider);
         this.reportMapper = reportMapper;
     }
@@ -74,10 +62,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     @Override
     protected void saveResult(Network network, AbstractResultContext<ShortCircuitRunContext> resultContext, ShortCircuitAnalysisResult result) {
-        resultService.insert(resultContext.getResultUuid(),
-                result,
-                resultContext.getRunContext(),
-                ShortCircuitAnalysisStatus.COMPLETED.name());
+        resultService.insert(resultContext.getResultUuid(), result, resultContext.getRunContext(), ShortCircuitAnalysisStatus.COMPLETED.name());
     }
 
     @Override
@@ -105,13 +90,11 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         Map<String, Object> additionalData = new HashMap<>();
         additionalData.put(HEADER_BUS_ID, resultContext.getRunContext().getBusId());
 
-        if (result != null && !result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null &&
-                result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
+        if (result != null && !result.getFaultResults().isEmpty() && resultContext.getRunContext().getBusId() == null && result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals)) {
             throw new ShortCircuitException(MISSING_EXTENSION_DATA, "Missing short-circuit extension data");
         }
 
-        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(),
-                resultContext.getRunContext().getUserId(), additionalData);
+        notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getUserId(), additionalData);
     }
 
     @Override
@@ -143,13 +126,12 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
         }
         List<Fault> faults = busesStream.map(bus -> {
-                    IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
-                    if (shortCircuitExtension != null) {
-                        shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
-                    }
-                    return new BusFault(bus.getId(), bus.getId());
-                })
-                .collect(Collectors.toList());
+            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+            if (shortCircuitExtension != null) {
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+            }
+            return new BusFault(bus.getId(), bus.getId());
+        }).collect(Collectors.toList());
         context.setShortCircuitLimits(shortCircuitLimits);
         return faults;
     }
