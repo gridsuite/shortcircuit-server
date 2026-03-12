@@ -108,7 +108,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     @Override
     protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
-        List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(runContext) : getBusFaultFromBusId(runContext);
+        List<Fault> faults = runContext.getBusId() == null ? getAllBusFaults(runContext) : getBusFaultFromBusId(runContext);
         ShortCircuitParameters parameters = runContext.buildParameters();
         if (runContext.getDebugDir() != null) {
             parameters.setDebugDir(runContext.getDebugDir().toString());
@@ -116,13 +116,13 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, parameters, executionService.getComputationManager(), List.of(), runContext.getReportNode());
     }
 
-    private List<Fault> getAllBusfaultFromNetwork(ShortCircuitRunContext context) {
+    private List<Fault> getAllBusFaults(ShortCircuitRunContext context) {
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
         Stream<Bus> busesStream = context.getNetwork().getBusView().getBusStream();
+        // If there is a configured ZI, then only BusFault for this ZI are returned, it returns all the network otherwise
         if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
             String rawNodeClusters = context.getParameters().getSpecificParameters().get(NODE_CLUSTER);
-            rawNodeClusters = rawNodeClusters.substring(1, rawNodeClusters.length() - 1);
-            List<String> nodeClusters = Arrays.asList(rawNodeClusters.split(", "));
+            List<String> nodeClusters = Arrays.stream(rawNodeClusters.split(", ")).map(String::trim).toList();
             busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
         }
         List<Fault> faults = busesStream.map(bus -> {

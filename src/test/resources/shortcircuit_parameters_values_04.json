@@ -17,6 +17,6 @@
     "detailedReport": false
   },
   "specificParameters": {
-    "nodeCluster": "[busId1, busId2]"
+    "nodeCluster": "busId1, busId2"
   }
 }

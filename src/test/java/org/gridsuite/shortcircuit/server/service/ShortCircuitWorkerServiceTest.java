@@ -159,14 +159,14 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         var analysisProvider = spy(new ShortCircuitAnalysisProviderMock(new ShortCircuitAnalysisResult(Collections.emptyList())));
         var message = new GenericMessage<>("test");
         final UUID networkUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
-        Network network = EurostagTutorialExample1Factory.create();
+        Network eurostagNetwork = EurostagTutorialExample1Factory.create();
         final ShortCircuitRunContext runContext = ShortCircuitRunContext.builder()
                 .networkUuid(networkUuid)
-                .parameters(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "[VLGEN_0, VLHV1_0]")).build())
+                .parameters(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "VLGEN_0, VLHV1_0")).build())
                 .debug(false)
                 .build();
         var resultContext = new ShortCircuitResultContext(UUID.randomUUID(), runContext);
-        when(networkStoreService.getNetwork(any(), any())).thenReturn(network);
+        when(networkStoreService.getNetwork(any(), any())).thenReturn(eurostagNetwork);
 
         try (var ignored = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
