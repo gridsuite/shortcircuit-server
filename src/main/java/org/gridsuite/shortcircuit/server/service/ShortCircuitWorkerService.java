@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.*;
@@ -16,26 +17,27 @@ import com.powsybl.shortcircuit.*;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
 import org.gridsuite.shortcircuit.server.PropertyServerNameProvider;
-import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
+import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.BUS_OUT_OF_VOLTAGE;
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.INCONSISTENT_VOLTAGE_LEVELS;
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.MISSING_EXTENSION_DATA;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.*;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.NODE_CLUSTER;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -133,8 +135,14 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     private List<Fault> getAllBusfaultFromNetwork(ShortCircuitRunContext context) {
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
-        List<Fault> faults = context.getNetwork().getBusView().getBusStream()
-                .map(bus -> {
+        Stream<Bus> busesStream = context.getNetwork().getBusView().getBusStream();
+        if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
+            String rawNodeClusters = context.getParameters().getSpecificParameters().get(NODE_CLUSTER);
+            rawNodeClusters = rawNodeClusters.substring(1, rawNodeClusters.length() - 1);
+            List<String> nodeClusters = Arrays.asList(rawNodeClusters.split(", "));
+            busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
+        }
+        List<Fault> faults = busesStream.map(bus -> {
                     IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
                     if (shortCircuitExtension != null) {
                         shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
