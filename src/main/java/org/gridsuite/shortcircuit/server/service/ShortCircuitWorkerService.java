@@ -52,7 +52,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
                                      ExecutionService executionService,
                                      NotificationService notificationService,
                                      ShortCircuitAnalysisResultService resultService,
-                                     @Autowired(required = false) ComputationS3Service computationS3Service,
+                                     @Autowired(required = false)
+                                     ComputationS3Service computationS3Service,
                                      ObjectMapper objectMapper,
                                      ReportMapperService reportMapper,
                                      ShortCircuitObserver shortCircuitObserver,
