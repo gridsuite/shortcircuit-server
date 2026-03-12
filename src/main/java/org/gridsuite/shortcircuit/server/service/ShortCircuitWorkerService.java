@@ -33,9 +33,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.BUS_OUT_OF_VOLTAGE;
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.INCONSISTENT_VOLTAGE_LEVELS;
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.MISSING_EXTENSION_DATA;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.*;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.NODE_CLUSTER;
 
@@ -133,13 +131,17 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, parameters, executionService.getComputationManager(), List.of(), runContext.getReportNode());
     }
 
+    private List<String> getNodeClusters(ShortCircuitRunContext context) {
+        String rawNodeClusters = context.getParameters().getSpecificParameters().get(NODE_CLUSTER);
+        return Arrays.stream(rawNodeClusters.split(", ")).map(String::trim).toList();
+    }
+
     private List<Fault> getAllBusFaults(ShortCircuitRunContext context) {
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
         Stream<Bus> busesStream = context.getNetwork().getBusView().getBusStream();
         // If there is a configured ZI, then only BusFault for this ZI are returned, it returns all the network otherwise
         if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
-            String rawNodeClusters = context.getParameters().getSpecificParameters().get(NODE_CLUSTER);
-            List<String> nodeClusters = Arrays.stream(rawNodeClusters.split(", ")).map(String::trim).toList();
+            List<String> nodeClusters = getNodeClusters(context);
             busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
         }
         List<Fault> faults = busesStream.map(bus -> {
@@ -155,6 +157,12 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     private List<Fault> getBusFaultFromBusId(ShortCircuitRunContext context) {
         String busId = context.getBusId();
+        if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
+            List<String> nodeClusters = getNodeClusters(context);
+            if (!nodeClusters.contains(busId)) {
+                throw new ShortCircuitException(BUS_OUT_OF_NODE_CLUSTER, "Selected bus is out of node cluster");
+            }
+        }
         Identifiable<?> identifiable = context.getNetwork().getIdentifiable(busId);
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
