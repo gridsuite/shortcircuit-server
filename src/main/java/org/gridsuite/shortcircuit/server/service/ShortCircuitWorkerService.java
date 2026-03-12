@@ -131,8 +131,11 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, parameters, executionService.getComputationManager(), List.of(), runContext.getReportNode());
     }
 
-    private List<String> getNodeClusters(ShortCircuitRunContext context) {
+    private List<String> deserializeNodeClusters(ShortCircuitRunContext context) {
         String rawNodeClusters = context.getParameters().getSpecificParameters().get(NODE_CLUSTER);
+        if (Objects.equals(rawNodeClusters, "") || rawNodeClusters == null) {
+            return Collections.emptyList();
+        }
         return Arrays.stream(rawNodeClusters.split(", ")).map(String::trim).toList();
     }
 
@@ -141,7 +144,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         Stream<Bus> busesStream = context.getNetwork().getBusView().getBusStream();
         // If there is a configured ZI, then only BusFault for this ZI are returned, it returns all the network otherwise
         if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
-            List<String> nodeClusters = getNodeClusters(context);
+            List<String> nodeClusters = deserializeNodeClusters(context);
             if (!nodeClusters.isEmpty()) {
                 busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
             }
@@ -160,7 +163,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     private List<Fault> getBusFaultFromBusId(ShortCircuitRunContext context) {
         String busId = context.getBusId();
         if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
-            List<String> nodeClusters = getNodeClusters(context);
+            List<String> nodeClusters = deserializeNodeClusters(context);
             if (!nodeClusters.isEmpty() && !nodeClusters.contains(busId)) {
                 throw new ShortCircuitException(BUS_OUT_OF_NODE_CLUSTER, "Selected bus is out of node cluster");
             }
