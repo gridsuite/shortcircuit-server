@@ -142,7 +142,9 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         // If there is a configured ZI, then only BusFault for this ZI are returned, it returns all the network otherwise
         if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
             List<String> nodeClusters = getNodeClusters(context);
-            busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
+            if (!nodeClusters.isEmpty()) {
+                busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
+            }
         }
         List<Fault> faults = busesStream.map(bus -> {
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
