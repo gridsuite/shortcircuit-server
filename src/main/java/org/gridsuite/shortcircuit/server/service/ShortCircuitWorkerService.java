@@ -153,6 +153,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+            } else {
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), Double.NaN, Double.NaN));
             }
             return new BusFault(bus.getId(), bus.getId());
         }).collect(Collectors.toList());
