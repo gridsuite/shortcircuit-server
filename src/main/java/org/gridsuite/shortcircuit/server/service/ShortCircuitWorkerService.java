@@ -162,17 +162,12 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     private List<Fault> getBusFaultFromBusId(ShortCircuitRunContext context) {
         String busId = context.getBusId();
-        if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
-            List<String> nodeClusters = deserializeNodeClusters(context);
-            if (!nodeClusters.isEmpty() && !nodeClusters.contains(busId)) {
-                throw new ShortCircuitException(BUS_OUT_OF_NODE_CLUSTER, "Selected bus is out of node cluster");
-            }
-        }
         Identifiable<?> identifiable = context.getNetwork().getIdentifiable(busId);
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
 
         if (identifiable instanceof BusbarSection busbarSection) {
             Bus bus = busbarSection.getTerminal().getBusView().getBus();
+            throwIfBusIsOutsideNodeCluster(context, bus);
             if (bus == null) {
                 throw new ShortCircuitException(BUS_OUT_OF_VOLTAGE, "Selected bus is out of voltage");
             }
@@ -185,6 +180,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         }
 
         if (identifiable instanceof Bus bus) {
+            throwIfBusIsOutsideNodeCluster(context, bus);
             String busIdFromBusView = bus.getVoltageLevel().getBusView().getMergedBus(busId).getId();
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
@@ -194,6 +190,15 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
         throw new NoSuchElementException("No bus found for bus id " + busId);
+    }
+
+    private void throwIfBusIsOutsideNodeCluster(ShortCircuitRunContext context, Bus bus) {
+        if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
+            List<String> nodeClusters = deserializeNodeClusters(context);
+            if (!nodeClusters.isEmpty() && !nodeClusters.contains(bus.getId())) {
+                throw new ShortCircuitException(BUS_OUT_OF_NODE_CLUSTER, "Selected bus is outside node cluster");
+            }
+        }
     }
 
     protected String getComputationType() {
