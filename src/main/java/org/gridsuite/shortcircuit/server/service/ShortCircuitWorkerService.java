@@ -167,7 +167,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
         if (identifiable instanceof BusbarSection busbarSection) {
             Bus bus = busbarSection.getTerminal().getBusView().getBus();
-            throwIfBusIsInOutsideNodeCluster(context, bus);
+            throwIfBusIsOutsideNodeCluster(context, bus);
             if (bus == null) {
                 throw new ShortCircuitException(BUS_OUT_OF_VOLTAGE, "Selected bus is out of voltage");
             }
@@ -180,7 +180,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         }
 
         if (identifiable instanceof Bus bus) {
-            throwIfBusIsInOutsideNodeCluster(context, bus);
+            throwIfBusIsOutsideNodeCluster(context, bus);
             String busIdFromBusView = bus.getVoltageLevel().getBusView().getMergedBus(busId).getId();
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
@@ -192,7 +192,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         throw new NoSuchElementException("No bus found for bus id " + busId);
     }
 
-    private void throwIfBusIsInOutsideNodeCluster(ShortCircuitRunContext context, Bus bus) {
+    private void throwIfBusIsOutsideNodeCluster(ShortCircuitRunContext context, Bus bus) {
         if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
             List<String> nodeClusters = deserializeNodeClusters(context);
             if (!nodeClusters.isEmpty() && !nodeClusters.contains(bus.getId())) {
