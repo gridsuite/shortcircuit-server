@@ -187,6 +187,10 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         var runContext = mock(ShortCircuitRunContext.class);
         var resultContext = new ShortCircuitResultContext(UUID.randomUUID(), runContext);
         var busId = "bus3";
+        var busbarSection = mock(BusbarSection.class);
+        var terminal = mock(Terminal.class);
+        var busView = mock(BusView.class);
+        var bus = mock(Bus.class);
 
         when(runContext.getBusId()).thenReturn(busId);
         when(runContext.getNetwork()).thenReturn(network);
@@ -195,6 +199,11 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         when(runContext.getParameters())
                 .thenReturn(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "bus1, bus2"))
                         .build());
+        doReturn(busbarSection).when(network).getIdentifiable(busId);
+        doReturn(terminal).when(busbarSection).getTerminal();
+        doReturn(busView).when(terminal).getBusView();
+        doReturn(bus).when(busView).getBus();
+        doReturn(busId).when(bus).getId();
 
         try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
