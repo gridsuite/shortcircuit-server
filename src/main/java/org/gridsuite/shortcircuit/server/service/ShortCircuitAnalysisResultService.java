@@ -69,16 +69,22 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     public static ShortCircuitAnalysisResultEntity toResultEntity(UUID resultUuid, ShortCircuitAnalysisResult result, Map<String, ShortCircuitLimits> allShortCircuitLimits) {
         Set<FaultResultEntity> faultResults = result.getFaultResults()
                 .stream()
+                .filter(faultResult -> faultResult.getStatus() != FaultResult.Status.SOLVER_FAILURE)
                 .map(faultResult -> {
-                    if (faultResult instanceof FailedFaultResult failedFaultResult) {
-                        return toGenericFaultResultEntity(failedFaultResult, null);
-                    } else if (faultResult instanceof FortescueFaultResult fortescueFaultResult) {
-                        return toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
-                    } else if (faultResult instanceof MagnitudeFaultResult magnitudeFaultResult) {
-                        return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
-                    } else {
-                        LOGGER.warn("Unknown FaultResult class: {}", faultResult.getClass());
-                        return toGenericFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
+                    switch (faultResult) {
+                        case FailedFaultResult failedFaultResult -> {
+                            return toGenericFaultResultEntity(failedFaultResult, null);
+                        }
+                        case FortescueFaultResult fortescueFaultResult -> {
+                            return toFortescueFaultResultEntity(fortescueFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
+                        }
+                        case MagnitudeFaultResult magnitudeFaultResult -> {
+                            return toMagnitudeFaultResultEntity(magnitudeFaultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
+                        }
+                        default -> {
+                            LOGGER.warn("Unknown FaultResult class: {}", faultResult.getClass());
+                            return toGenericFaultResultEntity(faultResult, allShortCircuitLimits.get(faultResult.getFault().getId()));
+                        }
                     }
                 })
                 .collect(Collectors.toSet());
