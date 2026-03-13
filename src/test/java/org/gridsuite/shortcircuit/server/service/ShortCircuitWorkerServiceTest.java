@@ -210,7 +210,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             final var run = workerService.consumeRun();
             String errorMessage = assertThrows(ComputationRunException.class, () -> run.accept(message)).getMessage();
-            assertThat(errorMessage).contains("Selected bus is out of node cluster");
+            assertThat(errorMessage).contains("Selected bus is outside node cluster");
         }
     }
 
