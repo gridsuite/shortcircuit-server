@@ -87,6 +87,7 @@ class ShortCircuitParametersITest implements WithAssertions {
     private final String shortcircuitParametersValues02Json;
     private final String shortcircuitParametersValues03Json;
     private final String shortcircuitParametersValues04Json;
+    private final String shortcircuitParametersValues05Json;
 
     public ShortCircuitParametersITest() throws Exception {
         this.defaultParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "");
@@ -97,6 +98,7 @@ class ShortCircuitParametersITest implements WithAssertions {
         this.shortcircuitParametersValues02Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_02.json").toURI())).replaceAll("\\s+", "");
         this.shortcircuitParametersValues03Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_03.json").toURI())).replaceAll("\\s+", "");
         this.shortcircuitParametersValues04Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_04.json").toURI()));
+        this.shortcircuitParametersValues05Json = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("shortcircuit_parameters_values_05.json").toURI()));
     }
 
     @Autowired
@@ -218,6 +220,23 @@ class ShortCircuitParametersITest implements WithAssertions {
                 ), List.of())));
 
         runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues04Json);
+    }
+
+    @Test
+    void runAnalysisWithEmptyNodeCluster() throws Exception {
+        final UUID parametersUuid = parametersRepository.save(ShortCircuitParametersEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
+                .specificParameters(List.of(
+                        ShortCircuitSpecificParameterEntity.builder()
+                                .provider(TestUtils.DEFAULT_PROVIDER)
+                                .name("nodeClusterFilterIds")
+                                .value(objectMapper.writeValueAsString(List.of(new FilterElements(FILTER_UUID, "f"))))
+                                .build()))
+                .minVoltageDropProportionalThreshold(42.0).build()).getId();
+
+        when(filterService.getFilterBusIds(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of(
+                new FilterEquipments(FILTER_UUID, List.of(
+                ), List.of())));
+        runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues05Json);
     }
 
     @Test

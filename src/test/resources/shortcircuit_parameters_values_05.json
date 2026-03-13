@@ -7,7 +7,7 @@
     "withVoltageResult": false,
     "withFeederResult": false,
     "studyType": "TRANSIENT",
-    "minVoltageDropProportionalThreshold": 20.0,
+    "minVoltageDropProportionalThreshold": 42.0,
     "withFortescueResult": false,
     "withLoads": false,
     "withShuntCompensators": false,
@@ -17,6 +17,6 @@
     "detailedReport": false
   },
   "specificParameters": {
-    "nodeCluster": "busId1, busId2"
+    "nodeCluster": ""
   }
 }

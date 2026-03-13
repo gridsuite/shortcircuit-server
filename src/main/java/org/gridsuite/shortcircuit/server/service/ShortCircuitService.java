@@ -169,7 +169,10 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
                 }
                 if (specificParameters.containsKey(NODE_CLUSTER_FILTER_IDS)) {
                     List<String> busIdsInNodeCluster = deserializeBusIdsForNodeCluster(specificParameters.get(NODE_CLUSTER_FILTER_IDS), runContext.getNetworkUuid(), runContext.getVariantId());
-                    specificParameters.put(NODE_CLUSTER, busIdsInNodeCluster.toString());
+                    String rawBusIdsInNodeCluster = busIdsInNodeCluster.toString();
+                    // remove brackets
+                    rawBusIdsInNodeCluster = rawBusIdsInNodeCluster.substring(1, rawBusIdsInNodeCluster.length() - 1);
+                    specificParameters.put(NODE_CLUSTER, rawBusIdsInNodeCluster);
                     specificParameters.remove(NODE_CLUSTER_FILTER_IDS);
                 }
             }
