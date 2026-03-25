@@ -6,8 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.ThreeSides;
-import com.powsybl.security.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import lombok.AllArgsConstructor;
 import org.gridsuite.computation.dto.ResourceFilterDTO;

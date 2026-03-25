@@ -6,8 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.powsybl.security.LimitViolation;
-import com.powsybl.security.LimitViolationType;
+import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.shortcircuit.server.dto.FaultResultsMode;

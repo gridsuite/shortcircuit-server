@@ -6,7 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.repositories;
 
-import com.powsybl.security.LimitViolationType;
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.shortcircuit.Fault;
 import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.springframework.data.jpa.domain.Specification;
