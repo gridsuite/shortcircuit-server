@@ -16,10 +16,10 @@ import com.powsybl.shortcircuit.*;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
 import org.gridsuite.shortcircuit.server.PropertyServerNameProvider;
-import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
+import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -31,11 +31,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.BUS_OUT_OF_VOLTAGE;
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.INCONSISTENT_VOLTAGE_LEVELS;
-import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.MISSING_EXTENSION_DATA;
+import static org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode.*;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.NODE_CLUSTER;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -123,7 +123,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
     @Override
     protected CompletableFuture<ShortCircuitAnalysisResult> getCompletableFuture(ShortCircuitRunContext runContext, String provider, UUID resultUuid) {
-        List<Fault> faults = runContext.getBusId() == null ? getAllBusfaultFromNetwork(runContext) : getBusFaultFromBusId(runContext);
+        List<Fault> faults = runContext.getBusId() == null ? getAllBusFaults(runContext) : getBusFaultFromBusId(runContext);
         ShortCircuitParameters parameters = runContext.buildParameters();
         if (runContext.getDebugDir() != null) {
             parameters.setDebugDir(runContext.getDebugDir().toString());
@@ -131,17 +131,33 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         return ShortCircuitAnalysis.runAsync(runContext.getNetwork(), faults, parameters, executionService.getComputationManager(), List.of(), runContext.getReportNode());
     }
 
-    private List<Fault> getAllBusfaultFromNetwork(ShortCircuitRunContext context) {
+    private List<String> deserializeNodeClusters(ShortCircuitRunContext context) {
+        String rawNodeClusters = context.getParameters().getSpecificParameters().get(NODE_CLUSTER);
+        if (Objects.equals(rawNodeClusters, "") || rawNodeClusters == null) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(rawNodeClusters.split(", ")).map(String::trim).toList();
+    }
+
+    private List<Fault> getAllBusFaults(ShortCircuitRunContext context) {
         Map<String, ShortCircuitLimits> shortCircuitLimits = new HashMap<>();
-        List<Fault> faults = context.getNetwork().getBusView().getBusStream()
-                .map(bus -> {
-                    IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
-                    if (shortCircuitExtension != null) {
-                        shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
-                    }
-                    return new BusFault(bus.getId(), bus.getId());
-                })
-                .collect(Collectors.toList());
+        Stream<Bus> busesStream = context.getNetwork().getBusView().getBusStream();
+        // If there is a configured ZI, then only BusFault for this ZI are returned, it returns all the network otherwise
+        if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
+            List<String> nodeClusters = deserializeNodeClusters(context);
+            if (!nodeClusters.isEmpty()) {
+                busesStream = busesStream.filter(bus -> nodeClusters.contains(bus.getId()));
+            }
+        }
+        List<Fault> faults = busesStream.map(bus -> {
+            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+            if (shortCircuitExtension != null) {
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+            } else {
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), Double.NaN, Double.NaN));
+            }
+            return new BusFault(bus.getId(), bus.getId());
+        }).collect(Collectors.toList());
         context.setShortCircuitLimits(shortCircuitLimits);
         return faults;
     }
@@ -153,27 +169,42 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
 
         if (identifiable instanceof BusbarSection busbarSection) {
             Bus bus = busbarSection.getTerminal().getBusView().getBus();
+            throwIfBusIsOutsideNodeCluster(context, bus);
             if (bus == null) {
                 throw new ShortCircuitException(BUS_OUT_OF_VOLTAGE, "Selected bus is out of voltage");
             }
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+            } else {
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), Double.NaN, Double.NaN));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(bus.getId(), bus.getId()));
         }
 
         if (identifiable instanceof Bus bus) {
+            throwIfBusIsOutsideNodeCluster(context, bus);
             String busIdFromBusView = bus.getVoltageLevel().getBusView().getMergedBus(busId).getId();
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+            } else {
+                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(bus.getVoltageLevel().getId(), Double.NaN, Double.NaN));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
         }
         throw new NoSuchElementException("No bus found for bus id " + busId);
+    }
+
+    private void throwIfBusIsOutsideNodeCluster(ShortCircuitRunContext context, Bus bus) {
+        if (context.getParameters().getSpecificParameters().containsKey(NODE_CLUSTER)) {
+            List<String> nodeClusters = deserializeNodeClusters(context);
+            if (!nodeClusters.isEmpty() && !nodeClusters.contains(bus.getId())) {
+                throw new ShortCircuitException(BUS_OUT_OF_NODE_CLUSTER, "Selected bus is outside node cluster");
+            }
+        }
     }
 
     protected String getComputationType() {

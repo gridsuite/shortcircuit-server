@@ -15,7 +15,8 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
 public enum ShortcircuitBusinessErrorCode implements BusinessErrorCode {
     BUS_OUT_OF_VOLTAGE("shortcircuit.busOutOfVoltage"),
     MISSING_EXTENSION_DATA("shortcircuit.missingExtensionData"),
-    INCONSISTENT_VOLTAGE_LEVELS("shortcircuit.inconsistentVoltageLevels"),;
+    INCONSISTENT_VOLTAGE_LEVELS("shortcircuit.inconsistentVoltageLevels"),
+    BUS_OUT_OF_NODE_CLUSTER("shortcircuit.busOutOfNodeCluster");
 
     private final String code;
 

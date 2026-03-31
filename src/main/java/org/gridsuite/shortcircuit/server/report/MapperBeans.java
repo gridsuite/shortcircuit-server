@@ -12,29 +12,33 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class MapperBeans {
+
+    private static final String DISCONNECTED_TERMINAL_GENERATOR_MESSAGE_KEY = "rte.iidm.export.adn.disconnectedTerminalGenerator";
+    private static final String ADD_CONSTANT_RATIO_MESSAGE_KEY = "rte.iidm.export.adn.addConstantRatio";
+
     @Bean
     public SeverityMapper powsyblAdnGeneratorsAndBatteriesSeverity() {
         // in generatorConversion and batteryConversion
-        return new SeverityMapper("disconnectedTerminalGenerator", TypedValue.TRACE_SEVERITY);
+        return new SeverityMapper(DISCONNECTED_TERMINAL_GENERATOR_MESSAGE_KEY, TypedValue.TRACE_SEVERITY);
     }
 
     @Bean
     public SeverityMapper powsyblAdnLinesSeverity() {
         // in branchConversion.twoWindingsTransformerConversion
-        return new SeverityMapper("lineConversion", "addConstantRatio", TypedValue.TRACE_SEVERITY);
+        return new SeverityMapper("rte.iidm.export.adn.lineConversion", ADD_CONSTANT_RATIO_MESSAGE_KEY, TypedValue.TRACE_SEVERITY);
     }
 
     @Bean
     public SeverityMapper powsyblAdnTwoWindingsTransformersSeverity() {
         // in branchConversion.twoWindingsTransformerConversion
-        return new SeverityMapper("twoWindingsTransformerConversion", "addConstantRatio", TypedValue.TRACE_SEVERITY);
+        return new SeverityMapper("rte.iidm.export.adn.twoWindingsTransformerConversion", ADD_CONSTANT_RATIO_MESSAGE_KEY, TypedValue.TRACE_SEVERITY);
     }
 
     @Bean
     public AdnSummarizeMapper powsyblAdnGeneratorsSummary() {
         return new AdnSummarizeMapper("generators",
-                "generatorConversion",
-                "disconnectedTerminalGenerator",
+                "rte.iidm.export.adn.generatorConversion",
+                DISCONNECTED_TERMINAL_GENERATOR_MESSAGE_KEY,
                 "shortcircuit.server.disconnectedTerminalEquipmentSummary",
                 ShortCircuitRunContext::getAdnSummarizeCounterGenerator);
     }
@@ -42,8 +46,8 @@ public class MapperBeans {
     @Bean
     public AdnSummarizeMapper powsyblAdnBatteriesSummary() {
         return new AdnSummarizeMapper("batteries",
-                "batteryConversion",
-                "disconnectedTerminalGenerator",
+                "rte.iidm.export.adn.batteryConversion",
+                DISCONNECTED_TERMINAL_GENERATOR_MESSAGE_KEY,
                 "shortcircuit.server.disconnectedTerminalEquipmentSummary",
                 ShortCircuitRunContext::getAdnSummarizeCounterBattery);
     }
@@ -52,8 +56,8 @@ public class MapperBeans {
     public AdnSummarizeMapper powsyblAdnLinesSummary() {
         // in branchConversion.twoWindingsTransformerConversion
         return new AdnSummarizeMapper("lines",
-                "lineConversion",
-                "addConstantRatio",
+                "rte.iidm.export.adn.lineConversion",
+                ADD_CONSTANT_RATIO_MESSAGE_KEY,
                 "shortcircuit.server.addConstantRatioSummary",
                 ShortCircuitRunContext::getAdnSummarizeCounterLines);
     }
@@ -62,8 +66,8 @@ public class MapperBeans {
     public AdnSummarizeMapper powsyblAdnTwoWindingsTransformersSummary() {
         // in branchConversion.twoWindingsTransformerConversion
         return new AdnSummarizeMapper("two windings transformers",
-                "twoWindingsTransformerConversion",
-                "addConstantRatio",
+                "rte.iidm.export.adn.twoWindingsTransformerConversion",
+                ADD_CONSTANT_RATIO_MESSAGE_KEY,
                 "shortcircuit.server.addConstantRatioSummary",
                 ShortCircuitRunContext::getAdnSummarizeCounterT2W);
     }

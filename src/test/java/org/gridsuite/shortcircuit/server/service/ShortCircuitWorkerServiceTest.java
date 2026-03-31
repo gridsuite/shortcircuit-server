@@ -9,11 +9,9 @@ package org.gridsuite.shortcircuit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.ComputationManager;
-import com.powsybl.iidm.network.BusbarSection;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.Terminal;
+import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.Terminal.BusView;
-import com.powsybl.iidm.network.VariantManager;
+import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.shortcircuit.*;
@@ -47,10 +45,12 @@ import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.NODE_CLUSTER;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -145,12 +145,72 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         when(busbarSection.getTerminal()).thenReturn(terminal);
         when(terminal.getBusView()).thenReturn(busView);
         when(busView.getBus()).thenReturn(null);
+        when(runContext.getParameters())
+                .thenReturn(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "bus1, bus2"))
+                        .build());
 
         try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
              var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
             final var run = workerService.consumeRun();
             assertThrows(ComputationRunException.class, () -> run.accept(message));
+        }
+    }
+
+    @Test
+    void testGetFaultsBusesFromNodeCluster() throws Exception {
+        var analysisProvider = spy(new ShortCircuitAnalysisProviderMock(new ShortCircuitAnalysisResult(Collections.emptyList())));
+        var message = new GenericMessage<>("test");
+        final UUID networkUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        Network eurostagNetwork = EurostagTutorialExample1Factory.create();
+        final ShortCircuitRunContext runContext = ShortCircuitRunContext.builder()
+                .networkUuid(networkUuid)
+                .parameters(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "VLGEN_0, VLHV1_0")).build())
+                .debug(false)
+                .build();
+        var resultContext = new ShortCircuitResultContext(UUID.randomUUID(), runContext);
+        when(networkStoreService.getNetwork(any(), any())).thenReturn(eurostagNetwork);
+
+        try (var ignored = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
+             var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
+            shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
+            final var run = workerService.consumeRun();
+            String errorMessage = assertThrows(ComputationRunException.class, () -> run.accept(message)).getMessage();
+            assertThat(errorMessage).contains("ShortCircuit provider not found null");
+        }
+    }
+
+    @Test
+    void testBuseIdOutsideNodeCluster() throws Exception {
+        var analysisProvider = spy(new ShortCircuitAnalysisProviderMock(new ShortCircuitAnalysisResult(Collections.emptyList())));
+        var message = new GenericMessage<>("test");
+        var runContext = mock(ShortCircuitRunContext.class);
+        var resultContext = new ShortCircuitResultContext(UUID.randomUUID(), runContext);
+        var busId = "bus3";
+        var busbarSection = mock(BusbarSection.class);
+        var terminal = mock(Terminal.class);
+        var busView = mock(BusView.class);
+        var bus = mock(Bus.class);
+
+        when(runContext.getBusId()).thenReturn(busId);
+        when(runContext.getNetwork()).thenReturn(network);
+        when(networkStoreService.getNetwork(any(), any())).thenReturn(network);
+        when(network.getVariantManager()).thenReturn(variantManager);
+        when(runContext.getParameters())
+                .thenReturn(ShortCircuitParametersValues.builder().specificParameters(Map.of(NODE_CLUSTER, "bus1, bus2"))
+                        .build());
+        doReturn(busbarSection).when(network).getIdentifiable(busId);
+        doReturn(terminal).when(busbarSection).getTerminal();
+        doReturn(busView).when(terminal).getBusView();
+        doReturn(bus).when(busView).getBus();
+        doReturn(busId).when(bus).getId();
+
+        try (var shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(analysisProvider);
+             var shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
+            shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
+            final var run = workerService.consumeRun();
+            String errorMessage = assertThrows(ComputationRunException.class, () -> run.accept(message)).getMessage();
+            assertThat(errorMessage).contains("Selected bus is outside node cluster");
         }
     }
 
