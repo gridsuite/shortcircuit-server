@@ -52,6 +52,9 @@ spring:
             <<: *consumeRunRabbitConfig
 
 computation:
+  rabbit:
+    loadbalanced-group:
+      - shortcircuitanalysisGroup
   s3:
     enabled: true
 
