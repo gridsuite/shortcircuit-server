@@ -6,12 +6,16 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.parameters.Parameter;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
 import org.assertj.core.api.WithAssertions;
+import org.gridsuite.filter.identifierlistfilter.IdentifierListFilter;
 import org.gridsuite.shortcircuit.server.TestUtils;
+import org.gridsuite.shortcircuit.server.dto.FilterElements;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
@@ -28,14 +32,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
+import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.NODE_CLUSTER_FILTER_IDS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -48,12 +47,14 @@ import static org.mockito.Mockito.*;
 class ShortCircuitParametersServiceTest implements WithAssertions {
 
     private ShortCircuitParametersService parametersService;
+    private FilterService filterService;
     private ParametersRepository parametersRepository;
 
     @BeforeAll
     void setup() {
         this.parametersRepository = mock(ParametersRepository.class);
-        this.parametersService = new ShortCircuitParametersService(parametersRepository, TestUtils.DEFAULT_PROVIDER);
+        this.filterService = mock(FilterService.class);
+        this.parametersService = new ShortCircuitParametersService(parametersRepository, TestUtils.DEFAULT_PROVIDER, filterService);
     }
 
     @AfterEach
@@ -401,6 +402,50 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         final ShortCircuitParametersInfos retrieved = parametersService.getParameters(pUuid).orElseThrow();
         assertThat(retrieved.specificParametersPerProvider()).as("retrieved specific parameters").isEqualTo(specific);
 
+        verify(parametersRepository).findById(pUuid);
+    }
+
+    @Test
+    void testGettingParametersWithNodeClusterFilters() throws JsonProcessingException {
+        final UUID pUuid = UUID.randomUUID();
+        final UUID nodeClusterFilterId = UUID.randomUUID();
+        final UUID filterId1 = UUID.randomUUID();
+        final UUID filterId2 = UUID.randomUUID();
+        List<FilterElements> filterElements = List.of(new FilterElements(filterId1, "filter1"),
+                new FilterElements(filterId2, "filter2"));
+        ObjectMapper objectMapper = new ObjectMapper();
+        String serializedFilerElements = objectMapper.writeValueAsString(filterElements);
+        List<ShortCircuitSpecificParameterEntity> specificParameterEntities = new ArrayList<>();
+        specificParameterEntities.add(new ShortCircuitSpecificParameterEntity(nodeClusterFilterId,
+                TestUtils.DEFAULT_PROVIDER, NODE_CLUSTER_FILTER_IDS, serializedFilerElements));
+        final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder()
+                .provider(TestUtils.DEFAULT_PROVIDER)
+                .id(pUuid)
+                .specificParameters(specificParameterEntities)
+                .build());
+        when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
+        when(filterService.getFilters(anyList())).thenReturn(List.of(new IdentifierListFilter(filterId1,
+                null, null, null)));
+        //can't spy call to fromEntity()
+        Map<String, String> specificParameters = new HashMap<>();
+        String serializedFilter1 = objectMapper.writeValueAsString(List.of(new FilterElements(filterId1, "filter1"),
+                new FilterElements(filterId2, null)));
+        specificParameters.put(NODE_CLUSTER_FILTER_IDS, serializedFilter1);
+        Map<String, Map<String, String>> specificParametersPerProvider = new HashMap<>();
+        specificParametersPerProvider.put(TestUtils.DEFAULT_PROVIDER, specificParameters);
+        assertThat(parametersService.getParameters(pUuid)).as("service call result")
+                .get().as("dto").usingRecursiveComparison().isEqualTo(new ShortCircuitParametersInfos(
+                        TestUtils.DEFAULT_PROVIDER,
+                        ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_NOMINAL_VOLTAGE_MAP, new ShortCircuitParameters()
+                        .setWithFeederResult(false)
+                        .setWithLoads(false)
+                        .setWithNeutralPosition(true)
+                        .setWithShuntCompensators(false)
+                        .setWithVoltageResult(false)
+                        .setMinVoltageDropProportionalThreshold(20.0),
+                        specificParametersPerProvider));
+        checkParametersEntityHasBeenRead(pEntity);
+        verifyNoMoreInteractions(pEntity);
         verify(parametersRepository).findById(pUuid);
     }
 }
