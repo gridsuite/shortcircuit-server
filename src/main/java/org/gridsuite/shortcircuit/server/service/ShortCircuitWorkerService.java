@@ -176,6 +176,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+            } else {
+                shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), Double.NaN, Double.NaN));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(bus.getId(), bus.getId()));
@@ -187,6 +189,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = bus.getVoltageLevel().getBusView().getMergedBus(busId).getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
+            } else {
+                shortCircuitLimits.put(busIdFromBusView, new ShortCircuitLimits(bus.getVoltageLevel().getId(), Double.NaN, Double.NaN));
             }
             context.setShortCircuitLimits(shortCircuitLimits);
             return List.of(new BusFault(busIdFromBusView, busIdFromBusView));
@@ -208,8 +212,12 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Bean
-    @Override
-    public Consumer<Message<String>> consumeRun() {
+    public Consumer<Message<String>> consumeRun1() {
+        return super.consumeRun();
+    }
+
+    @Bean
+    public Consumer<Message<String>> consumeRun2() {
         return super.consumeRun();
     }
 

@@ -13,18 +13,18 @@
       "testTieLine1": "Test log tie line",
       "testDangling1": "Test log dangling line",
       "test3WT1": "Test log 3WT",
-      "generatorConversion": "Conversion of generators",
+      "rte.iidm.export.adn.generatorConversion": "Conversion of generators",
       "shortcircuit.server.disconnectedTerminalEquipmentSummary": "Regulating terminal of ${nb} connected ${equipmentsLabel} is disconnected. Regulation is disabled.",
-      "disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
-      "batteryConversion": "Conversion of the batteries",
-      "branchConversion": "Conversion of branches",
-      "lineConversion": "Conversion of lines",
-      "tieLineConversion": "Conversion of tie lines",
-      "twoWindingsTransformerConversion": "Conversion of two windings transformers",
+      "rte.iidm.export.adn.disconnectedTerminalGenerator": "Regulating terminal of connected generator ${generator} is disconnected. Regulation is disabled.",
+      "rte.iidm.export.adn.batteryConversion": "Conversion of the batteries",
+      "rte.iidm.export.adn.branchConversion": "Conversion of branches",
+      "rte.iidm.export.adn.lineConversion": "Conversion of lines",
+      "rte.iidm.export.adn.tieLineConversion": "Conversion of tie lines",
+      "rte.iidm.export.adn.twoWindingsTransformerConversion": "Conversion of two windings transformers",
       "shortcircuit.server.addConstantRatioSummary": "Adding constant ratio voltage transformation on ${nb} ${equipmentsLabel} because extremities voltage levels have different nominal voltage",
-      "addConstantRatio": "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})",
-      "threeWindingsTransformerConversion": "Conversion of three windings transformers",
-      "danglinglinesConversion": "Conversion of the dangling lines"
+      "rte.iidm.export.adn.addConstantRatio": "Adding constant ratio ${rfix} voltage transformation on quad ${branch} because extremities voltage levels have different nominal voltage (${vlId1}: ${nominalVoltage1}; ${vlId2}: ${nominalVoltage2})",
+      "rte.iidm.export.adn.threeWindingsTransformerConversion": "Conversion of three windings transformers",
+      "rte.iidm.export.adn.danglinglinesConversion": "Conversion of the dangling lines"
     }
   },
   "reportRoot": {
@@ -50,7 +50,7 @@
         },
         "children": [
           {
-            "messageKey": "generatorConversion",
+            "messageKey": "rte.iidm.export.adn.generatorConversion",
             "children": [
               {
                 "messageKey": "testReportLine",
@@ -62,7 +62,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGenerator",
+                "messageKey": "rte.iidm.export.adn.disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
                     "value": "TRACE",
@@ -74,7 +74,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGenerator",
+                "messageKey": "rte.iidm.export.adn.disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
                     "value": "TRACE",
@@ -86,7 +86,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGenerator",
+                "messageKey": "rte.iidm.export.adn.disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
                     "value": "TRACE",
@@ -98,7 +98,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGenerator",
+                "messageKey": "rte.iidm.export.adn.disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
                     "value": "TRACE",
@@ -127,7 +127,7 @@
             ]
           },
           {
-            "messageKey": "batteryConversion",
+            "messageKey": "rte.iidm.export.adn.batteryConversion",
             "children": [
               {
                 "messageKey": "testReportLine",
@@ -139,7 +139,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGenerator",
+                "messageKey": "rte.iidm.export.adn.disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
                     "value": "TRACE",
@@ -151,7 +151,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGenerator",
+                "messageKey": "rte.iidm.export.adn.disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
                     "value": "TRACE",
@@ -163,7 +163,7 @@
                 }
               },
               {
-                "messageKey": "disconnectedTerminalGenerator",
+                "messageKey": "rte.iidm.export.adn.disconnectedTerminalGenerator",
                 "values": {
                   "reportSeverity": {
                     "value": "TRACE",
@@ -192,10 +192,10 @@
             ]
           },
           {
-            "messageKey": "branchConversion",
+            "messageKey": "rte.iidm.export.adn.branchConversion",
             "children": [
               {
-                "messageKey": "lineConversion",
+                "messageKey": "rte.iidm.export.adn.lineConversion",
                 "children": [
                   {
                     "messageKey": "testLine1",
@@ -209,7 +209,7 @@
                 ]
               },
               {
-                "messageKey": "tieLineConversion",
+                "messageKey": "rte.iidm.export.adn.tieLineConversion",
                 "children": [
                   {
                     "messageKey": "testTieLine1",
@@ -223,7 +223,7 @@
                 ]
               },
               {
-                "messageKey": "twoWindingsTransformerConversion",
+                "messageKey": "rte.iidm.export.adn.twoWindingsTransformerConversion",
                 "children": [
                   {
                     "messageKey": "test2WT1",
@@ -235,7 +235,7 @@
                     }
                   },
                   {
-                    "messageKey": "addConstantRatio",
+                    "messageKey": "rte.iidm.export.adn.addConstantRatio",
                     "values": {
                       "reportSeverity": {
                         "value": "TRACE",
@@ -247,7 +247,7 @@
                     }
                   },
                   {
-                    "messageKey": "addConstantRatio",
+                    "messageKey": "rte.iidm.export.adn.addConstantRatio",
                     "values": {
                       "reportSeverity": {
                         "value": "TRACE",
@@ -259,7 +259,7 @@
                     }
                   },
                   {
-                    "messageKey": "addConstantRatio",
+                    "messageKey": "rte.iidm.export.adn.addConstantRatio",
                     "values": {
                       "reportSeverity": {
                         "value": "TRACE",
@@ -271,7 +271,7 @@
                     }
                   },
                   {
-                    "messageKey": "addConstantRatio",
+                    "messageKey": "rte.iidm.export.adn.addConstantRatio",
                     "values": {
                       "reportSeverity": {
                         "value": "TRACE",
@@ -300,7 +300,7 @@
                 ]
               },
               {
-                "messageKey": "threeWindingsTransformerConversion",
+                "messageKey": "rte.iidm.export.adn.threeWindingsTransformerConversion",
                 "children": [
                   {
                     "messageKey": "test3WT1",
@@ -316,7 +316,7 @@
             ]
           },
           {
-            "messageKey": "danglinglinesConversion",
+            "messageKey": "rte.iidm.export.adn.danglinglinesConversion",
             "children": [
               {
                 "messageKey": "testDangling1",
