@@ -3,7 +3,6 @@
     <changeSet author="lesoteti" id="17620630186731-1">
         <modifyDataType  columnName="value_"
                          newDataType="TEXT"
-                         schemaName="public"
                          tableName="short_circuit_specific_parameters"/>
     </changeSet>
 </databaseChangeLog>
