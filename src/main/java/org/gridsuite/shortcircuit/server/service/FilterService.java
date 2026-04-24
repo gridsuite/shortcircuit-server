@@ -47,6 +47,10 @@ public class FilterService extends AbstractFilterService {
         return super.getResourceFilter(networkUuid, variantId, globalFilter, equipmentTypes, "fault.voltageLevelId");
     }
 
+    public List<FilterEquipments> getFilterHvdcStationFromHvdc(List<UUID> filterUuids, UUID networkUuid, String variantId) {
+        return getFilterEquipments("/filters/export/hvdcStations", filterUuids, networkUuid, variantId);
+    }
+
     public List<FilterEquipments> getFilterBusIds(List<UUID> filterUuids, UUID networkUuid, String variantId) {
         return getFilterEquipments("/filters/export/busIds", filterUuids, networkUuid, variantId);
     }
