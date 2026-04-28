@@ -43,6 +43,6 @@ public class ShortCircuitSpecificParameterEntity {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "value_", columnDefinition = "varchar(500)")
+    @Column(name = "value_", columnDefinition = "Text")
     private String value;
 }
