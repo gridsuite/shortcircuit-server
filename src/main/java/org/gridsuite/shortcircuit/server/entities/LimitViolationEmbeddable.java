@@ -6,7 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
-import com.powsybl.security.LimitViolationType;
+import com.powsybl.contingency.violations.LimitViolationType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

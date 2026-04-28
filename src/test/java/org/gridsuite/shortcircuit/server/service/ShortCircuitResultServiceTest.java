@@ -6,8 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import com.powsybl.security.LimitViolation;
-import com.powsybl.security.LimitViolationType;
+import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.shortcircuit.*;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
 import org.junit.jupiter.api.BeforeEach;
