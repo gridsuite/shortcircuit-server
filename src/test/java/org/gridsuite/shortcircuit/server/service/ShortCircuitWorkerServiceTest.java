@@ -215,7 +215,7 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
     }
 
     @AllArgsConstructor
-    private static class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
+    private static final class ShortCircuitAnalysisProviderMock implements ShortCircuitAnalysisProvider {
         private final ShortCircuitAnalysisResult result;
 
         @Override
