@@ -178,6 +178,13 @@ public class ShortCircuitController {
         return ResponseEntity.ok().body(result != null ? result.name() : null);
     }
 
+    @PostMapping(value = "/results/statuses", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get the short circuit analysis statuses from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis statuses")})
+    public ResponseEntity<Map<UUID, ShortCircuitAnalysisStatus>> getStatuses(@Parameter(description = "Result uuids") @RequestBody List<UUID> resultUuids) {
+        return ResponseEntity.ok().body(shortCircuitService.getStatuses(resultUuids));
+    }
+
     @PutMapping(value = "/results/invalidate-status", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Invalidate the short circuit analysis status from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis status has been invalidated")})
