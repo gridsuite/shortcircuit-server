@@ -842,6 +842,38 @@ class ShortCircuitAnalysisControllerTest {
     }
 
     @Test
+    void testStatuses() throws Exception {
+        MvcResult result = mockMvc.perform(post(
+                        "/" + VERSION + "/results/statuses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(List.of(RESULT_UUID, OTHER_RESULT_UUID))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        Map<UUID, ShortCircuitAnalysisStatus> statuses = mapper.readValue(result.getResponse().getContentAsString(),
+                new TypeReference<Map<UUID, ShortCircuitAnalysisStatus>>() {
+                });
+        assertTrue(statuses.isEmpty());
+
+        mockMvc.perform(put("/" + VERSION + "/results/invalidate-status?resultUuid=" + RESULT_UUID))
+                .andExpect(status().isOk());
+
+        result = mockMvc.perform(post(
+                        "/" + VERSION + "/results/statuses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(List.of(RESULT_UUID, OTHER_RESULT_UUID))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        statuses = mapper.readValue(result.getResponse().getContentAsString(),
+                new TypeReference<Map<UUID, ShortCircuitAnalysisStatus>>() {
+                });
+        assertEquals(1, statuses.size());
+        assertEquals(ShortCircuitAnalysisStatus.NOT_DONE, statuses.get(RESULT_UUID));
+        assertFalse(statuses.containsKey(OTHER_RESULT_UUID));
+    }
+
+    @Test
     void testGetFaultTypes() throws Exception {
         MvcResult result = mockMvc.perform(get(
                         "/" + VERSION + "/results/{resultUuid}/fault-types", RESULT_UUID))
