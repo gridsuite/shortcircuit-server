@@ -7,8 +7,7 @@
 package org.gridsuite.shortcircuit.server.dto.powsybl_private;
 
 import java.util.List;
-
-import org.gridsuite.shortcircuit.server.dto.FilterElements;
+import java.util.UUID;
 
 // DUPLICATED AND ADAPTED from private code should be removed
 /**
@@ -22,7 +21,7 @@ public class PowerElectronicsCluster extends AbstractPowerElectronicsData {
         UNKNOWN
     }
 
-    List<FilterElements> filters; // ADDED
+    List<UUID> filters; // ADDED
 
     Type type;
 
@@ -30,13 +29,13 @@ public class PowerElectronicsCluster extends AbstractPowerElectronicsData {
         // Needed for deserialization
     }
 
-    public PowerElectronicsCluster(double alpha, double u0, double usMin, double usMax, Type type, List<FilterElements> filters, Boolean active) {
+    public PowerElectronicsCluster(double alpha, double u0, double usMin, double usMax, Type type, List<UUID> filters, Boolean active) {
         super(alpha, u0, usMin, usMax, active);
         this.filters = filters;
         this.type = type;
     }
 
-    public List<FilterElements> getFilters() {
+    public List<UUID> getFilters() {
         return filters;
     }
 

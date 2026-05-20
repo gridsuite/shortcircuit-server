@@ -12,7 +12,6 @@ import org.assertj.core.api.WithAssertions;
 import org.gridsuite.computation.service.NotificationService;
 import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
 import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
-import org.gridsuite.shortcircuit.server.dto.FilterElements;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
 import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
@@ -143,7 +142,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .provider(TestUtils.DEFAULT_PROVIDER)
             .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                 .name("powerElectronicsClusters")
-                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(new FilterElements(FILTER_UUID, "f")), true))))
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(FILTER_UUID), true))))
                 .build()
             ))
             .build()
@@ -162,11 +161,8 @@ class ShortCircuitParametersITest implements WithAssertions {
             .provider(TestUtils.DEFAULT_PROVIDER)
             .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                 .name("powerElectronicsClusters")
-                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(
-                        new FilterElements(FILTER_UUID_1, "f1"),
-                        new FilterElements(FILTER_UUID_2, "f2"),
-                        new FilterElements(FILTER_UUID_3, "f3")
-                    ),
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC,
+                        List.of(FILTER_UUID_1, FILTER_UUID_2, FILTER_UUID_3),
                     true))))
                 .build()
             ))
@@ -188,7 +184,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .provider(TestUtils.DEFAULT_PROVIDER)
             .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                 .name("powerElectronicsClusters")
-                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(new FilterElements(FILTER_UUID_1, "f1")), true))))
+                .value(objectMapper.writeValueAsString(List.of(new PowerElectronicsCluster(2.0, 90.0, 10.0, 40.0, HVDC, List.of(FILTER_UUID_1), true))))
                 .build()
             ))
             .build()
@@ -207,7 +203,7 @@ class ShortCircuitParametersITest implements WithAssertions {
                 .provider(TestUtils.DEFAULT_PROVIDER)
                 .specificParameters(List.of(ShortCircuitSpecificParameterEntity.builder().provider(TestUtils.DEFAULT_PROVIDER)
                         .name("nodeClusterFilterIds")
-                        .value(objectMapper.writeValueAsString(List.of(new FilterElements(FILTER_UUID, "f"))))
+                        .value(objectMapper.writeValueAsString(List.of(FILTER_UUID)))
                         .build()
                 ))
                 .build()
@@ -229,7 +225,7 @@ class ShortCircuitParametersITest implements WithAssertions {
                         ShortCircuitSpecificParameterEntity.builder()
                                 .provider(TestUtils.DEFAULT_PROVIDER)
                                 .name("nodeClusterFilterIds")
-                                .value(objectMapper.writeValueAsString(List.of(new FilterElements(FILTER_UUID, "f"))))
+                                .value(objectMapper.writeValueAsString(List.of(FILTER_UUID)))
                                 .build()))
                 .minVoltageDropProportionalThreshold(42.0).build()).getId();
 

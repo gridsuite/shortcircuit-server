@@ -103,7 +103,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             .filter(AbstractPowerElectronicsData::isActive)
             .toList();
         List<UUID> filterUuids = activeClusters.stream()
-            .flatMap(item -> item.getFilters().stream().map(FilterElements::getFilterId))
+            .flatMap(item -> item.getFilters().stream())
             .toList();
 
         // Apply filters using filterService
@@ -131,7 +131,6 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             normalizedCluster.put("type", cluster.getType());
             // get equipmentIds from filterIds
             Set<String> equipmentIds = cluster.getFilters().stream()
-                .map(FilterElements::getFilterId)
                 .map(filterIdToEquipmentIds::get)
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
@@ -145,10 +144,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private List<String> deserializeBusIdsForNodeCluster(String inCalculationClusterFiltersValue, UUID networkUuid, String variantId) throws IOException {
-        List<FilterElements> filterData = objectMapper.readValue(inCalculationClusterFiltersValue, new TypeReference<List<FilterElements>>() { });
-        List<UUID> filterUuids = filterData.stream()
-                .map(FilterElements::getFilterId)
-                .toList();
+        List<UUID> filterUuids = objectMapper.readValue(inCalculationClusterFiltersValue, new TypeReference<List<UUID>>() { });
         // Apply filters using filterService
         List<FilterEquipments> filteredBuses = filterService.getFilterBusIds(filterUuids, networkUuid, variantId);
         return filteredBuses.stream()
