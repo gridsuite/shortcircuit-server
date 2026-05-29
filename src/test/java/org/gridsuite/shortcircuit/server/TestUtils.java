@@ -9,14 +9,12 @@ package org.gridsuite.shortcircuit.server;
 import com.powsybl.shortcircuit.ShortCircuitAnalysis;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 import lombok.NonNull;
-
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Constructor;
@@ -24,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
-
 import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -41,7 +38,7 @@ public final class TestUtils {
     public static final Pattern UUID_V4 = Pattern.compile("[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}", Pattern.CASE_INSENSITIVE);
     public static final Pattern UUID_IN_JSON = Pattern.compile("^\"" + UUID_V4.pattern() + "\"$", Pattern.CASE_INSENSITIVE);
 
-    public static final ShortCircuitParametersEntity createDefaultParametersEntity() {
+    public static ShortCircuitParametersEntity createDefaultParametersEntity() {
         return ShortCircuitParametersEntity.builder().provider(TestUtils.DEFAULT_PROVIDER).build();
     }
 
@@ -63,6 +60,7 @@ public final class TestUtils {
             null
     );
 
+    @SuppressWarnings("checkstyle:IllegalCatch")
     public static void assertQueuesEmptyThenClear(List<String> destinations, OutputDestination output) {
         try {
             destinations.forEach(destination -> assertNull(output.receive(TIMEOUT, destination), "Should not be any messages in queue " + destination + " : "));

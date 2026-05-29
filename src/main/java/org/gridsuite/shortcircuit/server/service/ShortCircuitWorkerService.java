@@ -173,7 +173,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
             if (bus == null) {
                 throw new ShortCircuitException(BUS_OUT_OF_VOLTAGE, "Selected bus is out of voltage");
             }
-            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(IdentifiableShortCircuit.class);
+            IdentifiableShortCircuit<VoltageLevel> shortCircuitExtension = ((BusbarSection) identifiable).getTerminal().getBusView().getBus().getVoltageLevel().getExtension(
+                    IdentifiableShortCircuit.class);
             if (shortCircuitExtension != null) {
                 shortCircuitLimits.put(bus.getId(), new ShortCircuitLimits(bus.getVoltageLevel().getId(), shortCircuitExtension.getIpMin(), shortCircuitExtension.getIpMax()));
             } else {

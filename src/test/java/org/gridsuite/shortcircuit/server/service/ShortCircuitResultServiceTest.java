@@ -22,7 +22,7 @@ import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 import static org.gridsuite.shortcircuit.server.TestUtils.assertRequestsCount;
 
 /**
- * @author Etienne HOMER <etienne.homer@rte-france.com>
+ * @author Etienne HOMER <etienne.homer at rte-france.com>
  */
 @SpringBootTest
 class ShortCircuitResultServiceTest {

@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Repository
 public interface ResultRepository extends JpaRepository<ShortCircuitAnalysisResultEntity, UUID> {

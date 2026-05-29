@@ -11,7 +11,6 @@ import com.powsybl.commons.config.PlatformConfig;
 import com.powsybl.commons.extensions.Extension;
 import com.powsybl.shortcircuit.ShortCircuitAnalysisProvider;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +19,6 @@ import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.AbstractComputationRunContext;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
-
 import java.util.*;
 
 /**

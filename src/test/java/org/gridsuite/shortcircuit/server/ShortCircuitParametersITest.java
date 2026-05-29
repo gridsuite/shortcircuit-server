@@ -15,7 +15,7 @@ import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
 import org.gridsuite.shortcircuit.server.dto.FilterElements;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
-import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
+import org.gridsuite.shortcircuit.server.dto.powsyblprivate.PowerElectronicsCluster;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitSpecificParameterEntity;
@@ -59,7 +59,7 @@ import java.util.stream.Stream;
 
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 import static org.gridsuite.shortcircuit.server.ShortCircuitParametersController.DUPLICATE_FROM;
-import static org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster.Type.HVDC;
+import static org.gridsuite.shortcircuit.server.dto.powsyblprivate.PowerElectronicsCluster.Type.HVDC;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.Mockito.*;
@@ -89,7 +89,7 @@ class ShortCircuitParametersITest implements WithAssertions {
     private final String shortcircuitParametersValues04Json;
     private final String shortcircuitParametersValues05Json;
 
-    public ShortCircuitParametersITest() throws Exception {
+    ShortCircuitParametersITest() throws Exception {
         this.defaultParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "");
         this.someParametersValuesJson = Files.readString(Paths.get(this.getClass().getClassLoader().getResource("default_shorcircuit_values_parameters.json").toURI())).replaceAll("\\s+", "")
             .replace("\"minVoltageDropProportionalThreshold\":20.0", "\"minVoltageDropProportionalThreshold\":42.0");
@@ -150,7 +150,8 @@ class ShortCircuitParametersITest implements WithAssertions {
         ).getId();
 
         when(filterService.getFilterEquipments(List.of(FILTER_UUID), NETWORK_ID, null)).thenReturn(List.of(
-            new FilterEquipments(FILTER_UUID, List.of(new IdentifiableAttributes("eq_1", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_2", IdentifiableType.GENERATOR, 0.0)), List.of())
+            new FilterEquipments(FILTER_UUID, List.of(new IdentifiableAttributes("eq_1", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_2", IdentifiableType.GENERATOR, 0.0)),
+                    List.of())
         ));
 
         runAnalysisTest(req -> req.queryParam("parametersUuid", parametersUuid.toString()), headers -> headers, false, shortcircuitParametersValues01Json);
@@ -174,8 +175,10 @@ class ShortCircuitParametersITest implements WithAssertions {
         ).getId();
 
         when(filterService.getFilterEquipments(List.of(FILTER_UUID_1, FILTER_UUID_2, FILTER_UUID_3), NETWORK_ID, null)).thenReturn(List.of(
-            new FilterEquipments(FILTER_UUID_1, List.of(new IdentifiableAttributes("eq_f1", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_common", IdentifiableType.GENERATOR, 0.0)), List.of()),
-            new FilterEquipments(FILTER_UUID_2, List.of(new IdentifiableAttributes("eq_f2", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_common", IdentifiableType.GENERATOR, 0.0)), List.of()),
+            new FilterEquipments(FILTER_UUID_1, List.of(new IdentifiableAttributes("eq_f1", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_common", IdentifiableType.GENERATOR, 0.0)),
+                    List.of()),
+            new FilterEquipments(FILTER_UUID_2, List.of(new IdentifiableAttributes("eq_f2", IdentifiableType.GENERATOR, 0.0), new IdentifiableAttributes("eq_common", IdentifiableType.GENERATOR, 0.0)),
+                    List.of()),
             new FilterEquipments(FILTER_UUID_3, List.of(), List.of())
         ));
 
@@ -256,7 +259,8 @@ class ShortCircuitParametersITest implements WithAssertions {
         return parametersRepository.findAll().get(0).getId();
     }
 
-    private void runAnalysisTest(final Consumer<MockHttpServletRequestBuilder> requestSet, final UnaryOperator<Builder<String, Object>> headerSet, boolean debug, final String response) throws Exception {
+    private void runAnalysisTest(final Consumer<MockHttpServletRequestBuilder> requestSet, final UnaryOperator<Builder<String, Object>> headerSet, boolean debug,
+            final String response) throws Exception {
         final MockHttpServletRequestBuilder requestBuilder = post("/v1/networks/{networkUuid}/run-and-save", NETWORK_ID).header(HEADER_USER_ID, USER_ID);
         requestSet.accept(requestBuilder);
         requestBuilder.queryParam("debug", String.valueOf(debug));

@@ -7,7 +7,7 @@
 package org.gridsuite.shortcircuit.server.dto;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 public enum ShortCircuitAnalysisStatus {
     NOT_DONE,

@@ -26,8 +26,8 @@ import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
 import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
 import org.gridsuite.shortcircuit.server.dto.*;
-import org.gridsuite.shortcircuit.server.dto.powsybl_private.AbstractPowerElectronicsData;
-import org.gridsuite.shortcircuit.server.dto.powsybl_private.PowerElectronicsCluster;
+import org.gridsuite.shortcircuit.server.dto.powsyblprivate.AbstractPowerElectronicsData;
+import org.gridsuite.shortcircuit.server.dto.powsyblprivate.PowerElectronicsCluster;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -229,7 +229,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         double current = faultResultEntity.getCurrent();
         double positiveMagnitude = faultResultEntity.getPositiveMagnitude();
         double shortCircuitPower = faultResultEntity.getShortCircuitPower();
-        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMin(), faultResultEntity.getIpMax(), faultResultEntity.getDeltaCurrentIpMin(), faultResultEntity.getDeltaCurrentIpMax());
+        ShortCircuitLimits shortCircuitLimits = new ShortCircuitLimits(faultResultEntity.getIpMin(), faultResultEntity.getIpMax(), faultResultEntity.getDeltaCurrentIpMin(),
+                faultResultEntity.getDeltaCurrentIpMax());
         List<LimitViolation> limitViolations = new ArrayList<>();
         List<FeederResult> feederResults = new ArrayList<>();
         if (mode != FaultResultsMode.BASIC) {
@@ -250,7 +251,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
     }
 
     private static FeederResult fromEntity(FeederResultEntity feederResultEntity) {
-        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(), feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
+        return new FeederResult(feederResultEntity.getConnectableId(), feederResultEntity.getCurrent(), feederResultEntity.getPositiveMagnitude(),
+                feederResultEntity.getSide() != null ? feederResultEntity.getSide().name() : null);
     }
 
     private static FaultResult buildFaultResultFromSomeOfItsFeederResultEntities(List<FeederResultEntity> feederResultEntities) {
@@ -300,12 +302,12 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
 
     private static void setFormat(CsvFormat format, String language) {
         format.setLineSeparator(System.lineSeparator());
-        format.setDelimiter(language != null && language.equals("fr") ? CSV_DELIMITER_FR : CSV_DELIMITER_EN);
+        format.setDelimiter(language != null && "fr".equals(language) ? CSV_DELIMITER_FR : CSV_DELIMITER_EN);
         format.setQuoteEscape(CSV_QUOTE_ESCAPE);
     }
 
     private static String convertDoubleToLocale(Double value, String language) {
-        NumberFormat nf = NumberFormat.getInstance(language != null && language.equals("fr") ? Locale.FRENCH : Locale.US);
+        NumberFormat nf = NumberFormat.getInstance(language != null && "fr".equals(language) ? Locale.FRENCH : Locale.US);
         nf.setGroupingUsed(false);
         return nf.format(value);
     }
@@ -387,9 +389,9 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             zipOutputStream.putNextEntry(new ZipEntry("shortCircuit_result.csv"));
             // This code is for writing the UTF-8 Byte Order Mark (BOM) to a ZipOutputStream
             // by adding BOM to the beginning of file to help excel in some versions to detect this is UTF-8 encoding bytes
-            zipOutputStream.write(0xef);
-            zipOutputStream.write(0xbb);
-            zipOutputStream.write(0xbf);
+            zipOutputStream.write(0xEF);
+            zipOutputStream.write(0xBB);
+            zipOutputStream.write(0xBF);
 
             CsvWriterSettings settings = new CsvWriterSettings();
             setFormat(settings.getFormat(), csvExportParams.language());

@@ -7,14 +7,13 @@
 package org.gridsuite.shortcircuit.server.entities;
 
 import com.powsybl.contingency.violations.LimitViolationType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 
 /**

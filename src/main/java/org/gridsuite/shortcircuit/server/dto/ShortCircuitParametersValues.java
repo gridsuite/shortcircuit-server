@@ -7,12 +7,10 @@
 package org.gridsuite.shortcircuit.server.dto;
 
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.HashMap;
 import java.util.Map;
 

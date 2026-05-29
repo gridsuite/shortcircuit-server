@@ -7,12 +7,10 @@
 package org.gridsuite.shortcircuit.server.entities;
 
 import com.powsybl.iidm.network.ThreeSides;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.*;
 import lombok.experimental.FieldNameConstants;
-
 import java.util.UUID;
 
 /**
