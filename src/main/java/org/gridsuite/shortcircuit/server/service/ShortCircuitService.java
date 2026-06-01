@@ -103,7 +103,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             .filter(AbstractPowerElectronicsData::isActive)
             .toList();
         List<UUID> filterUuids = activeClusters.stream()
-            .flatMap(item -> item.getFilters().stream())
+            .flatMap(item -> item.getFilterUuids().stream())
             .toList();
 
         // Apply filters using filterService
@@ -130,7 +130,7 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
             normalizedCluster.put("usMax", cluster.getUsMax());
             normalizedCluster.put("type", cluster.getType());
             // get equipmentIds from filterIds
-            Set<String> equipmentIds = cluster.getFilters().stream()
+            Set<String> equipmentIds = cluster.getFilterUuids().stream()
                 .map(filterIdToEquipmentIds::get)
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)

@@ -21,7 +21,7 @@ public class PowerElectronicsCluster extends AbstractPowerElectronicsData {
         UNKNOWN
     }
 
-    List<UUID> filters; // ADDED
+    List<UUID> filterUuids; // ADDED
 
     Type type;
 
@@ -29,14 +29,14 @@ public class PowerElectronicsCluster extends AbstractPowerElectronicsData {
         // Needed for deserialization
     }
 
-    public PowerElectronicsCluster(double alpha, double u0, double usMin, double usMax, Type type, List<UUID> filters, Boolean active) {
+    public PowerElectronicsCluster(double alpha, double u0, double usMin, double usMax, Type type, List<UUID> filterUuids, Boolean active) {
         super(alpha, u0, usMin, usMax, active);
-        this.filters = filters;
+        this.filterUuids = filterUuids;
         this.type = type;
     }
 
-    public List<UUID> getFilters() {
-        return filters;
+    public List<UUID> getFilterUuids() {
+        return filterUuids;
     }
 
     public Type getType() {
