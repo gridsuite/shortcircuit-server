@@ -5,7 +5,7 @@
             UPDATE short_circuit_specific_parameters SET value_ = regexp_replace(
                     value_,
                     '\{[^{}]*"filterId":"([^"]+)"[^{}]*\}',
-                    '"\1"') WHERE  name = 'nodeClusterFilterIds' OR  name = 'powerElectronicsClusters';
+                    '"\1"', 'g') WHERE  name = 'nodeClusterFilterIds' OR  name = 'powerElectronicsClusters';
         </sql>
     </changeSet>
 </databaseChangeLog>
