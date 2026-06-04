@@ -65,7 +65,8 @@ class FaultResultRepositoryTest {
         49.3, FaultResult.Status.SUCCESS);
     private static final FaultResult FAULT_RESULT_4 = new FortescueFaultResult(new BusFault("A_VLHV2_0", "ELEMENT_ID_2"), 18.0,
         List.of(), List.of(),
-        new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN,
+        new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN),
+            new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN,
                 Double.NaN, Double.NaN), Collections.emptyList(), null, FaultResult.Status.SUCCESS);
     private static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3));
     private static final ShortCircuitAnalysisResult RESULT_FORTESCUE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_4));
