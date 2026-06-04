@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * @author Florent MILLOT <florent.millot@rte-france.com>
+ * @author Florent MILLOT <florent.millot at rte-france.com>
  */
 public final class FeederResultSpecificationBuilder {
 

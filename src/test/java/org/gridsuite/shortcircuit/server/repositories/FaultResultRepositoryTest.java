@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 
 /**
- * @author Florent MILLOT <florent.millot@rte-france.com>
+ * @author Florent MILLOT <florent.millot at rte-france.com>
  */
 @SpringBootTest // would be better with @DataJpaTest but does not work here
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // improve tests speed as we only read DB
@@ -65,7 +65,9 @@ class FaultResultRepositoryTest {
         49.3, FaultResult.Status.SUCCESS);
     private static final FaultResult FAULT_RESULT_4 = new FortescueFaultResult(new BusFault("A_VLHV2_0", "ELEMENT_ID_2"), 18.0,
         List.of(), List.of(),
-        new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN), Collections.emptyList(), null, FaultResult.Status.SUCCESS);
+        new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN, Double.NaN, Double.NaN),
+            new FortescueValue(21.328664779663086, -80.73799896240234, Double.NaN, Double.NaN,
+                Double.NaN, Double.NaN), Collections.emptyList(), null, FaultResult.Status.SUCCESS);
     private static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1, FAULT_RESULT_2, FAULT_RESULT_3));
     private static final ShortCircuitAnalysisResult RESULT_FORTESCUE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_4));
     private static final UUID MAGNITUDE_RESULT_UUID = UUID.randomUUID();
@@ -133,11 +135,13 @@ class FaultResultRepositoryTest {
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(o -> o.getFaultResultUuid().toString()));
 
         //Test with pageable containing a sort by current and expect the results to be sorted by current
-        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "current"))), FaultResultsMode.BASIC);
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "current"))),
+                FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getCurrent));
 
         //Test with pageable containing a sort by nbLimitViolations and since some values are equals we except the result to be sorted by nbLimitViolations first and then by uuid
-        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "nbLimitViolations"))), FaultResultsMode.BASIC);
+        faultPage = shortCircuitAnalysisResultRepository.findFaultResultsPage(resultEntity, resourceFilters, null, PageRequest.of(0, 3, Sort.by(new Order(Sort.Direction.ASC, "nbLimitViolations"))),
+                FaultResultsMode.BASIC);
         assertFaultEqualsInOrder(faultPage, Comparator.comparing(FaultResultEntity::getNbLimitViolations).thenComparing(o -> o.getFaultResultUuid().toString()));
     }
 
@@ -372,22 +376,22 @@ class FaultResultRepositoryTest {
     private Stream<Arguments> provideNotEqualNestedFieldsFilters() {
         return Stream.of(
             //TODO FM need to fix it when we'll filter on limitViolations
-//            Arguments.of(
-//                resultMagnitudeEntity,
-//                List.of(
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 33.54, "limitViolations.value")),
-//                List.of(faultResultEntity2, faultResultEntity3)),
-//            Arguments.of(
-//                resultMagnitudeEntity,
-//                List.of(
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 33.54, "limitViolations.value"),
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 54.3, "limitViolations.value")),
-//                List.of(faultResultEntity2)),
-//            Arguments.of(
-//                resultMagnitudeEntity,
-//                List.of(
-//                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 10.56, "limitViolations.value")),
-//                List.of()),
+            //            Arguments.of(
+            //                resultMagnitudeEntity,
+            //                List.of(
+            //                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 33.54, "limitViolations.value")),
+            //                List.of(faultResultEntity2, faultResultEntity3)),
+            //            Arguments.of(
+            //                resultMagnitudeEntity,
+            //                List.of(
+            //                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 33.54, "limitViolations.value"),
+            //                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 54.3, "limitViolations.value")),
+            //                List.of(faultResultEntity2)),
+            //            Arguments.of(
+            //                resultMagnitudeEntity,
+            //                List.of(
+            //                    new ResourceFilter(ResourceFilter.DataType.NUMBER, ResourceFilter.Type.NOT_EQUAL, 10.56, "limitViolations.value")),
+            //                List.of()),
             Arguments.of(
                 resultFortescueEntity,
                 List.of(

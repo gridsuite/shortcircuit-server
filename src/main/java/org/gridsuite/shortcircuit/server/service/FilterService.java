@@ -7,10 +7,8 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.powsybl.network.store.client.NetworkStoreService;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
@@ -24,7 +22,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import java.util.*;
 
 @Service

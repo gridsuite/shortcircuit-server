@@ -10,5 +10,5 @@ public interface ReportMapper {
      *
      * @param node the current node visited
      */
-    void transformNode(@NonNull final ReportNode node, @NonNull final ShortCircuitRunContext runContext);
+    void transformNode(@NonNull ReportNode node, @NonNull ShortCircuitRunContext runContext);
 }

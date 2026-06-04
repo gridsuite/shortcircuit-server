@@ -4,11 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server.dto.powsybl_private;
-
-import java.util.List;
+package org.gridsuite.shortcircuit.server.dto.powsyblprivate;
 
 import org.gridsuite.shortcircuit.server.dto.FilterElements;
+import java.util.List;
 
 // DUPLICATED AND ADAPTED from private code should be removed
 /**

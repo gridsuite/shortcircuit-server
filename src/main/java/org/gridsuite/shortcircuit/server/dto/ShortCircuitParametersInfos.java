@@ -12,10 +12,8 @@ import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import lombok.Builder;
 import lombok.extern.jackson.Jacksonized;
-
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
-
 import java.util.List;
 import java.util.Map;
 

@@ -116,7 +116,9 @@ public class FaultResultEntity {
     @AttributeOverride(name = "angleC", column = @Column(name = "fortescue_voltage_angle_c"))
     private FortescueResultEmbeddable fortescueVoltage;
 
-    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations, List<FeederResultEntity> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent, FortescueResultEmbeddable fortescueVoltage, double deltaCurrentIpMin, double deltaCurrentIpMax) {
+    public FaultResultEntity(FaultEmbeddable fault, double current, double shortCircuitPower, List<LimitViolationEmbeddable> limitViolations,
+                             List<FeederResultEntity> feederResults, double ipMin, double ipMax, FortescueResultEmbeddable fortescueCurrent,
+                             FortescueResultEmbeddable fortescueVoltage, double deltaCurrentIpMin, double deltaCurrentIpMax) {
         this.fault = fault;
         this.current = current;
         this.shortCircuitPower = shortCircuitPower;

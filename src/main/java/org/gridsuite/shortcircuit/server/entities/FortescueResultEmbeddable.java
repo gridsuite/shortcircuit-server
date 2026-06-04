@@ -6,12 +6,11 @@
  */
 package org.gridsuite.shortcircuit.server.entities;
 
+import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import jakarta.persistence.Embeddable;
 
 /**
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>

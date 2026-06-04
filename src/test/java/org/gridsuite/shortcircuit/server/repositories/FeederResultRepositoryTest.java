@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.gridsuite.shortcircuit.server.TestUtils.MOCK_RUN_CONTEXT;
 
 /**
- * @author Florent MILLOT <florent.millot@rte-france.com>
+ * @author Florent MILLOT <florent.millot at rte-france.com>
  */
 @SpringBootTest // would be better with @DataJpaTest but does not work here
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // improve tests speed as we only read DB
@@ -53,7 +53,8 @@ class FeederResultRepositoryTest {
         Double.NaN, FaultResult.Status.SUCCESS);
     private static final FaultResult FAULT_RESULT_2 = new FortescueFaultResult(new BusFault("", ""), Double.NaN,
         List.of(FEEDER_RESULT_4, FEEDER_RESULT_5, FEEDER_RESULT_6), List.of(),
-        new FortescueValue(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN), List.of(), null, FaultResult.Status.SUCCESS);
+        new FortescueValue(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN), new FortescueValue(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN),
+                List.of(), null, FaultResult.Status.SUCCESS);
 
     private static final ShortCircuitAnalysisResult RESULT_MAGNITUDE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_1));
     private static final ShortCircuitAnalysisResult RESULT_FORTESCUE_FULL = new ShortCircuitAnalysisResult(List.of(FAULT_RESULT_2));
@@ -208,7 +209,8 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "A_CONN", "connectableId"),
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.STARTS_WITH, "B_CONN", "connectableId")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(), "A_CONN") && StringUtils.startsWith(feederResultEntity.getConnectableId(), "B_CONN")).toList()),
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> StringUtils.startsWith(feederResultEntity.getConnectableId(),
+                        "A_CONN") && StringUtils.startsWith(feederResultEntity.getConnectableId(), "B_CONN")).toList()),
             // case insensitive
             Arguments.of(
                 resultMagnitudeEntity,
@@ -235,7 +237,8 @@ class FeederResultRepositoryTest {
                 List.of(
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 22.17, "current"),
                     new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.NOT_EQUAL, 53.94, "current")),
-                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(22.17) && !((Double) feederResultEntity.getCurrent()).equals(53.94)).toList())
+                feederResultEntityMagnitudeList.stream().filter(feederResultEntity -> !((Double) feederResultEntity.getCurrent()).equals(22.17)
+                        && !((Double) feederResultEntity.getCurrent()).equals(53.94)).toList())
         );
     }
 
@@ -351,13 +354,15 @@ class FeederResultRepositoryTest {
                         resultFortescueEntity,
                         List.of(
                                 new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 45.328664779663086, "fortescueCurrent.positiveMagnitude")),
-                        feederResultEntityFortescueList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getFortescueCurrent().getPositiveMagnitude(), 45.328664779663086) == 0).toList()),
+                        feederResultEntityFortescueList.stream().filter(feederResultEntity -> Double.compare(feederResultEntity.getFortescueCurrent().getPositiveMagnitude(),
+                                45.328664779663086) == 0).toList()),
                 // Nested field with tolerance
                 Arguments.of(
                         resultFortescueEntity,
                         List.of(
                                 new ResourceFilterDTO(ResourceFilterDTO.DataType.NUMBER, ResourceFilterDTO.Type.EQUALS, 45.3287, "fortescueCurrent.positiveMagnitude")),
-                        feederResultEntityFortescueList.stream().filter(feederResultEntity -> Math.abs(feederResultEntity.getFortescueCurrent().getPositiveMagnitude() - 45.3287) <= (Math.pow(10, -4) * 0.5)).toList())
+                        feederResultEntityFortescueList.stream().filter(feederResultEntity -> Math.abs(feederResultEntity.getFortescueCurrent().getPositiveMagnitude() - 45.3287) <= (Math.pow(10,
+                                -4) * 0.5)).toList())
         );
     }
 

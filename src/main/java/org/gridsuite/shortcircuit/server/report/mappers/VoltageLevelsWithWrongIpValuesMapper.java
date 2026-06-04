@@ -4,8 +4,8 @@ import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.shortcircuit.server.report.ShortcircuitServerReportResourceBundle;
 import org.gridsuite.shortcircuit.server.report.ReportMapper;
+import org.gridsuite.shortcircuit.server.report.ShortcircuitServerReportResourceBundle;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.springframework.stereotype.Component;
 

@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.ReportNodeDeserializer;
 import lombok.extern.slf4j.Slf4j;
-
 import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.shortcircuit.server.RestTemplateConfig;
 import org.gridsuite.shortcircuit.server.TestUtils;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.skyscreamer.jsonassert.JSONAssert;
-
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -63,7 +61,7 @@ class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
     @ValueSource(strings = {"shortcircuit", "adn"})
     void testAggregatedLogs(final String partFileName) throws Exception {
         ReportNode rootReportNode;
-        try (final InputStream in = ReportMapperShortCircuitTest.class.getClassLoader().getResourceAsStream("reporter_" + partFileName + "_test.json")) {
+        try (InputStream in = ReportMapperShortCircuitTest.class.getClassLoader().getResourceAsStream("reporter_" + partFileName + "_test.json")) {
             rootReportNode = ReportNodeDeserializer.read(in);
         }
         // The problem here is that ResourceBundles aren't loaded when deserialized, so when modifying the tree,

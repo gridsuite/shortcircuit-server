@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-
 /**
  * @author Sylvain Bouzols <sylvain.bouzols at rte-france.com>
  */
