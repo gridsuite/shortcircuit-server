@@ -181,7 +181,8 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().provider(TestUtils.DEFAULT_PROVIDER).id(pUuid).build());
         when(parametersRepository.save(any(ShortCircuitParametersEntity.class))).thenReturn(pEntity);
         //dto that must have differences with defaults
-        assertThat(parametersService.createParameters(new ShortCircuitParametersInfos(TestUtils.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(), null)))
+        assertThat(parametersService.createParameters(new ShortCircuitParametersInfos(TestUtils.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(),
+                null)))
                 .as("service call result").isEqualTo(pUuid);
         verify(pEntity).getId();
         verifyNoMoreInteractions(pEntity);
@@ -230,7 +231,8 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
         final ShortCircuitParametersEntity pEntity = spy(ShortCircuitParametersEntity.builder().provider(TestUtils.DEFAULT_PROVIDER).id(pUuid).build());
         final ShortCircuitParameters pDtoUpdateParams = spy(new ShortCircuitParameters());
         //dto that must have differences with defaults
-        final ShortCircuitParametersInfos pDtoUpdateInfos = spy(new ShortCircuitParametersInfos(TestUtils.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, pDtoUpdateParams, Collections.emptyMap()));
+        final ShortCircuitParametersInfos pDtoUpdateInfos = spy(new ShortCircuitParametersInfos(TestUtils.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, pDtoUpdateParams,
+                Collections.emptyMap()));
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
 
         parametersService.updateParameters(pUuid, pDtoUpdateInfos);

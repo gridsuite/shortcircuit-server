@@ -21,7 +21,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.computation.dto.ReportInfos;
-
 import org.gridsuite.computation.error.ComputationRunException;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.ExecutionService;
@@ -42,14 +41,12 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import software.amazon.awssdk.services.s3.S3Client;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
-
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitService.NODE_CLUSTER;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
@@ -110,8 +107,8 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
                 .withResourceBundles("i18n.reports")
                 .withMessageTemplate("test").build();
 
-        try (final MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
-             final MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
+        try (MockedStatic<ShortCircuitAnalysis> shortCircuitAnalysisMockedStatic = TestUtils.injectShortCircuitAnalysisProvider(providerMock);
+             MockedStatic<ShortCircuitResultContext> shortCircuitResultContextMockedStatic = mockStatic(ShortCircuitResultContext.class)) {
             shortCircuitAnalysisMockedStatic.when(() -> ShortCircuitAnalysis.runAsync(any(), anyList(), any(), any(), anyList(), any()))
                     .thenAnswer(invocation -> CompletableFuture.completedFuture(analysisResult));
             shortCircuitResultContextMockedStatic.when(() -> ShortCircuitResultContext.fromMessage(message, objectMapper)).thenReturn(resultContext);
@@ -229,12 +226,14 @@ class ShortCircuitWorkerServiceTest implements WithAssertions {
         }
 
         @Override
-        public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters) {
+        public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters>
+                faultParameters) {
             return CompletableFuture.completedFuture(this.result);
         }
 
         @Override
-        public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters, ReportNode reportNode) {
+        public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters>
+                faultParameters, ReportNode reportNode) {
             return CompletableFuture.completedFuture(this.result);
         }
     }

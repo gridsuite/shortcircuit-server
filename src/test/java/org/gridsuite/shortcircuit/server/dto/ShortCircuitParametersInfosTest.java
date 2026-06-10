@@ -24,10 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.test.context.ContextConfiguration;
-
-import static org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants.CEI909_VOLTAGE_PROFILE;
-
 import java.util.Collections;
+import static org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants.CEI909_VOLTAGE_PROFILE;
 
 @ContextConfiguration(classes = {RestTemplateConfig.class})
 //NOTE: this surprises given the name AutoConfigureWebClient, but this is not actually web clients,
@@ -38,7 +36,10 @@ import java.util.Collections;
 @AutoConfigureWebClient
 @JsonTest
 class ShortCircuitParametersInfosTest implements WithAssertions {
-    private static final String DUMB_JSON = "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.4\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
+    private static final String DUMB_JSON =
+            "\"predefinedParameters\":\"ICC_MAX_WITH_CEI909\", \"parameters\":{\"version\":\"1.4\",\"withLimitViolations\":true,\"withVoltageResult\":true,\"withFeederResult\":true,"
+                    + "\"studyType\":\"TRANSIENT\",\"minVoltageDropProportionalThreshold\":0.0,\"withFortescueResult\":false,\"withLoads\":true,\"withShuntCompensators\":true,"
+                            + "\"withVSCConverterStations\":true,\"withNeutralPosition\":false,\"initialVoltageProfileMode\":\"NOMINAL\",\"detailedReport\":true}";
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -52,7 +53,8 @@ class ShortCircuitParametersInfosTest implements WithAssertions {
 
     @Test
     void shouldSerializeCei909VoltageRanges() throws Exception {
-        final String jsonSerialized = objectMapper.writeValueAsString(new ShortCircuitParametersInfos(TestUtils.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new ShortCircuitParameters(), Collections.emptyMap()));
+        final String jsonSerialized = objectMapper.writeValueAsString(new ShortCircuitParametersInfos(TestUtils.DEFAULT_PROVIDER, ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909, new
+                ShortCircuitParameters(), Collections.emptyMap()));
         JSONAssert.assertEquals(
             new JSONObject().put("predefinedParameters", ShortCircuitPredefinedConfiguration.ICC_MAX_WITH_CEI909.toString())
                             .put("commonParameters", new JSONObject().put("version", "1.4"))

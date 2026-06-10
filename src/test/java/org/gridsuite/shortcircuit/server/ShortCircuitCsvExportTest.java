@@ -290,9 +290,9 @@ class ShortCircuitCsvExportTest {
             byte[] unzippedCsvFile = unzip(zipFile);
             String unzippedCsvFileAsString = new String(unzippedCsvFile, StandardCharsets.UTF_8);
             List<List<String>> actualCsv = Arrays.stream(unzippedCsvFileAsString.split("\n"))
-                    .map(line -> line.split(language.equals("fr") ? ";" : ",")) // csv separator
+                    .map(line -> line.split("fr".equals(language) ? ";" : ",")) // csv separator
                     .map(fields -> Arrays.stream(fields)
-                            .map(field -> language.equals("fr") ? field.replace(",", ".") : field) // number formating
+                            .map(field -> "fr".equals(language) ? field.replace(",", ".") : field) // number formating
                             .toList())
                     .toList();
 

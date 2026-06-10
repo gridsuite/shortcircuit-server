@@ -6,8 +6,9 @@
  */
 package org.gridsuite.shortcircuit.server.service;
 
-import org.gridsuite.computation.error.ComputationException;
 import com.powsybl.iidm.network.ThreeSides;
+import com.powsybl.shortcircuit.Fault.*;
+import org.gridsuite.computation.error.ComputationException;
 import org.gridsuite.shortcircuit.server.dto.*;
 import org.gridsuite.shortcircuit.server.entities.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -20,18 +21,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
 import static java.lang.Double.NaN;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.gridsuite.computation.error.ComputationBusinessErrorCode.RESULT_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import com.powsybl.shortcircuit.Fault.*;
 
 /**
  * @author Caroline Jeandat {@literal <caroline.jeandat at rte-france.com>}

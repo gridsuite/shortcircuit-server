@@ -7,14 +7,13 @@
 package org.gridsuite.shortcircuit.server.entities;
 
 import com.powsybl.shortcircuit.Fault;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Nicolas Noir <nicolas.noir at rte-france.com>

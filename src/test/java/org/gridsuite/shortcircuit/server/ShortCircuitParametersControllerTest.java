@@ -6,6 +6,7 @@
  */
 package org.gridsuite.shortcircuit.server;
 
+import com.powsybl.commons.parameters.Parameter;
 import lombok.NonNull;
 import org.assertj.core.api.WithAssertions;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
@@ -25,9 +26,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
-
-import com.powsybl.commons.parameters.Parameter;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -36,15 +34,13 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ShortCircuitParametersControllerTest implements WithAssertions {
     private final String defaultParametersJson;
 
-    public ShortCircuitParametersControllerTest() throws Exception {
+    ShortCircuitParametersControllerTest() throws Exception {
         this.defaultParametersJson = Files.readString(Paths.get(this.getClass().getResource(this.getClass().getSimpleName() + ".json").toURI())).replaceAll("\\s+", "");
     }
 

@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.shortcircuit.server.dto.powsybl_private;
+package org.gridsuite.shortcircuit.server.dto.powsyblprivate;
 
 // DUPLICATED AND ADAPTED from private code should be removed
 /**
@@ -15,13 +15,6 @@ public abstract class AbstractPowerElectronicsData {
     protected AbstractPowerElectronicsData() {
     }
 
-    private double alpha;
-    private double u0;
-    private double usMin;
-    private double usMax;
-    // ADDED
-    Boolean active = true;
-
     protected AbstractPowerElectronicsData(double alpha, double u0, double usMin, double usMax, Boolean active) {
         this.alpha = alpha;
         this.u0 = u0;
@@ -29,6 +22,13 @@ public abstract class AbstractPowerElectronicsData {
         this.usMax = usMax;
         this.active = active;
     }
+
+    private double alpha;
+    private double u0;
+    private double usMin;
+    private double usMax;
+    // ADDED
+    Boolean active = true;
 
     public double getAlpha() {
         return alpha;

@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @AllArgsConstructor
 @Service
@@ -148,10 +148,16 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         }
 
         final FortescueValue.ThreePhaseValue currentThreePhaseValue = current.toThreePhaseValue();
-        entity.setFortescueCurrent(new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(), current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(), currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(), currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC()));
+        entity.setFortescueCurrent(new FortescueResultEmbeddable(current.getPositiveMagnitude(), current.getZeroMagnitude(), current.getNegativeMagnitude(),
+                current.getPositiveAngle(), current.getZeroAngle(), current.getNegativeAngle(), currentThreePhaseValue.getMagnitudeA(),
+                currentThreePhaseValue.getMagnitudeB(), currentThreePhaseValue.getMagnitudeC(), currentThreePhaseValue.getAngleA(),
+                currentThreePhaseValue.getAngleB(), currentThreePhaseValue.getAngleC()));
         final FortescueValue voltage = faultResult.getVoltage();
         final FortescueValue.ThreePhaseValue voltageThreePhaseValue = voltage.toThreePhaseValue();
-        entity.setFortescueVoltage(new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(), voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(), voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(), voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC()));
+        entity.setFortescueVoltage(new FortescueResultEmbeddable(voltage.getPositiveMagnitude(), voltage.getZeroMagnitude(), voltage.getNegativeMagnitude(),
+                voltage.getPositiveAngle(), voltage.getZeroAngle(), voltage.getNegativeAngle(), voltageThreePhaseValue.getMagnitudeA(),
+                voltageThreePhaseValue.getMagnitudeB(), voltageThreePhaseValue.getMagnitudeC(), voltageThreePhaseValue.getAngleA(),
+                voltageThreePhaseValue.getAngleB(), voltageThreePhaseValue.getAngleC()));
 
         return entity;
     }

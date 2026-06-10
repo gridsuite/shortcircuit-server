@@ -9,13 +9,10 @@ package org.gridsuite.shortcircuit.server.entities.parameters;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
-
 import jakarta.persistence.*;
 import lombok.*;
-
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersInfos;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitPredefinedConfiguration;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

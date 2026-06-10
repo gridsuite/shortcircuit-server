@@ -8,7 +8,6 @@ package org.gridsuite.shortcircuit.server;
 
 import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.ThreeSides;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,11 +26,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import static com.powsybl.shortcircuit.Fault.FaultType;
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.*;
@@ -59,7 +56,8 @@ public class ShortCircuitController {
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false) String reportType,
                                            @Parameter(description = "Bus Id - Used for analysis targeting one bus") @RequestParam(name = "busId", required = false) String busId,
                                            @Parameter(description = "Debug") @RequestParam(name = "debug", required = false, defaultValue = "false") boolean debug,
-                                           @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid,
+                                           @Parameter(description = "ID of parameters to use, fallback on default ones if none") @RequestParam(name = "parametersUuid", required = false) UUID
+                                                   parametersUuid,
                                            @Parameter(description = "resultUuid") @RequestParam(name = "resultUuid", required = false) UUID resultUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         UUID resultUuidToRun = resultUuid != null ? resultUuid : uuidGeneratorService.generate();
