@@ -6,8 +6,8 @@
  */
 package org.gridsuite.shortcircuit.server.dto.powsyblprivate;
 
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 
 // DUPLICATED AND ADAPTED from private code should be removed
 /**
