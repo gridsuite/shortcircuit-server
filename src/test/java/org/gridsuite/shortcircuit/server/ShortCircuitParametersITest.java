@@ -58,7 +58,6 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
-import static org.gridsuite.shortcircuit.server.ShortCircuitParametersController.DUPLICATE_FROM;
 import static org.gridsuite.shortcircuit.server.dto.powsyblprivate.PowerElectronicsCluster.Type.HVDC;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -470,7 +469,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .specificParametersPerProvider(Map.of())
             .build();
         final UUID pUuid = saveAndReturnId(infos);
-        final UUID pUuidDuplicated = objectMapper.readValue(mockMvc.perform(post("/v1/parameters").queryParam(DUPLICATE_FROM, pUuid.toString()))
+        final UUID pUuidDuplicated = objectMapper.readValue(mockMvc.perform(post("/v1/parameters/{uuid}/duplicate", pUuid))
             .andDo(log()).andExpectAll(
                 status().isOk(),
                 content().contentType(MediaType.APPLICATION_JSON),
@@ -513,8 +512,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             Arguments.of(post("/v1/parameters"), status().isBadRequest(), true, 400),
             Arguments.of(post("/v1/parameters").content("{}"), status().isBadRequest(), true, 400),
             Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, ""), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, UUID.randomUUID().toString()), status().isNotFound(), false, null),
+            Arguments.of(post("/v1/parameters/{uuid}/duplicate", UUID.randomUUID()), status().isNotFound(), false, null),
             Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null)
         );
     }
