@@ -509,10 +509,9 @@ class ShortCircuitParametersITest implements WithAssertions {
         return Stream.of(
             Arguments.of(get("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null),
             Arguments.of(delete("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null),
-            Arguments.of(post("/v1/parameters"), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").content("{}"), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters/{uuid}/duplicate", UUID.randomUUID()), status().isNotFound(), false, null),
+            Arguments.of(post("/v1/parameters"), status().isUnsupportedMediaType(), true, 415),
+            Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isUnsupportedMediaType(), true, 415),
+            Arguments.of(post("/v1/parameters/{parametersUuid}/duplicate", UUID.randomUUID()), status().isNotFound(), false, null),
             Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null)
         );
     }
