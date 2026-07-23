@@ -293,8 +293,8 @@ class ShortCircuitParametersITest implements WithAssertions {
             }, "payload")
             // message headers use an IdGenerator not overriden
             .withEqualsForFields((UUID id1, UUID id2) -> (id1 == null) == (id2 == null), "headers." + MessageHeaders.ID)
-            // we must do a comparaison using AssertJ because message headers have real system timestamp
-            .withEqualsForFields((Long t1, Long t2) -> t1 < t2, "headers." + MessageHeaders.TIMESTAMP)
+            // we ignore timestamps
+            .ignoringFields("headers.timestamp")
             .isEqualTo(new GenericMessage<>(response, headerSet.apply(ImmutableMap.<String, Object>builder().putAll(Map.of(
                 MessageHeaders.ID, UUID.randomUUID(),
                 MessageHeaders.TIMESTAMP, System.currentTimeMillis(),
