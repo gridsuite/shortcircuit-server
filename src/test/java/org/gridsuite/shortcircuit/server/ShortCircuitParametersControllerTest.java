@@ -112,7 +112,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
         final UUID arg = UUID.randomUUID();
         final UUID returned = UUID.randomUUID();
         when(shortCircuitParametersService.duplicateParameters(any(UUID.class))).thenReturn(Optional.of(returned));
-        mockMvc.perform(post("/v1/parameters").param("duplicateFrom", arg.toString()))
+        mockMvc.perform(post("/v1/parameters/{uuid}/duplicate", arg))
                .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON), content().string("\"" + returned + "\""));
         final ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
         verify(shortCircuitParametersService).duplicateParameters(uuidCaptor.capture());
@@ -123,7 +123,7 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
     void testDuplicateNonExistingParameters() throws Exception {
         final UUID arg = UUID.randomUUID();
         when(shortCircuitParametersService.duplicateParameters(any(UUID.class))).thenReturn(Optional.empty());
-        mockMvc.perform(post("/v1/parameters").param(ShortCircuitParametersController.DUPLICATE_FROM, arg.toString()))
+        mockMvc.perform(post("/v1/parameters/{uuid}/duplicate", arg))
                .andExpectAll(status().isNotFound());
         final ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
         verify(shortCircuitParametersService).duplicateParameters(uuidCaptor.capture());
