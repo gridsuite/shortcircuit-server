@@ -186,12 +186,12 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     }
 
     @Transactional
-    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, ShortCircuitRunContext runContext, String status) {
+    public void insert(UUID resultUuid, ShortCircuitAnalysisResult result, String busId, Map<String, ShortCircuitLimits> shortCircuitLimits, String status) {
         Objects.requireNonNull(resultUuid);
-        if (result != null && (runContext.getBusId() != null ||
+        if (result != null && (busId != null ||
                         !result.getFaultResults().stream().map(FaultResult::getStatus).allMatch(FaultResult.Status.NO_SHORT_CIRCUIT_DATA::equals))
         ) {
-            resultRepository.save(toResultEntity(resultUuid, result, runContext.getShortCircuitLimits()));
+            resultRepository.save(toResultEntity(resultUuid, result, shortCircuitLimits));
         }
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }

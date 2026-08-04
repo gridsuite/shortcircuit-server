@@ -80,7 +80,7 @@ class FeederResultRepositoryTest {
     @BeforeAll
     void setUp() {
         // Magnitude fault
-        shortCircuitAnalysisResultService.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, MOCK_RUN_CONTEXT, "");
+        shortCircuitAnalysisResultService.insert(MAGNITUDE_RESULT_UUID, RESULT_MAGNITUDE_FULL, MOCK_RUN_CONTEXT.getBusId(), MOCK_RUN_CONTEXT.getShortCircuitLimits(), "");
         resultMagnitudeEntity = shortCircuitAnalysisResultService.findFullResults(MAGNITUDE_RESULT_UUID).get();
         List<FeederResultEntity> feederResultEntities = resultMagnitudeEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
@@ -94,7 +94,7 @@ class FeederResultRepositoryTest {
         feederResultEntityMagnitudeList.add(feederResultEntity3);
 
         // Fortescue fault
-        shortCircuitAnalysisResultService.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, MOCK_RUN_CONTEXT, "");
+        shortCircuitAnalysisResultService.insert(FORTESCUE_RESULT_UUID, RESULT_FORTESCUE_FULL, MOCK_RUN_CONTEXT.getBusId(), MOCK_RUN_CONTEXT.getShortCircuitLimits(), "");
         resultFortescueEntity = shortCircuitAnalysisResultService.findFullResults(FORTESCUE_RESULT_UUID).get();
         feederResultEntities = resultFortescueEntity.getFaultResults().stream()
             .flatMap(faultResultEntity -> faultResultEntity.getFeederResults().stream())
