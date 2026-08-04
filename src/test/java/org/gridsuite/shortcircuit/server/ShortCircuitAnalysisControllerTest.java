@@ -119,7 +119,7 @@ class ShortCircuitAnalysisControllerTest {
     private FilterService filterService;
     @MockitoSpyBean
     private ShortCircuitParametersService shortCircuitParametersService;
-    @MockitoBean
+    @MockitoSpyBean
     private ShortCircuitAnalysisResultService shortCircuitAnalysisResultService;
     @Autowired
     private ObjectMapper objectMapper;
