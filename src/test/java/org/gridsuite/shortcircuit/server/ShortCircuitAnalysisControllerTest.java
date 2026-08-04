@@ -35,6 +35,7 @@ import org.gridsuite.shortcircuit.server.entities.FaultResultEntity;
 import org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersEntity;
 import org.gridsuite.shortcircuit.server.repositories.FaultResultRepository;
 import org.gridsuite.shortcircuit.server.service.FilterService;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitParametersService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -118,6 +119,8 @@ class ShortCircuitAnalysisControllerTest {
     private FilterService filterService;
     @MockitoSpyBean
     private ShortCircuitParametersService shortCircuitParametersService;
+    @MockitoBean
+    private ShortCircuitAnalysisResultService shortCircuitAnalysisResultService;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -1049,5 +1052,31 @@ class ShortCircuitAnalysisControllerTest {
             assertEquals(5.0, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMin(), 0.1);
             assertEquals(100.5, resultDto.getFaults().get(1).getShortCircuitLimits().getIpMax(), 0.1);
         }
+    }
+
+    @Test
+    void saveResultTest() throws Exception {
+        ShortCircuitAnalysisResult shortCircuitResult = mock(ShortCircuitAnalysisResult.class);
+
+        doNothing().when(shortCircuitAnalysisResultService).insert(
+            RESULT_UUID,
+            shortCircuitResult,
+            null,
+            Map.of(),
+            ShortCircuitAnalysisStatus.COMPLETED.name());
+
+        mockMvc.perform(
+                post("/" + VERSION + "/results/{resultUuid}", RESULT_UUID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(shortCircuitResult))
+            ).andExpect(status().isOk());
+
+        verify(shortCircuitAnalysisResultService).insert(
+            eq(RESULT_UUID),
+            any(ShortCircuitAnalysisResult.class),
+            eq(null),
+            eq(Map.of()),
+            eq(ShortCircuitAnalysisStatus.COMPLETED.name())
+        );
     }
 }
