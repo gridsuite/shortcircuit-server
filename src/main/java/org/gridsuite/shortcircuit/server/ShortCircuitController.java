@@ -24,6 +24,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -227,7 +228,7 @@ public class ShortCircuitController {
 
     @PostMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
     @Operation(summary = "Save short circuit results")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit results have been saved to database")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "The short circuit results have been saved to database")})
     public ResponseEntity<Void> saveResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
                                            @RequestBody com.powsybl.shortcircuit.ShortCircuitAnalysisResult result) {
         shortCircuitAnalysisResultService.insert(
@@ -237,6 +238,6 @@ public class ShortCircuitController {
             Map.of(),
             ShortCircuitAnalysisStatus.COMPLETED.name()
         );
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
