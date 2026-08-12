@@ -1069,7 +1069,7 @@ class ShortCircuitAnalysisControllerTest {
                 post("/" + VERSION + "/results/{resultUuid}", RESULT_UUID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(shortCircuitResult))
-            ).andExpect(status().isOk());
+            ).andExpect(status().isCreated());
 
         verify(shortCircuitAnalysisResultService).insert(
             eq(RESULT_UUID),
