@@ -17,12 +17,14 @@ import lombok.AllArgsConstructor;
 import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +46,7 @@ public class ShortCircuitController {
 
     private final ShortCircuitService shortCircuitService;
     private final UuidGeneratorService uuidGeneratorService;
+    private final ShortCircuitAnalysisResultService shortCircuitAnalysisResultService;
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a short circuit analysis on a network")
@@ -223,4 +226,18 @@ public class ShortCircuitController {
         return shortCircuitService.downloadDebugFile(resultUuid);
     }
 
+    @PostMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Save short circuit results")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "The short circuit results have been saved to database")})
+    public ResponseEntity<Void> saveResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                           @RequestBody com.powsybl.shortcircuit.ShortCircuitAnalysisResult result) {
+        shortCircuitAnalysisResultService.insert(
+            resultUuid,
+            result,
+            null,
+            Map.of(),
+            ShortCircuitAnalysisStatus.COMPLETED.name()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }
