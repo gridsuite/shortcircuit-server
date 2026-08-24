@@ -56,7 +56,6 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
     private static final Sort.Direction DEFAULT_SORT_DIRECTION = Sort.Direction.ASC;
 
     private final FaultResultSpecificationBuilder faultResultSpecificationBuilder;
-    private final FilterService filterService;
 
     private static List<LimitViolationEmbeddable> extractLimitViolations(FaultResult faultResult) {
         return faultResult.getLimitViolations().stream()
@@ -457,6 +456,14 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         } else {
             return null;
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, ShortCircuitAnalysisStatus> findStatuses(List<UUID> resultUuids) {
+        Objects.requireNonNull(resultUuids);
+        List<GlobalStatusEntity> globalEntities = globalStatusRepository.findAllById(resultUuids);
+        return globalEntities.stream().collect(Collectors.toMap(GlobalStatusEntity::getResultUuid, e -> ShortCircuitAnalysisStatus.valueOf(e.getStatus())));
     }
 
     private Pageable addDefaultSort(Pageable pageable, String defaultSortColumn) {
