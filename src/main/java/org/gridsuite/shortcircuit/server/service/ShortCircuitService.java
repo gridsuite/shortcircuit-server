@@ -49,6 +49,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -102,15 +103,21 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         List<PowerElectronicsCluster> activeClusters = clusters.stream()
             .filter(AbstractPowerElectronicsData::isActive)
             .toList();
-        List<UUID> filterUuids = activeClusters.stream()
+        List<UUID> filterNonHvdcUuids = activeClusters.stream()
+                .filter(cluster -> cluster.getType() != PowerElectronicsCluster.Type.HVDC)
             .flatMap(item -> item.getFilters().stream().map(FilterElements::getFilterId))
             .toList();
+        List<UUID> filterHvdcUuids = activeClusters.stream()
+                .filter(cluster -> cluster.getType() == PowerElectronicsCluster.Type.HVDC)
+                .flatMap(item -> item.getFilters().stream().map(FilterElements::getFilterId))
+                .toList();
 
         // Apply filters using filterService
-        List<FilterEquipments> filterEquipments = filterService.getFilterEquipments(filterUuids, networkUuid, variantId);
+        List<FilterEquipments> filterEquipments = filterService.getFilterEquipments(filterNonHvdcUuids, networkUuid, variantId);
+        List<FilterEquipments> hvdcStationFilterEquipments = filterService.getFilterHvdcStationFromHvdc(filterHvdcUuids, networkUuid, variantId);
 
         // regroup by filterIds in clusters list to get equipmentIds
-        Map<UUID, List<String>> filterIdToEquipmentIds = filterEquipments.stream()
+        Map<UUID, List<String>> filterIdToEquipmentIds = Stream.concat(filterEquipments.stream(), hvdcStationFilterEquipments.stream())
                 .collect(Collectors.toMap(
                         FilterEquipments::getFilterId,
                         fe -> fe.getIdentifiableAttributes()
