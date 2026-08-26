@@ -224,7 +224,7 @@ class ShortCircuitAnalysisControllerTest {
     @Autowired
     private FaultResultRepository faultResultRepository;
 
-    private final ObjectMapper mapper = RestTemplateConfig.objectMapper();
+    private final ObjectMapper mapper = RestClientConfig.objectMapper();
 
     @MockitoSpyBean
     private S3Client s3Client;
