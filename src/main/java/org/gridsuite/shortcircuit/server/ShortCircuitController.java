@@ -24,6 +24,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,7 @@ import static org.springframework.http.MediaType.*;
 @Tag(name = "Short circuit server")
 @AllArgsConstructor
 public class ShortCircuitController {
+    public static final String ATTACHMENT = "attachment";
 
     private final ShortCircuitService shortCircuitService;
     private final UuidGeneratorService uuidGeneratorService;
@@ -113,13 +115,18 @@ public class ShortCircuitController {
             @Parameter(description = "Sort parameters") Sort sort,
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
         List<FaultResult> faultResults;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(APPLICATION_OCTET_STREAM);
         if (csvExportParams.oneBusCase()) {
             faultResults = List.of(shortCircuitService.getOneBusFaultResult(resultUuid, filters, sort));
+            httpHeaders.setContentDispositionFormData(ATTACHMENT, "oneBus-results.zip");
         } else {
             Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
             faultResults = resultPage.getContent();
+            httpHeaders.setContentDispositionFormData(ATTACHMENT, "allBuses-results.zip");
         }
         return ResponseEntity.ok()
+                .headers(httpHeaders)
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
                 .body(shortCircuitService.getZippedCsvExportResult(faultResults, csvExportParams));
     }

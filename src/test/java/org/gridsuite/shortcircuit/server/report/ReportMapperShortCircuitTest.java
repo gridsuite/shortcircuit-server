@@ -11,7 +11,7 @@ import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.ReportNodeDeserializer;
 import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.computation.dto.ReportInfos;
-import org.gridsuite.shortcircuit.server.RestTemplateConfig;
+import org.gridsuite.shortcircuit.server.RestClientConfig;
 import org.gridsuite.shortcircuit.server.TestUtils;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.report.mappers.VoltageLevelsWithWrongIpValuesMapper;
@@ -28,7 +28,7 @@ import java.util.List;
 
 @Slf4j
 class ReportMapperShortCircuitTest extends AbstractReportMapperTest {
-    private static final ObjectMapper OBJECT_MAPPER = RestTemplateConfig.objectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = RestClientConfig.objectMapper();
     private ReportMapperService reportMapperService;
     private ShortCircuitRunContext runContext;
 
