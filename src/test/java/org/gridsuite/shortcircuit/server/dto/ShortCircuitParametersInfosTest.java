@@ -12,7 +12,7 @@ import com.powsybl.shortcircuit.VoltageRange;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
-import org.gridsuite.shortcircuit.server.RestTemplateConfig;
+import org.gridsuite.shortcircuit.server.RestClientConfig;
 import org.gridsuite.shortcircuit.server.TestUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,10 +27,10 @@ import org.springframework.test.context.ContextConfiguration;
 import java.util.Collections;
 import static org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants.CEI909_VOLTAGE_PROFILE;
 
-@ContextConfiguration(classes = {RestTemplateConfig.class})
+@ContextConfiguration(classes = {RestClientConfig.class})
 //NOTE: this surprises given the name AutoConfigureWebClient, but this is not actually web clients,
 // it is builders for webclients, and it's not just webflux webclient,
-// it's also resttemplatebuilder that we need.
+// it's also restclientbuilder that we need.
 // And other builders are also registered but without consequences, they're just unused.
 // In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
 @AutoConfigureWebClient
