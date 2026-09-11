@@ -55,7 +55,7 @@ class ShortCircuitResultServiceTest {
                 49.3, FaultResult.Status.SUCCESS);
 
         ShortCircuitAnalysisResult results = new ShortCircuitAnalysisResult(List.of(fault1, fault2, fault3));
-        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, results, MOCK_RUN_CONTEXT, "OK");
+        shortCircuitAnalysisResultRepository.insert(RESULT_UUID, results, MOCK_RUN_CONTEXT.getBusId(), MOCK_RUN_CONTEXT.getShortCircuitLimits(), "OK");
         SQLStatementCountValidator.reset();
 
         shortCircuitAnalysisResultRepository.delete(RESULT_UUID);

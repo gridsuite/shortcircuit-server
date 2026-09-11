@@ -29,7 +29,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/" + ShortCircuitApi.API_VERSION + "/parameters", produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Short circuit server analysis parameters")
 public class ShortCircuitParametersController {
-    public static final String DUPLICATE_FROM = "duplicateFrom";
 
     private final ShortCircuitParametersService shortCircuitParametersService;
 
@@ -78,11 +77,11 @@ public class ShortCircuitParametersController {
         return ResponseEntity.ok(shortCircuitParametersService.createDefaultParameters());
     }
 
-    @PostMapping(params = { DUPLICATE_FROM })
+    @PostMapping(path = "/{parametersUuid}/duplicate")
     @Operation(summary = "Duplicate the parameters of an analysis")
     @ApiResponse(responseCode = "200", description = "The new parameters ID")
     @ApiResponse(responseCode = "404", description = "The parameters don't exist")
-    public ResponseEntity<UUID> duplicateParameters(@Parameter(description = "UUID of parameters to duplicate") @RequestParam(name = DUPLICATE_FROM) UUID sourceParametersUuid) {
+    public ResponseEntity<UUID> duplicateParameters(@Parameter(description = "UUID of parameters to duplicate") @PathVariable(name = "parametersUuid") UUID sourceParametersUuid) {
         return ResponseEntity.of(shortCircuitParametersService.duplicateParameters(sourceParametersUuid));
     }
 

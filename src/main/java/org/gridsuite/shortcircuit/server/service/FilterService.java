@@ -17,10 +17,9 @@ import org.gridsuite.filter.identifierlistfilter.FilterEquipments;
 import org.gridsuite.filter.identifierlistfilter.IdentifiableAttributes;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 
@@ -30,10 +29,10 @@ public class FilterService extends AbstractFilterService {
     private static final String QUERY_PARAM_VARIANT_ID = "variantId";
     private static final String NETWORK_UUID = "networkUuid";
 
-    public FilterService(RestTemplateBuilder restTemplateBuilder,
+    public FilterService(RestClient.Builder restClientBuilder,
                          NetworkStoreService networkStoreService,
                          @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri) {
-        super(restTemplateBuilder, networkStoreService, filterServerBaseUri);
+        super(restClientBuilder, networkStoreService, filterServerBaseUri);
     }
 
     public Optional<ResourceFilterDTO> getResourceFilter(@NonNull UUID networkUuid, @NonNull String variantId, @NonNull GlobalFilter globalFilter) {
@@ -65,9 +64,11 @@ public class FilterService extends AbstractFilterService {
         }
         var path = uriComponentsBuilder.build().toUriString();
 
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<FilterEquipments>>() {
-                }).getBody();
+        return restClient.get()
+                .uri(filterServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
     }
 
     public List<IdentifiableAttributes> getIdentifiablesFromFilters(List<UUID> filterUuids, UUID networkUuid, String variantId) {

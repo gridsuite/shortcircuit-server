@@ -17,12 +17,15 @@ import lombok.AllArgsConstructor;
 import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.shortcircuit.server.dto.*;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitRunContext;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,9 +44,11 @@ import static org.springframework.http.MediaType.*;
 @Tag(name = "Short circuit server")
 @AllArgsConstructor
 public class ShortCircuitController {
+    public static final String ATTACHMENT = "attachment";
 
     private final ShortCircuitService shortCircuitService;
     private final UuidGeneratorService uuidGeneratorService;
+    private final ShortCircuitAnalysisResultService shortCircuitAnalysisResultService;
 
     @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a short circuit analysis on a network")
@@ -110,13 +115,18 @@ public class ShortCircuitController {
             @Parameter(description = "Sort parameters") Sort sort,
             @Parameter(description = "Csv headers and translations payload") @RequestBody CsvExportParams csvExportParams) {
         List<FaultResult> faultResults;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(APPLICATION_OCTET_STREAM);
         if (csvExportParams.oneBusCase()) {
             faultResults = List.of(shortCircuitService.getOneBusFaultResult(resultUuid, filters, sort));
+            httpHeaders.setContentDispositionFormData(ATTACHMENT, "oneBus-results.zip");
         } else {
             Page<FaultResult> resultPage = shortCircuitService.getFaultResultsPage(networkUuid, variantId, resultUuid, FaultResultsMode.FULL, filters, globalFilters, Pageable.unpaged(sort));
             faultResults = resultPage.getContent();
+            httpHeaders.setContentDispositionFormData(ATTACHMENT, "allBuses-results.zip");
         }
         return ResponseEntity.ok()
+                .headers(httpHeaders)
                 .contentType(MediaType.parseMediaType(APPLICATION_OCTET_STREAM_VALUE))
                 .body(shortCircuitService.getZippedCsvExportResult(faultResults, csvExportParams));
     }
@@ -223,4 +233,18 @@ public class ShortCircuitController {
         return shortCircuitService.downloadDebugFile(resultUuid);
     }
 
+    @PostMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Save short circuit results")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "The short circuit results have been saved to database")})
+    public ResponseEntity<Void> saveResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                           @RequestBody com.powsybl.shortcircuit.ShortCircuitAnalysisResult result) {
+        shortCircuitAnalysisResultService.insert(
+            resultUuid,
+            result,
+            null,
+            Map.of(),
+            ShortCircuitAnalysisStatus.COMPLETED.name()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }

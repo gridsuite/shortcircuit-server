@@ -57,7 +57,6 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
-import static org.gridsuite.shortcircuit.server.ShortCircuitParametersController.DUPLICATE_FROM;
 import static org.gridsuite.shortcircuit.server.dto.powsyblprivate.PowerElectronicsCluster.Type.HVDC;
 import static org.gridsuite.shortcircuit.server.service.ShortCircuitResultContext.HEADER_BUS_ID;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -290,8 +289,8 @@ class ShortCircuitParametersITest implements WithAssertions {
             }, "payload")
             // message headers use an IdGenerator not overriden
             .withEqualsForFields((UUID id1, UUID id2) -> (id1 == null) == (id2 == null), "headers." + MessageHeaders.ID)
-            // we must do a comparaison using AssertJ because message headers have real system timestamp
-            .withEqualsForFields((Long t1, Long t2) -> t1 < t2, "headers." + MessageHeaders.TIMESTAMP)
+            // we ignore timestamps
+            .ignoringFields("headers.timestamp")
             .isEqualTo(new GenericMessage<>(response, headerSet.apply(ImmutableMap.<String, Object>builder().putAll(Map.of(
                 MessageHeaders.ID, UUID.randomUUID(),
                 MessageHeaders.TIMESTAMP, System.currentTimeMillis(),
@@ -466,7 +465,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             .specificParametersPerProvider(Map.of())
             .build();
         final UUID pUuid = saveAndReturnId(infos);
-        final UUID pUuidDuplicated = objectMapper.readValue(mockMvc.perform(post("/v1/parameters").queryParam(DUPLICATE_FROM, pUuid.toString()))
+        final UUID pUuidDuplicated = objectMapper.readValue(mockMvc.perform(post("/v1/parameters/{uuid}/duplicate", pUuid))
             .andDo(log()).andExpectAll(
                 status().isOk(),
                 content().contentType(MediaType.APPLICATION_JSON),
@@ -506,11 +505,9 @@ class ShortCircuitParametersITest implements WithAssertions {
         return Stream.of(
             Arguments.of(get("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null),
             Arguments.of(delete("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null),
-            Arguments.of(post("/v1/parameters"), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").content("{}"), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, ""), status().isBadRequest(), true, 400),
-            Arguments.of(post("/v1/parameters").queryParam(DUPLICATE_FROM, UUID.randomUUID().toString()), status().isNotFound(), false, null),
+            Arguments.of(post("/v1/parameters"), status().isUnsupportedMediaType(), true, 415),
+            Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isUnsupportedMediaType(), true, 415),
+            Arguments.of(post("/v1/parameters/{parametersUuid}/duplicate", UUID.randomUUID()), status().isNotFound(), false, null),
             Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null)
         );
     }

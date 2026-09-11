@@ -74,7 +74,8 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     protected void saveResult(Network network, AbstractResultContext<ShortCircuitRunContext> resultContext, ShortCircuitAnalysisResult result) {
         resultService.insert(resultContext.getResultUuid(),
                 result,
-                resultContext.getRunContext(),
+                resultContext.getRunContext().getBusId(),
+                resultContext.getRunContext().getShortCircuitLimits(),
                 ShortCircuitAnalysisStatus.COMPLETED.name());
     }
 
