@@ -245,4 +245,9 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
         }
         resultService.insertStatus(Collections.singletonList(resultContext.getResultUuid()), ShortCircuitAnalysisStatus.FAILED);
     }
+
+    @Override
+    protected void setRunningStatus(UUID resultUuid) {
+        resultService.insertStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING);
+    }
 }
