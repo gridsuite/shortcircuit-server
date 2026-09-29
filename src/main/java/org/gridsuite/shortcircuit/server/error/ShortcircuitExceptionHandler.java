@@ -35,7 +35,6 @@ public class ShortcircuitExceptionHandler extends AbstractBusinessExceptionHandl
     protected HttpStatus mapStatus(ShortcircuitBusinessErrorCode businessErrorCode) {
         return switch (businessErrorCode) {
             case BUS_OUT_OF_VOLTAGE, INCONSISTENT_VOLTAGE_LEVELS, MISSING_EXTENSION_DATA, BUS_OUT_OF_NODE_CLUSTER -> HttpStatus.INTERNAL_SERVER_ERROR;
-            case CANNOT_BE_CANCELED -> HttpStatus.BAD_REQUEST;
         };
     }
 
