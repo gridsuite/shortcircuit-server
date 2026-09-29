@@ -20,7 +20,6 @@ import org.gridsuite.shortcircuit.server.dto.ShortCircuitAnalysisStatus;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitLimits;
 import org.gridsuite.shortcircuit.server.dto.ShortCircuitParametersValues;
 import org.gridsuite.shortcircuit.server.error.ShortCircuitException;
-import org.gridsuite.shortcircuit.server.error.ShortcircuitBusinessErrorCode;
 import org.gridsuite.shortcircuit.server.report.ReportMapperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -253,9 +252,7 @@ public class ShortCircuitWorkerService extends AbstractWorkerService<ShortCircui
     }
 
     @Override
-    protected void canBeCancelled(UUID resultUuid) {
-        if (resultService.findStatus(resultUuid) != ShortCircuitAnalysisStatus.RUNNING) {
-            throw new ShortCircuitException(ShortcircuitBusinessErrorCode.CANNOT_BE_CANCELED, "Voltage init cannot be cancelled because it is not running");
-        }
+    protected boolean canBeCancelled(UUID resultUuid) {
+        return resultService.findStatus(resultUuid) == ShortCircuitAnalysisStatus.RUNNING;
     }
 }
