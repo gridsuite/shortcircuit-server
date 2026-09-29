@@ -11,6 +11,7 @@ package org.gridsuite.shortcircuit.server.dto;
  */
 public enum ShortCircuitAnalysisStatus {
     NOT_DONE,
+    PRELOADING,
     RUNNING,
     COMPLETED,
     FAILED
