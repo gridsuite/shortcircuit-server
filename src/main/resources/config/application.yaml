@@ -28,6 +28,8 @@ spring:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.debug
         publishResult-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.result
+        publishRunning-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.running
         consumeCancel-in-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.cancel
         publishCancel-out-0:
@@ -36,7 +38,7 @@ spring:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.stopped
         publishCancelFailed-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}shortcircuitanalysis.cancelfailed
-      output-bindings: publishRun-out-0;publishDebug-out-0;publishResult-out-0;publishCancel-out-0;publishStopped-out-0:publishCancelFailed-out-0
+      output-bindings: publishRun-out-0;publishDebug-out-0;publishResult-out-0;publishRunning-out-0;publishCancel-out-0;publishStopped-out-0:publishCancelFailed-out-0
       rabbit:
         bindings:
           consumeRun1-in-0: &consumeRunRabbitConfig
