@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.restclient.test.autoconfigure.AutoConfigureRestClient;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
-import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.test.context.ContextConfiguration;
 import java.util.Collections;
 import static org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuitParametersConstants.CEI909_VOLTAGE_PROFILE;
@@ -33,7 +33,7 @@ import static org.gridsuite.shortcircuit.server.entities.parameters.ShortCircuit
 // it's also restclientbuilder that we need.
 // And other builders are also registered but without consequences, they're just unused.
 // In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
-@AutoConfigureWebClient
+@AutoConfigureRestClient
 @JsonTest
 class ShortCircuitParametersInfosTest implements WithAssertions {
     private static final String DUMB_JSON =

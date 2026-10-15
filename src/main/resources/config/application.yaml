@@ -2,6 +2,10 @@ spring:
   application:
     name: shortcircuit-server
 
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+
   jpa:
     properties:
       hibernate:
