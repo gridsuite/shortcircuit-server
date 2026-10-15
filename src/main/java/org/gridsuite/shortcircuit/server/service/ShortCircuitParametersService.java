@@ -138,12 +138,13 @@ public class ShortCircuitParametersService {
     @Transactional
     public void updateParameters(UUID parametersUuid, ShortCircuitParametersInfos parametersInfos) {
         ShortCircuitParametersEntity shortCircuitParametersEntity = parametersRepository.findById(parametersUuid).orElseThrow();
-        //if the parameters is null it means it's a reset to defaultValues
-        if (parametersInfos == null) {
-            shortCircuitParametersEntity.update(getDefaultParametersInfos());
-        } else {
-            shortCircuitParametersEntity.update(parametersInfos);
-        }
+        shortCircuitParametersEntity.update(parametersInfos);
+    }
+
+    @Transactional
+    public void resetParameters(UUID parametersUuid) {
+        ShortCircuitParametersEntity shortCircuitParametersEntity = parametersRepository.findById(parametersUuid).orElseThrow();
+        shortCircuitParametersEntity.update(getDefaultParametersInfos());
     }
 
     public static Map<String, List<Parameter>> getSpecificShortCircuitParameters(String providerName) {

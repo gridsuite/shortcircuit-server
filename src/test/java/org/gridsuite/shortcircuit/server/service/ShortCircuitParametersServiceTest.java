@@ -264,6 +264,14 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
     }
 
     @Test
+    void testResetNonExistingParameters() {
+        final UUID pUuid = UUID.randomUUID();
+        when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> parametersService.resetParameters(pUuid)).isInstanceOf(NoSuchElementException.class);
+        verify(parametersRepository).findById(pUuid);
+    }
+
+    @Test
     void testResetExistingParameters() {
         final UUID pUuid = UUID.randomUUID();
         final ShortCircuitParametersInfos defaultInfos = parametersService.getDefaultParametersInfos();
@@ -277,7 +285,7 @@ class ShortCircuitParametersServiceTest implements WithAssertions {
             .withLimitViolations(false) // the diff
             .build();
         when(parametersRepository.findById(any(UUID.class))).thenReturn(Optional.of(pEntity));
-        parametersService.updateParameters(pUuid, null);
+        parametersService.resetParameters(pUuid);
         // verify we search the correct uid
         verify(parametersRepository).findById(pUuid);
 
