@@ -336,7 +336,7 @@ class ShortCircuitAnalysisControllerTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        mockMvc.perform(delete("/" + VERSION + "/results")).andExpect(status().isOk());
+        mockMvc.perform(delete("/" + VERSION + "/supervision/results")).andExpect(status().isOk());
 
         TestUtils.assertQueuesEmptyThenClear(List.of(shortCircuitAnalysisResultDestination, shortCircuitAnalysisRunDestination,
             shortCircuitAnalysisCancelDestination, shortCircuitAnalysisStoppedDestination,
@@ -496,6 +496,12 @@ class ShortCircuitAnalysisControllerTest {
                              .param("size", "2")
                              .param("sort", "fault.id,DESC"))
                 .andExpect(status().isNotFound());
+
+            String resultsCount = mockMvc.perform(get("/" + VERSION + "/supervision/results-count")).andReturn().getResponse().getContentAsString();
+            assertNotEquals("0", resultsCount);
+            mockMvc.perform(delete("/" + VERSION + "/results")).andExpect(status().isBadRequest());
+            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", "")).andExpect(status().isOk());
+            mockMvc.perform(get("/" + VERSION + "/supervision/results-count")).andExpect(content().string(resultsCount));
 
             // test one result deletion
             mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))

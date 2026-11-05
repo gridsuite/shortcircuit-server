@@ -10,9 +10,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.gridsuite.shortcircuit.server.service.SupervisionService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,9 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Short circuit server - Supervision")
 public class SupervisionController {
     private final SupervisionService supervisionService;
+    private final ShortCircuitService shortCircuitService;
 
-    public SupervisionController(SupervisionService supervisionService) {
+    public SupervisionController(SupervisionService supervisionService, ShortCircuitService shortCircuitService) {
         this.supervisionService = supervisionService;
+        this.shortCircuitService = shortCircuitService;
     }
 
     @GetMapping(value = "/results-count")
@@ -35,5 +39,13 @@ public class SupervisionController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The count of all results")})
     public ResponseEntity<Integer> getResultsCount() {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(supervisionService.getResultsCount());
+    }
+
+    @DeleteMapping(value = "/results")
+    @Operation(summary = "Delete all short circuit analysis results from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All short circuit analysis results have been deleted")})
+    public ResponseEntity<Void> deleteAllResults() {
+        shortCircuitService.deleteAllResults();
+        return ResponseEntity.ok().build();
     }
 }
