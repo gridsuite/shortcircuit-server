@@ -35,8 +35,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -170,13 +168,13 @@ class ShortCircuitParametersControllerTest implements WithAssertions {
     void testResetParameters(final boolean existing, @NonNull final ResultMatcher statusMatcher) throws Exception {
         final UUID arg1 = UUID.randomUUID();
         if (!existing) {
-            doThrow(new NoSuchElementException()).when(shortCircuitParametersService).updateParameters(any(UUID.class), nullable(ShortCircuitParametersInfos.class));
+            doThrow(new NoSuchElementException()).when(shortCircuitParametersService).resetParameters(any(UUID.class));
         }
 
-        mockMvc.perform(put("/v1/parameters/{pUuid}", arg1.toString()))
+        mockMvc.perform(put("/v1/parameters/{pUuid}/reset", arg1.toString()))
                .andExpectAll(statusMatcher);
         final ArgumentCaptor<UUID> uuidCaptor = ArgumentCaptor.forClass(UUID.class);
-        verify(shortCircuitParametersService).updateParameters(uuidCaptor.capture(), isNull());
+        verify(shortCircuitParametersService).resetParameters(uuidCaptor.capture());
         assertThat(uuidCaptor.getValue()).isEqualTo(arg1);
     }
 
