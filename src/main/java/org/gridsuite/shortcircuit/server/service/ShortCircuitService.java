@@ -201,8 +201,8 @@ public class ShortCircuitService extends AbstractComputationService<ShortCircuit
         runContext.setProvider(parameters.getProvider() != null ? parameters.getProvider() : getDefaultProvider());
         final UUID resultUuid = runContext.getResultUuid();
 
-        // update status to running status
-        setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.RUNNING);
+        // update status to preloading status
+        setStatus(List.of(resultUuid), ShortCircuitAnalysisStatus.PRELOADING);
 
         notificationService.sendRunMessage(new ShortCircuitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
