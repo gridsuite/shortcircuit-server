@@ -12,6 +12,7 @@ import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.shortcircuit.server.entities.FeederResultEntity;
 import org.gridsuite.shortcircuit.server.entities.ShortCircuitAnalysisResultEntity;
 import org.gridsuite.shortcircuit.server.service.ShortCircuitAnalysisResultService;
+import org.gridsuite.shortcircuit.server.service.SupervisionService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -75,6 +76,9 @@ class FeederResultRepositoryTest {
     private ShortCircuitAnalysisResultEntity resultFortescueEntity;
 
     @Autowired
+    private SupervisionService supervisionService;
+
+    @Autowired
     private ShortCircuitAnalysisResultService shortCircuitAnalysisResultService;
 
     @BeforeAll
@@ -110,7 +114,7 @@ class FeederResultRepositoryTest {
 
     @AfterAll
     void tearDown() {
-        shortCircuitAnalysisResultService.deleteAll();
+        supervisionService.deleteAllResults();
     }
 
     @ParameterizedTest(name = "[{index}] Using the filter(s) {1} should return the given entities")

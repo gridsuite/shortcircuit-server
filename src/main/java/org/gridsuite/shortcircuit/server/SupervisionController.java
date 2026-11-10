@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.gridsuite.shortcircuit.server.service.ShortCircuitService;
 import org.gridsuite.shortcircuit.server.service.SupervisionService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,11 +26,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Short circuit server - Supervision")
 public class SupervisionController {
     private final SupervisionService supervisionService;
-    private final ShortCircuitService shortCircuitService;
 
-    public SupervisionController(SupervisionService supervisionService, ShortCircuitService shortCircuitService) {
+    public SupervisionController(SupervisionService supervisionService) {
         this.supervisionService = supervisionService;
-        this.shortCircuitService = shortCircuitService;
     }
 
     @GetMapping(value = "/results-count")
@@ -45,7 +42,7 @@ public class SupervisionController {
     @Operation(summary = "Delete all short circuit analysis results from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All short circuit analysis results have been deleted")})
     public ResponseEntity<Void> deleteAllResults() {
-        shortCircuitService.deleteAllResults();
+        supervisionService.deleteAllResults();
         return ResponseEntity.ok().build();
     }
 }
