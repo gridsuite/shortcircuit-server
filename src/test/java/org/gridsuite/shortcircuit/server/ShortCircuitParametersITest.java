@@ -402,7 +402,7 @@ class ShortCircuitParametersITest implements WithAssertions {
             )
             .specificParametersPerProvider(Map.of())
             .build());
-        mockMvc.perform(put("/v1/parameters/{id}", pUuid)).andDo(log()).andExpectAll(
+        mockMvc.perform(put("/v1/parameters/{id}/reset", pUuid)).andDo(log()).andExpectAll(
             status().isOk(),
             content().bytes(new byte[0])
         );
@@ -512,7 +512,8 @@ class ShortCircuitParametersITest implements WithAssertions {
             Arguments.of(post("/v1/parameters"), status().isUnsupportedMediaType(), true, 415),
             Arguments.of(post("/v1/parameters").contentType(MediaType.TEXT_PLAIN).content("{}"), status().isUnsupportedMediaType(), true, 415),
             Arguments.of(post("/v1/parameters/{parametersUuid}/duplicate", UUID.randomUUID()), status().isNotFound(), false, null),
-            Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()), status().isNotFound(), false, null)
+            Arguments.of(put("/v1/parameters/{parametersUuid}", UUID.randomUUID()).contentType(MediaType.APPLICATION_JSON).content("{}"), status().isNotFound(), false, null),
+            Arguments.of(put("/v1/parameters/{parametersUuid}/reset", UUID.randomUUID()), status().isNotFound(), false, null)
         );
     }
 }
