@@ -222,12 +222,6 @@ public class ShortCircuitAnalysisResultService extends AbstractComputationResult
         resultRepository.deleteByResultUuid(resultUuid);
     }
 
-    @Transactional
-    public void deleteAll() {
-        globalStatusRepository.deleteAll();
-        resultRepository.deleteAll();
-    }
-
     @Transactional(readOnly = true)
     public Optional<ShortCircuitAnalysisResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);

@@ -36,9 +36,12 @@ class ShortCircuitResultServiceTest {
     @Autowired
     private ShortCircuitAnalysisResultService shortCircuitAnalysisResultRepository;
 
+    @Autowired
+    private SupervisionService supervisionService;
+
     @BeforeEach
     void setUp() {
-        shortCircuitAnalysisResultRepository.deleteAll();
+        supervisionService.deleteAllResults();
         SQLStatementCountValidator.reset();
     }
 
