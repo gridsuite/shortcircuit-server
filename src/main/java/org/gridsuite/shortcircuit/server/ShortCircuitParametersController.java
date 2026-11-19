@@ -94,14 +94,27 @@ public class ShortCircuitParametersController {
     }
 
     @PutMapping(path = "/{parametersUuid}", consumes = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Update parameters for an analysis or reset them to default ones")
+    @Operation(summary = "Update parameters for an analysis")
     @ApiResponse(responseCode = "200", description = "The parameters are successfully updated")
     @ApiResponse(responseCode = "404", description = "The parameters don't exists")
-    public ResponseEntity<Void> updateOrResetParameters(@Parameter(description = "UUID of parameters") @PathVariable("parametersUuid") UUID parametersUuid,
+    public ResponseEntity<Void> updateParameters(@Parameter(description = "UUID of parameters") @PathVariable("parametersUuid") UUID parametersUuid,
                                                         @Parameter(description = "Parameters to save instead of default ones", schema = @Schema(implementation = ShortCircuitParametersInfos.class))
-                                                        @RequestBody(required = false) ShortCircuitParametersInfos parameters) {
+                                                        @RequestBody ShortCircuitParametersInfos parameters) {
         try {
             shortCircuitParametersService.updateParameters(parametersUuid, parameters);
+            return ResponseEntity.ok().build();
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping(path = "/{parametersUuid}/reset")
+    @Operation(summary = "reset parameters to default values")
+    @ApiResponse(responseCode = "200", description = "The parameters are successfully reset")
+    @ApiResponse(responseCode = "404", description = "The parameters don't exists")
+    public ResponseEntity<Void> resetParameters(@Parameter(description = "UUID of parameters") @PathVariable("parametersUuid") UUID parametersUuid) {
+        try {
+            shortCircuitParametersService.resetParameters(parametersUuid);
             return ResponseEntity.ok().build();
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
