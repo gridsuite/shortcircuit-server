@@ -7,7 +7,10 @@
 package org.gridsuite.shortcircuit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.Country;
+import com.powsybl.iidm.network.IdentifiableType;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
@@ -15,7 +18,7 @@ import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
+import mockwebserver3.junit5.StartStop;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import org.gridsuite.computation.dto.GlobalFilter;
@@ -33,7 +36,6 @@ import org.gridsuite.shortcircuit.server.utils.NetworkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -46,10 +48,9 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockWebServerExtension.class)
 @SpringBootTest
 class FilterServiceTest {
 
@@ -64,6 +65,9 @@ class FilterServiceTest {
 
     private final Network network = NetworkUtil.createSwitchNetwork(NETWORK_UUID, new NetworkFactoryImpl());
 
+    @StartStop
+    final MockWebServer mockWebServer = new MockWebServer();
+
     @MockitoBean
     private NetworkStoreService networkStoreService;
 
@@ -74,7 +78,7 @@ class FilterServiceTest {
     private FilterService filterService;
 
     @BeforeEach
-    void setUp(final MockWebServer mockWebServer) throws Exception {
+    void setUp() throws Exception {
         filterService = new FilterService(restClientBuilder, networkStoreService, initMockWebServer(mockWebServer));
     }
 
@@ -93,7 +97,7 @@ class FilterServiceTest {
             @NotNull
             @Override
             public MockResponse dispatch(RecordedRequest request) {
-                String requestPath = Objects.requireNonNull(request.getPath());
+                String requestPath = Objects.requireNonNull(request.getTarget());
                 if (requestPath.matches("/v1/filters/metadata\\?ids=.*")) {
                     return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonFiltersExpected);
                 } else if (requestPath.matches(String.format("/v1/filters/export\\?ids=.*&networkUuid=%s", NETWORK_UUID))) {
@@ -147,7 +151,7 @@ class FilterServiceTest {
                     }
                     return new MockResponse(HttpStatus.OK.value(), Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), jsonResponse);
                 } else {
-                    return new MockResponse.Builder().code(HttpStatus.NOT_FOUND.value()).body("Path not supported: " + request.getPath()).build();
+                    return new MockResponse.Builder().code(HttpStatus.NOT_FOUND.value()).body("Path not supported: " + request.getTarget()).build();
                 }
             }
         };
